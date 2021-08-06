@@ -1,25 +1,33 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+from datetime import datetime
+from astropy.coordinates.solar_system import get_body
 import healpy as hp
 import numpy as np
-import matplotlib.pyplot as plt
+import datetime
+
+from astropy import time
+from astropy import coordinates
 
 from zodipy.data import models
+from zodipy import integration
 from zodipy import functions as F
 
 
-class Zodi:
+now = time.Time(datetime.datetime.now())
+with coordinates.solar_system_ephemeris.set('builtin'):
+    earth_position = coordinates.get_body('earth', now)
+    earth_position = earth_position.transform_to(
+        coordinates.HeliocentricMeanEcliptic
+    ).cartesian
+
+print(earth_position)
+class Simulator:
     def __init__(
         self, 
         nside : int,
+        earth_position : None,
         observer_position : tuple = None,
-        model : models.Model = models.PLANCK_2018,
-        R_min : float = 0.001,
-        R_max : float = 30,
-        n_R : int = 50,
+        model : models.Model = models.PLANCK_2013,
+        integration_config : integration.IntegrationConfig = integration.DEFAULT_CONFIG,
     ) -> None:
         """Initializing the Zodi interface."""
 
@@ -31,10 +39,7 @@ class Zodi:
 
         self.components = model.components
         self.emissivities = model.emissivities
-
-        self.R_min = R_min
-        self.R_max = R_max
-        self.n_R = n_R
+        self.integration_config = integration_config
 
     @staticmethod
     def get_pixel_unit_vectors(nside):
@@ -79,35 +84,28 @@ class Zodi:
             Frequency at which to evaluate the IPD model [Hz].
         """
 
-        # R_grid is the distance to each shell for which we will evaluate
-        # the emission.
-        R_grid, dR_grid = np.linspace(
-            self.R_min, self.R_max, self.n_R, retstep=True
-        )
-
         X_observer = self.observer_position
         X_unit = self.get_pixel_unit_vectors(self.nside)
 
-        emission = np.zeros((self.n_R, hp.nside2npix(self.nside)))
-        for idx, R in enumerate(R_grid):            
-            for name, component in self.components.items():
-                prime_coords, R_helio = component.get_coordinates(
-                    X_observer, X_unit, R
-                )
-                density = component.get_density(*prime_coords)
+        NPIX = hp.nside2npix(self.nside)
+        emission = np.zeros(NPIX)
+
+        for comp_name, comp in self.components.items():
+            emissivity = self.get_emissivity(freq, comp_name)
+            integration_config = self.integration_config[comp_name]
+            comp_emission = np.zeros((integration_config.n, NPIX))
+
+            for idx, R in enumerate(integration_config.shells):
+                prime_coords, R_helio = comp.get_coordinates(X_observer, X_unit, R)
+                density = comp.get_density(*prime_coords)
                 blackbody_emission = self.get_blackbody_emission(R_helio, freq)
-                emissivity = self.get_emissivity(freq, name)
-                emission[idx] += emissivity * blackbody_emission * density
+                comp_emission[idx] += emissivity * blackbody_emission * density  
 
-        emission = np.trapz(emission, R_grid, dx=dR_grid, axis=0)
+            emission += integration_config.integrator(
+                comp_emission, 
+                integration_config.shells, 
+                dx=integration_config.dshells, 
+                axis=0
+            )
+
         return emission
-
-
-
-
-if __name__ == '__main__':
-    nside = 128
-    zodi = Zodi(nside)
-    emission = zodi.get_emission(800)
-    hp.mollview(emission, norm='hist', coord='EG')
-    plt.show()

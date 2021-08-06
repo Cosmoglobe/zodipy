@@ -110,6 +110,8 @@ class BaseComponent(ABC):
         inclination = self.parameters.inclination
 
         R_prime = np.sqrt(x_prime**2 + y_prime**2 + z_prime**2)
+        # R_prime[R_helio < 1] = 1
+        # print(R_prime)
         Z_prime = (
             x_prime*np.sin(omega)*np.sin(inclination) 
             - y_prime*np.cos(omega)*np.sin(inclination)

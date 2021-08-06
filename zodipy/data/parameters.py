@@ -1,7 +1,8 @@
+from zodipy import CompLabel
 from zodipy import component_params as params
 
 K98 = {
-    'cloud': params.CloudParameters(
+    CompLabel.CLOUD : params.CloudParameters(
         x0=0.0119,
         y0=0.00548,
         z0=-0.00215,
@@ -13,7 +14,7 @@ K98 = {
         gamma=0.942,
         mu=0.189,
     ),
-    'band1': params.BandParameters(
+    CompLabel.BAND1 : params.BandParameters(
         x0=0,
         y0=0,
         z0=0,
@@ -25,7 +26,7 @@ K98 = {
         p=4,
         delta_r=1.5,
     ),
-    'band2': params.BandParameters(
+    CompLabel.BAND2 : params.BandParameters(
         x0=0,
         y0=0,
         z0=0,
@@ -37,7 +38,7 @@ K98 = {
         p=4,
         delta_r=1.2,
     ),
-    'band3': params.BandParameters(
+    CompLabel.BAND3: params.BandParameters(
         x0=0,
         y0=0,
         z0=0,
@@ -49,7 +50,7 @@ K98 = {
         p=4,
         delta_r=1.5,
     ),
-    'ring': params.RingParameters(
+    CompLabel.RING : params.RingParameters(
         x0=0,
         y0=0,
         z0=0,
@@ -60,7 +61,7 @@ K98 = {
         sigma_r=0.025,
         sigma_z=0.054,
     ),
-    'feature': params.FeatureParameters(
+    CompLabel.FEATURE : params.FeatureParameters(
         x0=0,
         y0=0,
         z0=0,
