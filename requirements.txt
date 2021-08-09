@@ -1,0 +1,5 @@
+astroquery
+numpy
+scipy
+astropy
+healpy

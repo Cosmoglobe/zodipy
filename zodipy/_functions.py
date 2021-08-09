@@ -2,7 +2,7 @@ import astropy.constants as const
 import numpy as np
 
 
-def blackbody_emission(T, freq):    
+def blackbody_emission(T, freq) -> np.ndarray:    
     """Returns the blackbody emission.
     
     Assumes the frequency to be in units of GHz.
@@ -18,13 +18,15 @@ def blackbody_emission(T, freq):
     float
         Blackbody emission [W / m^2 Hz sr].
     """
+
     freq *= 1e9
     term1 = (2*const.h.value*freq**3) / const.c.value**2
     term2 = np.expm1((const.h.value*freq) / (const.k_B.value*T))
+    
     return term1 / term2
 
 
-def interplanetary_temperature(R, T_0=286, delta=0.4668626):
+def interplanetary_temperature(R, T_0=286, delta=0.4668626) -> np.ndarray:
     """Returns the interplanetary temperature as a function of radius.
     
     Parameters

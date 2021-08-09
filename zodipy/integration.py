@@ -4,8 +4,6 @@ from typing import Callable
 import numpy as np
 import scipy
 
-from zodipy import CompLabel
-
 
 @dataclass
 class IntegrationConfig:
@@ -31,53 +29,23 @@ class IntegrationConfig:
     integrator : Callable
 
     @property
-    def shells(self) -> np.ndarray:
+    def R(self) -> np.ndarray:
         """Linearly spaced grid of distances from observer."""
 
         return np.linspace(self.R_min, self.R_max, self.n)
 
     @property
-    def dshells(self) -> np.ndarray:
+    def dR(self) -> np.ndarray:
         """Distance between grid points in self.shells."""
 
-        return np.diff(self.shells)
+        return np.diff(self.R)
 
 
 DEFAULT_CONFIG = {
-    CompLabel.CLOUD: IntegrationConfig(
-        R_min=0.0001, 
-        R_max=30, 
-        n=15,
-        integrator=np.trapz
-    ),
-    CompLabel.BAND1: IntegrationConfig(
-        R_min=0.25, 
-        R_max=30, 
-        n=15,
-        integrator=np.trapz
-    ),
-    CompLabel.BAND2: IntegrationConfig(
-        R_min=0.0001, 
-        R_max=30, 
-        n=15,
-        integrator=np.trapz
-    ),
-    CompLabel.BAND3: IntegrationConfig(
-        R_min=0.25, 
-        R_max=30, 
-        n=15,
-        integrator=np.trapz
-    ),
-    CompLabel.RING: IntegrationConfig(
-        R_min=0.0001, 
-        R_max=2.5, 
-        n=50,
-        integrator=scipy.integrate.simpson
-    ),
-    CompLabel.FEATURE: IntegrationConfig(
-        R_min=0.0001, 
-        R_max=1, 
-        n=15,
-        integrator=scipy.integrate.simpson
-    )
+    'cloud': IntegrationConfig(0.0001, 30, 15, np.trapz),
+    'band1': IntegrationConfig(0.0001, 30, 15, np.trapz),
+    'band2': IntegrationConfig(0.0001, 30, 15, np.trapz),
+    'band3': IntegrationConfig(0.0001, 30, 15, np.trapz),
+    'ring': IntegrationConfig(0.0001, 2.25, 50, scipy.integrate.simpson),
+    'feature': IntegrationConfig(0.0001, 1, 15, scipy.integrate.simpson)
 }
