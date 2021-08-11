@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from math import radians, sin, cos
+from math import pi as π
 from typing import Tuple
 
 import numpy as np
@@ -18,30 +20,30 @@ class BaseComponent(ABC):
 
     Parameters
     ----------
-    x0: float
+    x_0: float
         x offset from the Sun in ecliptic coordinates.
-    y0: float
+    y_0: float
         y offset from the Sun in ecliptic coordinates.
-    z0: float
+    z_0: float
         z offset from the Sun in ecliptic coordinates.
     inclination: float
         Inclination [deg].
-    omega: float
+    Ω: float
         Ascending node [deg].
     """
 
-    x0 : float
-    y0 : float
-    z0 : float
-    inclination : float
-    omega : float
+    x_0 : float
+    y_0 : float
+    z_0 : float
+    i : float
+    Ω : float
 
     def __post_init__(self) -> None:
-        self.inclination = np.deg2rad(self.inclination)
-        self.omega = np.deg2rad(self.omega)
+        self.i = radians(self.i)
+        self.Ω = radians(self.Ω)
 
     @abstractmethod
-    def get_density(self, R_prime, Z_prime, theta) -> np.ndarray:
+    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
         """Returns the dust density at a shell around the observer.
         
         Parameters
@@ -54,7 +56,7 @@ class BaseComponent(ABC):
             Array containing the height above the x-y-plane in the prime 
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        theta : `numpy.ndarray`
+        θ : `numpy.ndarray`
             Array containing the heliocentric ecliptic longitude of the 
             coords in R_prime releative to the longitude of Earth. The 
             shape is (`NPIX`).
@@ -63,7 +65,7 @@ class BaseComponent(ABC):
         -------
         `numpy.ndarray`
             Array containing the density of the component at a shell around
-            the observer given by R_prime, Z_prime, and theta. The shape is
+            the observer given by R_prime, Z_prime, and θ. The shape is
             (`NPIX`)
         """
     
@@ -95,7 +97,7 @@ class BaseComponent(ABC):
             Array containing the height above the x-y-plane in the prime 
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        theta : `numpy.ndarray`
+        θ : `numpy.ndarray`
             Array containing the heliocentric ecliptic longitude of the 
             coords in R_prime releative to the longitude of Earth. The 
             shape is (`NPIX`).
@@ -105,35 +107,35 @@ class BaseComponent(ABC):
         """
 
         u_x, u_y, u_z = X_unit
-        x0, y0, z0 = X_observer
-
-        x_helio = R*u_x + x0
-        y_helio = R*u_y + y0
-        z_helio = R*u_z + z0
+        x_0, y_0, z_0 = X_observer
+        
+        x_helio = R*u_x + x_0
+        y_helio = R*u_y + y_0
+        z_helio = R*u_z + z_0
         R_helio = np.sqrt(x_helio**2 + y_helio**2 + z_helio**2)
 
-        x_prime = x_helio - self.x0
-        y_prime = y_helio - self.y0
-        z_prime = z_helio - self.z0
+        x_prime = x_helio - self.x_0
+        y_prime = y_helio - self.y_0
+        z_prime = z_helio - self.z_0
 
-        omega, inclination = self.omega, self.inclination
+        Ω, i = self.Ω, self.i
         R_prime = np.sqrt(x_prime**2 + y_prime**2 + z_prime**2)
         Z_prime = (
-            x_prime*np.sin(omega)*np.sin(inclination) 
-            - y_prime*np.cos(omega)*np.sin(inclination)
-            + z_prime*np.cos(inclination)
+            x_prime*sin(Ω)*sin(i) 
+            - y_prime*cos(Ω)*sin(i)
+            + z_prime*cos(i)
         )
 
         x_earth, y_earth, _ = X_earth
-        theta_prime = np.arctan2(y_prime, x_prime)
-        theta_earth = np.arctan2(y_earth, x_earth)
-        theta = theta_prime - theta_earth
+        θ_prime = np.arctan2(y_prime, x_prime)
+        θ_earth = np.arctan2(y_earth, x_earth)
+        θ = θ_prime - θ_earth
 
-        # Constraining theta to be in the limit [-pi, pi]
-        theta[theta < np.pi] = theta[theta < np.pi] + 2*np.pi
-        theta[theta > np.pi] = theta[theta > np.pi] - 2*np.pi
+        # Constraining θ to be in the limit [-π, π]
+        θ[θ < π] = θ[θ < π] + 2*π
+        θ[θ > π] = θ[θ > π] - 2*π
 
-        return (R_prime, Z_prime, theta), R_helio
+        return (R_prime, Z_prime, θ), R_helio
 
     def get_emission(self, freq, X_observer, X_earth, X_unit, R) -> np.ndarray:
         """Returns the emission at a shell of distance R from the observer.
@@ -172,39 +174,39 @@ class Cloud(BaseComponent):
     ----------
     n0 : float
         Density at 1 AU.
-    alpha : float 
+    α : float 
         Radial power-law exponent.
-    beta : float
+    β : float
         Vertical shape parameter.
-    gamma : float
+    γ : float
         Vertical power-law exponent.
-    mu : float
+    μ : float
         Widening parameter for the modified fan.
     """
 
     n0 : float
-    alpha : float
-    beta : float
-    gamma : float
-    mu : float
+    α : float
+    β : float
+    γ : float
+    μ : float
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, theta) -> np.ndarray:
+    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
         """See base class."""
 
-        zeta = np.abs(Z_prime) / R_prime
-        mu = self.mu
-        g = np.zeros_like(zeta)
+        ζ = np.abs(Z_prime) / R_prime
+        μ = self.μ
+        g = np.zeros_like(ζ)
         
-        condition = zeta < mu
-        g[condition] = zeta[condition]**2 / 2*mu
-        g[~condition] = zeta[~condition] - (mu / 2)
+        condition = ζ < μ
+        g[condition] = ζ[condition]**2 / 2*μ
+        g[~condition] = ζ[~condition] - (μ / 2)
 
         return (
-            self.n0 * R_prime**-self.alpha 
-            * np.exp(-self.beta * g * self.gamma)
+            self.n0 * R_prime**-self.α 
+            * np.exp(-self.β * g * self.γ)
         )
 
 
@@ -220,34 +222,34 @@ class Band(BaseComponent):
     ----------
     n0 : float
         Density at 3 AU.
-    delta_zeta : float
+    δ_ζ : float
         Shape parameter [deg].
     v : float
         Shape parameter.
     p : float
         Shape parameter.
-    delta_r : float
+    δ_r : float
         Inner radial cutoff. 
     """
 
     n0 : float
-    delta_zeta : float
+    δ_ζ : float
     v : float
     p : float
-    delta_r : float
+    δ_r : float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.delta_zeta = np.deg2rad(self.delta_zeta)
+        self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime, Z_prime, theta) -> np.ndarray:
+    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
         """See base class."""
 
-        zeta = np.abs(Z_prime) / R_prime
-        zeta_over_delta_zeta = zeta/self.delta_zeta
-        term1 = (3*self.n0/R_prime) * np.exp(-(zeta_over_delta_zeta)**6)
-        term2 = 1 + ((zeta_over_delta_zeta)**self.p)/self.v
-        term3 = 1 - np.exp(-(R_prime/self.delta_r)**20)
+        ζ = np.abs(Z_prime) / R_prime
+        ζ_over_δ_ζ = ζ/self.δ_ζ
+        term1 = (3*self.n0/R_prime) * np.exp(-(ζ_over_δ_ζ)**6)
+        term2 = 1 + ((ζ_over_δ_ζ)**self.p)/self.v
+        term3 = 1 - np.exp(-(R_prime/self.δ_r)**20)
         
         return term1 * term2 * term3
 
@@ -266,25 +268,25 @@ class Ring(BaseComponent):
         Density at 1 AU.
     R : float
         Radius of the peak density.
-    sigma_r : float
+    σ_r : float
         Radial dispersion.
-    sigma_z : float 
+    σ_z : float 
         Vertical dispersion.
     """
 
     n0 : float
     R : float
-    sigma_r : float
-    sigma_z : float
+    σ_r : float
+    σ_z : float
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, theta) -> np.ndarray:
+    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
         """See base class."""
 
-        term1 = -((R_prime - self.R)/self.sigma_r)**2
-        term2 = np.abs(Z_prime) / self.sigma_z
+        term1 = -((R_prime - self.R)/self.σ_r)**2
+        term2 = np.abs(Z_prime) / self.σ_z
 
         return self.n0 * np.exp(term1 - term2)
 
@@ -303,32 +305,32 @@ class Feature(BaseComponent):
         Density at 1 AU.
     R : float
         Radius of the peak density.
-    sigma_r : float
+    σ_r : float
         Radial dispersion.
-    sigma_z : float 
+    σ_z : float 
         Vertical dispersion.
-    theta : float
+    θ : float
         Longitude with respect to Earth.
-    sigma_theta : float
+    σ_θ : float
         Longitude dispersion.
     """
 
     n0 : float
     R : float
-    sigma_r : float
-    sigma_z : float
-    theta : float
-    sigma_theta : float
+    σ_r : float
+    σ_z : float
+    θ : float
+    σ_θ : float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.theta = np.deg2rad(self.theta)
-        self.sigma_theta = np.deg2rad(self.sigma_theta)
+        self.θ = radians(self.θ)
+        self.σ_θ = radians(self.σ_θ)
 
-    def get_density(self, R_prime, Z_prime, theta) -> np.ndarray:
+    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
         """See base class."""
 
-        term1 = -((R_prime - self.R)/self.sigma_r)**2
-        term2 = np.abs(Z_prime) / self.sigma_z
-        term3 = ((theta - self.theta) / self.sigma_theta)**2
+        term1 = -((R_prime - self.R)/self.σ_r)**2
+        term2 = np.abs(Z_prime) / self.σ_z
+        term3 = ((θ - self.θ) / self.σ_θ)**2
         return self.n0 * np.exp(term1 - term2 - term3)

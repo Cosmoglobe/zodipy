@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Dict
 
 from zodipy._emissivity import Emissivity
 from zodipy import components
@@ -16,13 +16,15 @@ class Model:
     emissivities : `zodipy.emissivities.Emissivity`
         Emissivity object.
     """
+
     def __init__(
         self,
         components: Iterable[str], 
-        parameters: dict, 
+        parameters: Dict[str, Dict[str, float]], 
         emissivities: Emissivity
     ) -> None: 
-    
+        """Initilizes a Model object."""
+        
         self.components = self._init_components(components, parameters)
         self.emissivities = emissivities
 

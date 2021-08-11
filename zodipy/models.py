@@ -1,5 +1,5 @@
-from zodipy import parameters
 from zodipy import emissivities
+from zodipy import parameters
 from zodipy._model import Model
 
 
@@ -16,7 +16,15 @@ PLANCK_2015 = Model(
     emissivities=emissivities.PLANCK_2015
 )
 
+PLANCK_2018 = Model(
+    components=('cloud', 'band1', 'band2', 'band3'),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2018
+)
 
+
+# Single component models used for testing
+# ----------------------------------------
 _CLOUD = Model(
     components=('cloud',),
     parameters=parameters.K98,

@@ -26,17 +26,17 @@ class IntegrationConfig:
     R_min : float
     R_max : float
     n : int
-    integrator : Callable
+    integrator : Callable[[float, float, int], np.ndarray]
 
     @property
     def R(self) -> np.ndarray:
-        """Linearly spaced grid of distances from observer."""
+        """Linearly spaced grid of distances to shells around the observer."""
 
         return np.expand_dims(np.linspace(self.R_min, self.R_max, self.n), axis=1)
 
     @property
     def dR(self) -> np.ndarray:
-        """Distance between grid points in self.shells."""
+        """Distance between grid points in R"""
 
         return np.diff(self.R)
 
