@@ -172,7 +172,7 @@ class Cloud(BaseComponent):
 
     Parameters
     ----------
-    n0 : float
+    n_0 : float
         Density at 1 AU.
     α : float 
         Radial power-law exponent.
@@ -184,7 +184,7 @@ class Cloud(BaseComponent):
         Widening parameter for the modified fan.
     """
 
-    n0 : float
+    n_0 : float
     α : float
     β : float
     γ : float
@@ -205,7 +205,7 @@ class Cloud(BaseComponent):
         g[~condition] = ζ[~condition] - (μ / 2)
 
         return (
-            self.n0 * R_prime**-self.α 
+            self.n_0 * R_prime**-self.α 
             * np.exp(-self.β * g * self.γ)
         )
 
@@ -220,7 +220,7 @@ class Band(BaseComponent):
 
     Parameters
     ----------
-    n0 : float
+    n_0 : float
         Density at 3 AU.
     δ_ζ : float
         Shape parameter [deg].
@@ -232,7 +232,7 @@ class Band(BaseComponent):
         Inner radial cutoff. 
     """
 
-    n0 : float
+    n_0 : float
     δ_ζ : float
     v : float
     p : float
@@ -247,7 +247,7 @@ class Band(BaseComponent):
 
         ζ = np.abs(Z_prime) / R_prime
         ζ_over_δ_ζ = ζ/self.δ_ζ
-        term1 = (3*self.n0/R_prime) * np.exp(-(ζ_over_δ_ζ)**6)
+        term1 = (3*self.n_0/R_prime) * np.exp(-(ζ_over_δ_ζ)**6)
         term2 = 1 + ((ζ_over_δ_ζ)**self.p)/self.v
         term3 = 1 - np.exp(-(R_prime/self.δ_r)**20)
         
@@ -264,7 +264,7 @@ class Ring(BaseComponent):
 
     Parameters
     ----------
-    n0 : float
+    n_0 : float
         Density at 1 AU.
     R : float
         Radius of the peak density.
@@ -274,7 +274,7 @@ class Ring(BaseComponent):
         Vertical dispersion.
     """
 
-    n0 : float
+    n_0 : float
     R : float
     σ_r : float
     σ_z : float
@@ -288,7 +288,7 @@ class Ring(BaseComponent):
         term1 = -((R_prime - self.R)/self.σ_r)**2
         term2 = np.abs(Z_prime) / self.σ_z
 
-        return self.n0 * np.exp(term1 - term2)
+        return self.n_0 * np.exp(term1 - term2)
 
 
 @dataclass
@@ -301,7 +301,7 @@ class Feature(BaseComponent):
 
     Parameters
     ----------
-    n0 : float
+    n_0 : float
         Density at 1 AU.
     R : float
         Radius of the peak density.
@@ -315,7 +315,7 @@ class Feature(BaseComponent):
         Longitude dispersion.
     """
 
-    n0 : float
+    n_0 : float
     R : float
     σ_r : float
     σ_z : float
@@ -333,4 +333,4 @@ class Feature(BaseComponent):
         term1 = -((R_prime - self.R)/self.σ_r)**2
         term2 = np.abs(Z_prime) / self.σ_z
         term3 = ((θ - self.θ) / self.σ_θ)**2
-        return self.n0 * np.exp(term1 - term2 - term3)
+        return self.n_0 * np.exp(term1 - term2 - term3)

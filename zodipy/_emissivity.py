@@ -6,7 +6,7 @@ import numpy as np
 
 @dataclass
 class Emissivity:
-    """Class containing various emissivity fits for the Zodiacal components."""
+    """Class containing emissivity fits for the Zodiacal components."""
 
     frequencies : Iterable[float]
     components : Dict[str, Tuple[float]]

@@ -42,10 +42,10 @@ def get_target_coordinates(target: str, time: datetime.datetime.date) -> np.ndar
             'surroundings of the earth'
         )
 
-
     stop = time + datetime.timedelta(days=1)
     start = time
     epochs = dict(start=str(start), stop=str(stop), step='1d')
+    
     query = Horizons(id=target, id_type='majorbody', location='c@sun', epochs=epochs)
     ephemerides = query.ephemerides()
 

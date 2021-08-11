@@ -11,7 +11,7 @@ from zodipy import _integration as integ
 
 
 class Zodi:
-    """Interface for simulating the interplanetary dust emission."""
+    """Interface for simulating Zodiacal emission."""
 
     def __init__(
         self, 
@@ -26,7 +26,7 @@ class Zodi:
         Parameters
         ----------
         observer : str, optional
-            The observer. Default is L2.
+            The observer. Defaults to L2.
         observation_time : `datetime.datetime`, optional
             The time of the observation. Defaults to the current time.
         earth_position : `numpy.ndarray`, optional
@@ -37,7 +37,8 @@ class Zodi:
             Defaults to the model used in the Planck 2018 analysis.
         integ : `zodipy.integration.IntegrationConfig`, optional
             Integration config object determining the integration details
-            used in the simulation. Defaults to DEFAULT_CONFIG.
+            used in the simulation. Defaults to 
+            `zodipy._integration.DEFAULT_CONFIG`.
         """
 
         self.X_observer = _coordinates.get_target_coordinates(
@@ -53,19 +54,19 @@ class Zodi:
         self.model = model
         self.integ = integ
 
-
     def simulate(
         self, nside: int, freq: Union[float, u.Quantity], coord: str = 'G'
     ) -> np.ndarray:
-        """Returns the model emission given a frequency.
+        """Simulates the Zodiacal emission given a frequency.
 
         Parameters
         ----------
         nside : int
             HEALPIX map resolution parameter.
         freq : float, `astropy.units.Quantity`
-            Frequency at which to evaluate the IPD model [GHz]. Assumes 
-            the value to be in GHz, unless an astropy quantity is used.
+            Frequency [GHz] at which to evaluate the IPD model. The 
+            frequency should be in units of GHz, unless an `astropy.Quantity`
+            object is used, for which it only needs to be compatible with Hz.
         coord : str, optional
             Coordinate system of the output map. Defaults to 'G' which is 
             the Galactic coordinate system.
@@ -79,19 +80,15 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        model = self.model
-
-        npix = hp.nside2npix(nside)
-        emission = np.zeros(npix)
-
         X_observer = self.X_observer
         X_earth = self.X_earth
-        X_unit = hp.pix2vec(nside, np.arange(npix))
+        X_unit = hp.pix2vec(nside, np.arange(npix := hp.nside2npix(nside)))
 
-        for comp_name, comp in model.components.items():
+        emission = np.zeros(npix)
+        for comp_name, comp in self.model.components.items():
             integration_config = self.integ[comp_name]
 
-            emissivity = model.emissivities.get_emissivity(comp_name, freq)
+            emissivity = self.model.emissivities.get_emissivity(comp_name, freq)
             comp_emission = comp.get_emission(
                 freq, X_observer, X_earth, X_unit, integration_config.R
             )
