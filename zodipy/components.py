@@ -110,7 +110,6 @@ class BaseComponent(ABC):
         x_helio = R*u_x + x0
         y_helio = R*u_y + y0
         z_helio = R*u_z + z0
-
         R_helio = np.sqrt(x_helio**2 + y_helio**2 + z_helio**2)
 
         x_prime = x_helio - self.x0

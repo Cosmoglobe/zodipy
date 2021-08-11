@@ -4,13 +4,11 @@ from astroquery.jplhorizons import Horizons
 import numpy as np
 
 TARGET_ALIASES = {
+    'l1' : 'SEMB-L1',
     'l2' : 'SEMB-L2',
     'planck' : 'Planck',
+    'wmap' : 'WMAP',
     'earth' : 'Earth-Moon Barycenter',
-    'jupiter' : 'Jupiter Barycenter',
-    'mars' : 'Mars Barycenter',
-    'venus' : 'Venus Barycenter',
-    'pluto' : 'Pluto Barycenter',
 }
 
 

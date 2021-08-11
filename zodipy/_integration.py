@@ -32,7 +32,7 @@ class IntegrationConfig:
     def R(self) -> np.ndarray:
         """Linearly spaced grid of distances from observer."""
 
-        return np.linspace(self.R_min, self.R_max, self.n)
+        return np.expand_dims(np.linspace(self.R_min, self.R_max, self.n), axis=1)
 
     @property
     def dR(self) -> np.ndarray:

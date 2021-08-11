@@ -1,8 +1,12 @@
+from typing import Union
+
 import astropy.constants as const
 import numpy as np
 
 
-def blackbody_emission(T, freq) -> np.ndarray:    
+def blackbody_emission(
+    T: Union[float, np.ndarray], freq: float
+) -> Union[float, np.ndarray]:    
     """Returns the blackbody emission.
     
     Assumes the frequency to be in units of GHz.
@@ -26,7 +30,9 @@ def blackbody_emission(T, freq) -> np.ndarray:
     return term1 / term2
 
 
-def interplanetary_temperature(R, T_0=286, delta=0.4668626) -> np.ndarray:
+def interplanetary_temperature(
+    R: Union[float, np.ndarray], T_0: float = 286, delta: float = 0.4668626
+) -> Union[float, np.ndarray]:
     """Returns the interplanetary temperature as a function of radius.
     
     Parameters

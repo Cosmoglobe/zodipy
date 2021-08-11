@@ -17,8 +17,38 @@ PLANCK_2015 = Model(
 )
 
 
-PLANCK_2018 = Model(
-    components=('cloud', 'band1', 'band2', 'band3'),
+_CLOUD = Model(
+    components=('cloud',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
+)
+
+_BAND1 = Model(
+    components=('band1',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2018
+)
+
+_BAND2 = Model(
+    components=('band2',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2018
+)
+
+_BAND3 = Model(
+    components=('band3',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2018
+)
+
+_RING = Model(
+    components=('ring',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2013
+)
+
+_FEATURE = Model(
+    components=('feature',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2013
 )

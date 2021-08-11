@@ -6,18 +6,18 @@ import numpy as np
 
 from zodipy import models
 from zodipy import _coordinates
-from zodipy import integration as integ
+from zodipy import _integration as integ
 
 
 class Zodi:
-    """Interface for simulations of the interplanetary dust emission."""
+    """Interface for simulating the interplanetary dust emission."""
 
     def __init__(
         self, 
         observer : Optional[str] = 'L2',
         observation_time : Optional[datetime] = datetime.now(),
         earth_position : Optional[np.ndarray] = None,
-        model : models.Model = models.PLANCK_2018,
+        model : models.Model = models._FEATURE,
         integ : integ.IntegrationConfig = integ.DEFAULT_CONFIG,
     ) -> None:
         """Initializing the Zodi interface.
@@ -57,8 +57,11 @@ class Zodi:
 
         Parameters
         ----------
-        freq : `astropy.units.Quantity`
-            Frequency at which to evaluate the IPD model [Hz].
+        nside : int
+            HEALPIX map resolution parameter.
+        freq : float, `astropy.units.Quantity`
+            Frequency at which to evaluate the IPD model [GHz]. Assumes 
+            the value to be in GHz, unless an astropy quantity is used.
         """
 
         NPIX = hp.nside2npix(nside)
@@ -66,25 +69,21 @@ class Zodi:
 
         X_observer = self.X_observer
         X_earth = self.X_earth
-        X_unit = np.asarray(
-            hp.pix2vec(nside, np.arange(hp.nside2npix(nside)))
-        )  
+        X_unit = hp.pix2vec(nside, np.arange(NPIX))
 
         model = self.model
         for comp_name, comp in model.components.items():
             integration_config = self.integ[comp_name]
-            comp_emission = np.zeros((integration_config.n, NPIX))
-        
-            for idx, R in enumerate(integration_config.R):
-                comp_emission[idx] = comp.get_emission(freq, X_observer, X_earth, X_unit, R)
 
             emissivity = model.emissivities.get_emissivity(comp_name, freq)
+            comp_emission = comp.get_emission(freq, X_observer, X_earth, X_unit, integration_config.R)
             comp_emission *= emissivity
+
             emission += integration_config.integrator(
                 comp_emission, 
                 integration_config.R, 
                 dx=integration_config.dR, 
                 axis=0
             )
-
+            
         return emission

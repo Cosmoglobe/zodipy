@@ -5,24 +5,23 @@ from zodipy import components
 
 
 class Model:
+    """Class that represents a model of the IPD.
     
+    Parameters
+    ----------
+    components : Iterable
+        Iterable containing component labels as strings.
+    parameters : dict
+        Dictionary containing component parameters.
+    emissivities : `zodipy.emissivities.Emissivity`
+        Emissivity object.
+    """
     def __init__(
         self,
         components: Iterable[str], 
         parameters: dict, 
         emissivities: Emissivity
     ) -> None: 
-        """Class that represents a model of the IPD.
-        
-        Parameters
-        ----------
-        components : Iterable
-            Iterable containing component labels as strings.
-        parameters : dict
-            Dictionary containing component parameters.
-        emissivities : `zodipy.emissivities.Emissivity`
-            Emissivity object.
-        """
     
         self.components = self._init_components(components, parameters)
         self.emissivities = emissivities
