@@ -13,8 +13,7 @@ zodi = zodipy.Zodi(observer='Planck')
 emission = zodi.simulate(nside=128, freq=700)
 ```
 
-The optional keyword `observation_time` which takes in `datetime` object can
-also be passed to the `zodipy.Zodi` object to determine the time of observation.
+The time of observation is can be changed as following
 ```python
 import datetime
 
