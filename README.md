@@ -10,10 +10,10 @@ emission as seen by the Planck satellite today
 import zodipy
 
 zodi = zodipy.Zodi(observer='Planck')
-emission = zodi.simulate(nside=128, freq=700)
+emission = zodi.simulate(nside=256, freq=800)
 ```
 
-The time of observation is can be changed as following
+The time of observation is defined as following
 ```python
 import datetime
 
@@ -22,7 +22,7 @@ zodi = zodipy.Zodi(observer='L2', observation_time=time)
 emission = zodi.simulate(nside=256, freq=800)
 ```
 
-These maps can then be visualized using Healpy and matplotlib
+The simulated emission can be visualized using Healpy and matplotlib
 ```python
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -33,10 +33,6 @@ hp.mollview(
     unit='W/m^2 Hz sr', 
     title='Zodiacal Emission as seen from L2 (2010-01-01)', 
 )
-plt.savefig('imgs/zodi.png')
 plt.show()
 ```
-
 ![plot](imgs/zodi.png)
-
-
