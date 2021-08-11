@@ -1,7 +1,7 @@
 # Zodipy
 
 ## Description
-Zodipy is simulation tool used to obtain the simulated instantaneous emission as seen from an observer.
+Zodipy is a python tool that simulates the instantaneous Zodiacal emission as seen from an observer.
 
 ## Usage
 The following will produce a HEALPIX map at `NSIDE=128` of the simulated
