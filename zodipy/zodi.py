@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
+import astropy.units as u
 import healpy as hp
 import numpy as np
 
@@ -53,7 +54,9 @@ class Zodi:
         self.integ = integ
 
 
-    def simulate(self, nside: int, freq: float, coord: str = None) -> np.ndarray:
+    def simulate(
+        self, nside: int, freq: Union[float, u.Quantity], coord: str = 'G'
+    ) -> np.ndarray:
         """Returns the model emission given a frequency.
 
         Parameters
@@ -63,8 +66,19 @@ class Zodi:
         freq : float, `astropy.units.Quantity`
             Frequency at which to evaluate the IPD model [GHz]. Assumes 
             the value to be in GHz, unless an astropy quantity is used.
+        coord : str, optional
+            Coordinate system of the output map. Defaults to 'G' which is 
+            the Galactic coordinate system.
+
+        Returns
+        -------
+        emission : `numpy.ndarray`
+            Simulated Zodiacal emission for some nside at some frequency.
         """
         
+        if isinstance(freq, u.Quantity):
+            freq = freq.to('GHz').value
+
         model = self.model
 
         npix = hp.nside2npix(nside)
@@ -78,7 +92,9 @@ class Zodi:
             integration_config = self.integ[comp_name]
 
             emissivity = model.emissivities.get_emissivity(comp_name, freq)
-            comp_emission = comp.get_emission(freq, X_observer, X_earth, X_unit, integration_config.R)
+            comp_emission = comp.get_emission(
+                freq, X_observer, X_earth, X_unit, integration_config.R
+            )
             comp_emission *= emissivity
 
             emission += integration_config.integrator(
@@ -88,7 +104,6 @@ class Zodi:
                 axis=0
             )
         
-        if coord is not None:
-            emission = _coordinates.change_coordinate_system(emission, coord)
+        emission = _coordinates.change_coordinate_system(emission, coord)
         
         return emission
