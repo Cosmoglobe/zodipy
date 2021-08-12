@@ -23,16 +23,16 @@ class IntegrationConfig:
         Function which performs the integration.
     """
 
-    R_min : float
     R_max : float
     n : int
-    integrator : Callable[[float, float, int], np.ndarray]
+    integrator : Callable[[float, float, int], np.ndarray] = np.trapz
 
     @property
     def R(self) -> np.ndarray:
         """Linearly spaced grid of distances to shells around the observer."""
 
-        return np.expand_dims(np.linspace(self.R_min, self.R_max, self.n), axis=1)
+        ZERO = np.finfo(float).eps
+        return np.expand_dims(np.linspace(ZERO, self.R_max, self.n), axis=1)
 
     @property
     def dR(self) -> np.ndarray:
@@ -41,11 +41,22 @@ class IntegrationConfig:
         return np.diff(self.R)
 
 
-DEFAULT_CONFIG = {
-    'cloud': IntegrationConfig(0.0001, 30, 15, np.trapz),
-    'band1': IntegrationConfig(0.0001, 30, 15, np.trapz),
-    'band2': IntegrationConfig(0.0001, 30, 15, np.trapz),
-    'band3': IntegrationConfig(0.0001, 30, 15, np.trapz),
-    'ring': IntegrationConfig(0.0001, 2.25, 50, scipy.integrate.simpson),
-    'feature': IntegrationConfig(0.0001, 1, 15, scipy.integrate.simpson)
+_CUT_OFF = 6
+
+GOOD = {
+    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=500),
+    'band1': IntegrationConfig(R_max=_CUT_OFF, n=500),
+    'band2': IntegrationConfig(R_max=_CUT_OFF, n=500),
+    'band3': IntegrationConfig(R_max=_CUT_OFF, n=500),
+    'ring': IntegrationConfig(R_max=2.25, n=200),
+    'feature': IntegrationConfig(R_max=1, n=200),
+}
+
+DEFAULT = {
+    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=250),
+    'band1': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'band2': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'band3': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'ring': IntegrationConfig(R_max=2.25, n=50),
+    'feature': IntegrationConfig(R_max=1, n=50),
 }

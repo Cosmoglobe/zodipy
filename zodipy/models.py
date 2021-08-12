@@ -22,7 +22,6 @@ PLANCK_2018 = Model(
     emissivities=emissivities.PLANCK_2018
 )
 
-
 # Single component models used for testing
 # ----------------------------------------
 _CLOUD = Model(
@@ -49,6 +48,12 @@ _BAND3 = Model(
     emissivities=emissivities.PLANCK_2018
 )
 
+_BANDS = Model(
+    components=('band3',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2018
+)
+
 _RING = Model(
     components=('ring',),
     parameters=parameters.K98,
@@ -57,6 +62,12 @@ _RING = Model(
 
 _FEATURE = Model(
     components=('feature',),
+    parameters=parameters.K98,
+    emissivities=emissivities.PLANCK_2013
+)
+
+_CIRCUMSOLAR = Model(
+    components=('ring','feature',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013
 )

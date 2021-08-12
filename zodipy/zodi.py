@@ -11,7 +11,11 @@ from zodipy import _integration as integ
 
 
 class Zodi:
-    """Interface for simulating Zodiacal emission."""
+    """Interface for simulating the Zodiacal emission.
+    
+    The emission is simulated as the instantaneous emission seen by an 
+    observer at some location in a region nearby earth at some time.
+    """
 
     def __init__(
         self, 
@@ -19,9 +23,13 @@ class Zodi:
         observation_time : Optional[datetime] = datetime.now().date(),
         earth_position : Optional[np.ndarray] = None,
         model : Optional[models.Model] = models.PLANCK_2018,
-        integ : Optional[integ.IntegrationConfig] = integ.DEFAULT_CONFIG,
+        integ : Optional[integ.IntegrationConfig] = integ.DEFAULT,
     ) -> None:
         """Initializing the zodi interface.
+
+        The geometric setup of the simulation, the model parameters and 
+        components, and the integration configuration used when integrating
+        up the emission are all configured here in the initialization.
         
         Parameters
         ----------
@@ -39,6 +47,10 @@ class Zodi:
             Integration config object determining the integration details
             used in the simulation. Defaults to 
             `zodipy._integration.DEFAULT_CONFIG`.
+
+        Methods
+        -------
+        simulate
         """
 
         self.X_observer = _coordinates.get_target_coordinates(
@@ -55,9 +67,13 @@ class Zodi:
         self.integ = integ
 
     def simulate(
-        self, nside: int, freq: Union[float, u.Quantity], coord: str = 'G'
+        self, 
+        nside: int, 
+        freq: Union[float, u.Quantity], 
+        coord: str = 'G',
+        return_comps: bool = False
     ) -> np.ndarray:
-        """Simulates the Zodiacal emission given a frequency.
+        """Simulates the Zodiacal emission given a frequency in MJy/sr.
 
         Parameters
         ----------
@@ -68,13 +84,19 @@ class Zodi:
             frequency should be in units of GHz, unless an `astropy.Quantity`
             object is used, for which it only needs to be compatible with Hz.
         coord : str, optional
-            Coordinate system of the output map. Defaults to 'G' which is 
-            the Galactic coordinate system.
+            Coordinate system of the output map. Accepted inputs are: 'E', 
+            'C', or 'G'. Defaults to 'G' which is the Galactic coordinate 
+            system.
+        return_comps : bool, optional
+            If True, the emission of each component in the model is returned
+            separatly in form of an array of shape (`n_comps`, `npix`). 
+            Defaults to False.
 
         Returns
         -------
         emission : `numpy.ndarray`
-            Simulated Zodiacal emission for some nside at some frequency.
+            Simulated Zodiacal emission [MJy/sr] for some nside at some 
+            frequency.
         """
         
         if isinstance(freq, u.Quantity):
@@ -84,23 +106,33 @@ class Zodi:
         X_earth = self.X_earth
         X_unit = hp.pix2vec(nside, np.arange(npix := hp.nside2npix(nside)))
 
-        emission = np.zeros(npix)
-        for comp_name, comp in self.model.components.items():
-            integration_config = self.integ[comp_name]
+        if return_comps:
+            emission = np.zeros((len(self.model.components), npix))
+        else:
+            emission = np.zeros(npix)
 
-            emissivity = self.model.emissivities.get_emissivity(comp_name, freq)
+        for idx, (comp_name, comp) in enumerate(self.model.components.items()):
+            integration_config = self.integ[comp_name]
             comp_emission = comp.get_emission(
                 freq, X_observer, X_earth, X_unit, integration_config.R
             )
-            comp_emission *= emissivity
-
-            emission += integration_config.integrator(
+            integrated_comp_emission = integration_config.integrator(
                 comp_emission, 
                 integration_config.R, 
                 dx=integration_config.dR, 
                 axis=0
             )
+
+            comp_emissivity = self.model.emissivities.get_emissivity(comp_name, freq)
+            integrated_comp_emission *= comp_emissivity
+
+            if return_comps:
+                emission[idx] = integrated_comp_emission
+            else: 
+                emission += integrated_comp_emission
         
+        emission *= 1e20    # Converting to MJy / sr from W / m^2 sr hz
+
         emission = _coordinates.change_coordinate_system(emission, coord)
         
         return emission
