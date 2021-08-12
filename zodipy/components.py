@@ -43,7 +43,9 @@ class BaseComponent(ABC):
         self.Ω = radians(self.Ω)
 
     @abstractmethod
-    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
+    def get_density(
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ: np.ndarray
+    ) -> np.ndarray:
         """Returns the dust density at a shell around the observer.
         
         Parameters
@@ -68,8 +70,14 @@ class BaseComponent(ABC):
             the observer given by R_prime, Z_prime, and θ. The shape is
             (`NPIX`)
         """
-    
-    def get_coordinates(self, X_observer, X_earth, X_unit, R) -> Tuple[np.ndarray]:
+
+    def get_coordinates(
+        self, 
+        X_observer: np.ndarray, 
+        X_earth: np.ndarray, 
+        X_unit: np.ndarray, 
+        R: np.ndarray
+    ) -> Tuple[np.ndarray]:
         """Returns coordinates for which to evaluate the density.
         
         The density of a component is computed in the prime coordinate 
@@ -84,8 +92,9 @@ class BaseComponent(ABC):
         X_unit : `numpy.ndarray`
             Array containing the unit vectors pointing to each pixel in 
             the HEALPIX map. The shape is (3, `NPIX`).
-        R : float
-            Distance to the surface of a shell centered on the observer.
+        R : `numpy.ndarray`
+            Array containing grid distances to the surface of a shells 
+            centered on the observer.
 
         Returns
         -------
@@ -137,11 +146,11 @@ class BaseComponent(ABC):
 
         return (R_prime, Z_prime, θ), R_helio
 
-    def get_emission(self, freq, X_observer, X_earth, X_unit, R) -> np.ndarray:
+    def get_emission(self, freq: float, X_observer, X_earth, X_unit, R) -> np.ndarray:
         """Returns the emission at a shell of distance R from the observer.
         
-        See get_coordinates for a description of the parameters not described
-        here.
+        For a description on X_observer, X_earth, X_unit and R, please 
+        see the get_coords function.
 
         Parameters
         ----------
@@ -151,12 +160,14 @@ class BaseComponent(ABC):
         Returns
         -------
         emission : `np.ndarray`
-            Zodiacal emission from a component.
+            Array containing the Zodiacal emission from a component at 
+            different shells around the observer. The shape is 
+            (len(R), `NPIX`).
         """
 
-        coordinates, R = self.get_coordinates(X_observer, X_earth, X_unit, R)
-        density = self.get_density(*coordinates)
-        temperature = F.interplanetary_temperature(R)
+        coords, R_helio = self.get_coordinates(X_observer, X_earth, X_unit, R)
+        density = self.get_density(*coords)
+        temperature = F.interplanetary_temperature(R_helio)
         blackbody_emission = F.blackbody_emission(temperature, freq)
 
         return blackbody_emission * density
@@ -193,8 +204,8 @@ class Cloud(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
-        """See base class."""
+    def get_density(self, R_prime, Z_prime, θ):
+        """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
         μ = self.μ
@@ -242,8 +253,8 @@ class Band(BaseComponent):
         super().__post_init__()
         self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
-        """See base class."""
+    def get_density(self, R_prime, Z_prime, θ):
+        """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
         ζ_over_δ_ζ = ζ/self.δ_ζ
@@ -282,8 +293,8 @@ class Ring(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
-        """See base class."""
+    def get_density(self, R_prime, Z_prime, θ):
+        """See base class for documentation."""
 
         term1 = -((R_prime - self.R)/self.σ_r)**2
         term2 = np.abs(Z_prime) / self.σ_z
@@ -327,8 +338,8 @@ class Feature(BaseComponent):
         self.θ = radians(self.θ)
         self.σ_θ = radians(self.σ_θ)
 
-    def get_density(self, R_prime, Z_prime, θ) -> np.ndarray:
-        """See base class."""
+    def get_density(self, R_prime, Z_prime, θ):
+        """See base class for documentation."""
 
         term1 = -((R_prime - self.R)/self.σ_r)**2
         term2 = np.abs(Z_prime) / self.σ_z
