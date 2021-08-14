@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "zodipy"
+homepage = "https://github.com/MetinSa/zodipy"
+version = "0.1.0"
+readme = "README.md"
+description = "Zodipy is a python tool that simulates the instantaneous Zodiacal emission as seen from an observer."
+authors = ["Metin San <metinisan@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.21.1"
+healpy = "^1.15.0"
+astropy = "^4.3.1"
+astroquery = "^0.4.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+matplotlib = "^3.4.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
