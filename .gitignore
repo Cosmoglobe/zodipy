@@ -3,6 +3,7 @@
 .pytest_cache
 __pycache__
 
+dist
 context.py
 test.py
 _utils.py

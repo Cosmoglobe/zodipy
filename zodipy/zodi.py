@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Optional, Union, Iterable
 from datetime import datetime
 
@@ -20,7 +21,7 @@ class Zodi:
     def __init__(
         self, 
         observer : Optional[str] = 'L2',
-        observation_times : Optional[Iterable[datetime]] = None,
+        observation_times : Optional[Union[Iterable[datetime], datetime]] = None,
         model : Optional[models.InterplanetaryDustModel] = models.PLANCK_2018,
         integration_config : Optional[integ.IntegrationConfig] = integ.DEFAULT,
     ) -> None:
@@ -48,6 +49,8 @@ class Zodi:
 
         if observation_times is None:
             observation_times = [datetime.now().date]
+        elif not isinstance(observation_times, Iterable): 
+            observation_times = [observation_times]
 
         observer_locations = [
             coords.get_target_coordinates(observer, time) 

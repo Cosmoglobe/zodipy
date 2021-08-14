@@ -1,25 +1,17 @@
 # Zodipy
 
 ## Description
-Zodipy is a python tool that simulates the instantaneous Zodiacal emission as seen from an observer.
+Zodipy is a python tool that simulates the instantaneous Zodiacal emission as seen by an observer.
 
 ## Usage
-The following will produce a HEALPIX map at `NSIDE=128` of the simulated
-emission as seen by the Planck satellite today
+The following will produce a HEALPIX map of the simulated Zodiacal emission at
+800 GHz as seen from L2 at 2010-01-01
 ```python
 import zodipy
+from datetime import datetime
 
-zodi = zodipy.Zodi(observer='Planck')
-emission = zodi.simulate(nside=256, freq=800)
-```
-
-The time of observation is defined as following
-```python
-import datetime
-
-time = datetime(2010, 1, 1)
-zodi = zodipy.Zodi(observer='L2', observation_time=time)
-emission = zodi.simulate(nside=256, freq=800)
+zodi = zodipy.Zodi('L2', datetime(2010, 1, 1))
+emission = zodi.get_emission(nside=128, freq=800)
 ```
 
 The simulated emission can be visualized using Healpy and matplotlib
@@ -30,7 +22,7 @@ import matplotlib.pyplot as plt
 hp.mollview(
     emission, 
     norm='hist', 
-    unit='W/m^2 Hz sr', 
+    unit='MJy/sr', 
     title='Zodiacal Emission as seen from L2 (2010-01-01)', 
 )
 plt.show()
