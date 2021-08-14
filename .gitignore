@@ -1,5 +1,6 @@
 .DS_Store
 .vscode
+.pytest_cache
 __pycache__
 
 context.py

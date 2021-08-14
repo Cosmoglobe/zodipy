@@ -26,7 +26,7 @@ def blackbody_emission(
     freq *= 1e9
     term1 = (2*const.h.value*freq**3) / const.c.value**2
     term2 = np.expm1((const.h.value*freq) / (const.k_B.value*T))
-    
+
     return term1 / term2
 
 
