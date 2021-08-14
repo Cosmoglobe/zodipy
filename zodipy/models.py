@@ -1,22 +1,22 @@
 from zodipy import emissivities
 from zodipy import parameters
-from zodipy._model import Model
+from zodipy._model import InterplanetaryDustModel
 
 
-PLANCK_2013 = Model(
+PLANCK_2013 = InterplanetaryDustModel(
     components=('cloud', 'band1', 'band2', 'band3', 'ring', 'feature'),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013
 )
 
 
-PLANCK_2015 = Model(
+PLANCK_2015 = InterplanetaryDustModel(
     components=('cloud', 'band1', 'band2', 'band3'),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2015
 )
 
-PLANCK_2018 = Model(
+PLANCK_2018 = InterplanetaryDustModel(
     components=('cloud', 'band1', 'band2', 'band3'),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
@@ -24,49 +24,49 @@ PLANCK_2018 = Model(
 
 # Single component models used for testing
 # ----------------------------------------
-_CLOUD = Model(
+_CLOUD = InterplanetaryDustModel(
     components=('cloud',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
 
-_BAND1 = Model(
+_BAND1 = InterplanetaryDustModel(
     components=('band1',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
 
-_BAND2 = Model(
+_BAND2 = InterplanetaryDustModel(
     components=('band2',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
 
-_BAND3 = Model(
+_BAND3 = InterplanetaryDustModel(
     components=('band3',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
 
-_BANDS = Model(
+_BANDS = InterplanetaryDustModel(
     components=('band3',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
 
-_RING = Model(
+_RING = InterplanetaryDustModel(
     components=('ring',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013
 )
 
-_FEATURE = Model(
+_FEATURE = InterplanetaryDustModel(
     components=('feature',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013
 )
 
-_CIRCUMSOLAR = Model(
+_CIRCUMSOLAR = InterplanetaryDustModel(
     components=('ring','feature',),
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013

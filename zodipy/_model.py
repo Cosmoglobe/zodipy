@@ -4,7 +4,7 @@ from zodipy._emissivity import Emissivity
 from zodipy import components
 
 
-class Model:
+class InterplanetaryDustModel:
     """Class that represents a model of the IPD.
     
     Parameters

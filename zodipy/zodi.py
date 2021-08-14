@@ -1,79 +1,78 @@
-from typing import Optional, Union
+from typing import Optional, Union, Iterable
 from datetime import datetime
 
 import astropy.units as u
-import healpy as hp
 import numpy as np
 
 from zodipy import models
 from zodipy import _coordinates
 from zodipy import _integration as integ
-
+from zodipy import simulation 
 
 class Zodi:
     """Interface for simulating the Zodiacal emission.
     
-    The emission is simulated as the instantaneous emission seen by an 
-    observer at some location in a region nearby earth at some time.
+    Currently, Zodipy only supports simulation the instantaneous Zodiacal 
+    emission. It is possible that TOD simulations will be implemented in 
+    future.
     """
 
     def __init__(
         self, 
         observer : Optional[str] = 'L2',
-        observation_time : Optional[datetime] = datetime.now().date(),
-        earth_position : Optional[np.ndarray] = None,
-        model : Optional[models.Model] = models.PLANCK_2018,
+        observation_times : Optional[Iterable[datetime]] = None,
+        model : Optional[models.InterplanetaryDustModel] = models.PLANCK_2018,
         integ : Optional[integ.IntegrationConfig] = integ.DEFAULT,
     ) -> None:
         """Initializing the zodi interface.
 
-        The geometric setup of the simulation, the model parameters and 
-        components, and the integration configuration used when integrating
-        up the emission are all configured here in the initialization.
+        The geometric setup of the simulation, the IPD model, and the 
+        integration configuration used when integrating up the emission 
+        are all configured here in the initialization of the Zodi object.
         
         Parameters
         ----------
         observer : str, optional
             The observer. Defaults to L2.
-        observation_time : `datetime.datetime`, optional
-            The time of the observation. Defaults to the current time.
-        earth_position : `numpy.ndarray`, optional
-            Heliocentric coordinates of the Earth. If None, Earth's 
-            coordinates from the observation_time is used. Defaults to None.
+        observation_times : Iterable, optional
+            The times of observation. Must be an iterable containing 
+            `datetime` objects. Defaults to a single observeration at the 
+            current time.
         model : `zodipy.models.Model`, optional
-            The Interplanteary dust model used in the simulation. 
-            Defaults to the model used in the Planck 2018 analysis.
+            The Interplanteary dust model used in the simulation. Defaults 
+            to the model used in the Planck 2018 analysis.
         integ : `zodipy.integration.IntegrationConfig`, optional
             Integration config object determining the integration details
-            used in the simulation. Defaults to 
-            `zodipy._integration.DEFAULT_CONFIG`.
-
-        Methods
-        -------
-        simulate
+            used in the simulation.
         """
 
-        self.X_observer = _coordinates.get_target_coordinates(
-            observer, observation_time
+        if observation_times is None:
+            observation_times = [datetime.now().date]
+
+        observer_locations = [
+            _coordinates.get_target_coordinates(observer, time) 
+            for time in observation_times
+        ]
+        earth_locations = [
+            _coordinates.get_target_coordinates('earth', time) 
+            for time in observation_times
+        ]
+
+        self.simulation_strategy = simulation.InstantaneousStrategy(
+            model=model,
+            integration_config=integ,
+            observer_locations=observer_locations,
+            earth_locations=earth_locations
         )
-        if earth_position is not None:
-            self.X_earth = earth_position
-        else:
-            self.X_earth = _coordinates.get_target_coordinates(
-                'earth', observation_time
-            )
 
-        self.model = model
-        self.integ = integ
-
-    def simulate(
+    def get_emission(
         self, 
         nside: int, 
         freq: Union[float, u.Quantity], 
-        coord: str = 'G',
-        return_comps: bool = False
+        coord: Optional[str] = 'G',
+        return_comps: Optional[bool] = False
     ) -> np.ndarray:
-        """Simulates the Zodiacal emission given a frequency in MJy/sr.
+        """Returns the simulated Zodiacal emission in units of MJy/sr.
 
         Parameters
         ----------
@@ -95,44 +94,15 @@ class Zodi:
         Returns
         -------
         emission : `numpy.ndarray`
-            Simulated Zodiacal emission [MJy/sr] for some nside at some 
-            frequency.
+            Simulated Zodiacal emission in units of MJy/sr.
         """
-        
+
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        X_observer = self.X_observer
-        X_earth = self.X_earth
-        X_unit = hp.pix2vec(nside, np.arange(npix := hp.nside2npix(nside)))
-
-        if return_comps:
-            emission = np.zeros((len(self.model.components), npix))
-        else:
-            emission = np.zeros(npix)
-
-        for idx, (comp_name, comp) in enumerate(self.model.components.items()):
-            integration_config = self.integ[comp_name]
-            comp_emission = comp.get_emission(
-                freq, X_observer, X_earth, X_unit, integration_config.R
-            )
-            integrated_comp_emission = integration_config.integrator(
-                comp_emission, 
-                integration_config.R, 
-                dx=integration_config.dR, 
-                axis=0
-            )
-
-            comp_emissivity = self.model.emissivities.get_emissivity(comp_name, freq)
-            integrated_comp_emission *= comp_emissivity
-
-            if return_comps:
-                emission[idx] = integrated_comp_emission
-            else: 
-                emission += integrated_comp_emission
+        emission = self.simulation_strategy.simulate(nside, freq)
         
-        emission *= 1e20    # Converting to MJy / sr from W / m^2 sr hz
+        if coord != 'E':
+            emission = _coordinates.change_coordinate_system(emission, coord)
 
-        emission = _coordinates.change_coordinate_system(emission, coord)
-        
-        return emission
+        return emission if return_comps else emission.sum(axis=0)
