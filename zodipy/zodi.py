@@ -48,7 +48,7 @@ class Zodi:
         """
 
         if observation_times is None:
-            observation_times = [datetime.now().date]
+            observation_times = [datetime.now().date()]
         elif not isinstance(observation_times, Iterable): 
             observation_times = [observation_times]
 
