@@ -5,7 +5,7 @@ import astropy.units as u
 import numpy as np
 
 from zodipy import models
-from zodipy import _coordinates
+from zodipy import _coordinates as coords
 from zodipy import _integration as integ
 from zodipy import simulation 
 
@@ -22,7 +22,7 @@ class Zodi:
         observer : Optional[str] = 'L2',
         observation_times : Optional[Iterable[datetime]] = None,
         model : Optional[models.InterplanetaryDustModel] = models.PLANCK_2018,
-        integ : Optional[integ.IntegrationConfig] = integ.DEFAULT,
+        integration_config : Optional[integ.IntegrationConfig] = integ.DEFAULT,
     ) -> None:
         """Initializing the zodi interface.
 
@@ -50,19 +50,16 @@ class Zodi:
             observation_times = [datetime.now().date]
 
         observer_locations = [
-            _coordinates.get_target_coordinates(observer, time) 
+            coords.get_target_coordinates(observer, time) 
             for time in observation_times
         ]
         earth_locations = [
-            _coordinates.get_target_coordinates('earth', time) 
+            coords.get_target_coordinates('earth', time) 
             for time in observation_times
         ]
 
         self.simulation_strategy = simulation.InstantaneousStrategy(
-            model=model,
-            integration_config=integ,
-            observer_locations=observer_locations,
-            earth_locations=earth_locations
+            model, integration_config, observer_locations, earth_locations
         )
 
     def get_emission(
@@ -101,8 +98,8 @@ class Zodi:
             freq = freq.to('GHz').value
 
         emission = self.simulation_strategy.simulate(nside, freq)
-        
+
         if coord != 'E':
-            emission = _coordinates.change_coordinate_system(emission, coord)
+            emission = coords.change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
