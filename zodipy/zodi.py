@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable as Iterable_
 from typing import Optional, Union, Iterable
 from datetime import datetime
 
@@ -51,7 +51,7 @@ class Zodi:
 
         if observation_times is None:
             observation_times = [datetime.now().date()]
-        elif not isinstance(observation_times, Iterable): 
+        elif not isinstance(observation_times, Iterable_): 
             observation_times = [observation_times]
 
         observer_locations = [
@@ -126,7 +126,6 @@ class Zodi:
 
         emission = self.simulation_strategy.simulate(nside, freq)
 
-        if coord != 'E':
-            emission = coords.change_coordinate_system(emission, coord)
+        emission = coords.change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
