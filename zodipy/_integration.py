@@ -43,7 +43,7 @@ class IntegrationConfig:
 
 _CUT_OFF = 6
 
-GOOD = {
+HIGH = {
     'cloud': IntegrationConfig(R_max=_CUT_OFF, n=500),
     'band1': IntegrationConfig(R_max=_CUT_OFF, n=500),
     'band2': IntegrationConfig(R_max=_CUT_OFF, n=500),

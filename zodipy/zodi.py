@@ -22,8 +22,8 @@ class Zodi:
         self, 
         observer : Optional[str] = 'L2',
         observation_times : Optional[Union[Iterable[datetime], datetime]] = None,
-        model : Optional[models.InterplanetaryDustModel] = models.PLANCK_2018,
-        integration_config : Optional[integ.IntegrationConfig] = integ.DEFAULT,
+        model : Optional[str] = 'planck 2018',
+        integration_config : Optional[str] = 'default'
     ) -> None:
         """Initializing the zodi interface.
 
@@ -39,12 +39,14 @@ class Zodi:
             The times of observation. Must be an iterable containing 
             `datetime` objects. Defaults to a single observeration at the 
             current time.
-        model : `zodipy.models.Model`, optional
-            The Interplanteary dust model used in the simulation. Defaults 
-            to the model used in the Planck 2018 analysis.
-        integ : `zodipy.integration.IntegrationConfig`, optional
-            Integration config object determining the integration details
-            used in the simulation.
+        model : str, optional
+            String representing the Interplanteary dust model used in the 
+            simulation. Available options are 'planck 2013', 'planck 2015',
+            and 'planck 2018'. Defaults to 'planck 2018'.
+        integration_config : str, optional
+            String representing the integration config which determins the 
+            integration details used in the simulation. Available options
+            'default', and 'high'. Defaults to 'default'.
         """
 
         if observation_times is None:
@@ -60,6 +62,28 @@ class Zodi:
             coords.get_target_coordinates('earth', time) 
             for time in observation_times
         ]
+
+        if 'planck' in model.lower():
+            if '2013' in model:
+                model = models.PLANCK_2013
+            elif '2015' in model:
+                model = models.PLANCK_2015
+            elif '2018' in model:
+                model = models.PLANCK_2018
+            else:
+                raise ValueError(
+                    "Available models are: 'planck 2013', 'planck 2015', and "
+                    "'planck 2018'"
+                )
+        
+        if integration_config == 'default':
+            integration_config = integ.DEFAULT
+        elif integration_config == 'high':
+            integration_config = integ.HIGH
+        else:
+            raise ValueError(
+                "Available configs are: 'default' and 'high'"
+            )
 
         self.simulation_strategy = simulation.InstantaneousStrategy(
             model, integration_config, observer_locations, earth_locations
