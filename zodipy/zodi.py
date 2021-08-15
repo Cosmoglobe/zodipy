@@ -6,9 +6,9 @@ import astropy.units as u
 import numpy as np
 
 from zodipy import models
-from zodipy import _coordinates as coords
-from zodipy import _integration as integ
 from zodipy import simulation 
+from zodipy import _coordinates
+from zodipy import _integration
 
 class Zodi:
     """Interface for simulating the Zodiacal emission.
@@ -55,11 +55,11 @@ class Zodi:
             observation_times = [observation_times]
 
         observer_locations = [
-            coords.get_target_coordinates(observer, time) 
+            _coordinates.get_target_coordinates(observer, time) 
             for time in observation_times
         ]
         earth_locations = [
-            coords.get_target_coordinates('earth', time) 
+            _coordinates.get_target_coordinates('earth', time) 
             for time in observation_times
         ]
 
@@ -77,9 +77,9 @@ class Zodi:
                 )
         
         if integration_config == 'default':
-            integration_config = integ.DEFAULT
+            integration_config = _integration.DEFAULT
         elif integration_config == 'high':
-            integration_config = integ.HIGH
+            integration_config = _integration.HIGH
         else:
             raise ValueError(
                 "Available configs are: 'default' and 'high'"
@@ -126,6 +126,6 @@ class Zodi:
 
         emission = self.simulation_strategy.simulate(nside, freq)
 
-        emission = coords.change_coordinate_system(emission, coord)
+        emission = _coordinates.change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
