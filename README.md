@@ -26,16 +26,16 @@ import zodipy
 zodi = zodipy.Zodi()
 emission = zodi.get_emission(nside=128, freq=800)
 ```
-Here we have started by initializing the `Zodi` object with default arguments,
-after which we have called the `get_emission()` method of the `Zodi` object,
-which simulates the emission for us at a given map resolution (nside) and frequency. 
+We started by initializing the `Zodi` object with default arguments,
+after which we have called the `get_emission` method of the `Zodi` object,
+which simulates the emission at a given map resolution (nside) and frequency. 
 
 We can visualize the emission using Healpy:
 
 ![plot](imgs/zodi_default.png)
 
 Alternatively, a specific observer, and a date (`datetime` object) can be passed as arguments to the `Zodi`
-object which initializes the new configuration:
+object, which initializes the new configuration:
 ```python
 import zodipy
 from datetime import datetime
@@ -46,10 +46,10 @@ emission = zodi.get_emission(nside=128, freq=800)
 ![plot](imgs/zodi_planck.png)
 
 ## Masked observations
-Finally, it is possible to specify the angle between the observer and the Sun
+We can specify the angle between the observer and the Sun
 for which all pixels are masked out. This is done in the `get_emission` function
 by providing the keyword argument `mask`, which takes in an angle. In the
-following we mimic the typical satellite scanning strategies by masking out all
+following we attempt to mimic typical satellite scanning strategies by masking out all
 pixels that look inwards towards the Sun:
 ```python
 import zodipy
@@ -82,7 +82,7 @@ observations).
 ![plot](imgs/zodi_planck_masked_mean.png)
 
 ## Interplanetary dust models
-Zodipy uses the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) Interplanetary dust model. The line-of-sight integrals are computed using the definition in [Planck](https://ui.adsabs.harvard.edu/abs/2006A%26A...452..685M/abstract). During the Planck analysis, three different sets of emissivities were fit to describe the emission. These can be selected by providing the keyword argument `model` to the `Zodi` object:
+Zodipy uses the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) Interplanetary dust model. The line-of-sight integrals are computed using the definition in [Planck 2013 results. XIV. Zodiacal emission](https://arxiv.org/abs/1303.5074). During the Planck analysis, three different sets of emissivities were fit to describe the emission. These can be selected by providing the keyword argument `model` to the `Zodi` object:
 ```python
 import zodipy
 
