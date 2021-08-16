@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from itertools import repeat
 from math import radians
 from typing import Iterable, List
 import warnings
@@ -64,7 +63,7 @@ class SimulationStrategy(ABC):
         """
 
     @staticmethod
-    def get_observer_pixels(
+    def get_observed_pixels(
         X_observer: np.ndarray, X_unit: np.ndarray, ang: float
     ) -> List[np.ndarray]:
         """Returns a list of the observed pixels per observation.
@@ -121,9 +120,9 @@ class InstantaneousStrategy(SimulationStrategy):
         n_observations = len(X_observer)
 
         if mask is None:
-            pixels = list(repeat(pixels, n_observations))
+            pixels = [slice(0, npix) for _ in range(n_observations)]
         else:
-            pixels = self.get_unmasked_pixels(X_observer, X_unit, ang=mask)
+            pixels = self.get_observed_pixels(X_observer, X_unit, ang=mask)
 
         components = self.model.components
 
