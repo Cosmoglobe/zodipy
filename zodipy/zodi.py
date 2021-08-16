@@ -115,6 +115,10 @@ class Zodi:
             If True, the emission of each component in the model is returned
             separatly in form of an array of shape (`n_comps`, `npix`). 
             Defaults to False.
+        mask : float, optional
+            Angle [deg] between observer and the Sun for which all pixels 
+            are masked at each observation. A mask of 90 degrees can be 
+            selected to simulate an observer that never looks inwards the Sun.
 
         Returns
         -------
