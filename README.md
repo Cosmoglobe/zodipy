@@ -45,6 +45,9 @@ emission = zodi.get_emission(nside=128, freq=800)
 ```
 ![plot](imgs/zodi_planck.png)
 
+It is possible to return the Zodiacal emission component-wise by setting the
+keyword `return_comps` in the `get_emission` function to True.
+
 ## Masked observations
 We can specify the angle between the observer and the Sun
 for which all pixels are masked out. This is done in the `get_emission` function
@@ -75,7 +78,7 @@ zodi = zodipy.Zodi(
 )
 emission = zodi.get_emission(nside=128, freq=800, mask=90)
 ```
-Here take the mean of linearly spaced observations from 2010-01-01 to 2011-01-01
+Here we take the mean of linearly spaced observations from 2010-01-01 to 2011-01-01
 with a step size of 10 days (note that this is a more expensive operation and
 may take up to a few minutes depending on the map resolution and number of
 observations).
