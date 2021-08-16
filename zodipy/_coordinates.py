@@ -1,6 +1,5 @@
-import datetime
+from datetime import datetime, timedelta
 import functools
-from math import sin, cos
 import warnings
 
 from astroquery.jplhorizons import Horizons
@@ -18,7 +17,9 @@ TARGET_ALIASES = {
 
 
 @functools.lru_cache
-def get_target_coordinates(target: str, time: datetime.datetime.date) -> np.ndarray:
+def get_target_coordinates(
+    target: str, start: datetime, stop:datetime = None, step: int = 1 
+) -> np.ndarray:
     """Returns the heliocentric cartesian coordinates of the target.
     
     Parameters
@@ -38,25 +39,30 @@ def get_target_coordinates(target: str, time: datetime.datetime.date) -> np.ndar
         target = TARGET_ALIASES[target.lower()]
     else:
         warnings.warn(
-            'The Zodiacal Emission model is only valid in the immediate '
-            'surroundings of the earth'
+            'The K98 model is only valid in the immediate surroundings of'
+            'the earth'
         )
 
-    stop = time + datetime.timedelta(days=1)
-    start = time
-    epochs = dict(start=str(start), stop=str(stop), step='1d')
-    
+    if stop is None:
+        stop_ = start + timedelta(1)
+    else:
+        stop_ = stop
+
+    epochs = dict(start=str(start), stop=str(stop_), step=f'{step}d')
     query = Horizons(id=target, id_type='majorbody', location='c@sun', epochs=epochs)
     ephemerides = query.ephemerides()
 
-    R = ephemerides['r'][0]
-    lon, lat = ephemerides['EclLon'][0], ephemerides['EclLat'][0]
-
-    x = R * cos(lat) * cos(lon)
-    y = R * cos(lat) * sin(lon)
-    z = R * sin(lat)
+    R = ephemerides['r'].value
+    lon, lat = ephemerides['EclLon'].value, ephemerides['EclLat'].value
+    x = R * np.cos(lat) * np.cos(lon)
+    y = R * np.cos(lat) * np.sin(lon)
+    z = R * np.sin(lat)
     
-    return np.array([[x], [y], [z]])
+    coordinates = np.stack((x,y,z), axis=1)
+
+    if stop is None:
+        return np.expand_dims(coordinates[0], axis=0)
+    return coordinates
 
 
 def change_coordinate_system(
