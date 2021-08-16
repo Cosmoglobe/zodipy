@@ -18,7 +18,7 @@ TARGET_ALIASES = {
 
 @functools.lru_cache
 def get_target_coordinates(
-    target: str, start: datetime, stop:datetime = None, step: int = 1 
+    target: str, start: datetime, stop:datetime = None, step: str = '1d'
 ) -> np.ndarray:
     """Returns the heliocentric cartesian coordinates of the target.
     
@@ -48,7 +48,7 @@ def get_target_coordinates(
     else:
         stop_ = stop
 
-    epochs = dict(start=str(start), stop=str(stop_), step=f'{step}d')
+    epochs = dict(start=str(start), stop=str(stop_), step=f'{step}')
     query = Horizons(id=target, id_type='majorbody', location='c@sun', epochs=epochs)
     ephemerides = query.ephemerides()
 

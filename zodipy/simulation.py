@@ -125,6 +125,7 @@ class InstantaneousStrategy(SimulationStrategy):
             pixels = self.get_observed_pixels(X_observer, X_unit, ang=mask)
 
         components = self.model.components
+        emissivities = self.model.emissivities
 
         # The emission is initialized as NANs representing unobserved pixels
         emission = np.zeros((n_observations, len(components), npix)) + np.NAN
@@ -144,9 +145,7 @@ class InstantaneousStrategy(SimulationStrategy):
                     comp_emission, R, dx=integration_config.dR, axis=0
                 )
 
-                comp_emissivity = self.model.emissivities.get_emissivity(
-                    comp_name, freq
-                )
+                comp_emissivity = emissivities.get_emissivity(comp_name, freq)
                 integrated_comp_emission *= comp_emissivity
 
                 emission[observation_idx, comp_idx, observed_pixels] = integrated_comp_emission

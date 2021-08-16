@@ -22,7 +22,7 @@ class Zodi:
         observer: Optional[str] = 'L2',
         start: Optional[datetime] = datetime.now().date(),
         stop: Optional[datetime] = None,
-        step: Optional[int] = 1,
+        step: Optional[str] = '1d',
         model: Optional[str] = 'planck 2018',
         integration_config: Optional[str] = 'default'
     ) -> None:
@@ -43,8 +43,9 @@ class Zodi:
             Datetime object represetning the time when the observation ended.
             If None, the observation is assumed to only occur on the start 
             date. Defaults to None.
-        step : int
-            Step size in number of days from start to stop. Defaults to 1.
+        step : str
+            Step size from the start to stop dates in days denoted by 'd' 
+            or hours 'h'. Defaults to 1 day ('1d').
         model : str, optional
             String representing the Interplanteary dust model used in the 
             simulation. Available options are 'planck 2013', 'planck 2015',
