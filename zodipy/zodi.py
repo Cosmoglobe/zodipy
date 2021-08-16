@@ -1,6 +1,5 @@
-from collections.abc import Iterable as Iterable_
-from typing import Optional, Union, Iterable
-from datetime import datetime, timedelta
+from typing import Optional, Union
+from datetime import datetime
 
 import astropy.units as u
 import numpy as np
