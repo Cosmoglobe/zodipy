@@ -1,6 +1,6 @@
 from collections.abc import Iterable as Iterable_
 from typing import Optional, Union, Iterable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import astropy.units as u
 import numpy as np
@@ -20,10 +20,12 @@ class Zodi:
 
     def __init__(
         self, 
-        observer : Optional[str] = 'L2',
-        observation_times : Optional[Union[Iterable[datetime], datetime]] = None,
-        model : Optional[str] = 'planck 2018',
-        integration_config : Optional[str] = 'default'
+        observer: Optional[str] = 'L2',
+        start: Optional[datetime] = datetime.now().date(),
+        stop: Optional[datetime] = None,
+        step: Optional[int] = 1,
+        model: Optional[str] = 'planck 2018',
+        integration_config: Optional[str] = 'default'
     ) -> None:
         """Initializing the zodi interface.
 
@@ -35,10 +37,15 @@ class Zodi:
         ----------
         observer : str, optional
             The observer. Defaults to L2.
-        observation_times : Iterable, optional
-            The times of observation. Must be an iterable containing 
-            `datetime` objects. Defaults to a single observeration at the 
-            current time.
+        start : `datetime.datetime`, optional
+            Datetime object representing the time of observation. Defaults
+            to the current date.
+        stop : `datetime.datetime`, optional
+            Datetime object represetning the time when the observation ended.
+            If None, the observation is assumed to only occur on the start 
+            date. Defaults to None.
+        step : int
+            Step size in number of days from start to stop. Defaults to 1.
         model : str, optional
             String representing the Interplanteary dust model used in the 
             simulation. Available options are 'planck 2013', 'planck 2015',
@@ -49,19 +56,12 @@ class Zodi:
             'default', and 'high'. Defaults to 'default'.
         """
 
-        if observation_times is None:
-            observation_times = [datetime.now().date()]
-        elif not isinstance(observation_times, Iterable_): 
-            observation_times = [observation_times]
-
-        observer_locations = [
-            _coordinates.get_target_coordinates(observer, time) 
-            for time in observation_times
-        ]
-        earth_locations = [
-            _coordinates.get_target_coordinates('earth', time) 
-            for time in observation_times
-        ]
+        observer_locations = _coordinates.get_target_coordinates(
+            observer, start, stop, step
+        ) 
+        earth_locations = _coordinates.get_target_coordinates(
+            'earth', start, stop, step
+        ) 
 
         if 'planck' in model.lower():
             if '2013' in model:
@@ -94,7 +94,8 @@ class Zodi:
         nside: int, 
         freq: Union[float, u.Quantity], 
         coord: Optional[str] = 'G',
-        return_comps: Optional[bool] = False
+        return_comps: Optional[bool] = False,
+        mask: float = None
     ) -> np.ndarray:
         """Returns the simulated Zodiacal emission in units of MJy/sr.
 
@@ -124,7 +125,7 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        emission = self.simulation_strategy.simulate(nside, freq)
+        emission = self.simulation_strategy.simulate(nside, freq, mask)
 
         emission = _coordinates.change_coordinate_system(emission, coord)
 
