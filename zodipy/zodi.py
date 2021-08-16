@@ -63,18 +63,25 @@ class Zodi:
             'earth', start, stop, step
         ) 
 
-        if 'planck' in model.lower():
-            if '2013' in model:
-                model = models.PLANCK_2013
-            elif '2015' in model:
-                model = models.PLANCK_2015
-            elif '2018' in model:
-                model = models.PLANCK_2018
-            else:
-                raise ValueError(
-                    "Available models are: 'planck 2013', 'planck 2015', and "
-                    "'planck 2018'"
-                )
+        model_error = ValueError(
+                "Available models are: 'planck 2013', 'planck 2015', and "
+                "'planck 2018'"
+        )
+        try:
+            name, year = model.lower().split()
+        except ValueError:
+            raise model_error
+
+        if name != 'planck':
+            raise model_error
+        if year == '2013':
+            model = models.PLANCK_2013
+        elif year == '2015':
+            model = models.PLANCK_2015
+        elif year == '2018':
+            model = models.PLANCK_2018
+        else:
+            raise model_error
         
         if integration_config == 'default':
             integration_config = _integration.DEFAULT
