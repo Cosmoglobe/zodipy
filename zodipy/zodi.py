@@ -63,34 +63,20 @@ class Zodi:
             'earth', start, stop, step
         ) 
 
-        model_error = ValueError(
-                "Available models are: 'planck 2013', 'planck 2015', and "
-                "'planck 2018'"
+        try:
+            model = models.MODELS[model.lower()]
+        except KeyError:
+            raise KeyError(
+                f"Model {model!r} not found. Available models are: "
+                f"{list(models.MODELS.keys())}"
         )
         try:
-            name, year = model.lower().split()
-        except ValueError:
-            raise model_error
-
-        if name != 'planck':
-            raise model_error
-        if year == '2013':
-            model = models.PLANCK_2013
-        elif year == '2015':
-            model = models.PLANCK_2015
-        elif year == '2018':
-            model = models.PLANCK_2018
-        else:
-            raise model_error
-        
-        if integration_config == 'default':
-            integration_config = _integration.DEFAULT
-        elif integration_config == 'high':
-            integration_config = _integration.HIGH
-        else:
-            raise ValueError(
-                "Available configs are: 'default' and 'high'"
-            )
+            integration_config = _integration.CONFIGS[integration_config.lower()]
+        except KeyError:
+            raise KeyError(
+                f"Config {integration_config!r} not found. Available configs "
+                f"are: {list(_integration.CONFIGS.keys())}"
+        )
 
         self.simulation_strategy = simulation.InstantaneousStrategy(
             model, integration_config, observer_locations, earth_locations

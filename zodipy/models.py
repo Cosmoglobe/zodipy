@@ -20,3 +20,10 @@ PLANCK_2018 = InterplanetaryDustModel(
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018
 )
+
+
+MODELS = {
+    'planck 2013' : PLANCK_2013,
+    'planck 2015' : PLANCK_2015,
+    'planck 2018' : PLANCK_2018
+}

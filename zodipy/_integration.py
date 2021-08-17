@@ -43,6 +43,15 @@ class IntegrationConfig:
 
 _CUT_OFF = 6
 
+DEFAULT = {
+    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=250),
+    'band1': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'band2': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'band3': IntegrationConfig(R_max=_CUT_OFF, n=50),
+    'ring': IntegrationConfig(R_max=2.25, n=50),
+    'feature': IntegrationConfig(R_max=1, n=50),
+}
+
 HIGH = {
     'cloud': IntegrationConfig(R_max=_CUT_OFF, n=500),
     'band1': IntegrationConfig(R_max=_CUT_OFF, n=500),
@@ -52,11 +61,8 @@ HIGH = {
     'feature': IntegrationConfig(R_max=1, n=200),
 }
 
-DEFAULT = {
-    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=250),
-    'band1': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'band2': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'band3': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'ring': IntegrationConfig(R_max=2.25, n=50),
-    'feature': IntegrationConfig(R_max=1, n=50),
+
+CONFIGS = {
+    'default' : DEFAULT,
+    'high' : HIGH,
 }
