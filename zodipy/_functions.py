@@ -13,13 +13,13 @@ def blackbody_emission(
 
     Parameters
     ----------
-    freq : float
+    freq
         Frequency [GHz].
-    T : float:
+    T
         Temperature of the blackbody [K]. 
+
     Returns
     -------
-    float
         Blackbody emission [W / m^2 Hz sr].
     """
 
@@ -37,16 +37,15 @@ def interplanetary_temperature(
     
     Parameters
     ----------
-    R : float
+    R
         Radial distance from the sun in ecliptic coordinates.
-    T_0 : float, optional 
+    T_0
         Temperature of the solar system at R = 1 AU.
-    delta : float, optional
+    delta
         Powerlaw index.
 
     Returns
     -------
-    float : 
         Interplanetary temperature.
     """
 

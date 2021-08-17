@@ -11,24 +11,23 @@ import zodipy._functions as F
 
 @dataclass
 class BaseComponent(ABC):
-    """Abstract base class for a Zodiacal component.
+    """Base class for a component of the interplanetary dust.
     
-    It contains a method to get the coordinates of a shell around an 
-    observer in the reference frame of the component. Additionally, any
-    component that inherits from the class must implement a get_density
-    method.
+    This class contains a method to get the coordinates of a shell around an 
+    observer in the reference frame of the component. Any component that 
+    inherits from the class must implement a get_density method.
 
-    Parameters
+    Attributes
     ----------
-    x_0: float
+    x_0
         x offset from the Sun in ecliptic coordinates.
-    y_0: float
+    y_0
         y offset from the Sun in ecliptic coordinates.
-    z_0: float
+    z_0
         z offset from the Sun in ecliptic coordinates.
-    inclination: float
+    i
         Inclination [deg].
-    Ω: float
+    Ω
         Ascending node [deg].
     """
 
@@ -50,22 +49,21 @@ class BaseComponent(ABC):
         
         Parameters
         ----------
-        R_prime : `numpy.ndarray`
+        R_prime
             Array containing the distance to the coordinate where the
             density is being evaluated per pixel in the prime coordinate
             system. The shape is (`NPIX`).
-        Z_prime : `numpy.ndarray`
+        Z_prime
             Array containing the height above the x-y-plane in the prime 
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        θ : `numpy.ndarray`
+        θ
             Array containing the heliocentric ecliptic longitude of the 
             coords in R_prime releative to the longitude of Earth. The 
             shape is (`NPIX`).
 
         Returns
         -------
-        `numpy.ndarray`
             Array containing the density of the component at a shell around
             the observer given by R_prime, Z_prime, and θ. The shape is
             (`NPIX`)
@@ -86,31 +84,31 @@ class BaseComponent(ABC):
 
         Parameters
         ----------
-        X_observer : `numpy.ndarray`
+        X_observer
             Vector containing to coordinates of the observer.
             The shape is (3,).
-        X_unit : `numpy.ndarray`
+        X_unit
             Array containing the unit vectors pointing to each pixel in 
             the HEALPIX map. The shape is (3, `NPIX`).
-        R : `numpy.ndarray`
+        R
             Array containing grid distances to the surface of a shells 
             centered on the observer.
 
         Returns
         -------
-        R_prime : `numpy.ndarray`
+        R_prime
             Array containing the distance to the coordinate where the
             density is being evaluated per pixel in the prime coordinate
             system. The shape is (`NPIX`).
-        Z_prime : `numpy.ndarray`
+        Z_prime
             Array containing the height above the x-y-plane in the prime 
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        θ : `numpy.ndarray`
+        θ
             Array containing the heliocentric ecliptic longitude of the 
             coords in R_prime releative to the longitude of Earth. The 
             shape is (`NPIX`).
-        R_helio : `np.ndarray`
+        R_helio
             Array containing the heliocentric distance to the coordinate
             where the density is evaluated. The shape is (`NPIX`).
         """
@@ -146,7 +144,14 @@ class BaseComponent(ABC):
 
         return (R_prime, Z_prime, θ), R_helio
 
-    def get_emission(self, freq: float, X_observer, X_earth, X_unit, R) -> np.ndarray:
+    def get_emission(
+        self, 
+        freq: float, 
+        X_observer: np.ndarray, 
+        X_earth: np.ndarray, 
+        X_unit: np.ndarray, 
+        R: np.ndarray
+    ) -> np.ndarray:
         """Returns the emission at a shell of distance R from the observer.
         
         For a description on X_observer, X_earth, X_unit and R, please 
@@ -154,12 +159,12 @@ class BaseComponent(ABC):
 
         Parameters
         ----------
-        freq : float
+        freq
             Frequency at which to evaluate the emitted emission.
 
         Returns
         -------
-        emission : `np.ndarray`
+        emission
             Array containing the Zodiacal emission from a component at 
             different shells around the observer. The shape is 
             (len(R), `NPIX`).
@@ -181,17 +186,17 @@ class Cloud(BaseComponent):
     It provides a method to estimate the density of the diffuse cloud at 
     at a shell around the observer.
 
-    Parameters
+    Attributes
     ----------
-    n_0 : float
+    n_0
         Density at 1 AU.
-    α : float 
+    α 
         Radial power-law exponent.
-    β : float
+    β
         Vertical shape parameter.
-    γ : float
+    γ
         Vertical power-law exponent.
-    μ : float
+    μ
         Widening parameter for the modified fan.
     """
 
@@ -231,15 +236,15 @@ class Band(BaseComponent):
 
     Parameters
     ----------
-    n_0 : float
+    n_0
         Density at 3 AU.
-    δ_ζ : float
+    δ_ζ
         Shape parameter [deg].
-    v : float
+    v
         Shape parameter.
-    p : float
+    p
         Shape parameter.
-    δ_r : float
+    δ_r
         Inner radial cutoff. 
     """
 
@@ -275,13 +280,13 @@ class Ring(BaseComponent):
 
     Parameters
     ----------
-    n_0 : float
+    n_0
         Density at 1 AU.
-    R : float
+    R
         Radius of the peak density.
-    σ_r : float
+    σ_r
         Radial dispersion.
-    σ_z : float 
+    σ_z 
         Vertical dispersion.
     """
 
@@ -312,17 +317,17 @@ class Feature(BaseComponent):
 
     Parameters
     ----------
-    n_0 : float
+    n_0
         Density at 1 AU.
-    R : float
+    R
         Radius of the peak density.
-    σ_r : float
+    σ_r
         Radial dispersion.
-    σ_z : float 
+    σ_z 
         Vertical dispersion.
-    θ : float
+    θ
         Longitude with respect to Earth.
-    σ_θ : float
+    σ_θ
         Longitude dispersion.
     """
 

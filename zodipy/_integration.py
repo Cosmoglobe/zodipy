@@ -11,15 +11,12 @@ class IntegrationConfig:
     
     Attributes
     ----------
-    R_min : float
-        Minimum distance from the observer for which to evaluate the 
-        dust density.
-    R_max : float 
+    R_max
         Maximum distance from the observer for which to evaluate the 
         dust density.
-    n : int
+    n
         Number of shells for which to evaluate the dust density.
-    integator : func
+    integator
         Function which performs the integration.
     """
 

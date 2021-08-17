@@ -1,29 +1,37 @@
 from dataclasses import dataclass
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable
 
 import numpy as np
 
 
 @dataclass
 class Emissivity:
-    """Class containing emissivity fits for the Zodiacal components."""
+    """Class containing emissivity fits for the Zodiacal components.
+    
+    Attributes
+    ----------
+    frequencies
+        Iterable containing frequencies corresponding to fitted emissivities.
+    components
+        Dictionary containing fitted emissivity values.
+    """
 
     frequencies : Iterable[float]
-    components : Dict[str, Tuple[float]]
+    components : Dict[str, Iterable[float]]
 
     def get_emissivity(self, comp: str, freq: float) -> float:
         """Interpolates in the fitted emissivites.
         
         Parameters
         ----------
-        comp : str
+        comp
             Component label, i.e, 'cloud'.
-        freq : float
+        freq
             Frequency at which to evaluate the Zodiacal emission.
 
         Returns
         -------
-        emissivity : float
+        emissivity
             Emissivity scaling factor.
         """
 

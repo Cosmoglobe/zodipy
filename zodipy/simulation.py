@@ -13,25 +13,20 @@ from zodipy._integration import IntegrationConfig
 
 @dataclass
 class SimulationStrategy(ABC):
-    """Class that represents the simulation part of Zodipy.
+    """Base class that represents a certian simulation strategy.
     
-    The simulation strategy is responsible for simulating the Zodiacal
-    emission given an initial setup of the problem.
-
-    Parameters
+    Attributes
     ----------
-    model : `zodipy._model.InterplanetaryDustModel`
-        IPD model with initialized componentents and corresponding 
-        emissivities.
-    integration_config: `zodipy._integ.IntegrationConfig`
+    model
+        Interplanetary dust model with initialized componentents and 
+        corresponding emissivities.
+    integration_config
         Configuration object that determines how a component is integrated
-        along a line of sight.
-    observer_locations : Iterable
-        Iterable containing the various locations of an observer. One 
-        instantaneous simulation is produced per location.
-    earth_locations : Iterable
-        Iterable containing the various locations of the Earth 
-        corresponding to the observer locations.
+        along a line-of-sight.
+    observer_locations
+        The locations of the observer.
+    earth_locations
+        The locations of the Earth corresponding to the observer locations.
     """
 
     model: InterplanetaryDustModel
@@ -41,24 +36,24 @@ class SimulationStrategy(ABC):
 
     @abstractmethod
     def simulate(self, nside: int, freq: float, mask: float) -> np.ndarray:
-        """Simulates the Zodiacal emission, given a nside and frequency.
+        """Returns the simulated the Zodiacal emission.
         
-        The emission is returned in units of MJy/sr.
+        The emission is computed given a nside and frequency, and outputted
+        in units of MJy/sr.
 
         Parameters
         ----------
-        nside : int
+        nside
             HEALPIX map resolution parameter.
-        freq : float
+        freq
             Frequency [GHz] at which to evaluate the IPD model.
-        mask : float, optional
+        mask
             Angle [deg] between observer and the Sun for which all pixels 
-            are masked at each observation. A mask of 90 degrees can be 
-            selected to simulate an observer that never looks inwards the Sun.
+            are masked (for each observation).
             
         Returns
         -------
-        emission : `np.ndarray`
+        emission
             Simulated Zodiacal emission.
         """
 
@@ -66,23 +61,23 @@ class SimulationStrategy(ABC):
     def get_observed_pixels(
         X_observer: np.ndarray, X_unit: np.ndarray, ang: float
     ) -> List[np.ndarray]:
-        """Returns a list of the observed pixels per observation.
+        """Returns a list of observed pixels per observation.
         
         All pixels that have an angular distance of larger than some angle
         between the observer and the sun are masked.
         
         Parameters
         ----------
-        X_observer: `np.ndarray`
+        X_observer
             Array containing coordinates of the observer.
-        X_unit: `np.ndarray`
+        X_unit
             Array containing heliocentric unit vectors.
-        ang: float
+        ang
             Angle for which all pixels are masked [deg].
         
         Returns
         -------
-        list
+        observed_pixels
             List containing arrays of unmasked pixels per observation.
         """
 
@@ -90,19 +85,18 @@ class SimulationStrategy(ABC):
             hp.rotator.angdist(obs , X_unit) for obs in X_observer
         ]
 
-        return [ang_dist < radians(ang) for ang_dist in angular_distance]
+        observed_pixels = [ang_dist < radians(ang) for ang_dist in angular_distance]
+        return observed_pixels
 
 
 class InstantaneousStrategy(SimulationStrategy):
-    """Simulation strategy that computes the instantaneous emission.
-    
-    By instantaneous emission, we mean the emission that is seen at one
-    instant in time. The emission is averaged over all observations.
-    """
+    """Simulation strategy for instantaneous emission."""
 
     def __init__(
         self, model, integration_config, observer_locations, earth_locations
     ) -> None:
+        """Initializing the strategy."""
+
         super().__init__(
             model, integration_config, observer_locations, earth_locations
         )

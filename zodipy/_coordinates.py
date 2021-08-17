@@ -24,14 +24,13 @@ def get_target_coordinates(
     
     Parameters
     ----------
-    target : str
+    target
         Name of the target body.
-    time : `datetime.datetime`
+    time
         Date and time at which to get the targets coordinates.
 
     Returns
     -------
-    `numpy.ndarray`
         Heliocentric cartesian coordinates of the target.
     """
 
@@ -70,17 +69,18 @@ def change_coordinate_system(
 ) -> np.ndarray:
     """Rotates a map from coordinate system to another using healpy.Rotator
     
-    Paramters
-    ---------
-    input_map : `numpy.ndarray`
+    Parameters
+    ----------
+    input_map
         Map to rotate.
-    coord_out : str
+    coord_out
         Coordinate system of the output_map.
-    coord_in : str
+    coord_in
         Coordinate system of the input_map.
+
     Returns
     -------
-    output_map : `numpy.ndarray`
+    output_map
         Rotated map.
     """
 

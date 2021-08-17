@@ -10,11 +10,20 @@ from zodipy import _coordinates
 from zodipy import _integration
 
 class Zodi:
-    """Interface for simulating the Zodiacal emission.
+    """The main Zodipy interface.
     
-    Currently, Zodipy only supports simulation the instantaneous Zodiacal 
-    emission. It is possible that TOD simulations will be implemented in 
-    future.
+    The initialization of this class is responsible for setting up the
+    simulation problem. The `get_emission` method is called to return a 
+    simulation of the Zodiacal emission given the initial conditions.
+
+    Attributes
+    ----------
+    simulation_strategy : `zodipy.simulations.SimulationStrategy`
+        Class representing the simulation aspect of Zodipy.
+
+    Methods
+    -------
+    get_emission
     """
 
     def __init__(
@@ -30,30 +39,29 @@ class Zodi:
 
         The geometric setup of the simulation, the IPD model, and the 
         integration configuration used when integrating up the emission 
-        are all configured here in the initialization of the Zodi object.
+        along lines-of-sight are all configured here.
         
         Parameters
         ----------
-        observer : str, optional
-            The observer. Defaults to L2.
-        start : `datetime.datetime`, optional
+        observer
+            The observer. Defaults to 'L2'.
+        start
             Datetime object representing the time of observation. Defaults
             to the current date.
-        stop : `datetime.datetime`, optional
+        stop
             Datetime object represetning the time when the observation ended.
-            If None, the observation is assumed to only occur on the start 
-            date. Defaults to None.
-        step : str
-            Step size from the start to stop dates in days denoted by 'd' 
-            or hours 'h'. Defaults to 1 day ('1d').
-        model : str, optional
-            String representing the Interplanteary dust model used in the 
+            If None, a single observation is assumed. Defaults to None.
+        step
+            Step size between the start and stop dates in either days 
+            denoted by 'd' or hours 'h'. Defaults to '1d'.
+        model
+            String referencing the Interplanetary dust model used in the 
             simulation. Available options are 'planck 2013', 'planck 2015',
             and 'planck 2018'. Defaults to 'planck 2018'.
-        integration_config : str, optional
-            String representing the integration config which determins the 
-            integration details used in the simulation. Available options
-            'default', and 'high'. Defaults to 'default'.
+        integration_config
+            String referencing the integration_config object which determins
+            the integration details used in the simulation. Available options
+            are: 'default', and 'high'. Defaults to 'default'.
         """
 
         observer_locations = _coordinates.get_target_coordinates(
@@ -94,28 +102,27 @@ class Zodi:
 
         Parameters
         ----------
-        nside : int
+        nside
             HEALPIX map resolution parameter.
-        freq : float, `astropy.units.Quantity`
-            Frequency [GHz] at which to evaluate the IPD model. The 
-            frequency should be in units of GHz, unless an `astropy.Quantity`
-            object is used, for which it only needs to be compatible with Hz.
-        coord : str, optional
-            Coordinate system of the output map. Accepted inputs are: 'E', 
-            'C', or 'G'. Defaults to 'G' which is the Galactic coordinate 
-            system.
-        return_comps : bool, optional
+        freq 
+            Frequency [GHz] at which to evaluate the Zodiacal emission. 
+            The frequency should be in units of GHz unless an 
+            `astropy.units.Quantity` object is passed for which it only 
+            needs to be compatible with Hz.
+        coord
+            Coordinate system of the output map. Available options are: 
+            'E', 'C', or 'G'. Defaults to 'G'.
+        return_comps
             If True, the emission of each component in the model is returned
             separatly in form of an array of shape (`n_comps`, `npix`). 
             Defaults to False.
-        mask : float, optional
+        mask
             Angle [deg] between observer and the Sun for which all pixels 
-            are masked at each observation. A mask of 90 degrees can be 
-            selected to simulate an observer that never looks inwards the Sun.
+            are masked at each observation.
 
         Returns
         -------
-        emission : `numpy.ndarray`
+        emission
             Simulated Zodiacal emission in units of MJy/sr.
         """
 

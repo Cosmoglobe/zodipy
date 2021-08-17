@@ -7,13 +7,12 @@ from zodipy import components
 class InterplanetaryDustModel:
     """Class that represents a model of the IPD.
     
-    Parameters
+    Attributes
     ----------
-    components : Iterable
-        Iterable containing component labels as strings.
-    parameters : dict
-        Dictionary containing component parameters.
-    emissivities : `zodipy.emissivities.Emissivity`
+    components : dict
+        Dictionary containing initialized `zodipy.components.BaseComponent`
+        objects.
+    emissivities : `zodipy._emissivity.Emissivity`
         Emissivity object.
     """
 
@@ -23,7 +22,17 @@ class InterplanetaryDustModel:
         parameters: Dict[str, Dict[str, float]], 
         emissivities: Emissivity
     ) -> None: 
-        """Initilizes a Model object."""
+        """Initilizes a Model object.
+        
+        Parameters
+        ----------
+        components
+            Iterable containing component labels as strings.
+        parameters
+            Dictionary containing component parameters.
+        emissivities
+            Emissivity object.
+        """
         
         self.components = self._init_components(components, parameters)
         self.emissivities = emissivities
