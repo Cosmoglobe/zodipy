@@ -13,9 +13,9 @@ import zodipy._functions as F
 class BaseComponent(ABC):
     """Base class for a component of the interplanetary dust.
     
-    This class contains a method to get the coordinates of a shell around an 
-    observer in the reference frame of the component. Any component that 
-    inherits from the class must implement a get_density method.
+    This class contains a method to get the coordinates of a shell around 
+    an observer in the reference frame of the component. Any component 
+    that inherits from the class must implement a `get_density` method.
 
     Attributes
     ----------

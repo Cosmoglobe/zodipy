@@ -4,26 +4,18 @@ from datetime import datetime
 import astropy.units as u
 import numpy as np
 
-from zodipy import models
-from zodipy import simulation 
-from zodipy import _coordinates
-from zodipy import _integration
+from zodipy._coordinates import get_target_coordinates, change_coordinate_system
+from zodipy._integration import INTEGRATION_CONFIGS
+from zodipy.models import MODELS
+from zodipy.simulation import InstantaneousStrategy
+
 
 class Zodi:
     """The main Zodipy interface.
     
-    The initialization of this class is responsible for setting up the
-    simulation problem. The `get_emission` method is called to return a 
-    simulation of the Zodiacal emission given the initial conditions.
-
-    Attributes
-    ----------
-    simulation_strategy : `zodipy.simulations.SimulationStrategy`
-        Class representing the simulation aspect of Zodipy.
-
-    Methods
-    -------
-    get_emission
+    Initializing this class sets up the initial conditions for the
+    simulation problem. The `get_emission` method is called to perfrom 
+    the simulation.
     """
 
     def __init__(
@@ -37,10 +29,6 @@ class Zodi:
     ) -> None:
         """Initializing the zodi interface.
 
-        The geometric setup of the simulation, the IPD model, and the 
-        integration configuration used when integrating up the emission 
-        along lines-of-sight are all configured here.
-        
         Parameters
         ----------
         observer
@@ -59,34 +47,34 @@ class Zodi:
             simulation. Available options are 'planck 2013', 'planck 2015',
             and 'planck 2018'. Defaults to 'planck 2018'.
         integration_config
-            String referencing the integration_config object which determins
-            the integration details used in the simulation. Available options
-            are: 'default', and 'high'. Defaults to 'default'.
+            String referencing the integration_config object used when 
+            calling `get_emission`. Available options are: 'default', and 
+            'high'. Defaults to 'default'.
         """
 
-        observer_locations = _coordinates.get_target_coordinates(
+        observer_locations = get_target_coordinates(
             observer, start, stop, step
         ) 
-        earth_locations = _coordinates.get_target_coordinates(
+        earth_locations = get_target_coordinates(
             'earth', start, stop, step
         ) 
 
         try:
-            model = models.MODELS[model.lower()]
+            model = MODELS[model.lower()]
         except KeyError:
             raise KeyError(
                 f"Model {model!r} not found. Available models are: "
-                f"{list(models.MODELS.keys())}"
+                f"{list(MODELS.keys())}"
         )
         try:
-            integration_config = _integration.CONFIGS[integration_config.lower()]
+            integration_config = INTEGRATION_CONFIGS[integration_config.lower()]
         except KeyError:
             raise KeyError(
                 f"Config {integration_config!r} not found. Available configs "
-                f"are: {list(_integration.CONFIGS.keys())}"
+                f"are: {list(INTEGRATION_CONFIGS.keys())}"
         )
 
-        self.simulation_strategy = simulation.InstantaneousStrategy(
+        self.simulation_strategy = InstantaneousStrategy(
             model, integration_config, observer_locations, earth_locations
         )
 
@@ -96,29 +84,29 @@ class Zodi:
         freq: Union[float, u.Quantity], 
         coord: Optional[str] = 'G',
         return_comps: Optional[bool] = False,
-        mask: float = None
+        solar_cut: float = None
     ) -> np.ndarray:
-        """Returns the simulated Zodiacal emission in units of MJy/sr.
+        """Simulates the Zodiacal emission in units of MJy/sr.
 
         Parameters
         ----------
         nside
             HEALPIX map resolution parameter.
         freq 
-            Frequency [GHz] at which to evaluate the Zodiacal emission. 
-            The frequency should be in units of GHz unless an 
+            Frequency at which to evaluate the Zodiacal emission. The 
+            frequency should be in units of GHz unless an 
             `astropy.units.Quantity` object is passed for which it only 
             needs to be compatible with Hz.
         coord
             Coordinate system of the output map. Available options are: 
             'E', 'C', or 'G'. Defaults to 'G'.
         return_comps
-            If True, the emission of each component in the model is returned
-            separatly in form of an array of shape (`n_comps`, `npix`). 
+            If True, the emission of each component in the model is 
+            returned separatly in the first dim of the output array. 
             Defaults to False.
-        mask
-            Angle [deg] between observer and the Sun for which all pixels 
-            are masked at each observation.
+        solar_cut
+            Angle in degrees between observer and the Sun for which all 
+            pixels are masked for each observation.
 
         Returns
         -------
@@ -129,8 +117,8 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        emission = self.simulation_strategy.simulate(nside, freq, mask)
+        emission = self.simulation_strategy.simulate(nside, freq, solar_cut)
 
-        emission = _coordinates.change_coordinate_system(emission, coord)
+        emission = change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)

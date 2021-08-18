@@ -59,7 +59,7 @@ HIGH = {
 }
 
 
-CONFIGS = {
+INTEGRATION_CONFIGS = {
     'default' : DEFAULT,
     'high' : HIGH,
 }
