@@ -1,9 +1,16 @@
 .DS_Store
 .vscode
-.pytest_cache
+
+# Byte compilation
 __pycache__
 
+# Distribution / packaging
 dist
+
+# Testing
+.pytest_cache
+
+# Development files and directories
 context.py
 test.py
 _utils.py
