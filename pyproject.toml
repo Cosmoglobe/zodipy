@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.1.4"
+version = "0.1.5"
 description = "Zodipy is a python tool that simulates the instantaneous Zodiacal emission as seen from an observer."
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
