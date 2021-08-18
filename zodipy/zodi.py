@@ -74,7 +74,7 @@ class Zodi:
                 f"are: {list(INTEGRATION_CONFIGS.keys())}"
         )
 
-        self.simulation_strategy = InstantaneousStrategy(
+        self._simulation_strategy = InstantaneousStrategy(
             model, integration_config, observer_locations, earth_locations
         )
 
@@ -117,7 +117,7 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        emission = self.simulation_strategy.simulate(nside, freq, solar_cut)
+        emission = self._simulation_strategy.simulate(nside, freq, solar_cut)
 
         emission = change_coordinate_system(emission, coord)
 
