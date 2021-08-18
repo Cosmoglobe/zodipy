@@ -112,10 +112,12 @@ class InstantaneousStrategy(SimulationStrategy):
         components = self.model.components
         emissivities = self.model.emissivities
 
-        # The total emission is initialized as NANs representing unobserved pixels
+        # Unobserved pixels are represented as NANs
         emission = np.zeros((n_observations, len(components), npix)) + np.NAN
 
-        for observation_idx, (observer_pos, earth_pos) in enumerate(zip(X_observer, X_earth)):
+        for observation_idx, (observer_pos, earth_pos) in enumerate(
+            zip(X_observer, X_earth)
+        ):
             if solar_cut is None:
                 observed_pixels = pixels
             else:
@@ -136,7 +138,9 @@ class InstantaneousStrategy(SimulationStrategy):
                 comp_emissivity = emissivities.get_emissivity(comp_name, freq)
                 integrated_comp_emission *= comp_emissivity
 
-                emission[observation_idx, comp_idx, observed_pixels] = integrated_comp_emission
+                emission[observation_idx, comp_idx, observed_pixels] = (
+                    integrated_comp_emission
+                )
 
         with warnings.catch_warnings():
             # np.nanmean throws a RuntimeWarning if all pixels along an 
