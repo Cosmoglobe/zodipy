@@ -15,27 +15,31 @@ pip install zodipy
 
 ## Usage
 The following examples provides an overview of how Zodipy may be used to produce
-simulations of the Zodiacal emission.
+simulations of the Zodiacal emission. A more in-depth documentation will be
+available in the near future.
 
-## Simulating a single instantaneous observation
+## Simulating the instantaneous emission from a single observation
 The simplest use case of Zodipy is to simulate the instantaneous emission as
-seen from an major body or a location in the Solar system, as of today:
+seen from a major body or a location in the Solar system, as of today:
 ```python
 import zodipy
 
 zodi = zodipy.Zodi()
 emission = zodi.get_emission(nside=128, freq=800)
 ```
-By default, calling the `Zodi` object will set up the initial conditions of the
-simulation for an observer at L2 today. The `get_emission` method of the `Zodi`
-object, is then called to simulate and return the emission at a given map resolution
-(nside) and frequency. 
+Calling the `Zodi` object with no arguments will by default set up the initial
+conditions of the simulation for an observer at L2 today. The `get_emission`
+method of the `Zodi` object, is then called to simulate and return the emission
+for a given nside and frequency. 
 
 We can visualize the above simulated emission using Healpy:
 
 ![plot](imgs/zodi_default.png)
 
-Alternatively, a specific `observer`, and an `epochs` can be passed as arguments to the `Zodi` objects initialization. The `epochs` object must match one of the possible formats defined in [astroquery's JPL Horizons api](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html).
+Alternatively, a specific observer and specific epochs can be passed as
+arguments to the `Zodi` object. The `epochs` object must match one of the
+possible formats defined in [astroquery's JPL Horizons
+api](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html).
 
 ```python
 import zodipy
@@ -54,7 +58,7 @@ By providing multiple dates in the `epochs` argument to `Zodi`, the
 `get_emission` function will return the average emission over all observations.
 
 It is possible to provide hit maps for each respective observation given by `epochs`. This is done by passing
-the a sequence of hit maps with the `hit_maps` argument to `Zodi`. 
+a sequence of hit maps with the `hit_maps` argument to `Zodi`. 
 
 Below is an example where we simulate the
 pixel weighted average over daily observations over a year:
@@ -66,16 +70,17 @@ epochs = {
     'stop': '2021-01-01', 
     'step' : '1d'
 }
-hit_maps = ... # Your list of hit_maps for each observation in epochs 
+hit_maps = ... # Your sequence of hit_maps for each observation in epochs 
 
 zodi = zodipy.Zodi(observer='Planck', epochs=epochs, hit_maps=hit_maps)
 emission = zodi.get_emission(nside=128, freq=800)
 ```
 ![plot](imgs/zodi_planck_weighted.png)
 
-This simulation closely resembles map making in the time-ordered domain, with the hit maps playing a significant role on the output map due to the motion of earth through the interplanetary dust.
+This simulation closely resembles map making in the time-ordered domain, with the hit maps playing a significant role on the outputted emission due to the motion of Earth through the interplanetary dust.
 
-The hit maps used in the above example was simulated hit maps somewhat arbitrarily chosen (stripes of 10 degrees perpendicular to the ecliptic).
+The hit maps used in the above example was somewhat arbitrarily chosen hit maps (stripes of 10 degrees perpendicular to the ecliptic).
+
 ## Interplanetary dust models
 Zodipy uses the [Kelsall et al.
 (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract)
