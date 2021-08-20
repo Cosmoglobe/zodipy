@@ -66,8 +66,8 @@ pixel weighted average over daily observations over a year:
 import zodipy
 
 epochs = {
-    'start': '2020-01-01', 
-    'stop': '2021-01-01', 
+    'start': '2010-01-01', 
+    'stop': '2011-01-01', 
     'step' : '1d'
 }
 hit_maps = ... # Your sequence of hit_maps for each observation in epochs 
