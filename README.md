@@ -4,8 +4,7 @@
 # Zodipy
 
 ## Description
-Zodipy is a python tool that simulates the instantaneous Zodiacal emission as
-seen by an observer.
+Zodipy is a python tool that simulates the Zodiacal emission.
 
 ## Installing
 Zodipy is installed with `pip`.
