@@ -10,12 +10,7 @@ from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
 
 class Zodi:
-    """The main Zodipy interface.
-    
-    Initializing this class sets up the initial conditions for the
-    simulation problem. The `get_emission` method is called to perform 
-    the simulation.
-    """
+    """The Zodipy interface."""
 
     def __init__(
         self, 
@@ -25,20 +20,22 @@ class Zodi:
         model: Optional[str] = 'planck 2018',
         integration_config: Optional[str] = 'default'
     ) -> None:
-        """Initializing the zodi interface.
+        """Setting up initial conditions and other simulation specifics.
 
         Parameters
         ----------
         observer
             The observer. Defaults to 'L2'.
-        epochs : scalar, list-like, or dictionary, optional
+        epochs
             Either a list of epochs in JD or MJD format or a dictionary
             defining a range of times and dates; the range dictionary has to
             be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
-            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|m|s]'}.
+            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
             Epoch timescales depend on the type of query performed: UTC for
             ephemerides queries, TDB for element queries, CT for vector queries.
             If no epochs are provided, the current time is used.
+        hit_maps
+            The number of times each pixel is observed for a given observation.
         model
             String referencing the Interplanetary dust model used in the 
             simulation. Available options are 'planck 2013', 'planck 2015',
@@ -66,20 +63,33 @@ class Zodi:
         
         observer_locations = get_target_coordinates(observer, epochs) 
         earth_locations = get_target_coordinates('earth', epochs) 
-
-        if hit_maps is not None and len(hit_maps) != len(observer_locations):
-            raise ValueError(
-                f"Lenght of 'hit_maps' ({len(hit_maps)}) are not matching "
-                f"the number of observations ({len(observer_locations)})"
-            )
+        
+        # We check that the dimensons of hit_map corresponds to the number
+        # of observations.
+        if hit_maps is not None:
+            if np.ndim(hit_maps) == 1:
+                hit_maps = np.expand_dims(hit_maps, axis=0)
+            elif len(hit_maps) != len(observer_locations):
+                raise ValueError(
+                    f"Lenght of 'hit_maps' ({len(hit_maps)}) are not matching "
+                    f"the number of observations ({len(observer_locations)})"
+                )
 
         if len(observer_locations) == 1:
             self._simulation_strategy = InstantaneousStrategy(
-                model, integration_config, observer_locations[0], earth_locations[0], hit_maps
+                model, 
+                integration_config, 
+                observer_locations[0], 
+                earth_locations[0], 
+                hit_maps
             )
         else:
             self._simulation_strategy = TimeOrderedStrategy(
-                model, integration_config, observer_locations, earth_locations, hit_maps
+                model, 
+                integration_config, 
+                observer_locations, 
+                earth_locations, 
+                hit_maps
             )     
 
     def get_emission(

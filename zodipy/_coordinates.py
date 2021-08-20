@@ -42,8 +42,7 @@ def get_target_coordinates(
         target = TARGET_ALIASES[target.lower()]
     else:
         warnings.warn(
-            'The K98 model is only valid in the immediate surroundings of'
-            'the earth'
+            'The K98 model is only valid when observed from a near earth orbit'
         )
 
     query = Horizons(
