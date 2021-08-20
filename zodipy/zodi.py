@@ -117,9 +117,6 @@ class Zodi:
             If True, the emission of each component in the model is 
             returned separatly in the first dim of the output array. 
             Defaults to False.
-        solar_cut
-            Angle in degrees between observer and the Sun for which all 
-            pixels are masked for each observation.
 
         Returns
         -------

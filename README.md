@@ -14,9 +14,9 @@ pip install zodipy
 ```
 
 ## Usage
-The following examples provides an overview of how Zodipy may be used to produce
-simulations of the Zodiacal emission. A more in-depth documentation will be
-available in the near future.
+The following examples are meant to provide an overview of how Zodipy may be
+used to produce simulations of the Zodiacal emission. A more in-depth
+documentation will be available in the near future.
 
 ## Simulating the instantaneous emission from a single observation
 The simplest use case of Zodipy is to simulate the instantaneous emission as
@@ -55,10 +55,11 @@ To return the component-wise emission the keyword `return_comps` in the
 
 ## Simulating the pixel weighted average over multiple observations
 By providing multiple dates in the `epochs` argument to `Zodi`, the
-`get_emission` function will return the average emission over all observations.
+`get_emission` function will return the emission averaged over all observations.
 
-It is possible to provide hit maps for each respective observation given by `epochs`. This is done by passing
-a sequence of hit maps with the `hit_maps` argument to `Zodi`. 
+It is possible to provide hit maps for each respective observation given by
+`epochs`. This is done by passing a sequence of hit maps through the `hit_maps`
+argument in `Zodi`. 
 
 Below is an example where we simulate the
 pixel weighted average over daily observations over a year:
@@ -77,9 +78,12 @@ emission = zodi.get_emission(nside=128, freq=800)
 ```
 ![plot](imgs/zodi_planck_weighted.png)
 
-This simulation closely resembles map making in the time-ordered domain, with the hit maps playing a significant role on the outputted emission due to the motion of Earth through the interplanetary dust.
+This simulation closely resembles map making in the time-ordered domain, with
+the hit maps playing a significant role on the outputted emission due to the
+motion of Earth through the interplanetary dust.
 
-The hit maps used in the above example was somewhat arbitrarily chosen hit maps (stripes of 10 degrees perpendicular to the ecliptic).
+The hit maps used in the above example was somewhat arbitrarily chosen (stripes
+of 10 degrees perpendicular to the ecliptic).
 
 ## Interplanetary dust models
 Zodipy uses the [Kelsall et al.
