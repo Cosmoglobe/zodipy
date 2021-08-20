@@ -1,7 +1,4 @@
-from datetime import datetime, timedelta
-import functools
 import warnings
-from math import ceil
 from typing import Union, Iterable, Dict
 
 from astroquery.jplhorizons import Horizons
@@ -15,7 +12,6 @@ TARGET_ALIASES = {
     'planck' : 'Planck',
     'wmap' : 'WMAP',
     'earth' : 'Earth-Moon Barycenter',
-    'sun' : 'sun'
 }
 
 
@@ -54,7 +50,7 @@ def get_target_coordinates(
         id=target, id_type='majorbody', location='c@sun', epochs=epochs
     )
     ephemerides = query.ephemerides()
-    
+
     R = ephemerides['r'].value
     lon, lat = ephemerides['EclLon'].value, ephemerides['EclLat'].value
     lon, lat = np.deg2rad(lon), np.deg2rad(lat)
