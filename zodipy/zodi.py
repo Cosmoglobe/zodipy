@@ -1,5 +1,4 @@
-from typing import Optional, Union
-from datetime import datetime
+from typing import Optional, Union, Iterable, Dict
 
 import astropy.units as u
 import numpy as np
@@ -7,23 +6,22 @@ import numpy as np
 from zodipy._coordinates import get_target_coordinates, change_coordinate_system
 from zodipy._integration import INTEGRATION_CONFIGS
 from zodipy.models import MODELS
-from zodipy.simulation import InstantaneousStrategy
+from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
 
 class Zodi:
     """The main Zodipy interface.
     
     Initializing this class sets up the initial conditions for the
-    simulation problem. The `get_emission` method is called to perfrom 
+    simulation problem. The `get_emission` method is called to perform 
     the simulation.
     """
 
     def __init__(
         self, 
         observer: Optional[str] = 'L2',
-        start: Optional[datetime] = datetime.now().date(),
-        stop: Optional[datetime] = None,
-        step: Optional[str] = '1d',
+        epochs: Optional[Union[float, Iterable[float], Dict[str, str]]] = None,
+        hit_maps: Optional[Iterable[np.ndarray]] = None,
         model: Optional[str] = 'planck 2018',
         integration_config: Optional[str] = 'default'
     ) -> None:
@@ -33,15 +31,14 @@ class Zodi:
         ----------
         observer
             The observer. Defaults to 'L2'.
-        start
-            Datetime object representing the time of observation. Defaults
-            to the current date.
-        stop
-            Datetime object represetning the time when the observation ended.
-            If None, a single observation is assumed. Defaults to None.
-        step
-            Step size between the start and stop dates in either days 
-            denoted by 'd' or hours 'h'. Defaults to '1d'.
+        epochs : scalar, list-like, or dictionary, optional
+            Either a list of epochs in JD or MJD format or a dictionary
+            defining a range of times and dates; the range dictionary has to
+            be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
+            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|m|s]'}.
+            Epoch timescales depend on the type of query performed: UTC for
+            ephemerides queries, TDB for element queries, CT for vector queries.
+            If no epochs are provided, the current time is used.
         model
             String referencing the Interplanetary dust model used in the 
             simulation. Available options are 'planck 2013', 'planck 2015',
@@ -51,13 +48,6 @@ class Zodi:
             calling `get_emission`. Available options are: 'default', and 
             'high'. Defaults to 'default'.
         """
-
-        observer_locations = get_target_coordinates(
-            observer, start, stop, step
-        ) 
-        earth_locations = get_target_coordinates(
-            'earth', start, stop, step
-        ) 
 
         try:
             model = MODELS[model.lower()]
@@ -73,10 +63,24 @@ class Zodi:
                 f"Config {integration_config!r} not found. Available configs "
                 f"are: {list(INTEGRATION_CONFIGS.keys())}"
         )
+        
+        observer_locations = get_target_coordinates(observer, epochs) 
+        earth_locations = get_target_coordinates('earth', epochs) 
 
-        self._simulation_strategy = InstantaneousStrategy(
-            model, integration_config, observer_locations, earth_locations
-        )
+        if hit_maps is not None and len(hit_maps) != len(observer_locations):
+            raise ValueError(
+                f"Lenght of 'hit_maps' ({len(hit_maps)}) are not matching "
+                f"the number of observations ({len(observer_locations)})"
+            )
+
+        if len(observer_locations) == 1:
+            self._simulation_strategy = InstantaneousStrategy(
+                model, integration_config, observer_locations[0], earth_locations[0], hit_maps
+            )
+        else:
+            self._simulation_strategy = TimeOrderedStrategy(
+                model, integration_config, observer_locations, earth_locations, hit_maps
+            )     
 
     def get_emission(
         self, 
@@ -84,7 +88,6 @@ class Zodi:
         freq: Union[float, u.Quantity], 
         coord: Optional[str] = 'G',
         return_comps: Optional[bool] = False,
-        solar_cut: float = None
     ) -> np.ndarray:
         """Simulates the Zodiacal emission in units of MJy/sr.
 
@@ -117,8 +120,9 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        emission = self._simulation_strategy.simulate(nside, freq, solar_cut)
-
+        emission = self._simulation_strategy.simulate(
+            nside, freq
+        )
         emission = change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
