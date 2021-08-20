@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import functools
 import warnings
+from math import ceil
+from typing import Union, Iterable, Dict
 
 from astroquery.jplhorizons import Horizons
 import healpy as hp
@@ -13,12 +15,12 @@ TARGET_ALIASES = {
     'planck' : 'Planck',
     'wmap' : 'WMAP',
     'earth' : 'Earth-Moon Barycenter',
+    'sun' : 'sun'
 }
 
 
-@functools.lru_cache
 def get_target_coordinates(
-    target: str, start: datetime, stop:datetime = None, step: str = '1d'
+    target: str, epochs: Union[float, Iterable, Dict[str, str]],
 ) -> np.ndarray:
     """Returns the heliocentric cartesian coordinates of the target.
     
@@ -26,8 +28,14 @@ def get_target_coordinates(
     ----------
     target
         Name of the target body.
-    time
-        Date and time at which to get the targets coordinates.
+    epochs : scalar, list-like, or dictionary, optional
+            Either a list of epochs in JD or MJD format or a dictionary
+            defining a range of times and dates; the range dictionary has to
+            be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
+            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|m|s]'}.
+            Epoch timescales depend on the type of query performed: UTC for
+            ephemerides queries, TDB for element queries, CT for vector queries.
+            If no epochs are provided, the current time is used.
 
     Returns
     -------
@@ -42,25 +50,21 @@ def get_target_coordinates(
             'the earth'
         )
 
-    if stop is None:
-        stop_ = start + timedelta(1)
-    else:
-        stop_ = stop
-
-    epochs = dict(start=str(start), stop=str(stop_), step=f'{step}')
-    query = Horizons(id=target, id_type='majorbody', location='c@sun', epochs=epochs)
+    query = Horizons(
+        id=target, id_type='majorbody', location='c@sun', epochs=epochs
+    )
     ephemerides = query.ephemerides()
-
+    
     R = ephemerides['r'].value
     lon, lat = ephemerides['EclLon'].value, ephemerides['EclLat'].value
+    lon, lat = np.deg2rad(lon), np.deg2rad(lat)
+
     x = R * np.cos(lat) * np.cos(lon)
     y = R * np.cos(lat) * np.sin(lon)
     z = R * np.sin(lat)
     
     coordinates = np.stack((x,y,z), axis=1)
 
-    if stop is None:
-        return np.expand_dims(coordinates[0], axis=0)
     return coordinates
 
 
