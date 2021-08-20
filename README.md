@@ -13,77 +13,69 @@ Zodipy is installed with `pip`.
 pip install zodipy
 ```
 
-## Examples
+## Usage
 The following examples provides an overview of how Zodipy may be used to produce
-various simulations of the Zodiacal emission.
+simulations of the Zodiacal emission.
 
-## Simulating a single observation
+## Simulating a single instantaneous observation
 The simplest use case of Zodipy is to simulate the instantaneous emission as
-seen from the Earth-Sun Lagrange point 2, as of today (This is the default
-behavior of the `Zodi` object):
+seen from an major body or a location in the Solar system, as of today:
 ```python
 import zodipy
 
 zodi = zodipy.Zodi()
 emission = zodi.get_emission(nside=128, freq=800)
 ```
-We started by initializing the `Zodi` object with default arguments, after which
-we have called the `get_emission` method of the `Zodi` object, which simulates
-the emission at a given map resolution (nside) and frequency. 
+By default, calling the `Zodi` object will set up the initial conditions of the
+simulation for an observer at L2 today. The `get_emission` method of the `Zodi`
+object, is then called to simulate and return the emission at a given map resolution
+(nside) and frequency. 
 
-We can visualize the emission using Healpy:
+We can visualize the above simulated emission using Healpy:
 
 ![plot](imgs/zodi_default.png)
 
-Alternatively, a specific observer, and a date (`datetime` object) can be passed
-as arguments to the `Zodi` object, which initializes the new configuration:
+Alternatively, a specific `observer`, and an `epochs` can be passed as arguments to the `Zodi` objects initialization. The `epochs` object must match one of the possible formats defined in [astroquery's JPL Horizons api](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html).
+
 ```python
 import zodipy
-from datetime import datetime
 
-zodi = zodipy.Zodi('Planck', datetime(2010, 1, 1))
+MJD = 59215  # 2010-01-01 in Modified Julian dates
+zodi = zodipy.Zodi(observer='Planck', epochs=MJD)
 emission = zodi.get_emission(nside=128, freq=800)
 ```
 ![plot](imgs/zodi_planck.png)
 
-It is possible to return the Zodiacal emission component-wise by setting the
-keyword `return_comps` in the `get_emission` function to True.
+To return the component-wise emission the keyword `return_comps` in the
+`get_emission` function may be set to True.
 
-## Masked observations
-We can specify the angle between the observer and the Sun for which all pixels
-are masked out. This is done in the `get_emission` function by providing the
-keyword argument `solar_cut`, which takes in an angle. In the following we
-attempt to mimic typical satellite scanning strategies by masking out all pixels
-that look inwards towards the Sun:
+## Simulating the pixel weighted average over multiple observations
+By providing multiple dates in the `epochs` argument to `Zodi`, the
+`get_emission` function will return the average emission over all observations.
+
+It is possible to provide hit maps for each respective observation given by `epochs`. This is done by passing
+the a sequence of hit maps with the `hit_maps` argument to `Zodi`. 
+
+Below is an example where we simulate the
+pixel weighted average over daily observations over a year:
 ```python
 import zodipy
-from datetime import datetime
 
-zodi = zodipy.Zodi('Planck', datetime(2010, 1, 1))
-emission = zodi.get_emission(nside=128, freq=800, solar_cut=90)
+epochs = {
+    'start': '2020-01-01', 
+    'stop': '2021-01-01', 
+    'step' : '1d'
+}
+hit_maps = ... # Your list of hit_maps for each observation in epochs 
+
+zodi = zodipy.Zodi(observer='Planck', epochs=epochs, hit_maps=hit_maps)
+emission = zodi.get_emission(nside=128, freq=800)
 ```
-![plot](imgs/zodi_planck_masked.png)
+![plot](imgs/zodi_planck_weighted.png)
 
-## Simulating the mean over multiple observations
-We can simulate the mean emission over a set of observations by initializing the
-`Zodi` object with the following keywords:
-```python
-import zodipy
-from datetime import datetime
+This simulation closely resembles map making in the time-ordered domain, with the hit maps playing a significant role on the output map due to the motion of earth through the interplanetary dust.
 
-zodi = zodipy.Zodi(
-    observer='Planck', 
-    start=datetime(2010, 1, 1), 
-    stop=datetime(2011, 1, 1), 
-    step='10d'
-)
-emission = zodi.get_emission(nside=128, freq=800, solar_cut=90)
-```
-Here we take the mean of linearly spaced observations from 2010-01-01 to
-2011-01-01 with a step size of 10 days (note that this is a more expensive
-operation and may take up to a few minutes depending on the map resolution and
-number of observations). ![plot](imgs/zodi_planck_masked_mean.png)
-
+The hit maps used in the above example was simulated hit maps somewhat arbitrarily chosen (stripes of 10 degrees perpendicular to the ecliptic).
 ## Interplanetary dust models
 Zodipy uses the [Kelsall et al.
 (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract)
