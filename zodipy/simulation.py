@@ -116,13 +116,14 @@ class TimeOrderedStrategy(SimulationStrategy):
         emissivities = self.model.emissivities
         X_observer  = self.observer_locations
         X_earth  = self.earth_locations
+        hit_maps = self.hit_maps
 
         npix = hp.nside2npix(nside)
-        if (hit_maps := self.hit_maps) is None:
+        if hit_maps is None:
             hits = np.ones(npix)
             hit_maps = np.asarray([hits for _ in range(len(X_observer))])
-        elif hp.get_nside(hit_maps := self.hit_maps) != nside:
-            hit_maps = hp.ud_grade(self.hit_maps, nside, power=-2)
+        elif hp.get_nside(hit_maps) != nside:
+            hit_maps = hp.ud_grade(hit_maps, nside, power=-2)
 
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))
         emission = np.zeros((len(components), npix))
@@ -151,7 +152,7 @@ class TimeOrderedStrategy(SimulationStrategy):
         with warnings.catch_warnings():
             # Unobserved pixels will be divided by 0 in the below return 
             # statement. This is fine since we want to return unobserved 
-            # pixels as np.NAN. However, a RuntimeWarning is raise, which 
+            # pixels as np.NAN. However, a RuntimeWarning is raised which 
             # we silence in this context manager.
             warnings.filterwarnings("ignore", category=RuntimeWarning)
 

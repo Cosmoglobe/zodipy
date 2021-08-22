@@ -51,10 +51,6 @@ class Zodi:
         earth_locations = get_target_coordinates('earth', epochs) 
         
         number_of_observations = len(observer_locations)
-        if number_of_observations == 1:
-            observer_locations = observer_locations[0]
-            earth_locations = earth_locations[0]
-
         if hit_maps is not None:
             hit_maps = np.asarray(hit_maps)
             number_of_hitmaps = 1 if np.ndim(hit_maps) == 1 else len(hit_maps)
@@ -67,6 +63,8 @@ class Zodi:
 
         if number_of_observations == 1:
             simulation_strategy = InstantaneousStrategy
+            observer_locations = observer_locations[0]
+            earth_locations = earth_locations[0]
         else:
             simulation_strategy = TimeOrderedStrategy
         self._simulation_strategy = simulation_strategy(
@@ -112,9 +110,7 @@ class Zodi:
         if isinstance(freq, u.Quantity):
             freq = freq.to('GHz').value
 
-        emission = self._simulation_strategy.simulate(
-            nside, freq
-        )
+        emission = self._simulation_strategy.simulate(nside, freq)
         emission = change_coordinate_system(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
