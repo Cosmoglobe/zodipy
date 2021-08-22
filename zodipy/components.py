@@ -6,7 +6,7 @@ from typing import Tuple
 
 import numpy as np
 
-import zodipy._functions as F
+from zodipy._functions import interplanetary_temperature, blackbody_emission
 
 
 @dataclass
@@ -172,10 +172,10 @@ class BaseComponent(ABC):
 
         coords, R_helio = self.get_coordinates(X_observer, X_earth, X_unit, R)
         density = self.get_density(*coords)
-        temperature = F.interplanetary_temperature(R_helio)
-        blackbody_emission = F.blackbody_emission(temperature, freq)
+        temperature = interplanetary_temperature(R_helio)
+        emission = blackbody_emission(temperature, freq)
 
-        return blackbody_emission * density
+        return emission * density
 
 
 @dataclass

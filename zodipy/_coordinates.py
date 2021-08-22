@@ -28,14 +28,14 @@ def get_target_coordinates(
             Either a list of epochs in JD or MJD format or a dictionary
             defining a range of times and dates; the range dictionary has to
             be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
-            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|m|s]'}.
-            Epoch timescales depend on the type of query performed: UTC for
-            ephemerides queries, TDB for element queries, CT for vector queries.
+            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
             If no epochs are provided, the current time is used.
 
     Returns
     -------
-        Heliocentric cartesian coordinates of the target.
+    coordinates
+        Heliocentric cartesian coordinates of the target. The shape is 
+        (`n_observations`, 3)
     """
 
     if target.lower() in TARGET_ALIASES:

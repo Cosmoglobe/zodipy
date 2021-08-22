@@ -1,11 +1,11 @@
-from dataclasses import dataclass
 from typing import Callable
 
 import numpy as np
-import scipy
+
+ZERO = np.finfo(float).eps
+RADIAL_CUTOFF = 6
 
 
-@dataclass
 class IntegrationConfig:
     """Config object for the LOS/shell integration in the simulation.
     
@@ -20,42 +20,33 @@ class IntegrationConfig:
         Function which performs the integration.
     """
 
-    R_max : float
-    n : int
-    integrator : Callable[[float, float, int], np.ndarray] = np.trapz
+    def __init__(
+        self, 
+        R_max: float, 
+        n:int, 
+        integrator: Callable[[float, float, int], np.ndarray] = np.trapz
+    ):
+        self.R = np.expand_dims(np.linspace(ZERO, R_max, n), axis=1)   
+        self.dR = np.diff(self.R)
+        self.integrator = integrator
 
-    @property
-    def R(self) -> np.ndarray:
-        """Linearly spaced grid of distances to shells around the observer."""
-
-        ZERO = np.finfo(float).eps
-        return np.expand_dims(np.linspace(ZERO, self.R_max, self.n), axis=1)
-
-    @property
-    def dR(self) -> np.ndarray:
-        """Distance between grid points in R"""
-
-        return np.diff(self.R)
-
-
-_CUT_OFF = 6
 
 DEFAULT = {
-    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=250),
-    'band1': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'band2': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'band3': IntegrationConfig(R_max=_CUT_OFF, n=50),
-    'ring': IntegrationConfig(R_max=2.25, n=50),
-    'feature': IntegrationConfig(R_max=1, n=50),
+    'cloud': IntegrationConfig(RADIAL_CUTOFF, 250),
+    'band1': IntegrationConfig(RADIAL_CUTOFF, 50),
+    'band2': IntegrationConfig(RADIAL_CUTOFF, 50),
+    'band3': IntegrationConfig(RADIAL_CUTOFF, 50),
+    'ring': IntegrationConfig(2.25, 50),
+    'feature': IntegrationConfig(1, 50),
 }
 
 HIGH = {
-    'cloud': IntegrationConfig(R_max=_CUT_OFF, n=500),
-    'band1': IntegrationConfig(R_max=_CUT_OFF, n=500),
-    'band2': IntegrationConfig(R_max=_CUT_OFF, n=500),
-    'band3': IntegrationConfig(R_max=_CUT_OFF, n=500),
-    'ring': IntegrationConfig(R_max=2.25, n=200),
-    'feature': IntegrationConfig(R_max=1, n=200),
+    'cloud': IntegrationConfig(RADIAL_CUTOFF, 500),
+    'band1': IntegrationConfig(RADIAL_CUTOFF, 500),
+    'band2': IntegrationConfig(RADIAL_CUTOFF, 500),
+    'band3': IntegrationConfig(RADIAL_CUTOFF, 500),
+    'ring': IntegrationConfig(2.25, 200),
+    'feature': IntegrationConfig(1, 200),
 }
 
 

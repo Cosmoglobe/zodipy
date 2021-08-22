@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Iterable
 import warnings
 
 import healpy as hp
@@ -32,8 +31,8 @@ class SimulationStrategy(ABC):
 
     model: InterplanetaryDustModel
     integration_config: IntegrationConfig
-    observer_locations: Iterable
-    earth_locations: Iterable
+    observer_locations: np.ndarray
+    earth_locations: np.ndarray
     hit_maps: np.ndarray
 
 
@@ -106,8 +105,8 @@ class InstantaneousStrategy(SimulationStrategy):
 class TimeOrderedStrategy(SimulationStrategy):
     """Simulation strategy for time-ordered emission.
     
-    This returns the pixel weighted average of multiple simultaneous 
-    observations.
+    This strategy simulates the sky at multiple different times and returns
+    the pixel weighted average of all observations.
     """
 
     def simulate(self, nside: int, freq: float) -> np.ndarray:

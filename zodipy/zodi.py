@@ -5,7 +5,7 @@ import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, change_coordinate_system
 from zodipy._integration import INTEGRATION_CONFIGS
-from zodipy.models import MODELS
+from zodipy.models import models
 from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
 
@@ -31,8 +31,6 @@ class Zodi:
             defining a range of times and dates; the range dictionary has to
             be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
             ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
-            Epoch timescales depend on the type of query performed: UTC for
-            ephemerides queries, TDB for element queries, CT for vector queries.
             If no epochs are provided, the current time is used.
         hit_maps
             The number of times each pixel is observed for a given observation.
@@ -46,17 +44,11 @@ class Zodi:
             'high'. Defaults to 'default'.
         """
 
-        try:
-            model = MODELS[model.lower()]
-        except KeyError:
-            raise KeyError(
-                f"Model {model!r} not found. Available models are: "
-                f"{list(MODELS.keys())}"
-        )
-        try:
-            integration_config = INTEGRATION_CONFIGS[integration_config.lower()]
-        except KeyError:
-            raise KeyError(
+        model = models.get_model(model)
+
+        integration_config = INTEGRATION_CONFIGS.get(integration_config.lower())
+        if integration_config is None:
+            raise ValueError(
                 f"Config {integration_config!r} not found. Available configs "
                 f"are: {list(INTEGRATION_CONFIGS.keys())}"
         )
