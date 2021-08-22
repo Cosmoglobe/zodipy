@@ -6,7 +6,7 @@ import healpy as hp
 import numpy as np
 
 from zodipy._model import InterplanetaryDustModel
-from zodipy._integration import IntegrationConfig
+from zodipy._integration_config import IntegrationConfig
 
 
 @dataclass

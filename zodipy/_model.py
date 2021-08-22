@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable, Dict, Union, Tuple
 
-from zodipy._emissivity import Emissivities
+from zodipy._emissivities import Emissivities
 from zodipy.components import BaseComponent, Cloud, Band, Ring, Feature
 
 

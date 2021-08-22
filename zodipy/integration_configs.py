@@ -1,4 +1,4 @@
-from zodipy._integration import IntegrationConfigFactory
+from zodipy._integration_config import IntegrationConfigFactory
 
 
 _RADIAL_CUTOFF = 6
