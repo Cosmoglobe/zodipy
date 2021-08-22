@@ -25,7 +25,7 @@ class SimulationStrategy(ABC):
         The location(s) of the observer.
     earth_location
         The location(s) of the Earth.
-    hit_maps
+    hit_counts
         The number of times each pixel is observed for a given observation.
     """
 
@@ -33,7 +33,7 @@ class SimulationStrategy(ABC):
     integration_config: IntegrationConfig
     observer_locations: np.ndarray
     earth_locations: np.ndarray
-    hit_maps: np.ndarray
+    hit_counts: np.ndarray
 
 
     @abstractmethod
@@ -71,14 +71,15 @@ class InstantaneousStrategy(SimulationStrategy):
         emissivities = self.model.emissivities
         X_observer  = self.observer_locations
         X_earth  = self.earth_locations
+        hit_counts = self.hit_counts
 
         npix = hp.nside2npix(nside)
-        if (hit_maps := self.hit_maps) is None:
-            hit_maps = np.ones(npix)
-        elif hp.get_nside(hit_maps) != nside:
-            hit_maps = hp.ud_grade(hit_maps, nside, power=-2)
+        if hit_counts is None:
+            hit_counts = np.ones(npix)
+        elif hp.get_nside(hit_counts) != nside:
+            hit_counts = hp.ud_grade(hit_counts, nside, power=-2)
 
-        pixels = np.flatnonzero(hit_maps)
+        pixels = np.flatnonzero(hit_counts)
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))[:, pixels]
         emission = np.zeros((len(components), npix)) + np.NAN
 
@@ -116,20 +117,20 @@ class TimeOrderedStrategy(SimulationStrategy):
         emissivities = self.model.emissivities
         X_observer  = self.observer_locations
         X_earth  = self.earth_locations
-        hit_maps = self.hit_maps
+        hit_counts = self.hit_counts
 
         npix = hp.nside2npix(nside)
-        if hit_maps is None:
+        if hit_counts is None:
             hits = np.ones(npix)
-            hit_maps = np.asarray([hits for _ in range(len(X_observer))])
-        elif hp.get_nside(hit_maps) != nside:
-            hit_maps = hp.ud_grade(hit_maps, nside, power=-2)
+            hit_counts = np.asarray([hits for _ in range(len(X_observer))])
+        elif hp.get_nside(hit_counts) != nside:
+            hit_counts = hp.ud_grade(hit_counts, nside, power=-2)
 
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))
         emission = np.zeros((len(components), npix))
 
-        for observer_pos, earth_pos, hit_map in zip(X_observer, X_earth, hit_maps):
-            pixels = np.flatnonzero(hit_map)
+        for observer_pos, earth_pos, hit_count in zip(X_observer, X_earth, hit_counts):
+            pixels = np.flatnonzero(hit_count)
             unit_vectors = X_unit[:, pixels]
 
             for comp_idx, (comp_name, comp) in enumerate(components.items()):
@@ -146,7 +147,7 @@ class TimeOrderedStrategy(SimulationStrategy):
                 comp_emissivity = emissivities.get_emissivity(comp_name, freq)
                 integrated_comp_emission *= comp_emissivity
                 emission[comp_idx, pixels] += (
-                    integrated_comp_emission * hit_map[pixels]
+                    integrated_comp_emission * hit_count[pixels]
                 )
         
         with warnings.catch_warnings():
@@ -156,4 +157,4 @@ class TimeOrderedStrategy(SimulationStrategy):
             # we silence in this context manager.
             warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-            return emission / hit_maps.sum(axis=0) * 1e20
+            return emission / hit_counts.sum(axis=0) * 1e20

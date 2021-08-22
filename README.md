@@ -57,7 +57,7 @@ By providing multiple dates in the `epochs` argument to `Zodi`, the
 `get_emission` function will return the emission averaged over all observations.
 
 It is possible to provide hit maps for each respective observation given by
-`epochs`. This is done by passing a sequence of hit maps through the `hit_maps`
+`epochs`. This is done by passing a sequence of hit maps through the `hit_counts`
 argument in `Zodi`. 
 
 Below is an example where we simulate the
@@ -70,9 +70,9 @@ epochs = {
     'stop': '2011-01-01', 
     'step' : '1d'
 }
-hit_maps = ... # Your sequence of hit_maps for each observation in epochs 
+hit_counts = ... # Your sequence of hit_counts for each observation in epochs 
 
-zodi = zodipy.Zodi(observer='Planck', epochs=epochs, hit_maps=hit_maps)
+zodi = zodipy.Zodi(observer='Planck', epochs=epochs, hit_counts=hit_counts)
 emission = zodi.get_emission(nside=128, freq=800)
 ```
 ![plot](imgs/zodi_planck_weighted.png)
