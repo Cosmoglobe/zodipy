@@ -5,7 +5,7 @@ import numpy as np
 
 
 @dataclass
-class Emissivity:
+class Emissivities:
     """Class containing emissivity fits for the Zodiacal components.
     
     Attributes

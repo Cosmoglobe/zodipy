@@ -4,7 +4,7 @@ import astropy.units as u
 import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, change_coordinate_system
-from zodipy._integration import INTEGRATION_CONFIGS
+from zodipy.integration_configs import integration_configs
 from zodipy.models import models
 from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
@@ -45,14 +45,8 @@ class Zodi:
         """
 
         model = models.get_model(model)
+        integration_config = integration_configs.get_config(integration_config)
 
-        integration_config = INTEGRATION_CONFIGS.get(integration_config.lower())
-        if integration_config is None:
-            raise ValueError(
-                f"Config {integration_config!r} not found. Available configs "
-                f"are: {list(INTEGRATION_CONFIGS.keys())}"
-        )
-        
         observer_locations = get_target_coordinates(observer, epochs) 
         earth_locations = get_target_coordinates('earth', epochs) 
         
