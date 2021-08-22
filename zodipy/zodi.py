@@ -63,8 +63,8 @@ class Zodi:
 
         if number_of_observations == 1:
             simulation_strategy = InstantaneousStrategy
-            observer_locations = observer_locations[0]
-            earth_locations = earth_locations[0]
+            observer_locations = observer_locations.squeeze()
+            earth_locations = earth_locations.squeeze()
         else:
             simulation_strategy = TimeOrderedStrategy
         self._simulation_strategy = simulation_strategy(
