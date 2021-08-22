@@ -39,7 +39,7 @@ class SimulationStrategy(ABC):
 
     @abstractmethod
     def simulate(self, nside: int, freq: float) -> np.ndarray:
-        """Returns the simulated the Zodiacal emission.
+        """Simulates and returns the Zodiacal emission.
         
         The emission is computed given a nside and frequency and outputted
         in units of MJy/sr.

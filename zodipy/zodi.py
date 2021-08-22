@@ -64,33 +64,32 @@ class Zodi:
         observer_locations = get_target_coordinates(observer, epochs) 
         earth_locations = get_target_coordinates('earth', epochs) 
         
-        # We check that the dimensons of hit_map corresponds to the number
-        # of observations.
+        number_of_observations = len(observer_locations)
+        if number_of_observations == 1:
+            observer_locations = observer_locations[0]
+            earth_locations = earth_locations[0]
+
         if hit_maps is not None:
-            if np.ndim(hit_maps) == 1:
-                hit_maps = np.expand_dims(hit_maps, axis=0)
-            elif len(hit_maps) != len(observer_locations):
+            hit_maps = np.asarray(hit_maps)
+            number_of_hitmaps = 1 if np.ndim(hit_maps) == 1 else len(hit_maps)
+            if number_of_hitmaps != number_of_observations:
                 raise ValueError(
-                    f"Lenght of 'hit_maps' ({len(hit_maps)}) are not matching "
-                    f"the number of observations ({len(observer_locations)})"
+                    f"The number of 'hit_maps' ({number_of_hitmaps}) are not "
+                    "matching the number of observations "
+                    f"({number_of_observations})"
                 )
 
-        if len(observer_locations) == 1:
-            self._simulation_strategy = InstantaneousStrategy(
-                model, 
-                integration_config, 
-                observer_locations[0], 
-                earth_locations[0], 
-                hit_maps
-            )
+        if number_of_observations == 1:
+            simulation_strategy = InstantaneousStrategy
         else:
-            self._simulation_strategy = TimeOrderedStrategy(
-                model, 
-                integration_config, 
-                observer_locations, 
-                earth_locations, 
-                hit_maps
-            )     
+            simulation_strategy = TimeOrderedStrategy
+        self._simulation_strategy = simulation_strategy(
+            model, 
+            integration_config, 
+            observer_locations, 
+            earth_locations, 
+            hit_maps
+        )     
 
     def get_emission(
         self, 
