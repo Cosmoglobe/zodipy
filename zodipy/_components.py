@@ -118,7 +118,8 @@ class BaseComponent(ABC):
 
         u_x, u_y, u_z = X_unit
         x_0, y_0, z_0 = X_observer
-        
+        x_earth, y_earth, _ = X_earth
+
         x_helio = R*u_x + x_0
         y_helio = R*u_y + y_0
         z_helio = R*u_z + z_0
@@ -136,8 +137,9 @@ class BaseComponent(ABC):
             + z_prime*cos(i)
         )
 
-        x_earth, y_earth, _ = X_earth
-        θ_prime = np.arctan2(y_prime - (y_earth - self.y_0) , x_prime - (x_earth - self.x_0))
+        x_earth_prime = x_earth - self.x_0
+        y_earth_prime = y_earth - self.y_0
+        θ_prime = np.arctan2(y_prime - y_earth_prime , x_prime - x_earth_prime)
 
         return (R_prime, Z_prime, θ_prime), R_helio
 
