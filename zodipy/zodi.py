@@ -3,7 +3,7 @@ from typing import Optional, Union, Iterable, Dict
 import astropy.units as u
 import numpy as np
 
-from zodipy._coordinates import get_target_coordinates, change_coordinate_system
+from zodipy._coordinates import get_target_coordinates, to_frame
 from zodipy.integration_configs import integration_configs
 from zodipy.models import models
 from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
@@ -17,21 +17,22 @@ class Zodi:
     observer
         The observer. Defaults to 'L2'.
     epochs
-        Either a list of epochs in JD or MJD format or a dictionary
-        defining a range of times and dates; the range dictionary has to
-        be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
-        ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
-        If no epochs are provided, the current time is used.
+        Either a single epoch, or a list of epochs in JD or MJD format, or 
+        a dictionary defining a range of times and dates; the range 
+        dictionary has to be of the form {'start':'YYYY-MM-DD [HH:MM:SS]',
+        'stop':'YYYY-MM-DD [HH:MM:SS]', 'step':'n[y|d|h|m|s]'}. If no epochs 
+        are provided, the current time is used in UTC.
     hit_counts
-        The number of times each pixel is observed for a given observation.
+        The number of times each pixel is hit for a given observation or 
+        multiple observations.
     model
-        String referencing the Interplanetary dust model used in the 
-        simulation. Available options are 'planck 2013', 'planck 2015',
-        and 'planck 2018'. Defaults to 'planck 2018'.
+        The Interplanetary dust model used in the simulation. Available 
+        options are 'planck 2013', 'planck 2015', and 'planck 2018'. 
+        Defaults to 'planck 2018'.
     integration_config
-        String referencing the integration_config object used when 
-        calling `get_emission`. Available options are: 'default', and 
-        'high'. Defaults to 'default'.
+        The integration_config object used when calling `get_emission`. 
+        Available options are: 'default', and 'high', and 'fast'. Defaults 
+        to 'default'.
     """
 
     def __init__(
@@ -52,10 +53,10 @@ class Zodi:
         number_of_observations = len(observer_locations)
         if hit_counts is not None:
             hit_counts = np.asarray(hit_counts)
-            number_of_hitmaps = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
-            if number_of_hitmaps != number_of_observations:
+            number_of_hit_counts = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
+            if number_of_hit_counts != number_of_observations:
                 raise ValueError(
-                    f"The number of 'hit_counts' ({number_of_hitmaps}) are not "
+                    f"The number of 'hit_counts' ({number_of_hit_counts}) are not "
                     "matching the number of observations "
                     f"({number_of_observations})"
                 )
@@ -93,7 +94,7 @@ class Zodi:
             `astropy.units.Quantity` object is passed for which it only 
             needs to be compatible with Hz.
         coord
-            Coordinate system of the output map. Available options are: 
+            Coordinate frame of the output map. Available options are: 
             'E', 'C', or 'G'. Defaults to 'G'.
         return_comps
             If True, the emission of each component in the model is 
@@ -110,6 +111,6 @@ class Zodi:
             freq = freq.to('GHz').value
 
         emission = self._simulation_strategy.simulate(nside, freq)
-        emission = change_coordinate_system(emission, coord)
+        emission = to_frame(emission, coord)
 
         return emission if return_comps else emission.sum(axis=0)
