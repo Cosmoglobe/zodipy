@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Dict
+from typing import Optional, Union, Iterable, Dict
 import warnings
 
 from astroquery.jplhorizons import Horizons
@@ -16,7 +16,8 @@ TARGET_ALIASES = {
 
 
 def get_target_coordinates(
-    target: str, epochs: Union[float, Iterable, Dict[str, str]],
+    target: str, 
+    epochs: Optional[Union[float, Iterable[float], Dict[str, str]]],
 ) -> np.ndarray:
     """Returns the heliocentric coordinates of the target given an epoch.
     

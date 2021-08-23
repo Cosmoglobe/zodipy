@@ -35,7 +35,7 @@ class Zodi:
         'step':'n[y|d|h|m|s]'}. If no epochs are provided, the current time 
         is used in UTC.
     hit_counts
-        The number of times each pixel is hit during each observation
+        The number of times each pixel is hit during each observation.
     model
         The Interplanetary dust model used in the simulation. Available 
         options are 'planck 2013', 'planck 2015', and 'planck 2018'. 
@@ -48,11 +48,11 @@ class Zodi:
 
     def __init__(
         self, 
-        observer: Optional[str] = 'L2',
+        observer: str = 'L2',
         epochs: Optional[Union[float, Iterable[float], Dict[str, str]]] = None,
         hit_counts: Optional[Iterable[np.ndarray]] = None,
-        model: Optional[str] = 'planck 2018',
-        integration_config: Optional[str] = 'default'
+        model: str = 'planck 2018',
+        integration_config: str = 'default'
     ) -> None:
 
         model = models.get_model(model)
@@ -90,8 +90,8 @@ class Zodi:
         self, 
         nside: int, 
         freq: Union[float, u.Quantity], 
-        coord: Optional[str] = 'G',
-        return_comps: Optional[bool] = False,
+        coord: str = 'G',
+        return_comps: bool = False,
     ) -> np.ndarray:
         """Simulates the Zodiacal emission in units of MJy/sr.
 

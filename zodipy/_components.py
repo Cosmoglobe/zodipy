@@ -46,7 +46,7 @@ class BaseComponent(ABC):
 
     @abstractmethod
     def get_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ: np.ndarray
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
     ) -> np.ndarray:
         """Returns the dust density at a shell around the observer.
         
@@ -60,7 +60,7 @@ class BaseComponent(ABC):
             Array containing the height above the x-y-plane in the prime 
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        θ
+        θ_prime
             Array containing the heliocentric ecliptic longitude of the 
             coords in R_prime releative to the longitude of Earth. The 
             shape is (`NPIX`).
@@ -212,7 +212,7 @@ class Cloud(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, θ):
+    def get_density(self, R_prime, Z_prime, _):
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -261,7 +261,7 @@ class Band(BaseComponent):
         super().__post_init__()
         self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime, Z_prime, θ):
+    def get_density(self, R_prime, Z_prime, _):
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -301,7 +301,7 @@ class Ring(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, θ):
+    def get_density(self, R_prime, Z_prime, _):
         """See base class for documentation."""
 
         term1 = -((R_prime - self.R)/self.σ_r)**2
@@ -346,10 +346,10 @@ class Feature(BaseComponent):
         self.θ = radians(self.θ)
         self.σ_θ = radians(self.σ_θ)
 
-    def get_density(self, R_prime, Z_prime, θ):
+    def get_density(self, R_prime, Z_prime, θ_prime):
         """See base class for documentation."""
 
-        Δθ = θ - self.θ
+        Δθ = θ_prime - self.θ
 
         condition1 = Δθ < - π
         condition2 = Δθ > π

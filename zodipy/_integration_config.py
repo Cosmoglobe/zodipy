@@ -12,7 +12,7 @@ class IntegrationConfig:
     def __init__(
         self, 
         R_max: float, 
-        n:int, 
+        n: int, 
         integrator: Callable[[float, float, int], np.ndarray] = np.trapz
     ):
         self.R = np.expand_dims(np.linspace(_ZERO, R_max, n), axis=1)   
