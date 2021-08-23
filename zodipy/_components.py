@@ -11,11 +11,14 @@ from zodipy._functions import interplanetary_temperature, blackbody_emission
 
 @dataclass
 class BaseComponent(ABC):
-    """Base class for a component of the interplanetary dust.
+    """Base class for an interplanetary dust component.
     
-    This class contains a method to get the coordinates of a shell around 
-    an observer in the reference frame of the component. Any component 
-    that inherits from the class must implement a `get_density` method.
+    This class contains a method that gets the coordinates of a shell 
+    around an observer in the reference frame of the component 
+    (prime coordinates). 
+    
+    Any component that inherits from the class must implement a 
+    `get_density` method.
 
     Attributes
     ----------
@@ -79,13 +82,13 @@ class BaseComponent(ABC):
         """Returns coordinates for which to evaluate the density.
         
         The density of a component is computed in the prime coordinate 
-        system, representing a coordinate system with the origin centered
-        on the component.
+        system, representing a coordinate system where the origin is 
+        centered on the component.
 
         Parameters
         ----------
         X_observer
-            Vector containing to coordinates of the observer.
+            Vector containing the coordinates of the observer.
             The shape is (3,).
         X_unit
             Array containing the unit vectors pointing to each pixel in 
@@ -134,15 +137,9 @@ class BaseComponent(ABC):
         )
 
         x_earth, y_earth, _ = X_earth
-        θ_prime = np.arctan2(y_prime, x_prime)
-        θ_earth = np.arctan2(y_earth, x_earth)
-        θ = θ_prime - θ_earth
+        θ_prime = np.arctan2(y_prime - (y_earth - self.y_0) , x_prime - (x_earth - self.x_0))
 
-        # Constraining θ to be in the limit [-π, π]
-        θ[θ < π] = θ[θ < π] + 2*π
-        θ[θ > π] = θ[θ > π] - 2*π
-
-        return (R_prime, Z_prime, θ), R_helio
+        return (R_prime, Z_prime, θ_prime), R_helio
 
     def get_emission(
         self, 
@@ -346,7 +343,15 @@ class Feature(BaseComponent):
     def get_density(self, R_prime, Z_prime, θ):
         """See base class for documentation."""
 
+        Δθ = θ - self.θ
+
+        condition1 = Δθ < - π
+        condition2 = Δθ > π
+        Δθ[condition1] = Δθ[condition1] + 2*π
+        Δθ[condition2] = Δθ[condition2] - 2*π
+
         term1 = -((R_prime - self.R)/self.σ_r)**2
         term2 = np.abs(Z_prime) / self.σ_z
-        term3 = ((θ - self.θ) / self.σ_θ)**2
+        term3 = (Δθ / self.σ_θ)**2
+
         return self.n_0 * np.exp(term1 - term2 - term3)
