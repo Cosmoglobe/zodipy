@@ -6,15 +6,7 @@ import numpy as np
 
 @dataclass
 class Emissivities:
-    """Class containing emissivity fits for the Zodiacal components.
-    
-    Attributes
-    ----------
-    frequencies
-        Iterable containing frequencies corresponding to fitted emissivities.
-    components
-        Dictionary containing fitted emissivity values.
-    """
+    """Emissivity fits for a Zodiacal component."""
 
     frequencies : Iterable[float]
     components : Dict[str, Iterable[float]]
@@ -25,7 +17,7 @@ class Emissivities:
         Parameters
         ----------
         comp
-            Component label, i.e, 'cloud'.
+            Component label.
         freq
             Frequency at which to evaluate the Zodiacal emission.
 

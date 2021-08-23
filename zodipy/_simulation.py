@@ -5,13 +5,13 @@ import warnings
 import healpy as hp
 import numpy as np
 
-from zodipy._model import InterplanetaryDustModel
 from zodipy._integration_config import IntegrationConfig
+from zodipy._model import InterplanetaryDustModel
 
 
 @dataclass
 class SimulationStrategy(ABC):
-    """Base class that represents a simulation strategy.    
+    """Base class representing a simulation strategy.    
     
     Attributes
     ----------
@@ -26,7 +26,7 @@ class SimulationStrategy(ABC):
     earth_location
         The location(s) of the Earth.
     hit_counts
-        The number of times each pixel is observed for a given observation.
+        The number of times each pixel is hit during each observation.
     """
 
     model: InterplanetaryDustModel
@@ -40,15 +40,15 @@ class SimulationStrategy(ABC):
     def simulate(self, nside: int, freq: float) -> np.ndarray:
         """Simulates and returns the Zodiacal emission.
         
-        The emission is computed given a nside and frequency and outputted
-        in units of MJy/sr.
+        The emission is computed for a given nside and frequency and 
+        outputted in units of MJy/sr.
 
         Parameters
         ----------
         nside
             HEALPIX map resolution parameter.
         freq
-            Frequency [GHz] at which to evaluate the IPD model.
+            Frequency in GHz for which to evaluate the emission.
             
         Returns
         -------

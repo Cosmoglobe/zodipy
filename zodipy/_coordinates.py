@@ -18,7 +18,7 @@ TARGET_ALIASES = {
 def get_target_coordinates(
     target: str, epochs: Union[float, Iterable, Dict[str, str]],
 ) -> np.ndarray:
-    """Returns the heliocentric cartesian coordinates of the target.
+    """Returns the heliocentric coordinates of the target given an epoch.
     
     Parameters
     ----------
@@ -34,8 +34,7 @@ def get_target_coordinates(
     Returns
     -------
     coordinates
-        Heliocentric cartesian coordinates of the target. The shape is 
-        (`n_observations`, 3)
+        Heliocentric cartesian coordinates of the target.
     """
 
     if target.lower() in TARGET_ALIASES:
@@ -66,7 +65,7 @@ def get_target_coordinates(
 def to_frame(
     input_map: np.ndarray, coord_out: str, coord_in: str = 'E'
 ) -> np.ndarray:
-    """Rotates a map from coordinate system.
+    """Rotates a HEALPIX map to another reference frame.
     
     Parameters
     ----------

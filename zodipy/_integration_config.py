@@ -7,7 +7,7 @@ _ZERO = np.finfo(float).eps
 
 
 class IntegrationConfig:
-    """Configuration for the integration strategies in the simulations."""
+    """Configuration for the integration strategies."""
 
     def __init__(
         self, 

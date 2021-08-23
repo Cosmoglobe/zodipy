@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Iterable, Dict, Union, Tuple
 
-from zodipy._emissivities import Emissivities
 from zodipy._components import BaseComponent, Cloud, Band, Ring, Feature
+from zodipy._emissivities import Emissivities
 
 
 @dataclass
@@ -26,9 +26,9 @@ class ModelFactory:
         parameters: Dict[str, Dict[str, float]],
         emissivities: Dict[str, Union[Tuple[float], Dict[str, Tuple[float]]]]
     ) -> None:
-        """Initializes and stores an IPD model."""
+        """Initializes and stores a model."""
 
-        model = init_model(components, parameters, emissivities)
+        model = _init_model(components, parameters, emissivities)
         self._models[name] = model
 
     def get_model(self, name: str) -> InterplanetaryDustModel: 
@@ -44,7 +44,7 @@ class ModelFactory:
         return model
 
 
-def init_model(components, parameters, emissivities):
+def _init_model(components, parameters, emissivities):
     initialized_components = {}
     for comp in components:
         if comp.startswith('cloud'):

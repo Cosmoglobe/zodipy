@@ -13,13 +13,13 @@ def blackbody_emission(T: np.ndarray, freq: float) -> np.ndarray:
     Parameters
     ----------
     freq
-        Frequency [GHz].
+        Frequency in GHz.
     T
-        Temperature of the blackbody [K]. 
+        Temperature of the blackbody in Kelvin. 
 
     Returns
     -------
-        Blackbody emission [W / m^2 Hz sr].
+        Blackbody emission in units of W / m^2 Hz sr.
     """
 
     freq *= 1e9
