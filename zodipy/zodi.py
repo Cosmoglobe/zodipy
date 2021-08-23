@@ -4,9 +4,9 @@ import astropy.units as u
 import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, to_frame
+from zodipy._simulation import InstantaneousStrategy, TimeOrderedStrategy
 from zodipy.integration_configs import integration_configs
 from zodipy.models import models
-from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
 
 class Zodi:
