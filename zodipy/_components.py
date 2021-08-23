@@ -139,7 +139,11 @@ class BaseComponent(ABC):
 
         x_earth_prime = x_earth - self.x_0
         y_earth_prime = y_earth - self.y_0
-        θ_prime = np.arctan2(y_prime - y_earth_prime , x_prime - x_earth_prime)
+
+        θ_prime = (
+            np.arctan2(y_prime , x_prime) 
+            - np.arctan2(y_earth_prime , x_earth_prime)
+        )
 
         return (R_prime, Z_prime, θ_prime), R_helio
 
