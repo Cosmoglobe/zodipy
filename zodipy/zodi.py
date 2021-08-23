@@ -11,20 +11,31 @@ from zodipy.simulation import InstantaneousStrategy, TimeOrderedStrategy
 
 class Zodi:
     """The Zodipy interface.
+
+    The Zodiacal emission seen by an observer is highly dependant on the 
+    specifics of the observation. As an observer moves through the Solar 
+    System, they will look through different columns of interplanetary 
+    dust. 
+    
+    In Zodipy, the simulated Zodiacal emission is a pixel-weighted average 
+    of all included observations. For each observation, a line-of-sight 
+    integral is carried out for all observed pixels from the observer 
+    location. If no hit_counts are provided, the full sky average over all 
+    observations are returned.
     
     Parameters
     ----------
     observer
         The observer. Defaults to 'L2'.
     epochs
-        Either a single epoch, or a list of epochs in JD or MJD format, or 
-        a dictionary defining a range of times and dates; the range 
-        dictionary has to be of the form {'start':'YYYY-MM-DD [HH:MM:SS]',
-        'stop':'YYYY-MM-DD [HH:MM:SS]', 'step':'n[y|d|h|m|s]'}. If no epochs 
-        are provided, the current time is used in UTC.
+        The observeration times given as a single epoch, or a list of epochs 
+        in JD or MJD format, or a dictionary defining a range of times and
+        dates; the range dictionary has to be of the form 
+        {'start':'YYYY-MM-DD [HH:MM:SS]', 'stop':'YYYY-MM-DD [HH:MM:SS]', 
+        'step':'n[y|d|h|m|s]'}. If no epochs are provided, the current time 
+        is used in UTC.
     hit_counts
-        The number of times each pixel is hit for a given observation or 
-        multiple observations.
+        The number of times each pixel is hit during each observation
     model
         The Interplanetary dust model used in the simulation. Available 
         options are 'planck 2013', 'planck 2015', and 'planck 2018'. 

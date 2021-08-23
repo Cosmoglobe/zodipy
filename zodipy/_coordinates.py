@@ -1,5 +1,5 @@
-import warnings
 from typing import Union, Iterable, Dict
+import warnings
 
 from astroquery.jplhorizons import Horizons
 import healpy as hp
@@ -24,12 +24,12 @@ def get_target_coordinates(
     ----------
     target
         Name of the target body.
-    epochs : scalar, list-like, or dictionary, optional
-            Either a list of epochs in JD or MJD format or a dictionary
-            defining a range of times and dates; the range dictionary has to
-            be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
-            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
-            If no epochs are provided, the current time is used.
+    epochs
+        Either a list of epochs in JD or MJD format or a dictionary
+        defining a range of times and dates; the range dictionary has to
+        be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
+        ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
+        If no epochs are provided, the current time is used.
 
     Returns
     -------
@@ -66,7 +66,7 @@ def get_target_coordinates(
 def to_frame(
     input_map: np.ndarray, coord_out: str, coord_in: str = 'E'
 ) -> np.ndarray:
-    """Rotates a map from coordinate system to another using healpy.Rotator
+    """Rotates a map from coordinate system.
     
     Parameters
     ----------
