@@ -63,7 +63,7 @@ def get_target_coordinates(
     return coordinates
 
 
-def change_coordinate_system(
+def to_frame(
     input_map: np.ndarray, coord_out: str, coord_in: str = 'E'
 ) -> np.ndarray:
     """Rotates a map from coordinate system to another using healpy.Rotator
