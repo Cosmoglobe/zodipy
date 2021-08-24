@@ -11,12 +11,12 @@ from zodipy._model import InterplanetaryDustModel
 
 @dataclass
 class SimulationStrategy(ABC):
-    """Base class representing a simulation strategy.    
-    
+    """Base class representing a simulation strategy.
+
     Attributes
     ----------
     model
-        Interplanetary dust model with initialized componentents and 
+        Interplanetary dust model with initialized componentents and
         corresponding emissivities.
     integration_config
         Configuration object that determines how a component is integrated
@@ -35,12 +35,11 @@ class SimulationStrategy(ABC):
     earth_locations: np.ndarray
     hit_counts: np.ndarray
 
-
     @abstractmethod
     def simulate(self, nside: int, freq: float) -> np.ndarray:
         """Simulates and returns the Zodiacal emission.
-        
-        The emission is computed for a given nside and frequency and 
+
+        The emission is computed for a given nside and frequency and
         outputted in units of MJy/sr.
 
         Parameters
@@ -49,7 +48,7 @@ class SimulationStrategy(ABC):
             HEALPIX map resolution parameter.
         freq
             Frequency in GHz for which to evaluate the emission.
-            
+
         Returns
         -------
         emission
@@ -60,7 +59,7 @@ class SimulationStrategy(ABC):
 @dataclass
 class InstantaneousStrategy(SimulationStrategy):
     """Simulation strategy for instantaneous emission.
-    
+
     This strategy simulates the sky as seen at an instant in time.
     """
 
@@ -69,8 +68,8 @@ class InstantaneousStrategy(SimulationStrategy):
 
         components = self.model.components
         emissivities = self.model.emissivities
-        X_observer  = self.observer_locations
-        X_earth  = self.earth_locations
+        X_observer = self.observer_locations
+        X_earth = self.earth_locations
         hit_counts = self.hit_counts
 
         npix = hp.nside2npix(nside)
@@ -87,9 +86,7 @@ class InstantaneousStrategy(SimulationStrategy):
             integration_config = self.integration_config[comp_name]
             R = integration_config.R
 
-            comp_emission = comp.get_emission(
-                freq, X_observer, X_earth, X_unit, R
-            )
+            comp_emission = comp.get_emission(freq, X_observer, X_earth, X_unit, R)
             integrated_comp_emission = integration_config.integrator(
                 comp_emission, R, dx=integration_config.dR, axis=0
             )
@@ -105,7 +102,7 @@ class InstantaneousStrategy(SimulationStrategy):
 @dataclass
 class TimeOrderedStrategy(SimulationStrategy):
     """Simulation strategy for time-ordered emission.
-    
+
     This strategy simulates the sky at multiple different times and returns
     the pixel weighted average of all observations.
     """
@@ -115,8 +112,8 @@ class TimeOrderedStrategy(SimulationStrategy):
 
         components = self.model.components
         emissivities = self.model.emissivities
-        X_observer  = self.observer_locations
-        X_earth  = self.earth_locations
+        X_observer = self.observer_locations
+        X_earth = self.earth_locations
         hit_counts = self.hit_counts
 
         npix = hp.nside2npix(nside)
@@ -149,11 +146,11 @@ class TimeOrderedStrategy(SimulationStrategy):
                 emission[comp_idx, pixels] += (
                     integrated_comp_emission * hit_count[pixels]
                 )
-        
+
         with warnings.catch_warnings():
-            # Unobserved pixels will be divided by 0 in the below return 
-            # statement. This is fine since we want to return unobserved 
-            # pixels as np.NAN. However, a RuntimeWarning is raised which 
+            # Unobserved pixels will be divided by 0 in the below return
+            # statement. This is fine since we want to return unobserved
+            # pixels as np.NAN. However, a RuntimeWarning is raised which
             # we silence in this context manager.
             warnings.filterwarnings("ignore", category=RuntimeWarning)
 

@@ -8,12 +8,12 @@ import numpy as np
 class Emissivities:
     """Emissivity fits for a Zodiacal component."""
 
-    frequencies : Iterable[float]
-    components : Dict[str, Iterable[float]]
+    frequencies: Iterable[float]
+    components: Dict[str, Iterable[float]]
 
     def get_emissivity(self, comp: str, freq: float) -> float:
         """Interpolates in the fitted emissivites.
-        
+
         Parameters
         ----------
         comp
@@ -28,7 +28,7 @@ class Emissivities:
         """
 
         if not self.frequencies[0] <= freq <= self.frequencies[-1]:
-            raise ValueError(f'Frequency is out of range')
+            raise ValueError(f"Frequency is out of range")
 
         emissivity = np.interp(freq, self.frequencies, self.components[comp])
 

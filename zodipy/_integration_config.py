@@ -10,12 +10,12 @@ class IntegrationConfig:
     """Configuration for the integration strategies."""
 
     def __init__(
-        self, 
-        R_max: float, 
-        n: int, 
-        integrator: Callable[[float, float, int], np.ndarray] = np.trapz
+        self,
+        R_max: float,
+        n: int,
+        integrator: Callable[[float, float, int], np.ndarray] = np.trapz,
     ):
-        self.R = np.expand_dims(np.linspace(EPS, R_max, n), axis=1)   
+        self.R = np.expand_dims(np.linspace(EPS, R_max, n), axis=1)
         self.dR = np.diff(self.R)
         self.integrator = integrator
 
@@ -27,9 +27,7 @@ class IntegrationConfigFactory:
         self._configs = {}
 
     def register_config(
-        self, 
-        name: str, 
-        components: Dict[str, Tuple[float,int]]
+        self, name: str, components: Dict[str, Tuple[float, int]]
     ) -> None:
         """Initializes and stores an integration config."""
 
@@ -39,14 +37,14 @@ class IntegrationConfigFactory:
 
         self._configs[name] = config
 
-    def get_config(self, name: str) -> IntegrationConfig: 
+    def get_config(self, name: str) -> IntegrationConfig:
         """Returns a registered config."""
-        
+
         config = self._configs.get(name)
         if config is None:
             raise ValueError(
-                f'Config {name} is not registered. Available configs are '
-                f'{list(self._configs.keys())}'
+                f"Config {name} is not registered. Available configs are "
+                f"{list(self._configs.keys())}"
             )
 
         return config
