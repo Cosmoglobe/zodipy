@@ -1,7 +1,7 @@
-_PLANCK_FREQUENCIES = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0)
+FREQUENCIES_PLANCK = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0)
 
 PLANCK_2013 = {
-    'frequencies' : _PLANCK_FREQUENCIES,
+    'frequencies' : FREQUENCIES_PLANCK,
     'components' : dict(
         cloud=(0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
         band1=(1.129, 1.463, 2.024, 2.035, 2.235, 1.777),
@@ -12,7 +12,7 @@ PLANCK_2013 = {
     )
 }
 PLANCK_2015 = {
-    'frequencies' : _PLANCK_FREQUENCIES,
+    'frequencies' : FREQUENCIES_PLANCK,
     'components' : dict(
         cloud=(0.012, 0.022, 0.051, 0.106, 0.167, 0.256),
         band1=(1.02, 1.23, 1.30, 1.58, 1.74, 2.06),
@@ -23,7 +23,7 @@ PLANCK_2015 = {
     )
 }
 PLANCK_2018 = {
-    'frequencies' : _PLANCK_FREQUENCIES,
+    'frequencies' : FREQUENCIES_PLANCK,
     'components' : dict(
         cloud=(0.018, 0.020, 0.042, 0.082, 0.179, 0.304),
         band1=(0.54, 1.00, 1.11, 1.52, 1.47, 1.58),

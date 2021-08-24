@@ -3,7 +3,7 @@ from typing import Callable, Tuple, Dict
 import numpy as np
 
 
-_ZERO = np.finfo(float).eps
+EPS = np.finfo(float).eps
 
 
 class IntegrationConfig:
@@ -15,7 +15,7 @@ class IntegrationConfig:
         n: int, 
         integrator: Callable[[float, float, int], np.ndarray] = np.trapz
     ):
-        self.R = np.expand_dims(np.linspace(_ZERO, R_max, n), axis=1)   
+        self.R = np.expand_dims(np.linspace(EPS, R_max, n), axis=1)   
         self.dR = np.diff(self.R)
         self.integrator = integrator
 
