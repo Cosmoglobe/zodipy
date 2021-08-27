@@ -1,7 +1,9 @@
+import warnings
 from typing import Optional, Union, Iterable, Dict
 
 import astropy.units as u
 import numpy as np
+import healpy as hp
 
 from zodipy._coordinates import get_target_coordinates, to_frame
 from zodipy._simulation import InstantaneousStrategy, TimeOrderedStrategy
@@ -113,6 +115,13 @@ class Zodi:
         emission
             Simulated Zodiacal emission in units of MJy/sr.
         """
+
+        if nside > 256:
+            warnings.warn(
+                "Memory usage may be very high for the requested simulation. "
+                "In thec urrent implementation of zodipy, intermediate "
+                "results are stored in memory during line-of-sight integration"
+            )
 
         if isinstance(freq, u.Quantity):
             freq = freq.to("GHz").value
