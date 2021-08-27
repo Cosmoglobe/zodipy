@@ -119,8 +119,11 @@ class Zodi:
         if nside > 256:
             warnings.warn(
                 "Memory usage may be very high for the requested simulation. "
-                "In thec urrent implementation of zodipy, intermediate "
-                "results are stored in memory during line-of-sight integration"
+                "In the current implementation of zodipy, intermediate "
+                "results are stored in memory during line-of-sight integration. "
+                "We recommend to simulate at a lower nside, e.g 256, and use "
+                "healpy.ud_grade afterwards instead (Zodiacal emission is very "
+                "smooth, so this should be fine)."
             )
 
         if isinstance(freq, u.Quantity):
