@@ -4,6 +4,9 @@ from typing import Iterable, Dict, Union, Tuple
 from zodipy._components import BaseComponent, Cloud, Band, Ring, Feature
 from zodipy._emissivities import Emissivities
 
+ModelParameterType = Dict[str, Dict[str, float]]
+EmissivitiesType = Dict[str, Union[Tuple[float], Dict[str, Tuple[float]]]]
+
 
 @dataclass
 class InterplanetaryDustModel:
@@ -23,8 +26,8 @@ class ModelFactory:
         self,
         name: str,
         components: Iterable[str],
-        parameters: Dict[str, Dict[str, float]],
-        emissivities: Dict[str, Union[Tuple[float], Dict[str, Tuple[float]]]],
+        parameters: ModelParameterType,
+        emissivities: EmissivitiesType,
     ) -> None:
         """Initializes and stores a model."""
 

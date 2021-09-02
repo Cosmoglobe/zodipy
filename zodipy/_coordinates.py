@@ -5,6 +5,8 @@ from astroquery.jplhorizons import Horizons
 import healpy as hp
 import numpy as np
 
+EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
+
 
 TARGET_ALIASES = {
     "l1": "SEMB-L1",
@@ -17,7 +19,7 @@ TARGET_ALIASES = {
 
 def get_target_coordinates(
     target: str,
-    epochs: Optional[Union[float, Iterable[float], Dict[str, str]]],
+    epochs: EpochsType,
 ) -> np.ndarray:
     """Returns the heliocentric coordinates of the target given an epoch.
 

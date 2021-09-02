@@ -1,5 +1,5 @@
-import warnings
 from typing import Optional, Union, Iterable, Dict
+import warnings
 
 import astropy.units as u
 import numpy as np
