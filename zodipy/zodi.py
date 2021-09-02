@@ -3,12 +3,13 @@ from typing import Optional, Union, Iterable, Dict
 
 import astropy.units as u
 import numpy as np
-import healpy as hp
 
 from zodipy._coordinates import get_target_coordinates, to_frame
 from zodipy._simulation import InstantaneousStrategy, TimeOrderedStrategy
 from zodipy.integration_configs import integration_configs
 from zodipy.models import models
+
+_EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
 
 
 class Zodi:
@@ -51,7 +52,7 @@ class Zodi:
     def __init__(
         self,
         observer: str = "L2",
-        epochs: Optional[Union[float, Iterable[float], Dict[str, str]]] = None,
+        epochs: Optional[_EpochsType] = None,
         hit_counts: Optional[Iterable[np.ndarray]] = None,
         model: str = "planck 2018",
         integration_config: str = "default",
