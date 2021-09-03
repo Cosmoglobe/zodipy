@@ -1,12 +1,11 @@
 from typing import Optional, Union, Iterable, Dict
-import warnings
 
 import astropy.units as u
 import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, to_frame
 from zodipy._simulation import InstantaneousStrategy, TimeOrderedStrategy
-from zodipy.integration_configs import integration_configs
+from zodipy.los_configs import LOS_configs
 from zodipy.models import models
 
 _EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
@@ -43,8 +42,8 @@ class Zodi:
         The Interplanetary dust model used in the simulation. Available
         options are 'planck 2013', 'planck 2015', and 'planck 2018'.
         Defaults to 'planck 2018'.
-    integration_config
-        The integration_config object used when calling `get_emission`.
+    line_of_sight_config
+        The line-of-sight configuration used in the simulation.
         Available options are: 'default', and 'high', and 'fast'. Defaults
         to 'default'.
     """
@@ -55,11 +54,11 @@ class Zodi:
         epochs: Optional[_EpochsType] = None,
         hit_counts: Optional[Iterable[np.ndarray]] = None,
         model: str = "planck 2018",
-        integration_config: str = "default",
+        line_of_sight_config: str = "default",
     ) -> None:
 
         model = models.get_model(model)
-        integration_config = integration_configs.get_config(integration_config)
+        line_of_sight_config = LOS_configs.get_config(line_of_sight_config)
 
         observer_locations = get_target_coordinates(observer, epochs)
         earth_locations = get_target_coordinates("earth", epochs)
@@ -82,7 +81,7 @@ class Zodi:
         else:
             simulation_strategy = TimeOrderedStrategy
         self._simulation_strategy = simulation_strategy(
-            model, integration_config, observer_locations, earth_locations, hit_counts
+            model, line_of_sight_config, observer_locations, earth_locations, hit_counts
         )
 
     def get_emission(
@@ -116,16 +115,6 @@ class Zodi:
         emission
             Simulated Zodiacal emission in units of MJy/sr.
         """
-
-        if nside > 256:
-            warnings.warn(
-                "Memory usage may be very high for the requested simulation. "
-                "In the current implementation of zodipy, intermediate "
-                "results are stored in memory during line-of-sight integration. "
-                "We recommend to simulate at a lower nside, e.g 256, and use "
-                "healpy.ud_grade afterwards instead (Zodiacal emission is very "
-                "smooth, so this should be fine)."
-            )
 
         if isinstance(freq, u.Quantity):
             freq = freq.to("GHz").value

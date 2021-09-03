@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Dict
 import warnings
 
 import healpy as hp
 import numpy as np
 
-from zodipy._integration_config import IntegrationConfig
+from zodipy._integration import trapezoidal
 from zodipy._model import InterplanetaryDustModel
 
 
@@ -18,9 +19,8 @@ class SimulationStrategy(ABC):
     model
         Interplanetary dust model with initialized componentents and
         corresponding emissivities.
-    integration_config
-        Configuration object that determines how a component is integrated
-        along a line-of-sight.
+    line_of_sight_config
+        Dictionary mapping a line_of_sight_config to each component.
     observer_locations
         The location(s) of the observer.
     earth_location
@@ -30,7 +30,7 @@ class SimulationStrategy(ABC):
     """
 
     model: InterplanetaryDustModel
-    integration_config: IntegrationConfig
+    line_of_sight_config: Dict[str, np.ndarray]
     observer_locations: np.ndarray
     earth_locations: np.ndarray
     hit_counts: np.ndarray
@@ -83,18 +83,20 @@ class InstantaneousStrategy(SimulationStrategy):
         emission = np.zeros((len(components), npix)) + np.NAN
 
         for comp_idx, (comp_name, comp) in enumerate(components.items()):
-            integration_config = self.integration_config[comp_name]
-            R = integration_config.R
-
-            comp_emission = comp.get_emission(freq, X_observer, X_earth, X_unit, R)
-            integrated_comp_emission = integration_config.integrator(
-                comp_emission, R, dx=integration_config.dR, axis=0
+            comp_emissivity = emissivities.get_emissivity(comp_name, freq)
+            line_of_sight = self.line_of_sight_config[comp_name]
+            integrated_comp_emission = trapezoidal(
+                comp.get_emission,
+                freq,
+                X_observer,
+                X_earth,
+                X_unit,
+                line_of_sight,
+                npix,
+                pixels,
             )
 
-            comp_emissivity = emissivities.get_emissivity(comp_name, freq)
-            integrated_comp_emission *= comp_emissivity
-
-            emission[comp_idx, pixels] = integrated_comp_emission
+            emission[comp_idx, pixels] = comp_emissivity * integrated_comp_emission
 
         return emission * 1e20
 
@@ -131,20 +133,22 @@ class TimeOrderedStrategy(SimulationStrategy):
             unit_vectors = X_unit[:, pixels]
 
             for comp_idx, (comp_name, comp) in enumerate(components.items()):
-                integration_config = self.integration_config[comp_name]
-                R = integration_config.R
-
-                comp_emission = comp.get_emission(
-                    freq, observer_pos, earth_pos, unit_vectors, R
-                )
-                integrated_comp_emission = integration_config.integrator(
-                    comp_emission, R, dx=integration_config.dR, axis=0
-                )
-
                 comp_emissivity = emissivities.get_emissivity(comp_name, freq)
-                integrated_comp_emission *= comp_emissivity
+                line_of_sight = self.line_of_sight_config[comp_name]
+
+                integrated_comp_emission = trapezoidal(
+                    comp.get_emission,
+                    freq,
+                    observer_pos,
+                    earth_pos,
+                    unit_vectors,
+                    line_of_sight,
+                    npix,
+                    pixels,
+                )
+
                 emission[comp_idx, pixels] += (
-                    integrated_comp_emission * hit_count[pixels]
+                    integrated_comp_emission * comp_emissivity * hit_count[pixels]
                 )
 
         with warnings.catch_warnings():
