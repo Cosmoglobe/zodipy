@@ -2,9 +2,9 @@ from zodipy._los_config import LOSFactory
 
 import numpy as np
 
-
 EPS = np.finfo(float).eps
 RADIAL_CUTOFF = 6
+
 
 LOS_configs = LOSFactory()
 

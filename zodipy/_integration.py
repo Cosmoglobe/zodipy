@@ -2,7 +2,6 @@ from typing import Callable
 
 import numpy as np
 
-
 EmissionCallable = Callable[
     [float, np.ndarray, np.ndarray, np.ndarray, float], np.ndarray
 ]
@@ -18,7 +17,7 @@ def trapezoidal(
     npix: int,
     pixels: np.ndarray,
 ) -> np.ndarray:
-    """Integrates the emission for a component using trapezoidal."""
+    """Integrates the emission for a component using the trapezoidal method."""
 
     comp_emission = np.zeros(npix)[pixels]
     emission_prev = emission_func(freq, x_obs, x_earth, x_unit, R[0])

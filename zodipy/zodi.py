@@ -4,7 +4,7 @@ import astropy.units as u
 import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, to_frame
-from zodipy._simulation import InstantaneousStrategy, TimeOrderedStrategy
+from zodipy._simulation import get_simulation_strategy
 from zodipy.los_configs import LOS_configs
 from zodipy.models import models
 
@@ -59,28 +59,10 @@ class Zodi:
 
         model = models.get_model(model)
         line_of_sight_config = LOS_configs.get_config(line_of_sight_config)
-
         observer_locations = get_target_coordinates(observer, epochs)
         earth_locations = get_target_coordinates("earth", epochs)
 
-        number_of_observations = len(observer_locations)
-        if hit_counts is not None:
-            hit_counts = np.asarray(hit_counts)
-            number_of_hit_counts = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
-            if number_of_hit_counts != number_of_observations:
-                raise ValueError(
-                    f"The number of 'hit_counts' ({number_of_hit_counts}) are not "
-                    "matching the number of observations "
-                    f"({number_of_observations})"
-                )
-
-        if number_of_observations == 1:
-            simulation_strategy = InstantaneousStrategy
-            observer_locations = observer_locations.squeeze()
-            earth_locations = earth_locations.squeeze()
-        else:
-            simulation_strategy = TimeOrderedStrategy
-        self._simulation_strategy = simulation_strategy(
+        self._simulation_strategy = get_simulation_strategy(
             model, line_of_sight_config, observer_locations, earth_locations, hit_counts
         )
 

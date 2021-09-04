@@ -159,3 +159,35 @@ class TimeOrderedStrategy(SimulationStrategy):
             warnings.filterwarnings("ignore", category=RuntimeWarning)
 
             return emission / hit_counts.sum(axis=0) * 1e20
+
+
+def get_simulation_strategy(
+    model: InterplanetaryDustModel,
+    line_of_sight_config: Dict[str, np.ndarray],
+    observer_locations: np.ndarray,
+    earth_locations: np.ndarray,
+    hit_counts: np.ndarray,
+) -> SimulationStrategy:
+    """Initializes and returns a simulation strategy given initial conditions."""
+
+    number_of_observations = len(observer_locations)
+    if hit_counts is not None:
+        hit_counts = np.asarray(hit_counts)
+        number_of_hit_counts = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
+        if number_of_hit_counts != number_of_observations:
+            raise ValueError(
+                f"The number of 'hit_counts' ({number_of_hit_counts}) are "
+                "not matching the number of observations "
+                f"({number_of_observations})"
+            )
+
+    if number_of_observations == 1:
+        simulation_strategy = InstantaneousStrategy
+        observer_locations = observer_locations.squeeze()
+        earth_locations = earth_locations.squeeze()
+    else:
+        simulation_strategy = TimeOrderedStrategy
+
+    return simulation_strategy(
+        model, line_of_sight_config, observer_locations, earth_locations, hit_counts
+    )

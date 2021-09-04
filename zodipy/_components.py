@@ -78,7 +78,7 @@ class BaseComponent(ABC):
         X_earth: np.ndarray,
         X_unit: np.ndarray,
         R: np.ndarray,
-    ) -> Tuple[np.ndarray]:
+    ) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]:
         """Returns coordinates for which to evaluate the density.
 
         The density of a component is computed in the prime coordinate
