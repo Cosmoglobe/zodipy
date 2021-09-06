@@ -7,7 +7,7 @@ import healpy as hp
 import numpy as np
 
 from zodipy._integration import trapezoidal
-from zodipy._model import InterplanetaryDustModel
+from zodipy._model import Model
 
 
 @dataclass
@@ -29,7 +29,7 @@ class SimulationStrategy(ABC):
         The number of times each pixel is hit during each observation.
     """
 
-    model: InterplanetaryDustModel
+    model: Model
     line_of_sight_config: Dict[str, np.ndarray]
     observer_locations: np.ndarray
     earth_locations: np.ndarray
@@ -57,56 +57,10 @@ class SimulationStrategy(ABC):
 
 
 @dataclass
-class InstantaneousStrategy(SimulationStrategy):
-    """Simulation strategy for instantaneous emission.
+class PixelWeightedMeanStrategy(SimulationStrategy):
+    """Currently the only implemented simulation strategy.
 
-    This strategy simulates the sky as seen at an instant in time.
-    """
-
-    def simulate(self, nside: int, freq: float) -> np.ndarray:
-        """See base class for a description."""
-
-        components = self.model.components
-        emissivities = self.model.emissivities
-        X_observer = self.observer_locations
-        X_earth = self.earth_locations
-        hit_counts = self.hit_counts
-
-        npix = hp.nside2npix(nside)
-        if hit_counts is None:
-            hit_counts = np.ones(npix)
-        elif hp.get_nside(hit_counts) != nside:
-            hit_counts = hp.ud_grade(hit_counts, nside, power=-2)
-
-        pixels = np.flatnonzero(hit_counts)
-        X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))[:, pixels]
-        emission = np.zeros((len(components), npix)) + np.NAN
-
-        for comp_idx, (comp_name, comp) in enumerate(components.items()):
-            comp_emissivity = emissivities.get_emissivity(comp_name, freq)
-            line_of_sight = self.line_of_sight_config[comp_name]
-            integrated_comp_emission = trapezoidal(
-                comp.get_emission,
-                freq,
-                X_observer,
-                X_earth,
-                X_unit,
-                line_of_sight,
-                npix,
-                pixels,
-            )
-
-            emission[comp_idx, pixels] = comp_emissivity * integrated_comp_emission
-
-        return emission * 1e20
-
-
-@dataclass
-class TimeOrderedStrategy(SimulationStrategy):
-    """Simulation strategy for time-ordered emission.
-
-    This strategy simulates the sky at multiple different times and returns
-    the pixel weighted average of all observations.
+    This strategy returns the pixel weighted mean of n observations.
     """
 
     def simulate(self, nside: int, freq: float) -> np.ndarray:
@@ -128,27 +82,29 @@ class TimeOrderedStrategy(SimulationStrategy):
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))
         emission = np.zeros((len(components), npix))
 
-        for observer_pos, earth_pos, hit_count in zip(X_observer, X_earth, hit_counts):
-            pixels = np.flatnonzero(hit_count)
-            unit_vectors = X_unit[:, pixels]
+        for obs_pos, earth_pos, hit_count in zip(X_observer, X_earth, hit_counts):
+            observed_pixels = np.flatnonzero(hit_count)
+            unit_vectors = X_unit[:, observed_pixels]
 
-            for comp_idx, (comp_name, comp) in enumerate(components.items()):
+            for comp_idx, (comp_name, comp_class) in enumerate(components.items()):
                 comp_emissivity = emissivities.get_emissivity(comp_name, freq)
                 line_of_sight = self.line_of_sight_config[comp_name]
 
                 integrated_comp_emission = trapezoidal(
-                    comp.get_emission,
+                    comp_class.get_emission,
                     freq,
-                    observer_pos,
+                    obs_pos,
                     earth_pos,
                     unit_vectors,
                     line_of_sight,
                     npix,
-                    pixels,
+                    observed_pixels,
                 )
 
-                emission[comp_idx, pixels] += (
-                    integrated_comp_emission * comp_emissivity * hit_count[pixels]
+                emission[comp_idx, observed_pixels] += (
+                    integrated_comp_emission
+                    * comp_emissivity
+                    * hit_count[observed_pixels]
                 )
 
         with warnings.catch_warnings():
@@ -162,15 +118,19 @@ class TimeOrderedStrategy(SimulationStrategy):
 
 
 def get_simulation_strategy(
-    model: InterplanetaryDustModel,
+    model: Model,
     line_of_sight_config: Dict[str, np.ndarray],
     observer_locations: np.ndarray,
     earth_locations: np.ndarray,
     hit_counts: np.ndarray,
 ) -> SimulationStrategy:
-    """Initializes and returns a simulation strategy given initial conditions."""
+    """Initializes, validates and returns a simulation strategy."""
 
     number_of_observations = len(observer_locations)
+    if number_of_observations != len(earth_locations):
+        raise ValueError(
+            "The number of observer locations and earth locations must be " "the same"
+        )
     if hit_counts is not None:
         hit_counts = np.asarray(hit_counts)
         number_of_hit_counts = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
@@ -181,13 +141,6 @@ def get_simulation_strategy(
                 f"({number_of_observations})"
             )
 
-    if number_of_observations == 1:
-        simulation_strategy = InstantaneousStrategy
-        observer_locations = observer_locations.squeeze()
-        earth_locations = earth_locations.squeeze()
-    else:
-        simulation_strategy = TimeOrderedStrategy
-
-    return simulation_strategy(
+    return PixelWeightedMeanStrategy(
         model, line_of_sight_config, observer_locations, earth_locations, hit_counts
     )

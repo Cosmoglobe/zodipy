@@ -9,8 +9,8 @@ EmissivitiesType = Dict[str, Union[Tuple[float], Dict[str, Tuple[float]]]]
 
 
 @dataclass
-class InterplanetaryDustModel:
-    """Data class representing an Interplanetary dust model."""
+class Model:
+    """Data class representing an interplanetary dust model."""
 
     components: Dict[str, BaseComponent]
     emissivities: Emissivities
@@ -34,7 +34,7 @@ class ModelFactory:
         model = _init_model(components, parameters, emissivities)
         self._models[name] = model
 
-    def get_model(self, name: str) -> InterplanetaryDustModel:
+    def get_model(self, name: str) -> Model:
         """Returns a registered model."""
 
         model = self._models.get(name)
@@ -48,6 +48,8 @@ class ModelFactory:
 
 
 def _init_model(components, parameters, emissivities):
+    """Handles mapping of compoents to correct classes."""
+    
     initialized_components = {}
     for comp in components:
         if comp.startswith("cloud"):
@@ -62,6 +64,6 @@ def _init_model(components, parameters, emissivities):
 
     emissivities = Emissivities(**emissivities)
 
-    return InterplanetaryDustModel(
+    return Model(
         components=initialized_components, emissivities=emissivities
     )

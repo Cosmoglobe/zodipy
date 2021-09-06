@@ -6,13 +6,11 @@ EPS = np.finfo(float).eps
 RADIAL_CUTOFF = 6
 
 
-# Initialize a line-of-sight config as following: 
-# (start, stop, n, geometry = "linear" | "log")
 LOS_configs = LOSFactory()
 
 LOS_configs.register_config(
     name="default",
-    components={
+    components={  # "comp name": (start, stop, n, geometry = "linear" | "log")
         "cloud": (EPS, RADIAL_CUTOFF, 250, "linear"),
         "band1": (EPS, RADIAL_CUTOFF, 50, "linear"),
         "band2": (EPS, RADIAL_CUTOFF, 50, "linear"),
