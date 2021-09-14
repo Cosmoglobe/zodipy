@@ -77,7 +77,7 @@ class BaseComponent(ABC):
         X_observer: np.ndarray,
         X_earth: np.ndarray,
         X_unit: np.ndarray,
-        R: np.ndarray,
+        R: float,
     ) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]:
         """Returns coordinates for which to evaluate the density.
 
@@ -150,7 +150,7 @@ class BaseComponent(ABC):
         X_observer: np.ndarray,
         X_earth: np.ndarray,
         X_unit: np.ndarray,
-        R: np.ndarray,
+        R: float,
     ) -> np.ndarray:
         """Returns the emission at a shell of distance R from the observer.
 
