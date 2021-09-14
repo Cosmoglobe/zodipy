@@ -1,15 +1,15 @@
-from typing import Tuple, Dict, Union
+from typing import Any, Dict
 
 import numpy as np
 
-LOSConfigType = Dict[str, Union[np.ndarray, Tuple[float, int]]]
+LOSConfigType = Dict[str, Any]
 
 
 class LOSFactory:
     """Factory responsible for registering and book-keeping of LOS configs."""
 
     def __init__(self) -> None:
-        self._configs = {}
+        self._configs: Dict[str, LOSConfigType] = {}
 
     def register_config(self, name: str, components: LOSConfigType) -> None:
         """Initializes and stores a LOS."""

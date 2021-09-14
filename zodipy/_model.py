@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import Iterable, Dict, Union, Tuple
+from typing import Any, Iterable, Dict
 
 from zodipy._components import BaseComponent, Cloud, Band, Ring, Feature
 from zodipy._emissivities import Emissivities
 
 ModelParameterType = Dict[str, Dict[str, float]]
-EmissivitiesType = Dict[str, Union[Tuple[float], Dict[str, Tuple[float]]]]
+EmissivitiesType = Dict[str, Any]
 
 
 @dataclass
@@ -20,7 +20,7 @@ class ModelFactory:
     """Factory responsible for registring and book-keeping models."""
 
     def __init__(self) -> None:
-        self._models = {}
+        self._models: Dict[str, Model] = {}
 
     def register_model(
         self,

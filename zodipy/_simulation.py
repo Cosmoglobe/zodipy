@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Iterable, Optional
 import warnings
 
 import healpy as hp
@@ -33,7 +33,7 @@ class SimulationStrategy(ABC):
     line_of_sight_config: Dict[str, np.ndarray]
     observer_locations: np.ndarray
     earth_locations: np.ndarray
-    hit_counts: np.ndarray
+    hit_counts: Optional[np.ndarray]
 
     @abstractmethod
     def simulate(self, nside: int, freq: float) -> np.ndarray:
@@ -70,14 +70,13 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
         emissivities = self.model.emissivities
         X_observer = self.observer_locations
         X_earth = self.earth_locations
-        hit_counts = self.hit_counts
 
         npix = hp.nside2npix(nside)
-        if hit_counts is None:
+        if self.hit_counts is None:
             hits = np.ones(npix)
             hit_counts = np.asarray([hits for _ in range(len(X_observer))])
-        elif hp.get_nside(hit_counts) != nside:
-            hit_counts = hp.ud_grade(hit_counts, nside, power=-2)
+        elif hp.get_nside(self.hit_counts) != nside:
+            hit_counts = hp.ud_grade(self.hit_counts, nside, power=-2)
 
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))
         emission = np.zeros((len(components), npix))
@@ -122,7 +121,7 @@ def get_simulation_strategy(
     line_of_sight_config: Dict[str, np.ndarray],
     observer_locations: np.ndarray,
     earth_locations: np.ndarray,
-    hit_counts: np.ndarray,
+    hit_counts: Optional[Iterable[np.ndarray]],
 ) -> SimulationStrategy:
     """Initializes, validates and returns a simulation strategy."""
 

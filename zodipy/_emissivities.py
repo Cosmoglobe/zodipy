@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Iterable
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -8,8 +8,8 @@ import numpy as np
 class Emissivities:
     """Emissivity fits for a Zodiacal component."""
 
-    frequencies: Iterable[float]
-    components: Dict[str, Iterable[float]]
+    frequencies: Tuple[float]
+    components: Dict[str, Tuple[float]]
 
     def get_emissivity(self, comp: str, freq: float) -> float:
         """Interpolates in the fitted emissivites.

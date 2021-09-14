@@ -57,13 +57,13 @@ class Zodi:
         line_of_sight_config: str = "default",
     ) -> None:
 
-        model = models.get_model(model)
-        line_of_sight_config = LOS_configs.get_config(line_of_sight_config)
+        zodi_model = models.get_model(model)
+        config = LOS_configs.get_config(line_of_sight_config)
         observer_locations = get_target_coordinates(observer, epochs)
         earth_locations = get_target_coordinates("earth", epochs)
 
         self._simulation_strategy = get_simulation_strategy(
-            model, line_of_sight_config, observer_locations, earth_locations, hit_counts
+            zodi_model, config, observer_locations, earth_locations, hit_counts
         )
 
     def get_emission(

@@ -9,6 +9,10 @@ dist
 
 # Testing
 .pytest_cache
+.mypy_cache
+.tox
+.eggs
+UNKNOWN.egg-info
 
 # Development files and directories
 context.py
