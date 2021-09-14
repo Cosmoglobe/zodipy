@@ -75,7 +75,7 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
         if self.hit_counts is None:
             hits = np.ones(npix)
             hit_counts = np.asarray([hits for _ in range(len(X_observer))])
-        if hp.get_nside(self.hit_counts) != nside:
+        elif hp.get_nside(self.hit_counts) != nside:
             hit_counts = hp.ud_grade(self.hit_counts, nside, power=-2)
 
         X_unit = np.asarray(hp.pix2vec(nside, np.arange(npix)))
