@@ -11,7 +11,7 @@ import zodipy
 
 
 DATA_DIR = "/Users/metinsan/Documents/doktor/zodipy/zodipy/data/"
-TABLE = DATA_DIR + "tabulated_zodi.h5"
+TABLE = DATA_DIR + "zodi_table64.h5"
 
 INITIAL_DAY = datetime.datetime(2020, 1, 1)
 DAYS_IN_A_YEAR = 365
@@ -87,41 +87,53 @@ def tabulate(
     with h5py.File(filename, "a") as file:
         model_group = file.create_group(model)
         for freq in freqs:
-            freq_group = model_group.create_group(str(freq))
+            print(freq)
+            freq_group = model_group.create_group(f"{int(freq):04}")
             for i, date in enumerate(dates):
                 zodi = zodipy.Zodi(observer=observer, epochs=date, model=model)
                 
                 emission = zodi.get_emission(nside=nside, freq=freq, return_comps=True, coord="E")
                 data_set = freq_group.create_dataset(f"{i:04d}", data=emission)
                 data_set.attrs["day"] = JD_to_yday(date)
-                print(data_set.attrs["day"])
 
 
 def get_tabulated_data(
     nside: int,
     freq: float,
-    table: str = TABLE,
+    model: str,
 ) -> Callable[[int], np.ndarray]:
     """Creates and returns a 1D interpolater from tabulated zodi data."""
 
-    npix = hp.nside2npix(nside)
-    with h5py.File(table, "r") as file:
-        days = np.zeros(len(file[f"{freq}"]))
-        first_step = list(file[f"{freq}"].keys())[0]
-        n_comps = len(file[f"{freq}/{first_step}"])
-        simulations = np.zeros((len(days), n_comps, npix))
-        for i, sim in enumerate(file[f"{freq}"]):
-            days[i] = file[f"{freq}/{sim}"].attrs["day"]
-            simulations[i] = file[f"{freq}/{sim}"][()]
+    frequencies = []
+    days = []
+    n_comps = 0
+    with h5py.File(TABLE, "r") as file:
+        if model not in file:
+            raise ModuleNotFoundError(f"tabulated data not found for model {model!r}")
+        data = file[model]
+        for freq in data:
+            frequencies.append(float(freq))
+            if not days:
+                for day in data[freq]:
+                    if n_comps == 0:
+                        n_comps = data[freq][day][()].shape[0]
+                    days.append(data[freq][day].attrs["day"])
 
-    return days, simulations
+        frequencies = np.asarray(frequencies)
+        days = np.asarray(days)
+        simulations = np.zeros((len(frequencies), len(days), n_comps, hp.nside2npix(nside)))
+        for i, freq in enumerate(data):
+            for j, day in enumerate(data[freq]):
+                simulations[i, j] = data[freq][day][()]
+
+    return frequencies, days, simulations
 
 
 if __name__ == "__main__":
     tabulate(
         nside=64,
-        freqs=np.geomspace(500,5000, 25),
+        freqs=np.geomspace(100,5000, 50),
         dates=get_JD_range(),
         model="K98",
-        filename=DATA_DIR + "zodi_table.h5"
+        filename=DATA_DIR + "zodi_table64.h5"
     )

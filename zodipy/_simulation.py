@@ -6,7 +6,7 @@ import warnings
 
 import healpy as hp
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import RectBivariateSpline
 
 from zodipy.los_configs import LOS_configs
 from zodipy.models import models
@@ -141,15 +141,17 @@ class InterpolateFromTableStrategy(SimulationStrategy):
         """See base class for a description."""
 
         npix = hp.nside2npix(nside)
-        days, simulations = get_tabulated_data(nside, freq)
-        n_comps = simulations.shape[1]
-        f = interp1d(days, simulations, axis=0)
-
-        dates = [JD_to_yday(date) for date in self.dates]
-
+        frequencies, days, simulations = get_tabulated_data(nside, freq, self.model)
+        n_comps = simulations.shape[2]
         emission = np.zeros((n_comps, npix))
-        for day in dates:
-            emission += f(day)
+        _, dates = get_target_coordinates(self.observer, self.epochs, return_dates=True)
+        dates = [JD_to_yday(date) for date in dates]
+        for comp in range(n_comps):
+            print(comp)
+            for pix in range(npix):
+                f = RectBivariateSpline(frequencies, days, simulations[:, :, comp, pix])
+                for date in dates:
+                    emission[comp][pix] += f(freq, date)
 
         return emission / len(dates)
 

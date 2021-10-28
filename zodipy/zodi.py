@@ -3,7 +3,7 @@ from typing import Optional, Union, Iterable, Dict
 import astropy.units as u
 import numpy as np
 
-from zodipy._coordinates import get_target_coordinates, to_frame
+from zodipy._coordinates import to_frame
 from zodipy._simulation import get_simulation_strategy
 
 _EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
