@@ -40,3 +40,16 @@ models.register_model(
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018,
 )
+models.register_model(
+    name="K98",
+    components=(
+        "cloud",
+        "band1",
+        "band2",
+        "band3",
+        "ring",
+        "feature"
+    ),
+    parameters=parameters.K98,
+    emissivities=None,
+)

@@ -5,8 +5,6 @@ import numpy as np
 
 from zodipy._coordinates import get_target_coordinates, to_frame
 from zodipy._simulation import get_simulation_strategy
-from zodipy.los_configs import LOS_configs
-from zodipy.models import models
 
 _EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
 
@@ -55,15 +53,16 @@ class Zodi:
         hit_counts: Optional[Iterable[np.ndarray]] = None,
         model: str = "planck 2018",
         line_of_sight_config: str = "default",
+        strategy: Optional[str] = "los",
     ) -> None:
 
-        zodi_model = models.get_model(model)
-        config = LOS_configs.get_config(line_of_sight_config)
-        observer_locations = get_target_coordinates(observer, epochs)
-        earth_locations = get_target_coordinates("earth", epochs)
-
         self._simulation_strategy = get_simulation_strategy(
-            zodi_model, config, observer_locations, earth_locations, hit_counts
+            observer,
+            epochs,
+            hit_counts,
+            model,
+            line_of_sight_config,
+            strategy,
         )
 
     def get_emission(

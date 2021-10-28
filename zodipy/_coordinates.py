@@ -20,6 +20,7 @@ TARGET_ALIASES = {
 def get_target_coordinates(
     target: str,
     epochs: EpochsType,
+    return_dates: bool = False,
 ) -> np.ndarray:
     """Returns the heliocentric coordinates of the target given an epoch.
 
@@ -33,11 +34,16 @@ def get_target_coordinates(
         be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
         ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
         If no epochs are provided, the current time is used.
+    return_dates
+        Boolean for wheter or not to returns the Julian dates for each 
+        target location.
 
     Returns
     -------
     coordinates
         Heliocentric cartesian coordinates of the target.
+    dates, optional
+        Julian dates of each target coordinate.
     """
 
     if target.lower() in TARGET_ALIASES:
@@ -59,6 +65,9 @@ def get_target_coordinates(
     z = R * np.sin(lat)
 
     coordinates = np.stack((x, y, z), axis=1)
+
+    if return_dates:
+        return coordinates, ephemerides["datetime_jd"]
 
     return coordinates
 

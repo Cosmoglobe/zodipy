@@ -1,13 +1,23 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Iterable, Optional
+
+from typing import Dict, Iterable, List, Optional
 import warnings
 
 import healpy as hp
 import numpy as np
+from scipy.interpolate import interp1d
 
+from zodipy.los_configs import LOS_configs
+from zodipy.models import models
 from zodipy._integration import trapezoidal
 from zodipy._model import Model
+from zodipy._tabulate import get_tabulated_data, JD_to_yday
+from zodipy._exceptions import SimulationStrategyNotFoundError
+from zodipy._coordinates import EpochsType, get_target_coordinates
+
+
+TABLE = "/Users/metinsan/Documents/doktor/zodipy/zodipy/data/zodi_table.h5"
 
 
 @dataclass
@@ -16,23 +26,23 @@ class SimulationStrategy(ABC):
 
     Attributes
     ----------
+    observer
+        Observer in the Solar System, e.g 'L2'.
     model
-        Interplanetary dust model with initialized componentents and
-        corresponding emissivities.
+        Interplanetary dust model.
     line_of_sight_config
-        Dictionary mapping a line_of_sight_config to each component.
-    observer_locations
-        The location(s) of the observer.
-    earth_location
-        The location(s) of the Earth.
+        Line of sight configuration per component in the model.
+    epochs
+        Epochs for which to simulate the Zodiacal Emission.
     hit_counts
-        The number of times each pixel is hit during each observation.
+        Array containing the number of times each pixel is hit during each
+        observation. The shape of this array must be (n_observations, npix).
     """
 
-    model: Model
-    line_of_sight_config: Dict[str, np.ndarray]
-    observer_locations: np.ndarray
-    earth_locations: np.ndarray
+    observer: str
+    model: str
+    line_of_sight_config: str
+    epochs: EpochsType
     hit_counts: Optional[np.ndarray]
 
     @abstractmethod
@@ -66,10 +76,13 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
     def simulate(self, nside: int, freq: float) -> np.ndarray:
         """See base class for a description."""
 
-        components = self.model.components
-        emissivities = self.model.emissivities
-        X_observer = self.observer_locations
-        X_earth = self.earth_locations
+        model = models.get_model(self.model)
+        los_config = LOS_configs.get_config(self.line_of_sight_config)
+
+        components = model.components
+        emissivities = model.emissivities
+        X_observer = get_target_coordinates(self.observer, self.epochs)
+        X_earth = get_target_coordinates("earth", self.epochs)
 
         npix = hp.nside2npix(nside)
         if self.hit_counts is None:
@@ -86,8 +99,12 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
             unit_vectors = X_unit[:, observed_pixels]
 
             for comp_idx, (comp_name, comp_class) in enumerate(components.items()):
-                comp_emissivity = emissivities.get_emissivity(comp_name, freq)
-                line_of_sight = self.line_of_sight_config[comp_name]
+                if emissivities is not None:
+                    comp_emissivity = emissivities.get_emissivity(comp_name, freq)
+                else:
+                    comp_emissivity = 1
+
+                line_of_sight = los_config[comp_name]
 
                 integrated_comp_emission = trapezoidal(
                     comp_class.get_emission,
@@ -116,30 +133,72 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
             return emission / hit_counts.sum(axis=0) * 1e20
 
 
+@dataclass
+class InterpolateFromTableStrategy(SimulationStrategy):
+    """Simulation strategy that interpolates from a tabel."""
+
+    def simulate(self, nside: int, freq: float) -> np.ndarray:
+        """See base class for a description."""
+
+        npix = hp.nside2npix(nside)
+        days, simulations = get_tabulated_data(nside, freq)
+        n_comps = simulations.shape[1]
+        f = interp1d(days, simulations, axis=0)
+
+        dates = [JD_to_yday(date) for date in self.dates]
+
+        emission = np.zeros((n_comps, npix))
+        for day in dates:
+            emission += f(day)
+
+        return emission / len(dates)
+
+
+IMPLEMENTED_STRATEGIES = {
+    "los": PixelWeightedMeanStrategy,
+    "interp": InterpolateFromTableStrategy,
+}
+
+
 def get_simulation_strategy(
+    observer: str,
+    epochs: EpochsType,
+    hit_counts: Optional[Iterable[np.ndarray]],
     model: Model,
     line_of_sight_config: Dict[str, np.ndarray],
-    observer_locations: np.ndarray,
-    earth_locations: np.ndarray,
-    hit_counts: Optional[Iterable[np.ndarray]],
+    strategy: str = "los",
 ) -> SimulationStrategy:
     """Initializes, validates and returns a simulation strategy."""
 
-    number_of_observations = len(observer_locations)
-    if number_of_observations != len(earth_locations):
-        raise ValueError(
-            "The number of observer locations and earth locations must be " "the same"
+    try:
+        simulation_strategy = IMPLEMENTED_STRATEGIES[strategy]
+    except KeyError:
+        raise SimulationStrategyNotFoundError(
+            f"simulation stratefy {strategy} is not implemented. Available "
+            f"strategies are {list(IMPLEMENTED_STRATEGIES.keys())}"
         )
+
     if hit_counts is not None:
         hit_counts = np.asarray(hit_counts)
         number_of_hit_counts = 1 if np.ndim(hit_counts) == 1 else len(hit_counts)
+        number_of_observations = 1 if np.ndim(hit_counts) == 1 else len(epochs)
         if number_of_hit_counts != number_of_observations:
             raise ValueError(
                 f"The number of 'hit_counts' ({number_of_hit_counts}) are "
                 "not matching the number of observations "
                 f"({number_of_observations})"
             )
+        if strategy != "los":
+            warnings.warn(
+                "simulation strategy is set to line-of-sight integration. "
+                "Interpolation is not supporting hit counts."
+            )
+            simulation_strategy = IMPLEMENTED_STRATEGIES["los"]
 
-    return PixelWeightedMeanStrategy(
-        model, line_of_sight_config, observer_locations, earth_locations, hit_counts
+    return simulation_strategy(
+        observer,
+        model,
+        line_of_sight_config,
+        epochs,
+        hit_counts,
     )
