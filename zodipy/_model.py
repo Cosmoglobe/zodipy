@@ -1,72 +1,51 @@
-from dataclasses import dataclass
-from typing import Any, Iterable, Dict, Optional
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
-from zodipy._components import BaseComponent, Cloud, Band, Ring, Feature
+from zodipy._components import Component, ComponentLabel
 from zodipy._emissivities import Emissivities
-from zodipy._exceptions import ModelNotFoundError
-
-
-ModelParameterType = Dict[str, Dict[str, float]]
-EmissivitiesType = Dict[str, Any]
 
 
 @dataclass
-class Model:
-    """Data class representing an interplanetary dust model."""
+class InterplanetaryDustModel:
+    """Class representing a initialized IPD Model."""
 
-    components: Dict[str, BaseComponent]
+    components: Dict[ComponentLabel, Component]
     emissivities: Optional[Emissivities] = None
 
+    def __getitem__(self, component: str) -> Component:
+        """Returns a sky component from the cosmoglobe model."""
 
-class ModelFactory:
-    """Factory responsible for registring and book-keeping models."""
+        return self.components[ComponentLabel(component)]
 
-    def __init__(self) -> None:
-        self._models: Dict[str, Model] = {}
+
+@dataclass
+class ModelRegistry:
+    """Container for registered IPD models."""
+
+    REGISTRY: Dict[str, InterplanetaryDustModel] = field(default_factory=dict)
 
     def register_model(
         self,
         name: str,
-        components: Iterable[str],
-        parameters: ModelParameterType,
-        emissivities: Optional[EmissivitiesType] = None,
+        components: List[ComponentLabel],
+        parameters: Dict[ComponentLabel, Dict[str, float]],
+        emissivities: Optional[Emissivities] = None,
     ) -> None:
-        """Initializes and stores a model."""
+        """Adds a new IPD model to the registry."""
 
-        model = _init_model(components, parameters, emissivities)
-        self._models[name] = model
+        if name in self.REGISTRY:
+            raise ValueError(f"model by name {name} is already registered.")
 
-    def get_model(self, name: str) -> Model:
-        """Returns a registered model."""
+        initialized_components: Dict[ComponentLabel, Component] = {}
+        for component in components:
+            initialized_components[component] = component.value(**parameters[component])
 
-        model = self._models.get(name)
-        if model is None:
-            raise ModelNotFoundError(
-                f"model {name} is not registered. Available models are "
-                f"{list(self._models.keys())}"
-            )
+        self.REGISTRY[name] = InterplanetaryDustModel(
+            components=initialized_components, emissivities=emissivities
+        )
 
-        return model
+    def get_model(self, name: str) -> InterplanetaryDustModel:
+        """Returns a IPD model from the registry."""
 
-
-def _init_model(components, parameters, emissivities):
-    """Handles mapping of compoents to correct classes."""
-    
-    initialized_components = {}
-    for comp in components:
-        if comp.startswith("cloud"):
-            comp_type = Cloud
-        elif comp.startswith("band"):
-            comp_type = Band
-        elif comp.startswith("ring"):
-            comp_type = Ring
-        elif comp.startswith("feature"):
-            comp_type = Feature
-        initialized_components[comp] = comp_type(**parameters[comp])
-
-    if emissivities is not None:
-        emissivities = Emissivities(**emissivities)
-
-    return Model(
-        components=initialized_components, emissivities=emissivities
-    )
+        return self.REGISTRY[name]

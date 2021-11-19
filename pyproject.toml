@@ -15,6 +15,7 @@ astropy = "^4.3.1"
 astroquery = "^0.4.3"
 scipy = "^1.7.1"
 Pillow = "^8.3.2"
+h5py = "^3.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

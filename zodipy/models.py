@@ -1,55 +1,56 @@
-from zodipy._model import ModelFactory
+from zodipy._model import ModelRegistry
+from zodipy._components import ComponentLabel
 from zodipy import emissivities
 from zodipy import parameters
 
 
-models = ModelFactory()
+model_registry = ModelRegistry()
 
-models.register_model(
+model_registry.register_model(
     name="planck 2013",
-    components=(
-        "cloud", 
-        "band1", 
-        "band2", 
-        "band3", 
-        "ring", 
-        "feature"
-    ),
+    components=[
+        ComponentLabel.CLOUD,
+        ComponentLabel.BAND1,
+        ComponentLabel.BAND2,
+        ComponentLabel.BAND3,
+        ComponentLabel.RING,
+        ComponentLabel.FEATURE,
+    ],
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013,
 )
-models.register_model(
+model_registry.register_model(
     name="planck 2015",
-    components=(
-        "cloud",
-        "band1",
-        "band2",
-        "band3",
-    ),
+    components=[
+        ComponentLabel.CLOUD,
+        ComponentLabel.BAND1,
+        ComponentLabel.BAND2,
+        ComponentLabel.BAND3,
+    ],
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2015,
 )
-models.register_model(
+model_registry.register_model(
     name="planck 2018",
-    components=(
-        "cloud",
-        "band1",
-        "band2",
-        "band3",
-    ),
+    components=[
+        ComponentLabel.CLOUD,
+        ComponentLabel.BAND1,
+        ComponentLabel.BAND2,
+        ComponentLabel.BAND3,
+    ],
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018,
 )
-models.register_model(
+model_registry.register_model(
     name="K98",
-    components=(
-        "cloud",
-        "band1",
-        "band2",
-        "band3",
-        "ring",
-        "feature"
-    ),
+    components=[
+        ComponentLabel.CLOUD,
+        ComponentLabel.BAND1,
+        ComponentLabel.BAND2,
+        ComponentLabel.BAND3,
+        ComponentLabel.RING,
+        ComponentLabel.FEATURE,
+    ],
     parameters=parameters.K98,
     emissivities=None,
 )

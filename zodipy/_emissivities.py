@@ -3,15 +3,17 @@ from typing import Dict, Tuple
 
 import numpy as np
 
+from zodipy._components import ComponentLabel
+
 
 @dataclass
 class Emissivities:
     """Emissivity fits for a Zodiacal component."""
 
-    frequencies: Tuple[float]
-    components: Dict[str, Tuple[float]]
+    frequencies: Tuple[float, ...]
+    components: Dict[ComponentLabel, Tuple[float, ...]]
 
-    def get_emissivity(self, comp: str, freq: float) -> float:
+    def get_emissivity(self, comp: ComponentLabel, freq: float) -> float:
         """Interpolates in the fitted emissivites.
 
         Parameters

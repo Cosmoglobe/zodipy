@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from math import radians, sin, cos
 from math import pi as π
 from typing import Tuple
@@ -9,8 +10,9 @@ import numpy as np
 from zodipy._functions import interplanetary_temperature, blackbody_emission
 
 
+
 @dataclass
-class BaseComponent(ABC):
+class Component(ABC):
     """Base class for an interplanetary dust component.
 
     This class contains a method that gets the coordinates of a shell
@@ -179,7 +181,7 @@ class BaseComponent(ABC):
 
 
 @dataclass
-class Cloud(BaseComponent):
+class Cloud(Component):
     """The Zodiacal diffuse cloud component.
 
     This is a class representing the diffuse cloud in the K98 IPD model.
@@ -209,7 +211,7 @@ class Cloud(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, _):
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -224,7 +226,7 @@ class Cloud(BaseComponent):
 
 
 @dataclass
-class Band(BaseComponent):
+class Band(Component):
     """The Zodiacal astroidal band component.
 
     This is a class representing the astroidal dust band components in
@@ -255,7 +257,7 @@ class Band(BaseComponent):
         super().__post_init__()
         self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime, Z_prime, _):
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -268,7 +270,7 @@ class Band(BaseComponent):
 
 
 @dataclass
-class Ring(BaseComponent):
+class Ring(Component):
     """The Zodiacal circum-solar ring component.
 
     This is a class representing the circum-solar ring component in
@@ -295,7 +297,7 @@ class Ring(BaseComponent):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime, Z_prime, _):
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
         """See base class for documentation."""
 
         term1 = -(((R_prime - self.R) / self.σ_r) ** 2)
@@ -305,7 +307,7 @@ class Ring(BaseComponent):
 
 
 @dataclass
-class Feature(BaseComponent):
+class Feature(Component):
     """The Zodiacal Earth-trailing feature component.
 
     This is a class representing the Earth-trailing feature component in
@@ -340,7 +342,9 @@ class Feature(BaseComponent):
         self.θ = radians(self.θ)
         self.σ_θ = radians(self.σ_θ)
 
-    def get_density(self, R_prime, Z_prime, θ_prime):
+    def get_density(
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
+    ) -> np.ndarray:
         """See base class for documentation."""
 
         Δθ = θ_prime - self.θ
@@ -355,3 +359,15 @@ class Feature(BaseComponent):
         term3 = (Δθ / self.σ_θ) ** 2
 
         return self.n_0 * np.exp(term1 - term2 - term3)
+
+
+
+class ComponentLabel(Enum):
+    """Labels representing the six Zodiacal components in the K98 IPD model."""
+
+    CLOUD = Cloud
+    BAND1 = Band
+    BAND2 = Band
+    BAND3 = Band
+    RING = Ring
+    FEATURE = Feature

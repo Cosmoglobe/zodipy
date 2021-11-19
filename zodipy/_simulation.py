@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, Optional
 import warnings
 
 import healpy as hp
@@ -9,9 +9,9 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
 from zodipy.los_configs import LOS_configs
-from zodipy.models import models
+from zodipy.models import model_registry
 from zodipy._integration import trapezoidal
-from zodipy._model import Model
+from zodipy._model import InterplanetaryDustModel
 from zodipy._tabulate import get_tabulated_data, JD_to_yday
 from zodipy._exceptions import SimulationStrategyNotFoundError
 from zodipy._coordinates import EpochsType, get_target_coordinates
@@ -76,7 +76,7 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
     def simulate(self, nside: int, freq: float) -> np.ndarray:
         """See base class for a description."""
 
-        model = models.get_model(self.model)
+        model = model_registry.get_model(self.model)
         los_config = LOS_configs.get_config(self.line_of_sight_config)
 
         components = model.components
@@ -166,7 +166,7 @@ def get_simulation_strategy(
     observer: str,
     epochs: EpochsType,
     hit_counts: Optional[Iterable[np.ndarray]],
-    model: Model,
+    model: InterplanetaryDustModel,
     line_of_sight_config: Dict[str, np.ndarray],
     strategy: str = "los",
 ) -> SimulationStrategy:

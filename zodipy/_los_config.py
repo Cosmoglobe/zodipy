@@ -2,7 +2,9 @@ from typing import Any, Dict
 
 import numpy as np
 
-LOSConfigType = Dict[str, Any]
+from zodipy._components import ComponentLabel
+
+LOSConfigType = Dict[ComponentLabel, Any]
 
 
 class LOSFactory:

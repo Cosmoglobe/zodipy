@@ -1,5 +1,7 @@
+from zodipy._components import ComponentLabel
+
 K98 = {
-    "cloud": dict(
+    ComponentLabel.CLOUD: dict(
         x_0=0.0119,
         y_0=0.00548,
         z_0=-0.00215,
@@ -11,7 +13,7 @@ K98 = {
         γ=0.942,
         μ=0.189,
     ),
-    "band1": dict(
+    ComponentLabel.BAND1: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -23,7 +25,7 @@ K98 = {
         p=4.0,
         δ_r=1.5,
     ),
-    "band2": dict(
+    ComponentLabel.BAND2: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -35,7 +37,7 @@ K98 = {
         p=4.0,
         δ_r=1.2,
     ),
-    "band3": dict(
+    ComponentLabel.BAND3: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -47,7 +49,7 @@ K98 = {
         p=4.0,
         δ_r=1.5,
     ),
-    "ring": dict(
+    ComponentLabel.RING: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -58,7 +60,7 @@ K98 = {
         σ_r=0.025,
         σ_z=0.054,
     ),
-    "feature": dict(
+    ComponentLabel.FEATURE: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
