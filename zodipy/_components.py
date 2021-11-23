@@ -48,7 +48,7 @@ class Component(ABC):
 
     @abstractmethod
     def get_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, *, θ_prime: np.ndarray
     ) -> np.ndarray:
         """Returns the dust density at a shell around the observer.
 
@@ -92,10 +92,10 @@ class Component(ABC):
         centered on the component.
 
         NOTE: If the same line-of-sight vector R is used for all components,
-        then the computation of the heliocentric coordinates X_helio and 
+        then the computation of the heliocentric coordinates X_helio and
         R_helio could be moved out of this function instead passed as arguments.
-        This would mean that we only compute these `n_LOS` times instead of 
-        `n_LOS_comp´ * `n_comps` as we do now. However, we find that using a 
+        This would mean that we only compute these `n_LOS` times instead of
+        `n_LOS_comp´ * `n_comps` as we do now. However, we find that using a
         single line-of-sight vector to be wastefull in the case where we want
         to evaluate the earth-neighbouring components, which are only valid around
         ~1 AU.

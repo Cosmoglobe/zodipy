@@ -8,11 +8,20 @@ from zodipy._emissivities import Emissivity
 
 
 @dataclass
-class InterplanetaryDustModel:
+class IPDModel:
     """Class representing a initialized IPD Model."""
 
     components: Dict[ComponentLabel, Component]
     emissivities: Optional[Emissivity] = None
+
+    @property
+    def includes_earth_neighboring_components(self) -> bool:
+        """Returns True if the model includes a earth neighboring component."""
+
+        return (
+            ComponentLabel.RING in self.components
+            or ComponentLabel.FEATURE in self.components
+        )
 
     def __getitem__(self, component_name: str) -> Component:
         """Returns a sky component from the cosmoglobe model."""
@@ -21,10 +30,10 @@ class InterplanetaryDustModel:
 
 
 @dataclass
-class InterplanetaryDustModelRegistry:
+class IPDModelRegistry:
     """Container for registered IPD models."""
 
-    registry: Dict[str, InterplanetaryDustModel] = field(default_factory=dict)
+    registry: Dict[str, IPDModel] = field(default_factory=dict)
 
     def register_model(
         self,
@@ -45,11 +54,11 @@ class InterplanetaryDustModelRegistry:
                 **parameters[component_label]
             )
 
-        self.registry[name] = InterplanetaryDustModel(
+        self.registry[name] = IPDModel(
             components=initialized_components, emissivities=emissivities
         )
 
-    def get_model(self, name: str) -> InterplanetaryDustModel:
+    def get_model(self, name: str) -> IPDModel:
         """Returns a IPD model from the registry."""
 
         if name not in self.registry:

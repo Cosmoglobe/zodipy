@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence, Tuple, Union, Dict
 
 from astroquery.jplhorizons import Horizons
 import healpy as hp
@@ -6,7 +6,7 @@ import numpy as np
 
 from zodipy._exceptions import TargetNotSupportedError
 
-Epochs = Optional[Union[float, Sequence[float], Dict[str, str]]]
+EpochsType = Optional[Union[float, Sequence[float], Dict[str, str]]]
 
 
 TARGET_IDS = {
@@ -24,8 +24,7 @@ TARGET_IDS = {
 
 def get_target_coordinates(
     target: str,
-    epochs: Optional[Epochs] = None,
-    return_dates: bool = False,
+    epochs: Optional[EpochsType] = None,
 ) -> np.ndarray:
     """Returns the heliocentric coordinates of the target given an epoch.
 
@@ -74,9 +73,6 @@ def get_target_coordinates(
     z = R * np.sin(lat)
 
     coordinates = np.stack((x, y, z), axis=1)
-
-    if return_dates:
-        return coordinates, ephemerides["datetime_jd"]
 
     return coordinates
 

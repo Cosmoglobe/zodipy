@@ -32,3 +32,11 @@ h5py = "^3.4.0"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.mypy]
+disable_error_code = ["misc"]
+overrides = [
+    { module = "numba.*", ignore_missing_imports = true },
+    { module = "healpy.*", ignore_missing_imports = true },
+    { module = "astropy.*", ignore_missing_imports = true },
+    { module = "numba.*", ignore_missing_imports = true },
+]

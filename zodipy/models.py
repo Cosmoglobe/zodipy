@@ -1,10 +1,10 @@
 from zodipy import emissivities
 from zodipy import parameters
-from zodipy._model import InterplanetaryDustModelRegistry
+from zodipy._model import IPDModelRegistry
 from zodipy._component_labels import ComponentLabel
 
 
-model_registry = InterplanetaryDustModelRegistry()
+model_registry = IPDModelRegistry()
 
 model_registry.register_model(
     name="Planck13",
