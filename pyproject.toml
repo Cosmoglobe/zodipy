@@ -39,5 +39,6 @@ overrides = [
     { module = "numba.*", ignore_missing_imports = true },
     { module = "healpy.*", ignore_missing_imports = true },
     { module = "astropy.*", ignore_missing_imports = true },
+    { module = "astroquery.*", ignore_missing_imports = true },
     { module = "numba.*", ignore_missing_imports = true },
 ]
