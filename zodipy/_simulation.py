@@ -1,7 +1,7 @@
 from typing import List
 
-import numpy as np
 import healpy as hp
+import numpy as np
 
 from zodipy._components import Component
 from zodipy._integration import line_of_sight_integrate
@@ -16,10 +16,11 @@ def instantaneous_emission(
     observer_coords: np.ndarray,
     earth_coords: np.ndarray,
 ) -> np.ndarray:
-    """Returns the instantaneous emission
+    """Returns the simulated instantaneous emission.
 
     The emission is that seen by an observer at an instant at a single time
-    or as the average of multiple times.
+    or as the average of multiple times if several observer and Earth 
+    coordinates are provided.
 
     Parameters:
     -----------
@@ -73,7 +74,7 @@ def time_ordered_emission(
     pixel_chunk: np.ndarray,
     bin: bool = False,
 ) -> np.ndarray:
-    """Computes the Zodiacal Emission in the timestream given a scanning strategy.
+    """Simulates and returns the Zodiacal emission timestream.
 
     Parameters:
     -----------
@@ -97,10 +98,8 @@ def time_ordered_emission(
 
     Returns
     -------
-    emission (bin=True)
-        The binned emission from the timestream.
-    time_stream (bin=False)
-        The timestream of Zodiacal Emission.
+        Zodiacal emission [MJy/sr] over a timestream of pixels, or the
+        binned Zodiacal emission map if bin is set to True.
     """
 
     if bin:

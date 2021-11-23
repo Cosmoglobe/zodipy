@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Union, Dict
+from typing import Optional, Sequence, Union, Dict
 
 from astroquery.jplhorizons import Horizons
 import healpy as hp
@@ -59,7 +59,7 @@ def get_target_coordinates(
         )
 
     if epochs is None:
-        epochs = [2459215.50000]    # 01-01-2021
+        epochs = [2459215.50000]  # 01-01-2021
 
     query = Horizons(id=target, id_type="majorbody", location="c@sun", epochs=epochs)
     ephemerides = query.ephemerides()

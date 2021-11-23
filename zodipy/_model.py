@@ -9,7 +9,10 @@ from zodipy._emissivities import Emissivity
 
 @dataclass
 class IPDModel:
-    """Class representing a initialized IPD Model."""
+    """An initialized Interplanetary Dust Model.
+    
+    A IPDModel consists of a set of initialized `Components` and optionally
+    a set of emissivities."""
 
     components: Dict[ComponentLabel, Component]
     emissivities: Optional[Emissivity] = None
@@ -31,7 +34,7 @@ class IPDModel:
 
 @dataclass
 class IPDModelRegistry:
-    """Container for registered IPD models."""
+    """Container for registered IPDModels."""
 
     registry: Dict[str, IPDModel] = field(default_factory=dict)
 
@@ -59,7 +62,7 @@ class IPDModelRegistry:
         )
 
     def get_model(self, name: str) -> IPDModel:
-        """Returns a IPD model from the registry."""
+        """Returns a IPDModel from the registry."""
 
         if name not in self.registry:
             raise ModuleNotFoundError(

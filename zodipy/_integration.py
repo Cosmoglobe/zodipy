@@ -12,7 +12,7 @@ class ZodiacalComponentEmissionFunc(Protocol):
         unit_vectors: np.ndarray,
         freq: float,
     ) -> np.ndarray:
-        """Interface for the `get_emission` function of a Zodiacal Component."""
+        """Interface of the `get_emission` function of a Zodiacal Component."""
 
 
 def line_of_sight_integrate(

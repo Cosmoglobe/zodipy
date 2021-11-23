@@ -12,13 +12,30 @@ from zodipy.models import model_registry
 class InterplanetaryDustModel:
     """The Zodipy simulation interface."""
 
-    def __init__(self, model: str = "Planck18") -> None:
-        """Initializes a interplaneteray dust model.
+    def __init__(self, model: str = "K98") -> None:
+        """Initializes the interface given an interplaneteray dust model.
+
+        By default, the Interplanetary Dust Model used by Zodipy is the
+        Kelsall et al. (1998) Interplanetary Dust Model, which includes
+        five Zodiacal components:
+            - The Diffuse Cloud
+            - Three Asteroidal Bands
+            - The Circumsolar Ring
+            - The Earth-trailing Feature
+
+        The Kelsall model yields the Zodiacal Emission given purely by the
+        parametric model, and does not use the emissivity factors fitted by
+        the Planck Collaboration.
+
+        Other available models are:
+            - Planck13 (all five Kelsall components + emissivity fits for each)
+            - Planck15 (cloud + bands + new emissivity fits)
+            - Planck18 (cloud + bands + the latest emissivity fits)
 
         Parameters
         ----------
         model
-            The name of a implemented interplanetary dust model.
+            The name of a implemented Interplanetary Dust Model.
         """
 
         self.model = model_registry.get_model(model)
@@ -36,10 +53,20 @@ class InterplanetaryDustModel:
         coord: str = "E",
         return_comps: bool = False,
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Simulates and returns the instantaneous Zodiacal Emission.
+        """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
 
-        The observer location (and optionally the location of the Earth) are
-        quiried from the Horizons JPL ephemerides given some epoch.
+        By instantaneous emission we mean the emission observed in an instant
+        in time.
+
+        The observer location (and optionally the location of the Earth if
+        either of the Feature or the Ring components are included) are queried
+        from the Horizons JPL ephemerides, given some epoch.
+
+        NOTE: This function returns the fullsky emission from one coordinate
+        in space. This means that we evaluate line-of-sights looking in towards
+        the inner Solar System where the dust density increases exponentially.
+        These are line-of-sights unlikely to be observed by an actual
+        experiment.
 
         Parameters
         ----------
@@ -110,7 +137,16 @@ class InterplanetaryDustModel:
         return_comps: bool = False,
         bin: bool = False,
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Simulates and returns the Zodiacal emission [MJy/sr] in a timestream.
+        """Simulates and returns the Zodiacal emission timestream [MJy/sr].
+
+        Given a timestream of pixels, this function evaluates the Zodiacal
+        Emission given a position in space (`observer_coordinates`), and
+        optionally Earth's coordinates (`earth_coordinates`) if the
+        interplanetary dust model includes either of the Feature or Ring
+        components.
+
+        If the bin parameter is set to True, the timestream is binned into a
+        HEALPIX map instead.
 
         Parameters
         ----------
@@ -137,9 +173,9 @@ class InterplanetaryDustModel:
 
         Returns
         -------
-        emission_timestream
-            Timestream of the Zodiacal emission [MJy/sr] over a chunk of
-            time-ordered pixels.
+        emission
+            Zodiacal emission [MJy/sr] over a timestream of pixels, or the
+            binned Zodiacal emission map if bin is set to True.
         """
 
         if earth_coordinates is None:
@@ -156,7 +192,7 @@ class InterplanetaryDustModel:
             components=list(self.model.components.keys()),
         )
 
-        emission_timestream = time_ordered_emission(
+        emission = time_ordered_emission(
             nside=nside,
             freq=freq,
             components=list(self.model.components.values()),
@@ -169,9 +205,8 @@ class InterplanetaryDustModel:
         )
 
         if not return_comps:
-            return emission_timestream.sum(axis=0)
+            return emission.sum(axis=0)
 
         return {
-            comp.value: emission_timestream[idx]
-            for idx, comp in enumerate(self.model.components)
+            comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
         }

@@ -8,13 +8,13 @@ from zodipy._component_labels import ComponentLabel
 
 @dataclass
 class Emissivity:
-    """Emissivity fits for a Zodiacal component."""
+    """Emissivity parameters for a Zodiacal component."""
 
     frequencies: Sequence[float]
     components: Dict[ComponentLabel, Sequence[float]]
 
     def __call__(self, component: ComponentLabel, freq: float) -> float:
-        """Interpolates in the fitted emissivites.
+        """Returns the interpolated emissivity given a frequency.
 
         Parameters
         ----------
@@ -26,7 +26,7 @@ class Emissivity:
         Returns
         -------
         emissivity
-            Emissivity scaling factor.
+            Interpolated emissivity scaling factor.
         """
 
         if not self.frequencies[0] <= freq <= self.frequencies[-1]:
