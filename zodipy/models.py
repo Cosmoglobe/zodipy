@@ -1,13 +1,13 @@
-from zodipy._model import ModelRegistry
-from zodipy._components import ComponentLabel
 from zodipy import emissivities
 from zodipy import parameters
+from zodipy._model import InterplanetaryDustModelRegistry
+from zodipy._component_labels import ComponentLabel
 
 
-model_registry = ModelRegistry()
+model_registry = InterplanetaryDustModelRegistry()
 
 model_registry.register_model(
-    name="planck 2013",
+    name="Planck13",
     components=[
         ComponentLabel.CLOUD,
         ComponentLabel.BAND1,
@@ -19,8 +19,9 @@ model_registry.register_model(
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2013,
 )
+
 model_registry.register_model(
-    name="planck 2015",
+    name="Planck15",
     components=[
         ComponentLabel.CLOUD,
         ComponentLabel.BAND1,
@@ -30,8 +31,9 @@ model_registry.register_model(
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2015,
 )
+
 model_registry.register_model(
-    name="planck 2018",
+    name="Planck18",
     components=[
         ComponentLabel.CLOUD,
         ComponentLabel.BAND1,
@@ -41,6 +43,7 @@ model_registry.register_model(
     parameters=parameters.K98,
     emissivities=emissivities.PLANCK_2018,
 )
+
 model_registry.register_model(
     name="K98",
     components=[
@@ -52,5 +55,4 @@ model_registry.register_model(
         ComponentLabel.FEATURE,
     ],
     parameters=parameters.K98,
-    emissivities=None,
 )

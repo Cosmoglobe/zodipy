@@ -10,11 +10,11 @@ from scipy.interpolate import RectBivariateSpline
 
 from zodipy.los_configs import LOS_configs
 from zodipy.models import model_registry
-from zodipy._integration import trapezoidal
+from zodipy._integration import line_of_sight_integrate
 from zodipy._model import InterplanetaryDustModel
 from zodipy._tabulate import get_tabulated_data, JD_to_yday
 from zodipy._exceptions import SimulationStrategyNotFoundError
-from zodipy._coordinates import EpochsType, get_target_coordinates
+from zodipy._coordinates import Epochs, get_target_coordinates
 
 
 TABLE = "/Users/metinsan/Documents/doktor/zodipy/zodipy/data/zodi_table.h5"
@@ -42,7 +42,7 @@ class SimulationStrategy(ABC):
     observer: str
     model: str
     line_of_sight_config: str
-    epochs: EpochsType
+    epochs: Epochs
     hit_counts: Optional[np.ndarray]
 
     @abstractmethod
@@ -106,7 +106,7 @@ class PixelWeightedMeanStrategy(SimulationStrategy):
 
                 line_of_sight = los_config[comp_name]
 
-                integrated_comp_emission = trapezoidal(
+                integrated_comp_emission = line_of_sight_integrate(
                     comp_class.get_emission,
                     freq,
                     obs_pos,

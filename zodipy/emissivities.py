@@ -1,8 +1,10 @@
-from zodipy._components import ComponentLabel
-from zodipy._emissivities import Emissivities
+from zodipy._component_labels import ComponentLabel
+from zodipy._emissivities import Emissivity
+
+
 FREQUENCIES_PLANCK = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0)
 
-PLANCK_2013 = Emissivities(
+PLANCK_2013 = Emissivity(
     frequencies=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
@@ -13,7 +15,7 @@ PLANCK_2013 = Emissivities(
         ComponentLabel.FEATURE: (0.252, -0.002, 0.243, 0.676, -0.182, 0.423),
     },
 )
-PLANCK_2015 = Emissivities(
+PLANCK_2015 = Emissivity(
     frequencies=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.012, 0.022, 0.051, 0.106, 0.167, 0.256),
@@ -22,7 +24,7 @@ PLANCK_2015 = Emissivities(
         ComponentLabel.BAND3: (0.72, 1.16, 1.27, 1.88, 2.54, 3.37),
     },
 )
-PLANCK_2018 = Emissivities(
+PLANCK_2018 = Emissivity(
     frequencies=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.018, 0.020, 0.042, 0.082, 0.179, 0.304),

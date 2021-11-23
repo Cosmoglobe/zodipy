@@ -1,4 +1,4 @@
-from zodipy._components import ComponentLabel
+from zodipy._component_labels import ComponentLabel
 
 K98 = {
     ComponentLabel.CLOUD: dict(

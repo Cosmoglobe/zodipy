@@ -1,24 +1,24 @@
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from zodipy._components import ComponentLabel
+from zodipy._component_labels import ComponentLabel
 
 
 @dataclass
-class Emissivities:
+class Emissivity:
     """Emissivity fits for a Zodiacal component."""
 
-    frequencies: Tuple[float, ...]
-    components: Dict[ComponentLabel, Tuple[float, ...]]
+    frequencies: Sequence[float]
+    components: Dict[ComponentLabel, Sequence[float]]
 
-    def get_emissivity(self, comp: ComponentLabel, freq: float) -> float:
+    def __call__(self, component: ComponentLabel, freq: float) -> float:
         """Interpolates in the fitted emissivites.
 
         Parameters
         ----------
-        comp
+        component
             Component label.
         freq
             Frequency at which to evaluate the Zodiacal emission.
@@ -32,6 +32,19 @@ class Emissivities:
         if not self.frequencies[0] <= freq <= self.frequencies[-1]:
             raise ValueError(f"Frequency is out of range")
 
-        emissivity = np.interp(freq, self.frequencies, self.components[comp])
+        emissivity = np.interp(freq, self.frequencies, self.components[component])
 
         return emissivity
+
+
+def get_emissivities(
+    freq: float,
+    emissivity: Optional[Emissivity],
+    components: List[ComponentLabel],
+) -> List[float]:
+    """Returns a list of interpolated emissivities for each component."""
+
+    if emissivity is not None:
+        return [emissivity(component, freq) for component in components]
+
+    return [1.0 for _ in components]

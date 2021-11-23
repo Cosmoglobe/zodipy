@@ -3,10 +3,11 @@ from typing import Optional, Union, Iterable, Dict
 import astropy.units as u
 import numpy as np
 
-from zodipy._coordinates import to_frame
+from zodipy._coordinates import to_frame, get_target_coordinates, Epochs
 from zodipy._simulation import get_simulation_strategy
+from zodipy.models import model_registry
+from zodipy.los_configs import LOS_configs
 
-_EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
 
 
 class Zodi:
@@ -49,18 +50,20 @@ class Zodi:
     def __init__(
         self,
         observer: str = "L2",
-        epochs: Optional[_EpochsType] = None,
+        epochs: Optional[Epochs] = None,
         hit_counts: Optional[Iterable[np.ndarray]] = None,
         model: str = "planck 2018",
-        line_of_sight_config: str = "default",
         strategy: Optional[str] = "los",
     ) -> None:
+
+        interplanetary_dust_model = model_registry.get_model(model)
+        line_of_sight_config = LOS_configs.get_config("default")
 
         self._simulation_strategy = get_simulation_strategy(
             observer,
             epochs,
             hit_counts,
-            model,
+            interplanetary_dust_model,
             line_of_sight_config,
             strategy,
         )
