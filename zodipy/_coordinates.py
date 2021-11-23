@@ -1,25 +1,30 @@
-from typing import Optional, Union, Iterable, Dict
-import warnings
+from typing import Optional, Sequence, Union, Dict
 
 from astroquery.jplhorizons import Horizons
 import healpy as hp
 import numpy as np
 
-EpochsType = Optional[Union[float, Iterable[float], Dict[str, str]]]
+from zodipy._exceptions import TargetNotSupportedError
+
+Epochs = Optional[Union[float, Sequence[float], Dict[str, str]]]
 
 
-TARGET_ALIASES = {
-    "l1": "SEMB-L1",
-    "l2": "SEMB-L2",
+TARGET_IDS = {
     "planck": "Planck",
     "wmap": "WMAP",
-    "earth": "Earth-Moon Barycenter",
+    "l2": "32",
+    "sun": "10",
+    "mercury": "199",
+    "venus": "299",
+    "earth": "399",
+    "mars": "499",
+    "jupiter": "599",
 }
 
 
 def get_target_coordinates(
     target: str,
-    epochs: EpochsType,
+    epochs: Optional[Epochs] = None,
     return_dates: bool = False,
 ) -> np.ndarray:
     """Returns the heliocentric coordinates of the target given an epoch.
@@ -35,7 +40,7 @@ def get_target_coordinates(
         ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|h|m|s]'}.
         If no epochs are provided, the current time is used.
     return_dates
-        Boolean for wheter or not to returns the Julian dates for each 
+        Boolean for wheter or not to returns the Julian dates for each
         target location.
 
     Returns
@@ -46,12 +51,16 @@ def get_target_coordinates(
         Julian dates of each target coordinate.
     """
 
-    if target.lower() in TARGET_ALIASES:
-        target = TARGET_ALIASES[target.lower()]
-    else:
-        warnings.warn(
-            "The K98 model is only valid when observed from a near earth orbit"
+    try:
+        target = TARGET_IDS[target.lower()]
+    except KeyError:
+        raise TargetNotSupportedError(
+            f"{target} is not a valid observer. Please select one of the following: "
+            f"{', '.join(TARGET_IDS)}."
         )
+
+    if epochs is None:
+        epochs = [2459215.50000]    # 01-01-2021
 
     query = Horizons(id=target, id_type="majorbody", location="c@sun", epochs=epochs)
     ephemerides = query.ephemerides()
