@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from math import radians, sin, cos
 from math import pi as π
 from typing import Tuple
 
+from numba import njit
 import numpy as np
 
 from zodipy._functions import interplanetary_temperature, blackbody_emission
-
 
 
 @dataclass
@@ -45,6 +44,7 @@ class Component(ABC):
     def __post_init__(self) -> None:
         self.i = radians(self.i)
         self.Ω = radians(self.Ω)
+        self.X_component = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
 
     @abstractmethod
     def get_density(
@@ -74,33 +74,60 @@ class Component(ABC):
             (`NPIX`)
         """
 
+    @staticmethod
+    @njit
     def get_coordinates(
-        self,
+        R_comp: np.ndarray,
         X_observer: np.ndarray,
         X_earth: np.ndarray,
         X_unit: np.ndarray,
-        R: float,
-    ) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray]:
-        """Returns coordinates for which to evaluate the density.
+        X_component: np.ndarray,
+        Ω_component: float,
+        i_component: float,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Returns the primed coordinates of a component.
 
         The density of a component is computed in the prime coordinate
         system, representing a coordinate system where the origin is
         centered on the component.
 
+        NOTE: If the same line-of-sight vector R is used for all components,
+        then the computation of the heliocentric coordinates X_helio and 
+        R_helio could be moved out of this function instead passed as arguments.
+        This would mean that we only compute these `n_LOS` times instead of 
+        `n_LOS_comp´ * `n_comps` as we do now. However, we find that using a 
+        single line-of-sight vector to be wastefull in the case where we want
+        to evaluate the earth-neighbouring components, which are only valid around
+        ~1 AU.
+
         Parameters
         ----------
+        R_comp
+            Distance R to a shell centered on the observer at which we want
+            to evaluate the Zodiacal emission at. Different shells are used
+            for each component.
         X_observer
             Vector containing the coordinates of the observer.
             The shape is (3,).
+        X_earth
+            Array containing the heliocentric earth cooridnates. The shape
+            is (3,).
         X_unit
             Array containing the unit vectors pointing to each pixel in
             the HEALPIX map. The shape is (3, `NPIX`).
-        R
-            Array containing grid distances to the surface of a shells
-            centered on the observer.
+        X_component
+            Array containing the heliocentric cooridnates to the center of the
+            component offset by (x0, y0, z0). The shape is (3,).
+        Ω_component
+            Ascending node of the component.
+        i_component
+            Inclination of the component.
 
         Returns
         -------
+        R_helio
+            Array containing the heliocentric distance to the coordinate
+            where the density is evaluated. The shape is (`NPIX`).
         R_prime
             Array containing the distance to the coordinate where the
             density is being evaluated per pixel in the prime coordinate
@@ -109,50 +136,38 @@ class Component(ABC):
             Array containing the height above the x-y-plane in the prime
             coordinate system of the coordinate in R_prime. The shape is
             (`NPIX`).
-        θ
+        θ_prime
             Array containing the heliocentric ecliptic longitude of the
             coords in R_prime releative to the longitude of Earth. The
             shape is (`NPIX`).
-        R_helio
-            Array containing the heliocentric distance to the coordinate
-            where the density is evaluated. The shape is (`NPIX`).
         """
 
-        u_x, u_y, u_z = X_unit
-        x_0, y_0, z_0 = X_observer
-        x_earth, y_earth, _ = X_earth
+        X_helio = R_comp * X_unit + X_observer
+        R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
-        x_helio = R * u_x + x_0
-        y_helio = R * u_y + y_0
-        z_helio = R * u_z + z_0
-        R_helio = np.sqrt(x_helio ** 2 + y_helio ** 2 + z_helio ** 2)
+        X_prime = X_helio - X_component
+        R_prime = np.sqrt(X_prime[0] ** 2 + X_prime[1] ** 2 + X_prime[2] ** 2)
 
-        x_prime = x_helio - self.x_0
-        y_prime = y_helio - self.y_0
-        z_prime = z_helio - self.z_0
-
-        Ω, i = self.Ω, self.i
-        R_prime = np.sqrt(x_prime ** 2 + y_prime ** 2 + z_prime ** 2)
         Z_prime = (
-            x_prime * sin(Ω) * sin(i) - y_prime * cos(Ω) * sin(i) + z_prime * cos(i)
+            X_prime[0] * sin(Ω_component) * sin(i_component)
+            - X_prime[1] * cos(Ω_component) * sin(i_component)
+            + X_prime[2] * cos(i_component)
         )
 
-        x_earth_prime = x_earth - self.x_0
-        y_earth_prime = y_earth - self.y_0
-
-        θ_prime = np.arctan2(y_prime, x_prime) - np.arctan2(
-            y_earth_prime, x_earth_prime
+        X_earth_prime = X_earth - X_component[0]
+        θ_prime = np.arctan2(X_prime[1], X_prime[2]) - np.arctan2(
+            X_earth_prime[1], X_earth_prime[0]
         )
 
-        return (R_prime, Z_prime, θ_prime), R_helio
+        return R_helio, R_prime, Z_prime, θ_prime
 
     def get_emission(
         self,
+        distance_to_shell: np.ndarray,
+        observer_coordinates: np.ndarray,
+        earth_coordinates: np.ndarray,
+        unit_vectors: np.ndarray,
         freq: float,
-        X_observer: np.ndarray,
-        X_earth: np.ndarray,
-        X_unit: np.ndarray,
-        R: float,
     ) -> np.ndarray:
         """Returns the emission at a shell of distance R from the observer.
 
@@ -161,19 +176,44 @@ class Component(ABC):
 
         Parameters
         ----------
+        distance_to_shell
+            Distance R to a shell centered on the observer at which we want
+            to evaluate the Zodiacal emission at.
+        observer_coordinates
+            Vector containing the coordinates of the observer.
+            The shape is (3,).
+        earth_coordinates
+            Vector containing the coordinates of the Earth.
+            The shape is (3,).
+        unit_vectors
+            Array containing the unit vectors pointing to each pixel in
+            the HEALPIX map. The shape is (3, `NPIX`).
         freq
             Frequency at which to evaluate the emitted emission.
 
         Returns
         -------
         emission
-            Array containing the Zodiacal emission from a component at
-            different shells around the observer. The shape is
-            (len(R), `NPIX`).
+            Array containing the Zodiacal emission emitted from a shell at
+            distance R from the observer. The shape is (len(R), `NPIX`).
         """
 
-        coords, R_helio = self.get_coordinates(X_observer, X_earth, X_unit, R)
-        density = self.get_density(*coords)
+        observer_coordinates = np.expand_dims(observer_coordinates, axis=1)
+
+        R_helio, R_prime, Z_prime, θ_prime = self.get_coordinates(
+            R_comp=distance_to_shell,
+            X_observer=observer_coordinates,
+            X_earth=earth_coordinates,
+            X_unit=unit_vectors,
+            X_component=self.X_component,
+            Ω_component=self.Ω,
+            i_component=self.i,
+        )
+        density = self.get_density(
+            R_prime=R_prime,
+            Z_prime=Z_prime,
+            θ_prime=θ_prime,
+        )
         temperature = interplanetary_temperature(R_helio)
         emission = blackbody_emission(temperature, freq)
 
@@ -211,7 +251,7 @@ class Cloud(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -257,7 +297,7 @@ class Band(Component):
         super().__post_init__()
         self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -297,7 +337,7 @@ class Ring(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, _) -> np.ndarray:
+    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
         """See base class for documentation."""
 
         term1 = -(((R_prime - self.R) / self.σ_r) ** 2)
@@ -359,15 +399,3 @@ class Feature(Component):
         term3 = (Δθ / self.σ_θ) ** 2
 
         return self.n_0 * np.exp(term1 - term2 - term3)
-
-
-
-class ComponentLabel(Enum):
-    """Labels representing the six Zodiacal components in the K98 IPD model."""
-
-    CLOUD = Cloud
-    BAND1 = Band
-    BAND2 = Band
-    BAND3 = Band
-    RING = Ring
-    FEATURE = Feature
