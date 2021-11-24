@@ -74,3 +74,7 @@ K98 = {
         σ_θ=12.1,
     ),
 }
+
+PLANCK = K98.copy()
+PLANCK.pop(ComponentLabel.RING)
+PLANCK.pop(ComponentLabel.FEATURE)

@@ -6,3 +6,6 @@ class SimulationStrategyNotFoundError(Exception):
 
 class TargetNotSupportedError(Exception):
     """Raised when a target that is not supported is selected."""
+
+class ComponentNotImplemented(Exception):
+    """Raised when one attempts to access a non implemented component."""

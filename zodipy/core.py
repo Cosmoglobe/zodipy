@@ -10,27 +10,32 @@ from zodipy.models import model_registry
 
 
 class InterplanetaryDustModel:
-    """The Zodipy simulation interface."""
+    """The Zodipy simulation interface.
+    
+    By default, the Interplanetary Dust Model used by Zodipy is the
+    Kelsall et al. (1998) Interplanetary Dust Model, which includes
+    five Zodiacal components:
+        - The Diffuse Cloud (cloud)
+        - Three Asteroidal Bands (band1, band2, band3)
+        - The Circumsolar Ring (ring)
+        - The Earth-trailing Feature (feature)
+
+    The Kelsall model yields the Zodiacal Emission given purely by the
+    parametric model, and does not use the emissivity factors fitted by
+    the Planck Collaboration.
+
+    Other available models are:
+        - Planck13 (all five Kelsall components + emissivity fits for each)
+        - Planck15 (cloud + bands + new emissivity fits)
+        - Planck18 (cloud + bands + the latest emissivity fits)
+
+    Custom IPD models (models consisting of a set of Zodiacal Components
+    with custom parameters and emissivities) needs to be registered before
+    initializing this class by using `zodipy.register_custom_model`.
+    """
 
     def __init__(self, model: str = "K98") -> None:
         """Initializes the interface given an interplaneteray dust model.
-
-        By default, the Interplanetary Dust Model used by Zodipy is the
-        Kelsall et al. (1998) Interplanetary Dust Model, which includes
-        five Zodiacal components:
-            - The Diffuse Cloud
-            - Three Asteroidal Bands
-            - The Circumsolar Ring
-            - The Earth-trailing Feature
-
-        The Kelsall model yields the Zodiacal Emission given purely by the
-        parametric model, and does not use the emissivity factors fitted by
-        the Planck Collaboration.
-
-        Other available models are:
-            - Planck13 (all five Kelsall components + emissivity fits for each)
-            - Planck15 (cloud + bands + new emissivity fits)
-            - Planck18 (cloud + bands + the latest emissivity fits)
 
         Parameters
         ----------
@@ -163,7 +168,8 @@ class InterplanetaryDustModel:
             the tod chunk.
         earth_coordinates
             The heliocentric coordinates with shape (3,) of the Earth over the
-            tod chunk.
+            tod chunk. Default is None, in which we set the earth_coordinates
+            equal to the observer coordinates.
         return_comps
             If True, the emission of each component in the model is
             returned individually in a dictionary. Defaults to False.
@@ -178,13 +184,10 @@ class InterplanetaryDustModel:
             binned Zodiacal emission map if bin is set to True.
         """
 
+        # If no earth_coordinates are specified, we assume that the earth and
+        # the observer coordinates are set to the same. 
         if earth_coordinates is None:
-            if self.model.includes_earth_neighboring_components:
-                raise ValueError(
-                    "The Interplanetary Dust model includes earth-neighboring "
-                    "components, but no earth_coordinates were given."
-                )
-            earth_coordinates = np.zeros(3)
+            earth_coordinates = observer_coordinates
 
         emissivities = get_emissivities(
             freq=freq,
@@ -210,3 +213,21 @@ class InterplanetaryDustModel:
         return {
             comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
         }
+
+
+    def __str__(self) -> str:
+        """String representation of the InterplanetaryDustModel."""
+
+        reprs = []
+        for label, component in self.model.components.items():
+            component_repr = f"{component.__class__.__name__}" + "\n"
+            reprs.append(f"({label.value}): {component_repr}")
+
+        main_repr = "InterplanetaryDustModel("
+        main_repr += f"\n  name: {self.model.name}"
+        main_repr += "\n  components( "
+        main_repr += "\n    " + "    ".join(reprs)
+        main_repr += "  )"
+        main_repr += "\n)"
+
+        return main_repr
