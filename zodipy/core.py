@@ -131,7 +131,7 @@ class InterplanetaryDustModel:
         self,
         nside: int,
         freq: float,
-        pixel_chunk: np.ndarray,
+        pixels: np.ndarray,
         observer_coordinates: np.ndarray,
         earth_coordinates: Optional[np.ndarray] = None,
         return_comps: bool = False,
@@ -155,7 +155,7 @@ class InterplanetaryDustModel:
         freq
             Frequency at which to evaluate the Zodiacal emission in units of
             GHz.
-        pixel_chunk
+        pixels
             Chunk of time-ordered pixels corresponding to a parts of a scanning
             strategy.
         observer_coordinates
@@ -200,7 +200,7 @@ class InterplanetaryDustModel:
             line_of_sights=self.line_of_sights,
             observer_coordinates=observer_coordinates,
             earth_coordinates=earth_coordinates,
-            pixel_chunk=pixel_chunk,
+            pixel_chunk=pixels,
             bin=bin,
         )
 
