@@ -1,104 +1,108 @@
+
+<img src="imgs/zodipy.png" width="450">
+
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
-# Zodipy
 
-## Description
-Zodipy is a python tool that simulates the Zodiacal emission.
+---
 
-## Installing
-Zodipy is installed with `pip`.
-```bash
-pip install zodipy
-```
 
-## Usage
-The following examples are meant to provide an overview of how Zodipy may be
-used to produce simulations of the Zodiacal emission. A more in-depth
-documentation will be available in the near future.
-
-## Simulating the instantaneous emission from a single observation
-The simplest use case of Zodipy is to simulate the instantaneous emission as
-seen from a major body or a location in the Solar system, as of today:
-```python
-import zodipy
-
-zodi = zodipy.Zodi()
-emission = zodi.get_emission(nside=128, freq=800)
-```
-Calling the `Zodi` object with no arguments will by default set up the initial
-conditions of the simulation for an observer at L2 today. The `get_emission`
-method of the `Zodi` object, is then called to simulate and return the emission
-for a given nside and frequency. 
-
-We can visualize the above simulated emission using Healpy:
+*Zodipy* is a Python simulation tool for Zodiacal Emission (Interplanetary Dust Emission). It allows you to compute the 
+simulated emission in a timestream, or at an instant in time.
 
 ![plot](imgs/zodi_default.png)
 
-Alternatively, a specific observer and specific epochs can be passed as
-arguments to the `Zodi` object. The `epochs` object must match one of the
-possible formats defined in [astroquery's JPL Horizons
-api](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html).
+## Installing
+Zodipy is available at PyPI and can be installed with `pip install zodipy`
 
+## Features
+The full set of features and use-cases will be documentated in the nearby future.
+
+**Initializing a Interplantery Dust Model:** We start by selecting which Interplanetary Dust Model to use. Currently, the implemented options are the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) model with or without the various emissivity fits from the Planck collaboration.
 ```python
 import zodipy
 
-MJD = 59215  # 2010-01-01 in Modified Julian dates
-zodi = zodipy.Zodi(observer='Planck', epochs=MJD)
-emission = zodi.get_emission(nside=128, freq=800)
+model = zodipy.InterplanetaryDustModel(model="Planck18")  # Other options: "K98", "Planck13", "Planck15"
+```
+
+**Instantaneous emission:** By obtaining the coordinates of an observer through the JPL Horizons API, we can simulate the full sky at an instant in time as follows:
+```python
+import healpy as hp
+
+epoch = 59215  # 2010-01-01 in Modified Julian dates
+emission = model.get_instantaneous_emission(nside=256, freq=800, observer="Planck", epochs=epoch)
+
+hp.mollview(emission, norm="hist", coord=["E", "G"])
 ```
 ![plot](imgs/zodi_planck.png)
 
-To return the component-wise emission the keyword `return_comps` in the
-`get_emission` function may be set to True.
+The `epochs` input must follow the convention used in [astroquery](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html). If multiple dates are used as epochs, the returned emission will be the average emission over all instantaneous maps.
 
-## Simulating the pixel weighted average over multiple observations
-By providing multiple dates in the `epochs` argument to `Zodi`, the
-`get_emission` function will return the emission averaged over all observations.
+Additionally, it is possible to retrieve the emission of each Zodiacal Component in a dictionary, if the parameter `return_comps` is set to `True`. Following is an example of what each component may have looked like at 6th of October 2021.
 
-It is possible to provide hit maps for each respective observation given by
-`epochs`. This is done by passing a sequence of hit maps through the `hit_counts`
-argument in `Zodi`. 
+![plot](imgs/comps.png)
 
-Below is an example where we simulate the
-pixel weighted average over daily observations over a year:
+
+**Time-ordered emission:** For a chunk of time-ordered data, it is possible to compute the simulated Zodiacal Emission over each observed pixel. In the following example we simulate the Zodiacal Emission time-stream given a chunk of the time-ordered pixels from the DIRBE instrument of the COBE satellite (Photometric Band 8, Detector A, first day of observations):
 ```python
+import matplotlib.pyplot as plt
 import zodipy
 
-epochs = {
-    'start': '2010-01-01', 
-    'stop': '2011-01-01', 
-    'step' : '1d'
-}
-hit_counts = ... # Your sequence of hit_counts for each observation in epochs 
+model = zodipy.InterplanetaryDustModel(model="K98")
 
-zodi = zodipy.Zodi(observer='Planck', epochs=epochs, hit_counts=hit_counts)
-emission = zodi.get_emission(nside=128, freq=800)
+dirbe_pixel_timestream = ...    # Get in DIRBE tods
+dirbe_coords = ...  # Get coords of DIRBE at the time corresponding to the tod chunk 
+earth_coords = ... # Get coords of the Earth at the time corresponding to the tod chunk 
+dirbe_freq = 974    # GHz
+dirbe_nside = 128
+
+timestream = model.get_time_ordered_emission(
+    nside=dirbe_nside,
+    freq=dirbe_freq,
+    pixels=dirbe_pixel_timestream,
+    observer_coordinates=dirbe_coords,
+    earth_coordinates=earth_coords
+)
+
+plt.plot(timestream)
 ```
-![plot](imgs/zodi_planck_weighted.png)
+![plot](imgs/timestream.png)
 
-This simulation closely resembles map making in the time-ordered domain, with
-the hit maps playing a significant role on the outputted emission due to the
-motion of Earth through the interplanetary dust.
 
-The hit maps used in the above example was somewhat arbitrarily chosen (stripes
-of 10 degrees perpendicular to the ecliptic).
+**Binned time-ordered emission:** By setting the optional `bin` parameter to `True`, the emission is binned into a map which we can visualize as follows:
 
-## Interplanetary dust models
-Zodipy uses the [Kelsall et al.
-(1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract)
-Interplanetary dust model. The line-of-sight integrals are computed using the
-definition in [Planck 2013 results. XIV. Zodiacal
-emission](https://arxiv.org/abs/1303.5074). During the Planck analysis, three
-different sets of emissivities were fit to describe the emission. These can be
-selected by providing the keyword argument `model` to the `Zodi` object:
 ```python
-import zodipy
 
-zodi = zodipy.Zodi(model='planck 2013')
+# Get three chunks each corresponding to a day of observation
+pixel_chunks = [...]
+dirbe_coords = [...]
+earth_coords = [...]
+
+# Initialize empty emission and hit maps array
+emission = np.zeros(hp.nside2npix(nside))
+hits_map = np.zeros(hp.nside2npix(nside))   
+    
+    # Loop over tod chunks
+    for pixels, dirbe_coords, earth_coords in zip(pixel_chunks, dirbe_coords, earth_coords)):
+        
+        # We construct the total hits map over all chunks so that we can
+        # normalize the output map
+        unique_pixels, counts = np.unique(pixels, return_counts=True)
+        hits_map[unique_pixels] += counts
+
+        emission += model.get_time_ordered_emission(
+            freq=freq,
+            nside=nside,
+            pixels=pixels,
+            observer_coordinates=dirbe_coords,
+            earth_coordinates=earth_coords,
+            bin=True,
+        )
+
+emission /= hits_map
+
+hp.mollview(emission, norm="hist", coord=["E", "G"])
 ```
-The available models are 'planck 2013', 'planck 2015', and 'planck 2018'. The
-default is the 2018 model. Note that selecting the 2013 model will include the
-Circumsolar and Earth-trailing components, which were left out in the 2015 and
-2018 Planck analyses.
+![plot](imgs/binned.png)
