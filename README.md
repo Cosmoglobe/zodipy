@@ -1,5 +1,5 @@
 
-<img src="imgs/zodipy.png" width="450">
+<img src="imgs/zodipy_logo.png" width="350">
 
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
@@ -15,16 +15,17 @@ simulated emission in a timestream, or at an instant in time.
 ![plot](imgs/zodi_default.png)
 
 ## Installing
-Zodipy is available at PyPI and can be installed with `pip install zodipy`
+Zodipy is available at PyPI and can be installed with ``pip install zodipy``.
 
 ## Features
 The full set of features and use-cases will be documentated in the nearby future.
 
-**Initializing a Interplantery Dust Model:** We start by selecting which Interplanetary Dust Model to use. Currently, the implemented options are the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) model with or without the various emissivity fits from the Planck collaboration.
+**Initializing an Interplantery Dust Model:** We start by selecting which Interplanetary Dust Model to use. Currently, the implemented options are the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) model with or without the various emissivity fits from the Planck collaboration.
 ```python
 import zodipy
 
-model = zodipy.InterplanetaryDustModel(model="Planck18")  # Other options: "K98", "Planck13", "Planck15"
+# Other options for models are "K98", "Planck13", "Planck15"
+model = zodipy.InterplanetaryDustModel(model="Planck18")
 ```
 
 **Instantaneous emission:** By obtaining the coordinates of an observer through the JPL Horizons API, we can simulate the full sky at an instant in time as follows:
@@ -32,7 +33,12 @@ model = zodipy.InterplanetaryDustModel(model="Planck18")  # Other options: "K98"
 import healpy as hp
 
 epoch = 59215  # 2010-01-01 in Modified Julian dates
-emission = model.get_instantaneous_emission(nside=256, freq=800, observer="Planck", epochs=epoch)
+emission = model.get_instantaneous_emission(
+    nside=256, 
+    freq=800, 
+    observer="Planck", 
+    epochs=epoch
+)
 
 hp.mollview(emission, norm="hist", coord=["E", "G"])
 ```
@@ -75,7 +81,7 @@ plt.plot(timestream)
 
 ```python
 
-# Get three chunks each corresponding to a day of observation
+# Get three tod chunks, each corresponding to a day of observation
 pixel_chunks = [...]
 dirbe_coords = [...]
 earth_coords = [...]
