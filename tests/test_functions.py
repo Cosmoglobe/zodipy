@@ -10,7 +10,7 @@ TEMPERATURE_ARRAY = np.array([31,45,53])
 R = 3
 R_ARRAY = np.array([4, 5.3, 6])
 DELTA = 0.324
-FREQUENCY = 549
+FREQUENCY = 549 * 1e9
 
 
 def test_blackbody_emission_value():

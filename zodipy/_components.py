@@ -155,7 +155,7 @@ class Component(ABC):
         )
 
         X_earth_prime = X_earth - X_component[0]
-        θ_prime = np.arctan2(X_prime[1], X_prime[2]) - np.arctan2(
+        θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
             X_earth_prime[1], X_earth_prime[0]
         )
 
@@ -214,8 +214,8 @@ class Component(ABC):
             Z_prime=Z_prime,
             θ_prime=θ_prime,
         )
-        temperature = interplanetary_temperature(R_helio)
-        emission = blackbody_emission(temperature, freq)
+        temperature = interplanetary_temperature(R=R_helio)
+        emission = blackbody_emission(T=temperature, ν=freq)
 
         return emission * density
 
@@ -259,7 +259,7 @@ class Cloud(Component):
         g = np.zeros_like(ζ)
 
         condition = ζ < μ
-        g[condition] = ζ[condition] ** 2 / 2 * μ
+        g[condition] = ζ[condition] ** 2 / (2 * μ)
         g[~condition] = ζ[~condition] - (μ / 2)
 
         return self.n_0 * R_prime ** -self.α * np.exp(-self.β * g * self.γ)
