@@ -1,11 +1,13 @@
+import astropy.units as u
+
 from zodipy._component_labels import ComponentLabel
 from zodipy._emissivities import Emissivity
 
 
-FREQUENCIES_PLANCK = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0)
+FREQUENCIES_PLANCK = [100.0, 143.0, 217.0, 353.0, 545.0, 857.0] * u.GHz
 
 PLANCK_2013 = Emissivity(
-    frequencies=FREQUENCIES_PLANCK,
+    spectrum=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
         ComponentLabel.BAND1: (1.129, 1.463, 2.024, 2.035, 2.235, 1.777),
@@ -16,7 +18,7 @@ PLANCK_2013 = Emissivity(
     },
 )
 PLANCK_2015 = Emissivity(
-    frequencies=FREQUENCIES_PLANCK,
+    spectrum=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.012, 0.022, 0.051, 0.106, 0.167, 0.256),
         ComponentLabel.BAND1: (1.02, 1.23, 1.30, 1.58, 1.74, 2.06),
@@ -25,7 +27,7 @@ PLANCK_2015 = Emissivity(
     },
 )
 PLANCK_2018 = Emissivity(
-    frequencies=FREQUENCIES_PLANCK,
+    spectrum=FREQUENCIES_PLANCK,
     components={
         ComponentLabel.CLOUD: (0.018, 0.020, 0.042, 0.082, 0.179, 0.304),
         ComponentLabel.BAND1: (0.54, 1.00, 1.11, 1.52, 1.47, 1.58),

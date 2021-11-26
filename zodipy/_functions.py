@@ -1,19 +1,21 @@
 import astropy.constants as const
 import numpy as np
 
-DELTA = 0.4668626
+δ_K98 = 0.4668626
 T_0 = 286
 
+h = const.h.value
+c = const.c.value
+k_B = const.k_B.value
 
-def blackbody_emission(T: np.ndarray, freq: float) -> np.ndarray:
-    """Returns the blackbody emission.
 
-    Assumes the frequency to be in units of GHz.
+def blackbody_emission(T: np.ndarray, ν: float) -> np.ndarray:
+    """Returns the blackbody emission for a temperature T and frequency ν.
 
     Parameters
     ----------
-    freq
-        Frequency in GHz.
+    ν
+        Frequency in Hz.
     T
         Temperature of the blackbody in Kelvin.
 
@@ -22,15 +24,14 @@ def blackbody_emission(T: np.ndarray, freq: float) -> np.ndarray:
         Blackbody emission in units of W / m^2 Hz sr.
     """
 
-    freq *= 1e9
-    term1 = (2 * const.h.value * freq ** 3) / const.c.value ** 2
-    term2 = np.expm1((const.h.value * freq) / (const.k_B.value * T))
+    term1 = (2 * h * ν ** 3) / c ** 2
+    term2 = np.expm1((h * ν) / (k_B * T))
 
     return term1 / term2
 
 
 def interplanetary_temperature(
-    R: np.ndarray, T_0: float = T_0, delta: float = DELTA
+    R: np.ndarray, T_0: float = T_0, δ: float = δ_K98
 ) -> np.ndarray:
     """Returns the interplanetary temperature as a function of radius.
 
@@ -40,7 +41,7 @@ def interplanetary_temperature(
         Radial distance from the sun in ecliptic coordinates.
     T_0
         Temperature of the solar system at R = 1 AU.
-    delta
+    δ
         Powerlaw index.
 
     Returns
@@ -48,4 +49,4 @@ def interplanetary_temperature(
         Interplanetary temperature.
     """
 
-    return T_0 * R ** -delta
+    return T_0 * R ** -δ

@@ -12,6 +12,12 @@ RADIAL_CUTOFF = 6  # Distance to Jupiter in AU.
 
 @dataclass
 class IntegrationConfigRegistry:
+    """Container for registered integration configs.
+    
+    By integration config, we mean a mapping of discrete points along a 
+    line-of-sight per component.
+    """
+
     registry: Dict[str, Dict[ComponentLabel, np.ndarray]] = field(default_factory=dict)
 
     def register_config(
@@ -19,10 +25,12 @@ class IntegrationConfigRegistry:
         name: str,
         components: Dict[ComponentLabel, np.ndarray],
     ) -> None:
+        """Adds a new integration config to the registry."""
 
         self.registry[name] = components
 
     def get_config(self, name: str) -> Dict[ComponentLabel, np.ndarray]:
+        """Returns an integration config from the registry."""
 
         if name not in self.registry:
             raise ModuleNotFoundError(
@@ -37,7 +45,7 @@ integration_config_registry = IntegrationConfigRegistry()
 integration_config_registry.register_config(
     name="default",
     components={
-        ComponentLabel.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 125),
+        ComponentLabel.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 155),
         ComponentLabel.BAND1: np.linspace(EPS, RADIAL_CUTOFF, 50),
         ComponentLabel.BAND2: np.linspace(EPS, RADIAL_CUTOFF, 50),
         ComponentLabel.BAND3: np.linspace(EPS, RADIAL_CUTOFF, 50),
@@ -47,3 +55,4 @@ integration_config_registry.register_config(
 )
 
 DEFAULT_INTEGRATION_CONFIG = integration_config_registry.get_config("default")
+

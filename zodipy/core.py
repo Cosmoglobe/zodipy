@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Union
 
 import numpy as np
+import astropy.units as u
 
 from zodipy._coordinates import to_frame, get_target_coordinates, EpochsType
 from zodipy._emissivities import get_emissivities
@@ -11,7 +12,7 @@ from zodipy.models import model_registry
 
 class InterplanetaryDustModel:
     """The Zodipy simulation interface.
-    
+
     By default, the Interplanetary Dust Model used by Zodipy is the
     Kelsall et al. (1998) Interplanetary Dust Model, which includes
     five Zodiacal components:
@@ -28,6 +29,8 @@ class InterplanetaryDustModel:
         - Planck13 (all five Kelsall components + emissivity fits for each)
         - Planck15 (cloud + bands + new emissivity fits)
         - Planck18 (cloud + bands + the latest emissivity fits)
+    NOTE: These alternative models can only be evaluated within the frequency
+    range covered by the Planck HFI Bands.
 
     Custom IPD models (models consisting of a set of Zodiacal Components
     with custom parameters and emissivities) needs to be registered before
@@ -49,10 +52,12 @@ class InterplanetaryDustModel:
             line_of_sight for line_of_sight in integration_config.values()
         ]
 
+    @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
     def get_instantaneous_emission(
         self,
+        freq_or_wavelength: u.Quantity,
         nside: int,
-        freq: float,
+        *,
         observer: str = "L2",
         epochs: Optional[EpochsType] = None,
         coord: str = "E",
@@ -75,10 +80,10 @@ class InterplanetaryDustModel:
 
         Parameters
         ----------
+        freq_or_wavelength
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
         nside
             HEALPIX map resolution parameter.
-        freq
-            Frequency at which to evaluate the Zodiacal emission in units of GHz.
         observer
             The observer. Defaults to 'L2'.
         epochs
@@ -108,11 +113,12 @@ class InterplanetaryDustModel:
             earth_coordinates = np.zeros(3)
 
         emissivities = get_emissivities(
-            freq=freq,
+            ν_or_λ=freq_or_wavelength,
             emissivity=self.model.emissivities,
             components=list(self.model.components.keys()),
         )
 
+        freq = freq_or_wavelength.to("Hz", equivalencies=u.spectral()).value
         emission = instantaneous_emission(
             nside=nside,
             freq=freq,
@@ -132,10 +138,12 @@ class InterplanetaryDustModel:
             comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
         }
 
+    @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
     def get_time_ordered_emission(
         self,
+        freq_or_wavelength: u.Quantity,
         nside: int,
-        freq: float,
+        *,
         pixels: np.ndarray,
         observer_coordinates: np.ndarray,
         earth_coordinates: Optional[np.ndarray] = None,
@@ -155,11 +163,10 @@ class InterplanetaryDustModel:
 
         Parameters
         ----------
+        freq_or_wavelength
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
         nside
             HEALPIX map resolution parameter.
-        freq
-            Frequency at which to evaluate the Zodiacal emission in units of
-            GHz.
         pixels
             Chunk of time-ordered pixels corresponding to a parts of a scanning
             strategy.
@@ -185,16 +192,17 @@ class InterplanetaryDustModel:
         """
 
         # If no earth_coordinates are specified, we assume that the earth and
-        # the observer coordinates are set to the same. 
+        # the observer coordinates are set to the same.
         if earth_coordinates is None:
             earth_coordinates = observer_coordinates
 
         emissivities = get_emissivities(
-            freq=freq,
+            ν_or_λ=freq_or_wavelength,
             emissivity=self.model.emissivities,
             components=list(self.model.components.keys()),
         )
 
+        freq = freq_or_wavelength.to("Hz", equivalencies=u.spectral()).value
         emission = time_ordered_emission(
             nside=nside,
             freq=freq,
@@ -213,7 +221,6 @@ class InterplanetaryDustModel:
         return {
             comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
         }
-
 
     def __str__(self) -> str:
         """String representation of the InterplanetaryDustModel."""

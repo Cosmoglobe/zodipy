@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
+import astropy.units as u
 
 from zodipy._component_labels import ComponentLabel
 
@@ -10,18 +11,18 @@ from zodipy._component_labels import ComponentLabel
 class Emissivity:
     """Emissivity parameters for a Zodiacal component."""
 
-    frequencies: Sequence[float]
+    spectrum: u.Quantity
     components: Dict[ComponentLabel, Sequence[float]]
 
-    def __call__(self, component: ComponentLabel, freq: float) -> float:
+    def __call__(self, component: ComponentLabel, ν_or_λ: u.Quantity) -> float:
         """Returns the interpolated emissivity given a frequency.
 
         Parameters
         ----------
         component
             Component label.
-        freq
-            Frequency at which to evaluate the Zodiacal emission.
+        ν_or_λ
+            Frequency or wavelength at which to to interpolate in the emissivities.
 
         Returns
         -------
@@ -29,22 +30,24 @@ class Emissivity:
             Interpolated emissivity scaling factor.
         """
 
-        if not self.frequencies[0] <= freq <= self.frequencies[-1]:
+        ν_or_λ = ν_or_λ.to(self.spectrum.unit, equivalencies=u.spectral())
+
+        if not self.spectrum[0] <= ν_or_λ <= self.spectrum[-1]:
             raise ValueError(f"Frequency is out of range")
 
-        emissivity = np.interp(freq, self.frequencies, self.components[component])
+        emissivity = np.interp(ν_or_λ, self.spectrum, self.components[component])
 
         return emissivity
 
 
 def get_emissivities(
-    freq: float,
+    ν_or_λ: u.Quantity,
     emissivity: Optional[Emissivity],
     components: List[ComponentLabel],
 ) -> List[float]:
     """Returns a list of interpolated emissivities for each component."""
 
     if emissivity is not None:
-        return [emissivity(component, freq) for component in components]
+        return [emissivity(component, ν_or_λ) for component in components]
 
     return [1.0 for _ in components]

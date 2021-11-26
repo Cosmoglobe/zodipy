@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional
 
 from zodipy._components import Component
 from zodipy._component_labels import ComponentLabel, LABEL_TO_CLASS
 from zodipy._emissivities import Emissivity
-from zodipy._exceptions import ComponentNotImplemented
 
 
 class IPDModel:
