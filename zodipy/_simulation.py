@@ -13,13 +13,14 @@ def instantaneous_emission(
     components: List[Component],
     emissivities: List[float],
     line_of_sights: List[np.ndarray],
-    observer_coords: np.ndarray,
-    earth_coords: np.ndarray,
+    observer_positions: np.ndarray,
+    earth_positions: np.ndarray,
+    coord_out: str,
 ) -> np.ndarray:
     """Returns the simulated instantaneous emission.
 
     The emission is that seen by an observer at an instant at a single time
-    or as the average of multiple times if several observer and Earth 
+    or as the average of multiple times if several observer and Earth
     coordinates are provided.
 
     Parameters:
@@ -34,26 +35,32 @@ def instantaneous_emission(
     emissivities:
         Sequency of emissivities, one for each component, corresponding to the
         frequency of `freq`.
-    observer_coords
-        Heliocentric coordinates of the observer.
-    earth_coords
-        Heliocentric coordinates of the Earth.
+    observer_positions
+        A sequence of (or a single) heliocentric positions of the observer.
+    earth_positions
+        A sequence of (or a single) heliocentric positions of the Earth.
+    coord_out
+        Coordinate frame of the output map.
     """
 
     npix = hp.nside2npix(nside)
-    unit_vectors = np.asarray(hp.pix2vec(nside, np.arange(npix)))
-
+    unit_vectors = _get_unit_vectors(
+        nside=nside,
+        pixels=np.arange(npix),
+        coord_out=coord_out,
+    )
     emission = np.zeros((len(components), npix))
-    for obs_pos, earth_pos in zip(
-        observer_coords,
-        earth_coords,
+
+    for observer_position, earth_position in zip(
+        observer_positions,
+        earth_positions,
     ):
         for idx, component in enumerate(components):
             integrated_comp_emission = line_of_sight_integrate(
                 line_of_sight=line_of_sights[idx],
                 get_emission_func=component.get_emission,
-                observer_coordinates=obs_pos,
-                earth_coordinates=earth_pos,
+                observer_position=observer_position,
+                earth_position=earth_position,
                 unit_vectors=unit_vectors,
                 freq=freq,
             )
@@ -69,10 +76,11 @@ def time_ordered_emission(
     components: List[Component],
     emissivities: List[float],
     line_of_sights: List[np.ndarray],
-    observer_coordinates: np.ndarray,
-    earth_coordinates: np.ndarray,
+    observer_position: np.ndarray,
+    earth_position: np.ndarray,
     pixel_chunk: np.ndarray,
-    bin: bool = False,
+    bin: bool,
+    coord_out: str,
 ) -> np.ndarray:
     """Simulates and returns the Zodiacal emission timestream.
 
@@ -88,13 +96,15 @@ def time_ordered_emission(
     emissivities:
         Sequency of emissivities, one for each component, corresponding to the
         frequency of `freq`.
-    observer_coords
-        Heliocentric coordinates of the observer.
-    earth_coords
-        Heliocentric coordinates of the Earth.
+    observer_position
+        Heliocentric position of the observer.
+    earth_position
+        Heliocentric position of the Earth.
     bin
         If True, return a binned HEALPIX map of the emission. If False, the
         timestream is returned.
+    coord_out
+        Coordinate frame of the output map.
 
     Returns
     -------
@@ -104,15 +114,19 @@ def time_ordered_emission(
 
     if bin:
         pixels, counts = np.unique(pixel_chunk, return_counts=True)
-        unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
+        unit_vectors = _get_unit_vectors(
+            nside=nside,
+            pixels=pixels,
+            coord_out=coord_out,
+        )
         emission = np.zeros((len(components), hp.nside2npix(nside)))
 
         for idx, component in enumerate(components):
             integrated_comp_emission = line_of_sight_integrate(
                 line_of_sight=line_of_sights[idx],
                 get_emission_func=component.get_emission,
-                observer_coordinates=observer_coordinates,
-                earth_coordinates=earth_coordinates,
+                observer_position=observer_position,
+                earth_position=earth_position,
                 unit_vectors=unit_vectors,
                 freq=freq,
             )
@@ -123,15 +137,19 @@ def time_ordered_emission(
         return emission * 1e20
 
     pixels, indicies = np.unique(pixel_chunk, return_inverse=True)
-    unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
+    unit_vectors = _get_unit_vectors(
+        nside=nside,
+        pixels=pixels,
+        coord_out=coord_out,
+    )
     time_stream = np.zeros((len(components), len(pixel_chunk)))
 
     for idx, component in enumerate(components):
         integrated_comp_emission = line_of_sight_integrate(
             line_of_sight=line_of_sights[idx],
             get_emission_func=component.get_emission,
-            observer_coordinates=observer_coordinates,
-            earth_coordinates=earth_coordinates,
+            observer_position=observer_position,
+            earth_position=earth_position,
             unit_vectors=unit_vectors,
             freq=freq,
         )
@@ -139,3 +157,18 @@ def time_ordered_emission(
         time_stream[idx] = integrated_comp_emission[indicies] * emissivities[idx]
 
     return time_stream * 1e20
+
+
+def _get_unit_vectors(nside: int, pixels: np.ndarray, coord_out: str) -> np.ndarray:
+    """Returns the unit vectors on a HEALPIX map given a requested coordinate system.
+
+    If the requested output system is not ecliptic ("E"), we need to rotate the
+    vectors to ecliptic before evaluating the model.
+    """
+
+    unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
+    if coord_out != "E":
+        r = hp.rotator.Rotator(coord=[coord_out, "E"])
+        unit_vectors = r(unit_vectors)
+
+    return np.asarray(unit_vectors)

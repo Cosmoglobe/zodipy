@@ -7,8 +7,8 @@ class ZodiacalComponentEmissionFunc(Protocol):
     def __call__(
         self,
         distance_to_shell: np.ndarray,
-        observer_coordinates: np.ndarray,
-        earth_coordinates: np.ndarray,
+        observer_position: np.ndarray,
+        earth_position: np.ndarray,
         unit_vectors: np.ndarray,
         freq: float,
     ) -> np.ndarray:
@@ -18,8 +18,8 @@ class ZodiacalComponentEmissionFunc(Protocol):
 def line_of_sight_integrate(
     line_of_sight: np.ndarray,
     get_emission_func: ZodiacalComponentEmissionFunc,
-    observer_coordinates: np.ndarray,
-    earth_coordinates: np.ndarray,
+    observer_position: np.ndarray,
+    earth_position: np.ndarray,
     unit_vectors: np.ndarray,
     freq: float,
 ) -> np.ndarray:
@@ -31,12 +31,12 @@ def line_of_sight_integrate(
         Line-of-sight array.
     get_emission_func
         The `get_emission` function of the component.
-    observer_coordinates
-        The heliocentric coordinates of the observer.
-    earth_cooridnates
-        The heliocentric coordinates of the Earth.
+    observer_position
+        The heliocentric position of the observer.
+    earth_position
+        The heliocentric position of the Earth.
     unit_vectors
-        Unit vectors pointing to each pixel in the HEALPIX map.
+        Heliocentric Unit vectors pointing to each pixel in the HEALPIX map.
     freq
         Frequency at which to evaluate to Zodiacal Emission.
 
@@ -49,8 +49,8 @@ def line_of_sight_integrate(
 
     emission_previous = get_emission_func(
         distance_to_shell=line_of_sight[0],
-        observer_coordinates=observer_coordinates,
-        earth_coordinates=earth_coordinates,
+        observer_position=observer_position,
+        earth_position=earth_position,
         unit_vectors=unit_vectors,
         freq=freq,
     )
@@ -60,8 +60,8 @@ def line_of_sight_integrate(
     for r, dr in zip(line_of_sight, dR):
         emission_current = get_emission_func(
             distance_to_shell=r,
-            observer_coordinates=observer_coordinates,
-            earth_coordinates=earth_coordinates,
+            observer_position=observer_position,
+            earth_position=earth_position,
             unit_vectors=unit_vectors,
             freq=freq,
         )

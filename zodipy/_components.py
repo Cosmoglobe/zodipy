@@ -164,8 +164,8 @@ class Component(ABC):
     def get_emission(
         self,
         distance_to_shell: np.ndarray,
-        observer_coordinates: np.ndarray,
-        earth_coordinates: np.ndarray,
+        observer_position: np.ndarray,
+        earth_position: np.ndarray,
         unit_vectors: np.ndarray,
         freq: float,
     ) -> np.ndarray:
@@ -179,15 +179,15 @@ class Component(ABC):
         distance_to_shell
             Distance R to a shell centered on the observer at which we want
             to evaluate the Zodiacal emission at.
-        observer_coordinates
-            Vector containing the coordinates of the observer.
+        observer_position
+            Vector containing the heliocentric position of the observer.
             The shape is (3,).
-        earth_coordinates
-            Vector containing the coordinates of the Earth.
+        earth_position
+            Vector containing the heliocentric position of the Earth.
             The shape is (3,).
         unit_vectors
-            Array containing the unit vectors pointing to each pixel in
-            the HEALPIX map. The shape is (3, `NPIX`).
+            Array containing the heliocentric unit vectors pointing to each 
+            pixel in the HEALPIX map. The shape is (3, `NPIX`).
         freq
             Frequency at which to evaluate the emitted emission.
 
@@ -198,12 +198,12 @@ class Component(ABC):
             distance R from the observer. The shape is (len(R), `NPIX`).
         """
 
-        observer_coordinates = np.expand_dims(observer_coordinates, axis=1)
+        observer_position = np.expand_dims(observer_position, axis=1)
 
         R_helio, R_prime, Z_prime, θ_prime = self.get_coordinates(
             R_comp=distance_to_shell,
-            X_observer=observer_coordinates,
-            X_earth=earth_coordinates,
+            X_observer=observer_position,
+            X_earth=earth_position,
             X_unit=unit_vectors,
             X_component=self.X_component,
             Ω_component=self.Ω,

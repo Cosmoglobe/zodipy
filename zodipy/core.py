@@ -3,7 +3,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 import astropy.units as u
 
-from zodipy._coordinates import to_frame, get_target_coordinates, EpochsType
+from zodipy._astroquery import query_target_positions, EpochsType
 from zodipy._emissivities import get_emissivities
 from zodipy._integration_config import integration_config_registry
 from zodipy._simulation import instantaneous_emission, time_ordered_emission
@@ -60,8 +60,8 @@ class InterplanetaryDustModel:
         *,
         observer: str = "L2",
         epochs: Optional[EpochsType] = None,
-        coord: str = "E",
         return_comps: bool = False,
+        coord_out: str = "E",
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
 
@@ -93,12 +93,12 @@ class InterplanetaryDustModel:
             {'start':'YYYY-MM-DD [HH:MM:SS]', 'stop':'YYYY-MM-DD [HH:MM:SS]',
             'step':'n[y|d|h|m|s]'}. If no epochs are provided, the current time
             is used in UTC.
-        coord
-            Coordinate frame of the output map. Defaults to 'E', which is
-            ecliptic coordinates.
         return_comps
             If True, the emission of each component in the model is
             returned individually in a dictionary. Defaults to False.
+        coord_out
+            Coordinate frame of the output map. Defaults to 'E', which is
+            ecliptic coordinates.
 
         Returns
         -------
@@ -106,11 +106,11 @@ class InterplanetaryDustModel:
             Simulated instantaneous Zodiacal emission in units of MJy/sr.
         """
 
-        observer_coordinates = get_target_coordinates(observer, epochs)
+        observer_positions = query_target_positions(observer, epochs)
         if self.model.includes_earth_neighboring_components:
-            earth_coordinates = get_target_coordinates("earth", epochs)
+            earth_positions = query_target_positions("earth", epochs)
         else:
-            earth_coordinates = np.zeros(3)
+            earth_positions = np.zeros(3)
 
         emissivities = get_emissivities(
             ν_or_λ=freq_or_wavelength,
@@ -124,12 +124,11 @@ class InterplanetaryDustModel:
             freq=freq,
             components=list(self.model.components.values()),
             emissivities=emissivities,
-            observer_coords=observer_coordinates,
-            earth_coords=earth_coordinates,
+            observer_positions=observer_positions,
+            earth_positions=earth_positions,
             line_of_sights=self.line_of_sights,
+            coord_out=coord_out,
         )
-        if coord != "E":
-            emission = to_frame(emission, coord)
 
         if not return_comps:
             return emission.sum(axis=0)
@@ -145,10 +144,11 @@ class InterplanetaryDustModel:
         nside: int,
         *,
         pixels: np.ndarray,
-        observer_coordinates: np.ndarray,
-        earth_coordinates: Optional[np.ndarray] = None,
+        observer_position: np.ndarray,
+        earth_position: Optional[np.ndarray] = None,
         return_comps: bool = False,
         bin: bool = False,
+        coord_out: str = "E"
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """Simulates and returns the Zodiacal emission timestream [MJy/sr].
 
@@ -170,19 +170,22 @@ class InterplanetaryDustModel:
         pixels
             Chunk of time-ordered pixels corresponding to a parts of a scanning
             strategy.
-        observer_coordinates
-            The heliocentric coordinates with shape (3,) of the observer over
+        observer_position
+            The heliocentric position with shape (3,) of the observer over
             the tod chunk.
-        earth_coordinates
-            The heliocentric coordinates with shape (3,) of the Earth over the
-            tod chunk. Default is None, in which we set the earth_coordinates
-            equal to the observer coordinates.
+        earth_position
+            The heliocentric position with shape (3,) of the Earth over the
+            tod chunk. Default is None, in which we set the earth_position
+            equal to the observer position.
         return_comps
             If True, the emission of each component in the model is
             returned individually in a dictionary. Defaults to False.
         bin
             If True, return a binned HEALPIX map of the emission. If False, the
             timestream is returned.
+        coord_out
+            Coordinate frame of the output map. Defaults to 'E', which is
+            ecliptic coordinates.
 
         Returns
         -------
@@ -193,8 +196,8 @@ class InterplanetaryDustModel:
 
         # If no earth_coordinates are specified, we assume that the earth and
         # the observer coordinates are set to the same.
-        if earth_coordinates is None:
-            earth_coordinates = observer_coordinates
+        if earth_position is None:
+            earth_position = observer_position
 
         emissivities = get_emissivities(
             ν_or_λ=freq_or_wavelength,
@@ -209,10 +212,11 @@ class InterplanetaryDustModel:
             components=list(self.model.components.values()),
             emissivities=emissivities,
             line_of_sights=self.line_of_sights,
-            observer_coordinates=observer_coordinates,
-            earth_coordinates=earth_coordinates,
+            observer_position=observer_position,
+            earth_position=earth_position,
             pixel_chunk=pixels,
             bin=bin,
+            coord_out=coord_out
         )
 
         if not return_comps:
