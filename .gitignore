@@ -21,3 +21,5 @@ _utils.py
 _tabulate.py
 contour.py
 data
+zodi_mask.fits
+zodi_temp.fits

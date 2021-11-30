@@ -77,24 +77,28 @@ plt.plot(timestream)
 ![plot](imgs/timestream.png)
 
 
-**Binned time-ordered emission:** By setting the optional `bin` parameter to `True`, the emission is binned into a map which we can visualize as follows:
+**Binned time-ordered emission:** By setting the optional `bin` parameter to `True`, the emission is binned into a map HEALPIX map. In the following, we compare *Zodipy* simulations with the data observed by DIRBE.
 
 ```python
 
-# Get three tod chunks, each corresponding to a day of observation
+# We get the DIRBE time-ordered pixels and the corresponding position of 
+# DIRBE and the Earth for each chunk (we assume constant position for 
+# each chunk).
 pixel_chunks = [...]
 dirbe_coords = [...]
 earth_coords = [...]
 
-# Initialize empty emission and hit maps array
 emission = np.zeros(hp.nside2npix(nside))
 hits_map = np.zeros(hp.nside2npix(nside))   
     
-    # Loop over tod chunks
-    for pixels, dirbe_coords, earth_coords in zip(pixel_chunks, dirbe_coords, earth_coords)):
+    # Loop over chunks.
+    for day, (pixels, dirbe_coords, earth_coords) in enumerate(
+        zip(pixel_chunks, dirbe_coords, earth_coords)),
+        start=1
+    ):
         
-        # We construct the total hits map over all chunks so that we can
-        # normalize the output map
+        # Here we extract each unique pixel observed in the chunk and 
+        # feed it to Zodipy, as well as use it to build the hits map.
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         hits_map[unique_pixels] += counts
 
@@ -107,8 +111,12 @@ hits_map = np.zeros(hp.nside2npix(nside))
             bin=True,
         )
 
-emission /= hits_map
-
-hp.mollview(emission, norm="hist", coord=["E", "G"])
+        # We make a plot for each week.
+        if day % 7 == 0:
+            zodi_emission /= hits_map
+            hp.mollview(zodi_emission)
 ```
-![plot](imgs/binned.png)
+
+
+![plot](imgs/dirbe.gif) | ![plot](imgs/zodipy.gif)
+
