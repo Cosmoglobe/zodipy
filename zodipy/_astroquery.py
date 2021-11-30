@@ -4,8 +4,6 @@ from astroquery.jplhorizons import Horizons
 import numpy as np
 
 
-EpochsType = Optional[Union[float, Sequence[float], Dict[str, str]]]
-
 TARGET_MAPPINGS = {
     "planck": "Planck",
     "wmap": "WMAP",
@@ -20,14 +18,15 @@ TARGET_MAPPINGS = {
 
 
 def query_target_positions(
-    target: str, epochs: Optional[EpochsType] = None
+    target: str,
+    epochs: Optional[Union[float, Sequence[float], Dict[str, str]]] = None,
 ) -> np.ndarray:
-    """Returns the heliocentric positions of the target given an epoch.
+    """Returns the heliocentric cartesian positions of the target given some epoch.
 
     Parameters
     ----------
     target
-        Name of the target body.
+        Name of the target body. Must be a valid target in the JPL Horizons API.
     epochs
         Either a list of epochs in JD or MJD format or a dictionary
         defining a range of times and dates; the range dictionary has to
@@ -37,12 +36,11 @@ def query_target_positions(
 
     Returns
     -------
-    positions
-        Heliocentric positions of the target.
+        Heliocentric cartesian positions of the target.
     """
 
-    if target in TARGET_MAPPINGS:
-        target = TARGET_MAPPINGS[target.lower()]
+    if (target_lower := target.lower()) in TARGET_MAPPINGS:
+        target = TARGET_MAPPINGS[target_lower]
 
     if epochs is None:
         epochs = 2459215.50000  # 01-01-2021
@@ -58,6 +56,4 @@ def query_target_positions(
     y = R * np.cos(lat) * np.sin(lon)
     z = R * np.sin(lat)
 
-    positions = np.stack((x, y, z), axis=1)
-
-    return positions
+    return np.stack((x, y, z), axis=1)
