@@ -116,7 +116,6 @@ hits_map = np.zeros(hp.nside2npix(nside))
             zodi_emission /= hits_map
             hp.mollview(zodi_emission)
 ```
-
-
-![plot](imgs/dirbe.gif) | ![plot](imgs/zodipy.gif)
-
+| DIRBE TOD | Zodipy TOD Simulation|
+| :---: | :---: |
+|![plot](imgs/dirbe.gif) | ![plot](imgs/zodipy.gif)|
