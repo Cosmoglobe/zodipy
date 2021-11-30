@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import radians, sin, cos
 from math import pi as π
-from typing import Tuple
+from typing import Tuple, Union
 
 from numba import njit
 import numpy as np
@@ -12,25 +12,22 @@ from zodipy._functions import interplanetary_temperature, blackbody_emission
 
 @dataclass
 class Component(ABC):
-    """Base class for an interplanetary dust component.
+    """Base class for an Interplanetary Dust Component.
 
-    This class contains a method that gets the coordinates of a shell
-    around an observer in the reference frame of the component
-    (prime coordinates).
-
-    Any component that inherits from the class must implement a
-    `get_density` method.
+    This class defines a method for getting the coordinates to a shell at
+    distance R around an observer in the primed coordinate system
+    (component-centric ecliptic cartesian coordinates).
 
     Attributes
     ----------
     x_0
-        x offset from the Sun in ecliptic coordinates.
+        x-offset from the Sun in helliocentric ecliptic cartesian coordinates.
     y_0
-        y offset from the Sun in ecliptic coordinates.
+        y-offset from the Sun in helliocentric ecliptic cartesian coordinates.
     z_0
-        z offset from the Sun in ecliptic coordinates.
+        z-offset from the Sun in helliocentric ecliptic cartesian coordinates.
     i
-        Inclination [deg].
+        Inclination with respect to the ecliptic plane [deg].
     Ω
         Ascending node [deg].
     """
@@ -55,29 +52,26 @@ class Component(ABC):
         Parameters
         ----------
         R_prime
-            Array containing the distance to the coordinate where the
-            density is being evaluated per pixel in the prime coordinate
-            system. The shape is (`NPIX`).
+            Array of distances corresponding to discrete points along a
+            line-of-sight for a shell surrounding the observer in the primed
+            coordinates.
         Z_prime
-            Array containing the height above the x-y-plane in the prime
-            coordinate system of the coordinate in R_prime. The shape is
-            (`NPIX`).
+            Heights above the midplane in primed coordinates of a component
+            corresponding to the distances in `R_prime`.
         θ_prime
-            Array containing the heliocentric ecliptic longitude of the
-            coords in R_prime releative to the longitude of Earth. The
-            shape is (`NPIX`).
+            Relative mean lognitude between the discrete points along the
+            line-of-sight describe by `R_prime` and the Earth.
 
         Returns
         -------
-            Array containing the density of the component at a shell around
-            the observer given by R_prime, Z_prime, and θ. The shape is
-            (`NPIX`)
+            Density of the component at the coordinates given by R_prime,
+            Z_prime, and θ_prime.
         """
 
     @staticmethod
     @njit
     def get_coordinates(
-        R_comp: np.ndarray,
+        R_comp: Union[float, np.ndarray],
         X_observer: np.ndarray,
         X_earth: np.ndarray,
         X_unit: np.ndarray,
@@ -85,39 +79,30 @@ class Component(ABC):
         Ω_component: float,
         i_component: float,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Returns the primed coordinates of a component.
+        """Returns a set of coordinates for a component.
 
-        The density of a component is computed in the prime coordinate
-        system, representing a coordinate system where the origin is
-        centered on the component.
-
-        NOTE: If the same line-of-sight vector R is used for all components,
-        then the computation of the heliocentric coordinates X_helio and
-        R_helio could be moved out of this function instead passed as arguments.
-        This would mean that we only compute these `n_LOS` times instead of
-        `n_LOS_comp´ * `n_comps` as we do now. However, we find that using a
-        single line-of-sight vector to be wastefull in the case where we want
-        to evaluate the earth-neighbouring components, which are only valid around
-        ~1 AU.
+        Given a set of heliocentric ecliptic positions in space given by the
+        unit vectors `X_unit` and `R_comp`, we compute the `R_helio`, `R_prime`,
+        `Z_prime`, and `θ_prime` coordinates as seen by and observer whos
+        heliocentric ecliptic coordinates are given by `X_observer`. These are
+        the coordinates required by the Interplanetary Dust Model to evalutate
+        the density of a Zodiacal Component at the given positions.
 
         Parameters
         ----------
         R_comp
             Distance R to a shell centered on the observer at which we want
-            to evaluate the Zodiacal emission at. Different shells are used
-            for each component.
+            to evaluate the Zodiacal emission at.
         X_observer
-            Vector containing the coordinates of the observer.
-            The shape is (3,).
+            Heliocentric ecliptic cartesian coordinates of the observer.
         X_earth
-            Array containing the heliocentric earth cooridnates. The shape
-            is (3,).
+            Heliocentric ecliptic cartesian coordinates of the Earth.
         X_unit
-            Array containing the unit vectors pointing to each pixel in
-            the HEALPIX map. The shape is (3, `NPIX`).
+            Heliocentric ecliptic cartesian unit vectors pointing to each 
+            position in space we that we consider.
         X_component
-            Array containing the heliocentric cooridnates to the center of the
-            component offset by (x0, y0, z0). The shape is (3,).
+            Heliocentric ecliptic cartesian off-set of the component
+            (x_0, y_0, z_0).
         Ω_component
             Ascending node of the component.
         i_component
@@ -126,20 +111,19 @@ class Component(ABC):
         Returns
         -------
         R_helio
-            Array containing the heliocentric distance to the coordinate
-            where the density is evaluated. The shape is (`NPIX`).
+            Array of distances corresponding to discrete points along a
+            line-of-sight for a shell surrounding the observer in heliocentric
+            ecliptic coordinates.
         R_prime
-            Array containing the distance to the coordinate where the
-            density is being evaluated per pixel in the prime coordinate
-            system. The shape is (`NPIX`).
+            Array of distances corresponding to discrete points along a
+            line-of-sight for a shell surrounding the observer in the primed
+            coordinates.
         Z_prime
-            Array containing the height above the x-y-plane in the prime
-            coordinate system of the coordinate in R_prime. The shape is
-            (`NPIX`).
+            Heights above the midplane in primed coordinates of a component
+            corresponding to the distances in `R_prime`.
         θ_prime
-            Array containing the heliocentric ecliptic longitude of the
-            coords in R_prime releative to the longitude of Earth. The
-            shape is (`NPIX`).
+            Relative mean lognitude between the discrete points along the
+            line-of-sight describe by `R_prime` and the Earth.
         """
 
         X_helio = R_comp * X_unit + X_observer
@@ -163,7 +147,7 @@ class Component(ABC):
 
     def get_emission(
         self,
-        distance_to_shell: np.ndarray,
+        distance_to_shell: Union[float, np.ndarray],
         observer_position: np.ndarray,
         earth_position: np.ndarray,
         unit_vectors: np.ndarray,
@@ -177,29 +161,27 @@ class Component(ABC):
         Parameters
         ----------
         distance_to_shell
-            Distance R to a shell centered on the observer at which we want
-            to evaluate the Zodiacal emission at.
+            Distance R to a shell centered on the observer for which we want
+            to evaluate the Zodiacal emission.
         observer_position
-            Vector containing the heliocentric position of the observer.
-            The shape is (3,).
+            Heliocentric ecliptic cartesian coordinates of the observer.
         earth_position
-            Vector containing the heliocentric position of the Earth.
-            The shape is (3,).
+            Heliocentric ecliptic cartesian coordinates of the Earth.
         unit_vectors
-            Array containing the heliocentric unit vectors pointing to each 
-            pixel in the HEALPIX map. The shape is (3, `NPIX`).
+            Heliocentric ecliptic cartesian unit vectors pointing to each 
+            position in space we that we consider.
         freq
-            Frequency at which to evaluate the emitted emission.
+            Frequency at which to evaluate the Zodiacal emission.
 
         Returns
         -------
         emission
+            Zodiacal emission at
             Array containing the Zodiacal emission emitted from a shell at
             distance R from the observer. The shape is (len(R), `NPIX`).
         """
 
         observer_position = np.expand_dims(observer_position, axis=1)
-
         R_helio, R_prime, Z_prime, θ_prime = self.get_coordinates(
             R_comp=distance_to_shell,
             X_observer=observer_position,
@@ -222,11 +204,11 @@ class Component(ABC):
 
 @dataclass
 class Cloud(Component):
-    """The Zodiacal diffuse cloud component.
+    """The Zodiacal Diffuse Cloud component.
 
-    This is a class representing the diffuse cloud in the K98 IPD model.
-    It provides a method to estimate the density of the diffuse cloud at
-    at a shell around the observer.
+    This class represents the diffuse cloud in the K98 IPD model. It provides a
+    method to estimate the density of the diffuse cloud at a shell around the
+    observer.
 
     Attributes
     ----------
@@ -267,13 +249,13 @@ class Cloud(Component):
 
 @dataclass
 class Band(Component):
-    """The Zodiacal astroidal band component.
+    """The Zodiacal Astroidal Band component.
 
-    This is a class representing the astroidal dust band components in
-    the K98 IPD model. It provides a method to estimate the density of
-    the dust bands at at a shell around the observer.
+    This class represents the Astroidal Dust Band components in the K98 IPD
+    model. It provides a method to estimate the density of the dust bands at a
+    shell around the observer.
 
-    Parameters
+    Attributes
     ----------
     n_0
         Density at 3 AU.
@@ -311,13 +293,13 @@ class Band(Component):
 
 @dataclass
 class Ring(Component):
-    """The Zodiacal circum-solar ring component.
+    """The Zodiacal Circum-solar Ring component.
 
-    This is a class representing the circum-solar ring component in
-    the K98 IPD model. It provides a method to estimate the density of
-    the circum-solar ring at at a shell around the observer.
+    This class represents the Circum-solar Ring component in the K98 IPD model.
+    It provides a method to estimate the density of the Circum-solar Ring at a
+    shell around the observer.
 
-    Parameters
+    Attributes
     ----------
     n_0
         Density at 1 AU.
@@ -348,13 +330,13 @@ class Ring(Component):
 
 @dataclass
 class Feature(Component):
-    """The Zodiacal Earth-trailing feature component.
+    """The Zodiacal Earth-trailing Feature component.
 
-    This is a class representing the Earth-trailing feature component in
-    the K98 IPD model. It provides a method to estimate the density of
-    the Earth-trailing feature at at a shell around the observer.
+    This class represents the Earth-trailing Feature component in the K98 IPD
+    model. It provides a method to estimate the density of the Earth-trailing
+    Feature at a shell around the observer.
 
-    Parameters
+    Attributes
     ----------
     n_0
         Density at 1 AU.

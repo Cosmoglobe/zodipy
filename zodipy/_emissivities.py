@@ -9,7 +9,15 @@ from zodipy._component_labels import ComponentLabel
 
 @dataclass
 class Emissivity:
-    """Emissivity parameters for a Zodiacal component."""
+    """Emissivity parameters for a Zodiacal component.
+
+    Attributes
+    ----------
+    spectrum
+        Frequencies (or wavelengths) corresponding to the emissivity fits.
+    components
+        Dictionary mapping components to the emissivity fits.
+    """
 
     spectrum: u.Quantity
     components: Dict[ComponentLabel, Sequence[float]]

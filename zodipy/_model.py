@@ -8,7 +8,10 @@ from zodipy._emissivities import Emissivity
 
 
 class IPDModel:
-    """An IPD Model, composed of a combination of Zodiacal Components and optionally emissivities."""
+    """An Interplanetary Dust Model.
+
+    An IPDModel is a container for a unique combination of initialized Zodiacal
+    Components and emissivity fits."""
 
     def __init__(
         self,
@@ -16,7 +19,7 @@ class IPDModel:
         parameters: Dict[ComponentLabel, Dict[str, float]],
         emissivities: Optional[Emissivity] = None,
     ) -> None:
-        """Initializes an IPDModel given a set of parameters and optionally emissivities."""
+        """Initializes an IPDModel given a set of parameters and emissivities."""
 
         self.name = name
         self.components: Dict[ComponentLabel, Component] = {}
@@ -28,7 +31,7 @@ class IPDModel:
 
     @property
     def includes_earth_neighboring_components(self) -> bool:
-        """Returns True if the model includes a earth neighboring component."""
+        """Returns True if the model includes an Earth-neighboring component."""
 
         return (
             ComponentLabel.RING in self.components
@@ -39,6 +42,7 @@ class IPDModel:
         """Returns a sky component from the cosmoglobe model."""
 
         return self.components[ComponentLabel(component_name)]
+
 
 @dataclass
 class IPDModelRegistry:

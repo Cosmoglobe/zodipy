@@ -1,9 +1,9 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import astropy.units as u
 
-from zodipy._astroquery import query_target_positions, EpochsType
+from zodipy._astroquery import query_target_positions
 from zodipy._emissivities import get_emissivities
 from zodipy._integration_config import integration_config_registry
 from zodipy._simulation import instantaneous_emission, time_ordered_emission
@@ -13,37 +13,31 @@ from zodipy.models import model_registry
 class InterplanetaryDustModel:
     """The Zodipy simulation interface.
 
-    By default, the Interplanetary Dust Model used by Zodipy is the
-    Kelsall et al. (1998) Interplanetary Dust Model, which includes
-    five Zodiacal components:
+    The Interplanetary Dust Model used by Zodipy is the Kelsall et al. (1998)
+    Interplanetary Dust Model, which includes five (six) Zodiacal components:
         - The Diffuse Cloud (cloud)
         - Three Asteroidal Bands (band1, band2, band3)
-        - The Circumsolar Ring (ring)
-        - The Earth-trailing Feature (feature)
+        - The Circumsolar Ring (ring) + The Earth-trailing Feature (feature)
 
-    The Kelsall model yields the Zodiacal Emission given purely by the
-    parametric model, and does not use the emissivity factors fitted by
-    the Planck Collaboration.
-
-    Other available models are:
+    Optionally, it is possible to scale the K98 emission with component
+    specific emissivities, as done by the Planck Collaboration. This is
+    achieved by specifiying one of the following implemented models:
         - Planck13 (all five Kelsall components + emissivity fits for each)
         - Planck15 (cloud + bands + new emissivity fits)
         - Planck18 (cloud + bands + the latest emissivity fits)
-    NOTE: These alternative models can only be evaluated within the frequency
-    range covered by the Planck HFI Bands.
 
-    Custom IPD models (models consisting of a set of Zodiacal Components
-    with custom parameters and emissivities) needs to be registered before
-    initializing this class by using `zodipy.register_custom_model`.
+    NOTE: No extrapolation is done when using the fitted emissivities, and as
+    such, these models can only be evaluated within the frequency range covered
+    by the Planck HFI Bands for which the emissivities were fitted.
     """
 
     def __init__(self, model: str = "K98") -> None:
-        """Initializes the interface given an interplaneteray dust model.
+        """Initializes the interface given an Interplanetary Dust Model.
 
         Parameters
         ----------
         model
-            The name of a implemented Interplanetary Dust Model.
+            The name of the model to initialize.
         """
 
         self.model = model_registry.get_model(model)
@@ -59,33 +53,39 @@ class InterplanetaryDustModel:
         nside: int,
         *,
         observer: str = "L2",
-        epochs: Optional[EpochsType] = None,
+        epochs: Optional[Union[float, Sequence[float], Dict[str, str]]] = None,
         return_comps: bool = False,
         coord_out: str = "E",
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
 
-        By instantaneous emission we mean the emission observed in an instant
-        in time.
+        By instantaneous emission we mean the emission observed at an instant
+        in time. If multiple epochs are given, the returned emission will be
+        the mean of all simulated instantaneous observations.
 
-        The observer location (and optionally the location of the Earth if
-        either of the Feature or the Ring components are included) are queried
-        from the Horizons JPL ephemerides, given some epoch.
+        The observer location, given by the parameter `observer` (and
+        optionally the location of the Earth if either of the Feature or the
+        Ring components are included in the selected Interplanetary Dust Model)
+        are queried from the Horizons JPL ephemerides, given some epoch defined
+        by the `epochs` parameter.
 
-        NOTE: This function returns the fullsky emission from one coordinate
-        in space. This means that we evaluate line-of-sights looking in towards
-        the inner Solar System where the dust density increases exponentially.
-        These are line-of-sights unlikely to be observed by an actual
-        experiment.
+        NOTE: This function returns the fullsky emission from at a single time.
+        This means that we in the simulation evaluate line-of-sights that
+        sometimes points directly towards the inner Solar System and through
+        the Sun, where the dust density increases exponentially. Such
+        line-of-sights are unlikely to be observed by an actual observer, and
+        as such, the simulated emission will appear very bright in these
+        regions.
 
         Parameters
         ----------
         freq_or_wavelength
             Frequency or wavelength at which to evaluate the Zodiacal emission.
         nside
-            HEALPIX map resolution parameter.
+            HEALPIX map resolution parameter of the returned emission map.
         observer
-            The observer. Defaults to 'L2'.
+            The name of the observer for which we quiery its location given
+            the `epochs` parameter. Defaults to 'L2'.
         epochs
             The observeration times given as a single epoch, or a list of epochs
             in JD or MJD format, or a dictionary defining a range of times and
@@ -94,23 +94,23 @@ class InterplanetaryDustModel:
             'step':'n[y|d|h|m|s]'}. If no epochs are provided, the current time
             is used in UTC.
         return_comps
-            If True, the emission of each component in the model is
-            returned individually in a dictionary. Defaults to False.
+            If True, the emission is returned component-wise in a dictionary.
+            Defaults to False.
         coord_out
-            Coordinate frame of the output map. Defaults to 'E', which is
-            ecliptic coordinates.
+            Coordinate frame of the output map. Defaults to 'E' (heliocentered
+            ecliptic coordinates).
 
         Returns
         -------
         emission
-            Simulated instantaneous Zodiacal emission in units of MJy/sr.
+            Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
         observer_positions = query_target_positions(observer, epochs)
         if self.model.includes_earth_neighboring_components:
             earth_positions = query_target_positions("earth", epochs)
         else:
-            earth_positions = np.zeros(3)
+            earth_positions = observer_positions.copy()
 
         emissivities = get_emissivities(
             ν_or_λ=freq_or_wavelength,
@@ -130,12 +130,13 @@ class InterplanetaryDustModel:
             coord_out=coord_out,
         )
 
-        if not return_comps:
-            return emission.sum(axis=0)
+        if return_comps:
+            return {
+                comp.value: emission[idx]
+                for idx, comp in enumerate(self.model.components)
+            }
 
-        return {
-            comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
-        }
+        return emission.sum(axis=0)
 
     @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
     def get_time_ordered_emission(
@@ -146,56 +147,50 @@ class InterplanetaryDustModel:
         pixels: np.ndarray,
         observer_position: np.ndarray,
         earth_position: Optional[np.ndarray] = None,
-        return_comps: bool = False,
         bin: bool = False,
-        coord_out: str = "E"
+        return_comps: bool = False,
+        coord_out: str = "E",
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Simulates and returns the Zodiacal emission timestream [MJy/sr].
+        """Simulates and returns the Zodiacal emission [MJy/sr] in a timestream.
 
-        Given a timestream of pixels, this function evaluates the Zodiacal
-        Emission given a position in space (`observer_coordinates`), and
-        optionally Earth's coordinates (`earth_coordinates`) if the
-        interplanetary dust model includes either of the Feature or Ring
-        components.
-
-        If the bin parameter is set to True, the timestream is binned into a
-        HEALPIX map instead.
+        Given a sequence of time-ordered pixels, the Zodiacal emission is
+        evaluated from a constant location in space given by the
+        `observer_position`. The `earth_position` is required for Interplanetary
+        Dust models that include the Earth-trailing Feature and Circum-solar
+        Ring components.
 
         Parameters
         ----------
         freq_or_wavelength
             Frequency or wavelength at which to evaluate the Zodiacal emission.
         nside
-            HEALPIX map resolution parameter.
+            HEALPIX map resolution parameter of the returned emission map.
         pixels
-            Chunk of time-ordered pixels corresponding to a parts of a scanning
-            strategy.
+            Sequence of time-ordered pixels.
         observer_position
-            The heliocentric position with shape (3,) of the observer over
-            the tod chunk.
+            The heliocentric ecliptic cartesian position of the observer at 
+            the time of observing the tods.
         earth_position
-            The heliocentric position with shape (3,) of the Earth over the
-            tod chunk. Default is None, in which we set the earth_position
-            equal to the observer position.
-        return_comps
-            If True, the emission of each component in the model is
-            returned individually in a dictionary. Defaults to False.
+            The heliocentric ecliptic cartesian position of the Earth at the 
+            time of observing the tods. If None, the observer is assumed to be 
+            the Earth. Defaults to None.
         bin
-            If True, return a binned HEALPIX map of the emission. If False, the
-            timestream is returned.
+            If True, the time-ordered sequence of emission per pixel is binned
+            into a HEALPIX map. Defaults to False.
+        return_comps
+            If True, the emission is returned component-wise in a dictionary.
+            Defaults to False.
         coord_out
-            Coordinate frame of the output map. Defaults to 'E', which is
-            ecliptic coordinates.
+            Coordinate frame of the output map. Defaults to 'E' (heliocentric 
+            ecliptic coordinates).
 
         Returns
         -------
         emission
-            Zodiacal emission [MJy/sr] over a timestream of pixels, or the
-            binned Zodiacal emission map if bin is set to True.
+            Simulated timestream of Zodiacal emission [MJy/sr] (optionally
+            binned into a HEALPIX map).
         """
 
-        # If no earth_coordinates are specified, we assume that the earth and
-        # the observer coordinates are set to the same.
         if earth_position is None:
             earth_position = observer_position
 
@@ -216,15 +211,16 @@ class InterplanetaryDustModel:
             earth_position=earth_position,
             pixel_chunk=pixels,
             bin=bin,
-            coord_out=coord_out
+            coord_out=coord_out,
         )
 
-        if not return_comps:
-            return emission.sum(axis=0)
+        if return_comps:
+            return {
+                comp.value: emission[idx]
+                for idx, comp in enumerate(self.model.components)
+            }
 
-        return {
-            comp.value: emission[idx] for idx, comp in enumerate(self.model.components)
-        }
+        return emission.sum(axis=0)
 
     def __str__(self) -> str:
         """String representation of the InterplanetaryDustModel."""

@@ -14,14 +14,14 @@ def blackbody_emission(T: np.ndarray, ν: float) -> np.ndarray:
 
     Parameters
     ----------
-    ν
-        Frequency in Hz.
     T
-        Temperature of the blackbody in Kelvin.
+        Temperature of the blackbody [K].
+    ν
+        Frequency [Hz].
 
     Returns
     -------
-        Blackbody emission in units of W / m^2 Hz sr.
+        Blackbody emission [W / m^2 Hz sr].
     """
 
     term1 = (2 * h * ν ** 3) / c ** 2
@@ -31,9 +31,11 @@ def blackbody_emission(T: np.ndarray, ν: float) -> np.ndarray:
 
 
 def interplanetary_temperature(
-    R: np.ndarray, T_0: float = T_0, δ: float = δ_K98
+    R: np.ndarray,
+    T_0: float = T_0,
+    δ: float = δ_K98,
 ) -> np.ndarray:
-    """Returns the interplanetary temperature as a function of radius.
+    """Returns the Interplanetary Temperature given a radial distance from the Sun.
 
     Parameters
     ----------

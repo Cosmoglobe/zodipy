@@ -19,28 +19,30 @@ def instantaneous_emission(
 ) -> np.ndarray:
     """Returns the simulated instantaneous emission.
 
-    The emission is that seen by an observer at an instant at a single time
-    or as the average of multiple times if several observer and Earth
-    coordinates are provided.
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     nside
         HEALPIX map resolution parameter.
-    freq:
-        Frequency of the observer in GHz.
-    components:
-        Dictionary containing the Zodiacal Component that is used to evaluate
-        the emission.
-    emissivities:
-        Sequency of emissivities, one for each component, corresponding to the
-        frequency of `freq`.
+    freq
+        Frequency at which to evaluate the Zodiacal emission [Hz].
+    components
+        List of Zodiacal Components for which to simulate the emission.
+    emissivities
+        Sequency of emissivities at the frequency given by `freq`, one for each
+        component.
     observer_positions
-        A sequence of (or a single) heliocentric positions of the observer.
+        A sequence of (or a single) heliocentric cartesian positions of the 
+        observer.
     earth_positions
-        A sequence of (or a single) heliocentric positions of the Earth.
+        A sequence of (or a single) heliocentric cartesian positions of the 
+        Earth.
     coord_out
         Coordinate frame of the output map.
+
+    Returns
+    -------
+    emission
+        Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
     """
 
     npix = hp.nside2npix(nside)
@@ -57,7 +59,7 @@ def instantaneous_emission(
     ):
         for idx, component in enumerate(components):
             integrated_comp_emission = line_of_sight_integrate(
-                line_of_sight=line_of_sights[idx],
+                radial_distances=line_of_sights[idx],
                 get_emission_func=component.get_emission,
                 observer_position=observer_position,
                 earth_position=earth_position,
@@ -84,32 +86,31 @@ def time_ordered_emission(
 ) -> np.ndarray:
     """Simulates and returns the Zodiacal emission timestream.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     nside
         HEALPIX map resolution parameter.
-    freq:
-        Frequency of the observer in GHz.
-    components:
-        Dictionary containing the Zodiacal Component that is used to evaluate
-        the emission.
-    emissivities:
-        Sequency of emissivities, one for each component, corresponding to the
-        frequency of `freq`.
+    freq
+        Frequency at which to evaluate the Zodiacal emission [Hz].
+    components
+        List of Zodiacal Components for which to simulate the emission.
+    emissivities
+        Sequency of emissivities at the frequency given by `freq`, one for each
+        component.
     observer_position
-        Heliocentric position of the observer.
+        Heliocentric cartesian position of the observer.
     earth_position
-        Heliocentric position of the Earth.
+        Heliocentric cartesian position of the Earth.
     bin
-        If True, return a binned HEALPIX map of the emission. If False, the
-        timestream is returned.
+        If True, the time-ordered sequence of emission per pixel is binned 
+        into a HEALPIX map. Defaults to False.
     coord_out
         Coordinate frame of the output map.
 
     Returns
     -------
-        Zodiacal emission [MJy/sr] over a timestream of pixels, or the
-        binned Zodiacal emission map if bin is set to True.
+        Simulated timestream of Zodiacal emission [MJy/sr] (optionally 
+        binned into a HEALPIX map).
     """
 
     if bin:
@@ -123,7 +124,7 @@ def time_ordered_emission(
 
         for idx, component in enumerate(components):
             integrated_comp_emission = line_of_sight_integrate(
-                line_of_sight=line_of_sights[idx],
+                radial_distances=line_of_sights[idx],
                 get_emission_func=component.get_emission,
                 observer_position=observer_position,
                 earth_position=earth_position,
@@ -146,7 +147,7 @@ def time_ordered_emission(
 
     for idx, component in enumerate(components):
         integrated_comp_emission = line_of_sight_integrate(
-            line_of_sight=line_of_sights[idx],
+            radial_distances=line_of_sights[idx],
             get_emission_func=component.get_emission,
             observer_position=observer_position,
             earth_position=earth_position,
@@ -160,15 +161,15 @@ def time_ordered_emission(
 
 
 def _get_unit_vectors(nside: int, pixels: np.ndarray, coord_out: str) -> np.ndarray:
-    """Returns the unit vectors on a HEALPIX map given a requested coordinate system.
+    """Returns the unit vectors of a HEALPIX map given a requested output coordinate system.
 
-    If the requested output system is not ecliptic ("E"), we need to rotate the
-    vectors to ecliptic before evaluating the model.
+    Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
+    we need to rotate any unit vectors defined in another coordinate frame to
+    ecliptic before evaluating the model.
     """
 
     unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
     if coord_out != "E":
-        r = hp.rotator.Rotator(coord=[coord_out, "E"])
-        unit_vectors = r(unit_vectors)
+        unit_vectors = hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
 
     return np.asarray(unit_vectors)
