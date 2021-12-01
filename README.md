@@ -74,7 +74,7 @@ timestream = model.get_time_ordered_emission(
 
 plt.plot(timestream)
 ```
-![plot](imgs/timestream.png)
+![plot](imgs/tods.png)
 
 
 **Binned time-ordered emission:** By setting `bin=True` in the function call, the simulated emission is binned into a map. In the following, we compare *Zodipy* simulations with the observed time-ordered data by DIRBE.
