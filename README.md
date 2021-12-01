@@ -52,15 +52,14 @@ Additionally, it is possible to retrieve the emission component-wise by setting 
 ![plot](imgs/comps.png)
 
 
-**Time-ordered emission:** We can make a time-stream of simulated emission for a sequence of time-ordered pixels using the `get_time_ordered_emission`. This function requires specifying the heliocentric ecliptic cartesian position of the observer (and optionally the Earth) associated with each chunk of pixels. In the following we use the first day of time-ordered pixels from the DIRBE instrument of the COBE satellite (Photometric Band 6, Detector A, first day of observations) to make a simulated time-stream:
+**Time-ordered emission:** We can make a time-stream of simulated emission for a sequence of time-ordered pixels using the `get_time_ordered_emission` function. This requires specifying the heliocentric ecliptic cartesian position of the observer (and optionally the Earth) associated with each chunk of pixels. In the following we use the first day of time-ordered pixels from the DIRBE instrument of the COBE satellite (Photometric Band 6, Detector A, first day of observations) to make a simulated time-stream:
 ```python
 import astropy.units as u
 import matplotlib.pyplot as plt
 import zodipy
 
-model = zodipy.InterplanetaryDustModel(model="K98")
+model = zodipy.InterplanetaryDustModel()
 
-# TOD-chunk information
 dirbe_pixels = ...
 dirbe_position = ...  
 earth_position = ...  
@@ -87,10 +86,7 @@ import zodipy
 
 model = zodipy.InterplanetaryDustModel()
 
-# We get the DIRBE time-ordered pixels and the corresponding 
-# positions of DIRBE and the Earth for each chunk (assuming a 
-# constant position over each chunk).
-pixel_chunks = [...]
+dirbe_pixel_chunks = [...]
 dirbe_positions = [...]
 earth_positions = [...]
 
@@ -98,7 +94,7 @@ emission = np.zeros(hp.nside2npix(nside))
 hits_map = np.zeros(hp.nside2npix(nside))   
     
 for day, (pixels, dirbe_position, earth_position) in enumerate(
-    zip(pixel_chunks, dirbe_positions, earth_positions),
+    zip(dirbe_pixel_chunks, dirbe_positions, earth_positions),
     start=1
 ):
     
