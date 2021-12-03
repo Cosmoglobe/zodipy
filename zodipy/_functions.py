@@ -1,8 +1,8 @@
 import astropy.constants as const
 import numpy as np
 
-δ_K98 = 0.4668626
-T_0 = 286
+δ = 0.4668626   #K98
+T_0 = 286   #K98
 
 h = const.h.value
 c = const.c.value
@@ -33,7 +33,7 @@ def blackbody_emission(T: np.ndarray, ν: float) -> np.ndarray:
 def interplanetary_temperature(
     R: np.ndarray,
     T_0: float = T_0,
-    δ: float = δ_K98,
+    δ: float = δ,
 ) -> np.ndarray:
     """Returns the Interplanetary Temperature given a radial distance from the Sun.
 

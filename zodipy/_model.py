@@ -4,7 +4,7 @@ from typing import Dict, Optional
 
 from zodipy._components import Component
 from zodipy._component_labels import ComponentLabel, LABEL_TO_CLASS
-from zodipy._emissivities import Emissivity
+from zodipy._emissivity import Emissivity
 
 
 class IPDModel:

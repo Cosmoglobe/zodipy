@@ -33,3 +33,12 @@ model_registry.register_model(
         emissivities=emissivities.PLANCK_2018,
     )
 )
+
+
+model_registry.register_model(
+    IPDModel(
+        name="DIRBE",
+        parameters=parameters.K98,
+        emissivities=emissivities.DIRBE,
+    )
+)

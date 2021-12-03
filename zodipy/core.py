@@ -4,7 +4,7 @@ import numpy as np
 import astropy.units as u
 
 from zodipy._astroquery import query_target_positions
-from zodipy._emissivities import get_emissivities
+from zodipy._emissivity import get_emissivities
 from zodipy._integration_config import integration_config_registry
 from zodipy._simulation import instantaneous_emission, time_ordered_emission
 from zodipy.models import model_registry
