@@ -62,7 +62,7 @@ def instantaneous_emission(
             integrated_comp_emission = trapezoidal(
                 freq=freq,
                 radial_distances=line_of_sights[label],
-                get_density_func=component.get_density,
+                get_density=component.get_density,
                 observer_position=observer_position,
                 earth_position=earth_position,
                 unit_vectors=unit_vectors,
@@ -129,7 +129,7 @@ def time_ordered_emission(
             integrated_comp_emission = trapezoidal(
                 freq=freq,
                 radial_distances=line_of_sights[label],
-                get_density_func=component.get_density,
+                get_density=component.get_density,
                 observer_position=observer_position,
                 earth_position=earth_position,
                 unit_vectors=unit_vectors,
@@ -155,7 +155,7 @@ def time_ordered_emission(
         integrated_comp_emission = trapezoidal(
             freq=freq,
             radial_distances=line_of_sights[label],
-            get_density_func=component.get_density,
+            get_density=component.get_density,
             observer_position=observer_position,
             earth_position=earth_position,
             unit_vectors=unit_vectors,

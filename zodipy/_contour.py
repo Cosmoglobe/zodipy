@@ -65,7 +65,7 @@ def get_component_density_grid(
         X_earth_prime[1], X_earth_prime[0]
     )
 
-    density_grid = component_class.get_density(
+    density_grid = component_class.compute_density(
         R_prime=R_prime, Z_prime=Z_prime, θ_prime=θ_prime
     )
 
