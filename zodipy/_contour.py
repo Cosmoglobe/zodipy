@@ -2,7 +2,7 @@ from math import sin, cos
 from typing import Tuple, Sequence, Union
 
 from zodipy.models import model_registry
-from zodipy._component_labels import ComponentLabel
+from zodipy._labels import Label
 import numpy as np
 import astropy.constants as const
 
@@ -40,7 +40,7 @@ def get_component_density_grid(
     """
 
     ipd_model = model_registry.get_model(model)
-    component_class = ipd_model.components[ComponentLabel(component)]
+    component_class = ipd_model.components[Label(component)]
 
     x_helio = np.linspace(-xy_lim, xy_lim, n)
     y_helio = x_helio.copy()

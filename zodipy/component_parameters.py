@@ -1,7 +1,7 @@
-from zodipy._component_labels import ComponentLabel
+from zodipy._labels import Label
 
 K98 = {
-    ComponentLabel.CLOUD: dict(
+    Label.CLOUD: dict(
         x_0=0.0119,
         y_0=0.00548,
         z_0=-0.00215,
@@ -13,7 +13,7 @@ K98 = {
         γ=0.942,
         μ=0.189,
     ),
-    ComponentLabel.BAND1: dict(
+    Label.BAND1: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -25,7 +25,7 @@ K98 = {
         p=4.0,
         δ_r=1.5,
     ),
-    ComponentLabel.BAND2: dict(
+    Label.BAND2: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -37,7 +37,7 @@ K98 = {
         p=4.0,
         δ_r=1.2,
     ),
-    ComponentLabel.BAND3: dict(
+    Label.BAND3: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -49,7 +49,7 @@ K98 = {
         p=4.0,
         δ_r=1.5,
     ),
-    ComponentLabel.RING: dict(
+    Label.RING: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -60,7 +60,7 @@ K98 = {
         σ_r=0.025,
         σ_z=0.054,
     ),
-    ComponentLabel.FEATURE: dict(
+    Label.FEATURE: dict(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -76,5 +76,5 @@ K98 = {
 }
 
 PLANCK = K98.copy()
-PLANCK.pop(ComponentLabel.RING)
-PLANCK.pop(ComponentLabel.FEATURE)
+PLANCK.pop(Label.RING)
+PLANCK.pop(Label.FEATURE)

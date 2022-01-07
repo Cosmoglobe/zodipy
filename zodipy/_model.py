@@ -3,45 +3,48 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional
 
 from zodipy._components import Component
-from zodipy._component_labels import ComponentLabel, LABEL_TO_CLASS
-from zodipy._emissivity import Emissivity
+from zodipy._labels import Label, LABEL_TO_CLASS
+from zodipy._source_parameters import SourceParameter
 
 
 class IPDModel:
     """An Interplanetary Dust Model.
 
     An IPDModel is a container for a unique combination of initialized Zodiacal
-    Components and emissivity fits."""
+    Components and SourceParameters fits."""
 
     def __init__(
         self,
         name: str,
-        parameters: Dict[ComponentLabel, Dict[str, float]],
-        emissivities: Optional[Emissivity] = None,
+        component_parameters: Dict[Label, Dict[str, float]],
+        interplanetary_temperature: float,
+        delta: float,
+        emissivity: Optional[SourceParameter] = None,
+        albedo: Optional[SourceParameter] = None,
     ) -> None:
         """Initializes an IPDModel given a set of parameters and emissivities."""
 
         self.name = name
-        self.components: Dict[ComponentLabel, Component] = {}
-        for component_label, component_parameters in parameters.items():
-            component_class = LABEL_TO_CLASS[component_label]
-            self.components[component_label] = component_class(**component_parameters)
+        self.components: Dict[Label, Component] = {}
+        for label, parameters in component_parameters.items():
+            component_class = LABEL_TO_CLASS[label]
+            self.components[label] = component_class(**parameters)
 
-        self.emissivities = emissivities
+        self.interplanetary_temperature = interplanetary_temperature
+        self.delta = delta
+        self.emissivity = emissivity
+        self.albedo = albedo
 
     @property
     def includes_earth_neighboring_components(self) -> bool:
         """Returns True if the model includes an Earth-neighboring component."""
 
-        return (
-            ComponentLabel.RING in self.components
-            or ComponentLabel.FEATURE in self.components
-        )
+        return Label.RING in self.components or Label.FEATURE in self.components
 
     def __getitem__(self, component_name: str) -> Component:
         """Returns a sky component from the cosmoglobe model."""
 
-        return self.components[ComponentLabel(component_name)]
+        return self.components[Label(component_name)]
 
 
 @dataclass

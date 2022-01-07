@@ -3,7 +3,7 @@ from typing import Dict
 
 import numpy as np
 
-from zodipy._component_labels import ComponentLabel
+from zodipy._labels import Label
 
 
 EPS = np.finfo(float).eps  # Smallest non zero value.
@@ -18,18 +18,18 @@ class IntegrationConfigRegistry:
     line-of-sight per component.
     """
 
-    registry: Dict[str, Dict[ComponentLabel, np.ndarray]] = field(default_factory=dict)
+    registry: Dict[str, Dict[Label, np.ndarray]] = field(default_factory=dict)
 
     def register_config(
         self,
         name: str,
-        components: Dict[ComponentLabel, np.ndarray],
+        components: Dict[Label, np.ndarray],
     ) -> None:
         """Adds a new integration config to the registry."""
 
         self.registry[name] = components
 
-    def get_config(self, name: str) -> Dict[ComponentLabel, np.ndarray]:
+    def get_config(self, name: str) -> Dict[Label, np.ndarray]:
         """Returns an integration config from the registry."""
 
         if name not in self.registry:
@@ -45,12 +45,12 @@ integration_config_registry = IntegrationConfigRegistry()
 integration_config_registry.register_config(
     name="default",
     components={
-        ComponentLabel.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 155),
-        ComponentLabel.BAND1: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        ComponentLabel.BAND2: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        ComponentLabel.BAND3: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        ComponentLabel.RING: np.linspace(EPS, 2.25, 50),
-        ComponentLabel.FEATURE: np.linspace(EPS, 1, 50),
+        Label.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 155),
+        Label.BAND1: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        Label.BAND2: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        Label.BAND3: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        Label.RING: np.linspace(EPS, 2.25, 50),
+        Label.FEATURE: np.linspace(EPS, 1, 50),
     },
 )
 

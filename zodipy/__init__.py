@@ -1,3 +1,3 @@
-from zodipy.core import InterplanetaryDustModel
+from zodipy.core import Zodipy
 
-__all__ = ("InterplanetaryDustModel",)
+__all__ = ("Zodipy",)

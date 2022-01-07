@@ -4,7 +4,7 @@ from typing import Dict, Type
 from zodipy._components import Component, Cloud, Band, Ring, Feature
 
 
-class ComponentLabel(Enum):
+class Label(Enum):
     """Labels representing the six Zodiacal components in the K98 model."""
 
     CLOUD = "cloud"
@@ -15,11 +15,11 @@ class ComponentLabel(Enum):
     FEATURE = "feature"
 
 
-LABEL_TO_CLASS: Dict[ComponentLabel, Type[Component]] = {
-    ComponentLabel.CLOUD: Cloud,
-    ComponentLabel.BAND1: Band,
-    ComponentLabel.BAND2: Band,
-    ComponentLabel.BAND3: Band,
-    ComponentLabel.RING: Ring,
-    ComponentLabel.FEATURE: Feature,
+LABEL_TO_CLASS: Dict[Label, Type[Component]] = {
+    Label.CLOUD: Cloud,
+    Label.BAND1: Band,
+    Label.BAND2: Band,
+    Label.BAND3: Band,
+    Label.RING: Ring,
+    Label.FEATURE: Feature,
 }

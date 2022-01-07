@@ -4,13 +4,12 @@ import numpy as np
 import astropy.units as u
 
 from zodipy._astroquery import query_target_positions
-from zodipy._emissivity import get_emissivities
 from zodipy._integration_config import integration_config_registry
 from zodipy._simulation import instantaneous_emission, time_ordered_emission
 from zodipy.models import model_registry
 
 
-class InterplanetaryDustModel:
+class Zodipy:
     """The Zodipy simulation interface.
 
     The Interplanetary Dust Model used by Zodipy is the Kelsall et al. (1998)
@@ -41,10 +40,7 @@ class InterplanetaryDustModel:
         """
 
         self.model = model_registry.get_model(model)
-        integration_config = integration_config_registry.get_config("default")
-        self.line_of_sights = [
-            line_of_sight for line_of_sight in integration_config.values()
-        ]
+        self.line_of_sights = integration_config_registry.get_config("default")
 
     @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
     def get_instantaneous_emission(
@@ -106,27 +102,21 @@ class InterplanetaryDustModel:
             Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
+        freq = freq_or_wavelength.to("GHz", equivalencies=u.spectral())
+
         observer_positions = query_target_positions(observer, epochs)
         if self.model.includes_earth_neighboring_components:
             earth_positions = query_target_positions("earth", epochs)
         else:
             earth_positions = observer_positions.copy()
 
-        emissivities = get_emissivities(
-            ν_or_λ=freq_or_wavelength,
-            emissivity=self.model.emissivities,
-            components=list(self.model.components.keys()),
-        )
-
-        freq = freq_or_wavelength.to("Hz", equivalencies=u.spectral()).value
         emission = instantaneous_emission(
             nside=nside,
-            freq=freq,
-            components=list(self.model.components.values()),
-            emissivities=emissivities,
+            freq=freq.value,
+            model=self.model,
+            line_of_sights=self.line_of_sights,
             observer_positions=observer_positions,
             earth_positions=earth_positions,
-            line_of_sights=self.line_of_sights,
             coord_out=coord_out,
         )
 
@@ -168,11 +158,11 @@ class InterplanetaryDustModel:
         pixels
             Sequence of time-ordered pixels.
         observer_position
-            The heliocentric ecliptic cartesian position of the observer at 
+            The heliocentric ecliptic cartesian position of the observer at
             the time of observing the tods.
         earth_position
-            The heliocentric ecliptic cartesian position of the Earth at the 
-            time of observing the tods. If None, the observer is assumed to be 
+            The heliocentric ecliptic cartesian position of the Earth at the
+            time of observing the tods. If None, the observer is assumed to be
             the Earth. Defaults to None.
         bin
             If True, the time-ordered sequence of emission per pixel is binned
@@ -181,7 +171,7 @@ class InterplanetaryDustModel:
             If True, the emission is returned component-wise in a dictionary.
             Defaults to False.
         coord_out
-            Coordinate frame of the output map. Defaults to 'E' (heliocentric 
+            Coordinate frame of the output map. Defaults to 'E' (heliocentric
             ecliptic coordinates).
 
         Returns
@@ -191,21 +181,15 @@ class InterplanetaryDustModel:
             binned into a HEALPIX map).
         """
 
+        freq = freq_or_wavelength.to("GHz", equivalencies=u.spectral())
+
         if earth_position is None:
             earth_position = observer_position
 
-        emissivities = get_emissivities(
-            ν_or_λ=freq_or_wavelength,
-            emissivity=self.model.emissivities,
-            components=list(self.model.components.keys()),
-        )
-
-        freq = freq_or_wavelength.to("Hz", equivalencies=u.spectral()).value
         emission = time_ordered_emission(
             nside=nside,
-            freq=freq,
-            components=list(self.model.components.values()),
-            emissivities=emissivities,
+            freq=freq.value,
+            model=self.model,
             line_of_sights=self.line_of_sights,
             observer_position=observer_position,
             earth_position=earth_position,

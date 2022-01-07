@@ -2,12 +2,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from math import radians, sin, cos
 from math import pi as π
-from typing import Tuple, Union
+from typing import Tuple
 
 from numba import njit
 import numpy as np
-
-from zodipy._functions import interplanetary_temperature, blackbody_emission
 
 
 @dataclass
@@ -44,7 +42,7 @@ class Component(ABC):
         self.X_component = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
 
     @abstractmethod
-    def get_density(
+    def compute_density(
         self, R_prime: np.ndarray, Z_prime: np.ndarray, *, θ_prime: np.ndarray
     ) -> np.ndarray:
         """Returns the dust density at a shell around the observer.
@@ -70,15 +68,13 @@ class Component(ABC):
 
     @staticmethod
     @njit
-    def get_coordinates(
-        R_comp: Union[float, np.ndarray],
-        X_observer: np.ndarray,
+    def get_primed_coordinates(
+        X_helio: np.ndarray,
         X_earth: np.ndarray,
-        X_unit: np.ndarray,
         X_component: np.ndarray,
         Ω_component: float,
         i_component: float,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Returns a set of coordinates for a component.
 
         Given a set of heliocentric ecliptic positions in space given by the
@@ -90,16 +86,11 @@ class Component(ABC):
 
         Parameters
         ----------
-        R_comp
-            Distance R to a shell centered on the observer at which we want
-            to evaluate the Zodiacal emission at.
-        X_observer
-            Heliocentric ecliptic cartesian coordinates of the observer.
+        X_helio
+            Heliocentric ecliptic cartesian coordinates of each considered 
+            pixel.
         X_earth
-            Heliocentric ecliptic cartesian coordinates of the Earth.
-        X_unit
-            Heliocentric ecliptic cartesian unit vectors pointing to each 
-            position in space we that we consider.
+            Heliocentric ecliptic cartesian coordinates of the Earth. 
         X_component
             Heliocentric ecliptic cartesian off-set of the component
             (x_0, y_0, z_0).
@@ -110,10 +101,6 @@ class Component(ABC):
 
         Returns
         -------
-        R_helio
-            Array of distances corresponding to discrete points along a
-            line-of-sight for a shell surrounding the observer in heliocentric
-            ecliptic coordinates.
         R_prime
             Array of distances corresponding to discrete points along a
             line-of-sight for a shell surrounding the observer in the primed
@@ -125,9 +112,6 @@ class Component(ABC):
             Relative mean lognitude between the discrete points along the
             line-of-sight describe by `R_prime` and the Earth.
         """
-
-        X_helio = R_comp * X_unit + X_observer
-        R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
         X_prime = X_helio - X_component
         R_prime = np.sqrt(X_prime[0] ** 2 + X_prime[1] ** 2 + X_prime[2] ** 2)
@@ -143,63 +127,43 @@ class Component(ABC):
             X_earth_prime[1], X_earth_prime[0]
         )
 
-        return R_helio, R_prime, Z_prime, θ_prime
+        return R_prime, Z_prime, θ_prime
 
-    def get_emission(
+    def get_density(
         self,
-        distance_to_shell: Union[float, np.ndarray],
-        observer_position: np.ndarray,
+        pixel_positions: np.ndarray,
         earth_position: np.ndarray,
-        unit_vectors: np.ndarray,
-        freq: float,
     ) -> np.ndarray:
-        """Returns the emission at a shell of distance R from the observer.
+        """Returns the emission at a shell around the observer.
 
         For a description on X_observer, X_earth, X_unit and R, please
         see the get_coords function.
 
         Parameters
         ----------
-        distance_to_shell
-            Distance R to a shell centered on the observer for which we want
-            to evaluate the Zodiacal emission.
-        observer_position
-            Heliocentric ecliptic cartesian coordinates of the observer.
+        pixel_positions
+            Heliocentric ecliptic cartesian coordinates of the considered
+            pixels.
         earth_position
             Heliocentric ecliptic cartesian coordinates of the Earth.
-        unit_vectors
-            Heliocentric ecliptic cartesian unit vectors pointing to each 
-            position in space we that we consider.
-        freq
-            Frequency at which to evaluate the Zodiacal emission.
 
         Returns
         -------
-        emission
-            Zodiacal emission at
-            Array containing the Zodiacal emission emitted from a shell at
-            distance R from the observer. The shape is (len(R), `NPIX`).
+            Density of a Zodiacal component at a shell around the observer.
         """
 
-        observer_position = np.expand_dims(observer_position, axis=1)
-        R_helio, R_prime, Z_prime, θ_prime = self.get_coordinates(
-            R_comp=distance_to_shell,
-            X_observer=observer_position,
+        R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
+            X_helio=pixel_positions,
             X_earth=earth_position,
-            X_unit=unit_vectors,
             X_component=self.X_component,
             Ω_component=self.Ω,
             i_component=self.i,
         )
-        density = self.get_density(
+        return self.compute_density(
             R_prime=R_prime,
             Z_prime=Z_prime,
             θ_prime=θ_prime,
         )
-        temperature = interplanetary_temperature(R=R_helio)
-        emission = blackbody_emission(T=temperature, ν=freq)
-
-        return emission * density
 
 
 @dataclass
@@ -233,7 +197,9 @@ class Cloud(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
+    def compute_density(
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
+    ) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -279,7 +245,9 @@ class Band(Component):
         super().__post_init__()
         self.δ_ζ = radians(self.δ_ζ)
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
+    def compute_density(
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
+    ) -> np.ndarray:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
@@ -319,7 +287,9 @@ class Ring(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-    def get_density(self, R_prime: np.ndarray, Z_prime: np.ndarray, **_) -> np.ndarray:
+    def compute_density(
+        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
+    ) -> np.ndarray:
         """See base class for documentation."""
 
         term1 = -(((R_prime - self.R) / self.σ_r) ** 2)
@@ -364,7 +334,7 @@ class Feature(Component):
         self.θ = radians(self.θ)
         self.σ_θ = radians(self.σ_θ)
 
-    def get_density(
+    def compute_density(
         self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
     ) -> np.ndarray:
         """See base class for documentation."""

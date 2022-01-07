@@ -1,36 +1,35 @@
-from zodipy import emissivities
-from zodipy import parameters
+from zodipy import source_parameters
+from zodipy import component_parameters
 from zodipy._model import IPDModel, model_registry
 
 
 model_registry.register_model(
     IPDModel(
-        name="K98",
-        parameters=parameters.K98,
-    )
-)
-
-model_registry.register_model(
-    IPDModel(
         name="Planck13",
-        parameters=parameters.PLANCK,
-        emissivities=emissivities.PLANCK_2013,
+        component_parameters=component_parameters.PLANCK,
+        interplanetary_temperature=source_parameters.T_0_K98,
+        delta=source_parameters.delta_K98,
+        emissivity=source_parameters.EMISSIVITY_PLANCK_13
     )
 )
 
 model_registry.register_model(
     IPDModel(
         name="Planck15",
-        parameters=parameters.PLANCK,
-        emissivities=emissivities.PLANCK_2015,
+        component_parameters=component_parameters.PLANCK,
+        interplanetary_temperature=source_parameters.T_0_K98,
+        delta=source_parameters.delta_K98,
+        emissivity=source_parameters.EMISSIVITY_PLANCK_15,
     )
 )
 
 model_registry.register_model(
     IPDModel(
         name="Planck18",
-        parameters=parameters.PLANCK,
-        emissivities=emissivities.PLANCK_2018,
+        component_parameters=component_parameters.PLANCK,
+        interplanetary_temperature=source_parameters.T_0_K98,
+        delta=source_parameters.delta_K98,
+        emissivity=source_parameters.EMISSIVITY_PLANCK_18,
     )
 )
 
@@ -38,7 +37,10 @@ model_registry.register_model(
 model_registry.register_model(
     IPDModel(
         name="DIRBE",
-        parameters=parameters.K98,
-        emissivities=emissivities.DIRBE,
+        component_parameters=component_parameters.K98,
+        interplanetary_temperature=source_parameters.T_0_K98,
+        delta=source_parameters.delta_K98,
+        emissivity=source_parameters.EMISSIVITY_DIRBE,
+        albedo=source_parameters.ALBEDO_DIRBE,
     )
 )
