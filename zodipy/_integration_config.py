@@ -18,7 +18,7 @@ class IntegrationConfigRegistry:
     line-of-sight per component.
     """
 
-    registry: Dict[str, Dict[Label, np.ndarray]] = field(default_factory=dict)
+    _registry: Dict[str, Dict[Label, np.ndarray]] = field(default_factory=dict)
 
     def register_config(
         self,
@@ -27,17 +27,17 @@ class IntegrationConfigRegistry:
     ) -> None:
         """Adds a new integration config to the registry."""
 
-        self.registry[name] = components
+        self._registry[name] = components
 
     def get_config(self, name: str) -> Dict[Label, np.ndarray]:
         """Returns an integration config from the registry."""
 
-        if name not in self.registry:
+        if name not in self._registry:
             raise ModuleNotFoundError(
                 f"{name} is not a config in the registry. Avaliable configs are "
-                f"{', '.join(self.registry)}"
+                f"{', '.join(self._registry)}"
             )
-        return self.registry[name]
+        return self._registry[name]
 
 
 integration_config_registry = IntegrationConfigRegistry()

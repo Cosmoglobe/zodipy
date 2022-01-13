@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from zodipy._functions import blackbody_emission, interplanetary_temperature
+from zodipy._source_functions import blackbody_emission, interplanetary_temperature
 
 
 TEMPERATURE = 30
@@ -10,7 +10,7 @@ TEMPERATURE_ARRAY = np.array([31,45,53])
 R = 3
 R_ARRAY = np.array([4, 5.3, 6])
 DELTA = 0.324
-FREQUENCY = 549 * 1e9
+FREQUENCY = 549
 
 
 def test_blackbody_emission_value():

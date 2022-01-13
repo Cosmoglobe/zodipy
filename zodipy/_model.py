@@ -1,76 +1,72 @@
-from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Any, Dict, List, Union
 
-from zodipy._components import Component
 from zodipy._labels import Label, LABEL_TO_CLASS
-from zodipy._source_parameters import SourceParameter
+from zodipy._components import Component
 
 
-class IPDModel:
-    """An Interplanetary Dust Model.
+@dataclass
+class InterplanetaryDustModel:
+    name: str
+    components: List[Label]
+    component_parameters: Dict[Label, Dict[str, float]]
+    source_component_parameters: Dict[str, Dict[Union[str, Label], Any]]
+    source_parameters: Dict[str, Any]
+    doc: str = ""
 
-    An IPDModel is a container for a unique combination of initialized Zodiacal
-    Components and SourceParameters fits."""
+    def get_initialized_component(self, label: Label) -> Component:
+        """Initializes and returns a Zodiacal Component from the model parameters."""
 
-    def __init__(
-        self,
-        name: str,
-        component_parameters: Dict[Label, Dict[str, float]],
-        interplanetary_temperature: float,
-        delta: float,
-        emissivity: Optional[SourceParameter] = None,
-        albedo: Optional[SourceParameter] = None,
-    ) -> None:
-        """Initializes an IPDModel given a set of parameters and emissivities."""
+        if label not in self.components:
+            raise ValueError(f"{label.value} is not included in the {self.name} model")
 
-        self.name = name
-        self.components: Dict[Label, Component] = {}
-        for label, parameters in component_parameters.items():
-            component_class = LABEL_TO_CLASS[label]
-            self.components[label] = component_class(**parameters)
+        parameters = self.component_parameters[label]
+        component_class = LABEL_TO_CLASS[label]
 
-        self.interplanetary_temperature = interplanetary_temperature
-        self.delta = delta
-        self.emissivity = emissivity
-        self.albedo = albedo
+        return component_class(**parameters)
 
     @property
-    def includes_earth_neighboring_components(self) -> bool:
+    def includes_ring(self) -> bool:
         """Returns True if the model includes an Earth-neighboring component."""
 
         return Label.RING in self.components or Label.FEATURE in self.components
 
-    def __getitem__(self, component_name: str) -> Component:
-        """Returns a sky component from the cosmoglobe model."""
-
-        return self.components[Label(component_name)]
-
 
 @dataclass
-class IPDModelRegistry:
-    """Container for registered IPDModels."""
+class ModelRegistry:
+    """Container for registered InterplanetaryDustModel's."""
 
-    registry: Dict[str, IPDModel] = field(default_factory=dict)
+    _registry: Dict[str, InterplanetaryDustModel] = field(default_factory=dict)
 
-    def register_model(self, model: IPDModel) -> None:
-        """Adds a new IPD model to the registry."""
+    def register_model(
+        self,
+        name: str,
+        components: List[Label],
+        component_parameters: Dict[Label, Dict[str, float]],
+        source_component_parameters: Dict[str, Dict[Union[str, Label], Any]],
+        source_parameters: Dict[str, Any],
+        doc: str = "",
+    ) -> None:
+        if name in self._registry:
+            raise ValueError(f"a model by the name {name!s} is already registered.")
 
-        if (name := model.name) in self.registry:
-            raise ValueError(f"model by name {name} is already registered.")
+        self._registry[name] = InterplanetaryDustModel(
+            name,
+            components,
+            component_parameters,
+            source_component_parameters,
+            source_parameters,
+            doc,
+        )
 
-        self.registry[name] = model
-
-    def get_model(self, name: str) -> IPDModel:
-        """Returns a IPDModel from the registry."""
-
-        if name not in self.registry:
+    def get_model(self, name: str) -> InterplanetaryDustModel:
+        if name not in self._registry:
             raise ModuleNotFoundError(
                 f"{name} is not a model in the registry. Avaliable models are "
-                f"{', '.join(self.registry)}"
+                f"{', '.join(self._registry)}"
             )
 
-        return self.registry[name]
+        return self._registry[name]
 
 
-model_registry = IPDModelRegistry()
+model_registry = ModelRegistry()

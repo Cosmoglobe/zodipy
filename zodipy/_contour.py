@@ -39,8 +39,8 @@ def get_component_density_grid(
         3D grid of the density of the component.
     """
 
-    ipd_model = model_registry.get_model(model)
-    component_class = ipd_model.components[Label(component)]
+    _model = model_registry.get_model(model)
+    component_class = _model.get_initialized_component(Label(component))
 
     x_helio = np.linspace(-xy_lim, xy_lim, n)
     y_helio = x_helio.copy()

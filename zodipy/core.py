@@ -5,38 +5,38 @@ import astropy.units as u
 
 from zodipy._astroquery import query_target_positions
 from zodipy._integration_config import integration_config_registry
-from zodipy._simulation import instantaneous_emission, time_ordered_emission
+from zodipy._labels import LABEL_TO_CLASS
+import zodipy._simulation as simulation
 from zodipy.models import model_registry
 
 
 class Zodipy:
     """The Zodipy simulation interface.
 
-    The Interplanetary Dust Model used by Zodipy is the Kelsall et al. (1998)
-    Interplanetary Dust Model, which includes five (six) Zodiacal components:
+    The geometry of the Zodiacal components used in Zodipy is guven by the 
+    Kelsall et al. (1998) Interplanetary Dust Model, which includes five (six) 
+    Zodiacal components:
         - The Diffuse Cloud (cloud)
         - Three Asteroidal Bands (band1, band2, band3)
         - The Circumsolar Ring (ring) + The Earth-trailing Feature (feature)
 
-    Optionally, it is possible to scale the K98 emission with component
-    specific emissivities, as done by the Planck Collaboration. This is
-    achieved by specifiying one of the following implemented models:
-        - Planck13 (all five Kelsall components + emissivity fits for each)
-        - Planck15 (cloud + bands + new emissivity fits)
-        - Planck18 (cloud + bands + the latest emissivity fits)
+    The spectral parameters used when evaluating the line-of-sight parameters
+    can be selected by specifying a model, e.g "Planck13", which uses the 
+    source parameters (emissivities) fitted the Planck collaboration in their 
+    2013 analysis. 
 
-    NOTE: No extrapolation is done when using the fitted emissivities, and as
-    such, these models can only be evaluated within the frequency range covered
-    by the Planck HFI Bands for which the emissivities were fitted.
+    NOTE: Currently Zodipy only supports the frequency range covered by the 
+    spectral parameters in the specified model.
     """
 
-    def __init__(self, model: str = "K98") -> None:
-        """Initializes the interface given an Interplanetary Dust Model.
+    def __init__(self, model: str = "DIRBE") -> None:
+        """Initializes the interface given a model (fitted source parameters).
 
         Parameters
         ----------
         model
-            The name of the model to initialize.
+            The name of the model to initialize. Defaults to `DIRBE` which 
+            uses the source parameters fit in K98.
         """
 
         self.model = model_registry.get_model(model)
@@ -59,19 +59,16 @@ class Zodipy:
         in time. If multiple epochs are given, the returned emission will be
         the mean of all simulated instantaneous observations.
 
-        The observer location, given by the parameter `observer` (and
-        optionally the location of the Earth if either of the Feature or the
-        Ring components are included in the selected Interplanetary Dust Model)
-        are queried from the Horizons JPL ephemerides, given some epoch defined
-        by the `epochs` parameter.
+        The location of the observer, and optionally, the Earth, are queried 
+        from the Horizons JPL ephemerides using `astroquery`, given an epoch 
+        defined by the `epochs` parameter.
 
-        NOTE: This function returns the fullsky emission from at a single time.
-        This means that we in the simulation evaluate line-of-sights that
-        sometimes points directly towards the inner Solar System and through
-        the Sun, where the dust density increases exponentially. Such
-        line-of-sights are unlikely to be observed by an actual observer, and
-        as such, the simulated emission will appear very bright in these
-        regions.
+        NOTE: This function returns the fullsky emission at a single time. This
+        means that line-of-sights that sometimes points directly towards the 
+        inner Solar System and through the Sun, where the dust density 
+        increases exponentially are evaluated. Such line-of-sights are unlikely 
+        to be observed by an actual observer, and as such, the simulated 
+        emission will appear very bright in these npregions.
 
         Parameters
         ----------
@@ -105,12 +102,12 @@ class Zodipy:
         freq = freq_or_wavelength.to("GHz", equivalencies=u.spectral())
 
         observer_positions = query_target_positions(observer, epochs)
-        if self.model.includes_earth_neighboring_components:
+        if self.model.includes_ring:
             earth_positions = query_target_positions("earth", epochs)
         else:
             earth_positions = observer_positions.copy()
 
-        emission = instantaneous_emission(
+        emission = simulation.instantaneous_emission(
             nside=nside,
             freq=freq.value,
             model=self.model,
@@ -122,8 +119,8 @@ class Zodipy:
 
         if return_comps:
             return {
-                comp.value: emission[idx]
-                for idx, comp in enumerate(self.model.components)
+                component_label.value: emission[idx]
+                for idx, component_label in enumerate(self.model.components)
             }
 
         return emission.sum(axis=0)
@@ -186,7 +183,7 @@ class Zodipy:
         if earth_position is None:
             earth_position = observer_position
 
-        emission = time_ordered_emission(
+        emission = simulation.time_ordered_emission(
             nside=nside,
             freq=freq.value,
             model=self.model,
@@ -200,18 +197,19 @@ class Zodipy:
 
         if return_comps:
             return {
-                comp.value: emission[idx]
-                for idx, comp in enumerate(self.model.components)
+                component_label.value: emission[idx]
+                for idx, component_label in enumerate(self.model.components)
             }
 
         return emission.sum(axis=0)
 
     def __str__(self) -> str:
-        """String representation of the InterplanetaryDustModel."""
+        """String representation of the Interplanetary dust model used."""
 
         reprs = []
-        for label, component in self.model.components.items():
-            component_repr = f"{component.__class__.__name__}" + "\n"
+        for label in self.model.components:
+            component_class = LABEL_TO_CLASS[label]
+            component_repr = f"{component_class.__name__}" + "\n"
             reprs.append(f"({label.value}): {component_repr}")
 
         main_repr = "InterplanetaryDustModel("

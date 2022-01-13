@@ -1,46 +1,31 @@
+from zodipy._model import model_registry
+from zodipy._labels import Label
 from zodipy import source_parameters
 from zodipy import component_parameters
-from zodipy._model import IPDModel, model_registry
 
 
 model_registry.register_model(
-    IPDModel(
-        name="Planck13",
-        component_parameters=component_parameters.PLANCK,
-        interplanetary_temperature=source_parameters.T_0_K98,
-        delta=source_parameters.delta_K98,
-        emissivity=source_parameters.EMISSIVITY_PLANCK_13
-    )
-)
-
-model_registry.register_model(
-    IPDModel(
-        name="Planck15",
-        component_parameters=component_parameters.PLANCK,
-        interplanetary_temperature=source_parameters.T_0_K98,
-        delta=source_parameters.delta_K98,
-        emissivity=source_parameters.EMISSIVITY_PLANCK_15,
-    )
-)
-
-model_registry.register_model(
-    IPDModel(
-        name="Planck18",
-        component_parameters=component_parameters.PLANCK,
-        interplanetary_temperature=source_parameters.T_0_K98,
-        delta=source_parameters.delta_K98,
-        emissivity=source_parameters.EMISSIVITY_PLANCK_18,
-    )
-)
-
-
-model_registry.register_model(
-    IPDModel(
-        name="DIRBE",
-        component_parameters=component_parameters.K98,
-        interplanetary_temperature=source_parameters.T_0_K98,
-        delta=source_parameters.delta_K98,
-        emissivity=source_parameters.EMISSIVITY_DIRBE,
-        albedo=source_parameters.ALBEDO_DIRBE,
-    )
+    name="DIRBE",
+    components=[
+        Label.CLOUD,
+        Label.BAND1,
+        Label.BAND2,
+        Label.BAND3,
+        Label.RING,
+        Label.FEATURE,
+    ],
+    component_parameters=component_parameters.K98,
+    source_component_parameters={
+        "emissivities": source_parameters.EMISSIVITY_DIRBE,
+        "albedos": source_parameters.ALBEDO_DIRBE,
+    },
+    source_parameters={
+        "T_0": source_parameters.T_0_K98,
+        "delta": source_parameters.delta_K98,
+        "phase": source_parameters.PHASE_DIRBE,
+    },
+    doc=(
+        "The Interplanetary Dust Model used in the DIRBE analysis. See "
+        "Kelsall et al. (1998) for more information."
+    ),
 )
