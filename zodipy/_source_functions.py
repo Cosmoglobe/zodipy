@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Union
 import astropy.constants as const
 import numpy as np
 

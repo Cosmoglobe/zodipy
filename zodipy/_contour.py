@@ -55,8 +55,8 @@ def get_component_density_grid(
 
     R_prime = np.sqrt(XX_prime ** 2 + YY_prime ** 2 + ZZ_prime ** 2)
     Z_prime = (
-        XX_prime * sin(component_class.Ω) * sin(component_class.i)
-        - YY_prime * cos(component_class.Ω) * sin(component_class.i)
+        XX_prime * sin(component_class.Omega) * sin(component_class.i)
+        - YY_prime * cos(component_class.Omega) * sin(component_class.i)
         + ZZ_prime * cos(component_class.i)
     )
 

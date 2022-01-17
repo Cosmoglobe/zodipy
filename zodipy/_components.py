@@ -4,7 +4,6 @@ from math import radians, sin, cos
 from math import pi as π
 from typing import Tuple
 
-from numba import njit
 import numpy as np
 
 
@@ -26,7 +25,7 @@ class Component(ABC):
         z-offset from the Sun in helliocentric ecliptic cartesian coordinates.
     i
         Inclination with respect to the ecliptic plane [deg].
-    Ω
+    Omega
         Ascending node [deg].
     """
 
@@ -34,11 +33,11 @@ class Component(ABC):
     y_0: float
     z_0: float
     i: float
-    Ω: float
+    Omega: float
 
     def __post_init__(self) -> None:
         self.i = radians(self.i)
-        self.Ω = radians(self.Ω)
+        self.Omega = radians(self.Omega)
         self.X_component = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
 
     @abstractmethod
@@ -66,14 +65,8 @@ class Component(ABC):
             Z_prime, and θ_prime.
         """
 
-    @staticmethod
-    @njit
     def get_primed_coordinates(
-        X_helio: np.ndarray,
-        X_earth: np.ndarray,
-        X_component: np.ndarray,
-        Ω_component: float,
-        i_component: float,
+        self, X_helio: np.ndarray, X_earth: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Returns a set of coordinates for a component.
 
@@ -87,17 +80,10 @@ class Component(ABC):
         Parameters
         ----------
         X_helio
-            Heliocentric ecliptic cartesian coordinates of each considered 
+            Heliocentric ecliptic cartesian coordinates of each considered
             pixel.
         X_earth
-            Heliocentric ecliptic cartesian coordinates of the Earth. 
-        X_component
-            Heliocentric ecliptic cartesian off-set of the component
-            (x_0, y_0, z_0).
-        Ω_component
-            Ascending node of the component.
-        i_component
-            Inclination of the component.
+            Heliocentric ecliptic cartesian coordinates of the Earth.
 
         Returns
         -------
@@ -113,16 +99,16 @@ class Component(ABC):
             line-of-sight describe by `R_prime` and the Earth.
         """
 
-        X_prime = X_helio - X_component
+        X_prime = X_helio - self.X_component
         R_prime = np.sqrt(X_prime[0] ** 2 + X_prime[1] ** 2 + X_prime[2] ** 2)
 
         Z_prime = (
-            X_prime[0] * sin(Ω_component) * sin(i_component)
-            - X_prime[1] * cos(Ω_component) * sin(i_component)
-            + X_prime[2] * cos(i_component)
+            X_prime[0] * sin(self.Omega) * sin(self.i)
+            - X_prime[1] * cos(self.Omega) * sin(self.i)
+            + X_prime[2] * cos(self.i)
         )
 
-        X_earth_prime = X_earth - X_component[0]
+        X_earth_prime = X_earth - self.X_component[0]
         θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
             X_earth_prime[1], X_earth_prime[0]
         )
@@ -134,10 +120,7 @@ class Component(ABC):
         pixel_positions: np.ndarray,
         earth_position: np.ndarray,
     ) -> np.ndarray:
-        """Returns the emission at a shell around the observer.
-
-        For a description on X_observer, X_earth, X_unit and R, please
-        see the get_coords function.
+        """Returns the component density at a shell around the observer.
 
         Parameters
         ----------
@@ -153,11 +136,7 @@ class Component(ABC):
         """
 
         R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
-            X_helio=pixel_positions,
-            X_earth=earth_position,
-            X_component=self.X_component,
-            Ω_component=self.Ω,
-            i_component=self.i,
+            X_helio=pixel_positions, X_earth=earth_position
         )
         return self.compute_density(
             R_prime=R_prime,
@@ -178,21 +157,21 @@ class Cloud(Component):
     ----------
     n_0
         Density at 1 AU.
-    α
+    alpha
         Radial power-law exponent.
-    β
-        Vertical shape parameter.
-    γ
+    beta
+       Vertical shape parameter.
+    gamma
         Vertical power-law exponent.
-    μ
+    mu
         Widening parameter for the modified fan.
     """
 
     n_0: float
-    α: float
-    β: float
-    γ: float
-    μ: float
+    alpha: float
+    beta: float
+    gamma: float
+    mu: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -203,14 +182,14 @@ class Cloud(Component):
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
-        μ = self.μ
+        μ = self.mu
         g = np.zeros_like(ζ)
 
         condition = ζ < μ
         g[condition] = ζ[condition] ** 2 / (2 * μ)
         g[~condition] = ζ[~condition] - (μ / 2)
 
-        return self.n_0 * R_prime ** -self.α * np.exp(-self.β * g * self.γ)
+        return self.n_0 * R_prime ** -self.alpha * np.exp(-self.beta * g * self.gamma)
 
 
 @dataclass
@@ -225,25 +204,25 @@ class Band(Component):
     ----------
     n_0
         Density at 3 AU.
-    δ_ζ
+    delta_zeta
         Shape parameter [deg].
     v
         Shape parameter.
     p
         Shape parameter.
-    δ_r
+    delta_r
         Inner radial cutoff.
     """
 
     n_0: float
-    δ_ζ: float
+    delta_zeta: float
     v: float
     p: float
-    δ_r: float
+    delta_r: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.δ_ζ = radians(self.δ_ζ)
+        self.delta_zeta = radians(self.delta_zeta)
 
     def compute_density(
         self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
@@ -251,10 +230,10 @@ class Band(Component):
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime) / R_prime
-        ζ_over_δ_ζ = ζ / self.δ_ζ
+        ζ_over_δ_ζ = ζ / self.delta_zeta
         term1 = (3 * self.n_0 / R_prime) * np.exp(-((ζ_over_δ_ζ) ** 6))
         term2 = 1 + ((ζ_over_δ_ζ) ** self.p) / self.v
-        term3 = 1 - np.exp(-((R_prime / self.δ_r) ** 20))
+        term3 = 1 - np.exp(-((R_prime / self.delta_r) ** 20))
 
         return term1 * term2 * term3
 
@@ -273,16 +252,16 @@ class Ring(Component):
         Density at 1 AU.
     R
         Radius of the peak density.
-    σ_r
+    sigma_r
         Radial dispersion.
-    σ_z
+    sigma_z
         Vertical dispersion.
     """
 
     n_0: float
     R: float
-    σ_r: float
-    σ_z: float
+    sigma_r: float
+    sigma_z: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -292,8 +271,8 @@ class Ring(Component):
     ) -> np.ndarray:
         """See base class for documentation."""
 
-        term1 = -(((R_prime - self.R) / self.σ_r) ** 2)
-        term2 = np.abs(Z_prime) / self.σ_z
+        term1 = -(((R_prime - self.R) / self.sigma_r) ** 2)
+        term2 = np.abs(Z_prime) / self.sigma_z
 
         return self.n_0 * np.exp(term1 - term2)
 
@@ -312,42 +291,42 @@ class Feature(Component):
         Density at 1 AU.
     R
         Radius of the peak density.
-    σ_r
+    sigma_r
         Radial dispersion.
-    σ_z
+    sigma_z
         Vertical dispersion.
     θ
         Longitude with respect to Earth.
-    σ_θ
+    sigma_θ
         Longitude dispersion.
     """
 
     n_0: float
     R: float
-    σ_r: float
-    σ_z: float
-    θ: float
-    σ_θ: float
+    sigma_r: float
+    sigma_z: float
+    theta: float
+    sigma_theta: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.θ = radians(self.θ)
-        self.σ_θ = radians(self.σ_θ)
+        self.theta = radians(self.theta)
+        self.sigma_theta = radians(self.sigma_theta)
 
     def compute_density(
         self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
     ) -> np.ndarray:
         """See base class for documentation."""
 
-        Δθ = θ_prime - self.θ
+        Δθ = θ_prime - self.theta
 
         condition1 = Δθ < -π
         condition2 = Δθ > π
         Δθ[condition1] = Δθ[condition1] + 2 * π
         Δθ[condition2] = Δθ[condition2] - 2 * π
 
-        term1 = -(((R_prime - self.R) / self.σ_r) ** 2)
-        term2 = np.abs(Z_prime) / self.σ_z
-        term3 = (Δθ / self.σ_θ) ** 2
+        term1 = -(((R_prime - self.R) / self.sigma_r) ** 2)
+        term2 = np.abs(Z_prime) / self.sigma_z
+        term3 = (Δθ / self.sigma_theta) ** 2
 
         return self.n_0 * np.exp(term1 - term2 - term3)
