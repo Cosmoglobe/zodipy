@@ -1,10 +1,11 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 import astropy.units as u
 import numpy as np
 
 from zodipy._model import InterplanetaryDustModel
 import zodipy._source_functions as source_funcs
+from zodipy._dirbe_bandpass import get_color_correction
 from zodipy._labels import Label
 
 
@@ -46,7 +47,6 @@ def brightness_integral(
     """
 
     integrated_emission = np.zeros(unit_vectors.shape[-1])
-    
     component = model.get_initialized_component(component_label)
     emissivity, albedo, phase_coefficients = _get_interpolated_source_parameters(
         freq=freq * u.GHz,
@@ -69,13 +69,16 @@ def brightness_integral(
         Theta=scattering_angle, C=phase_coefficients
     )
     T = source_funcs.interplanetary_temperature(R=R_helio, T_0=T_0, delta=delta)
+    # color_correction = get_color_correction(T=T, freq=freq)
+
     B_nu = source_funcs.blackbody_emission(T=T, freq=freq)
 
     density = component.get_density(
         pixel_positions=X_helio, earth_position=earth_position
     )
     emission_previous = density * (
-        albedo * solar_flux * phase_function + (1 - albedo) * (emissivity * B_nu)
+        albedo * solar_flux * phase_function
+        + (1 - albedo) * (emissivity * B_nu)# * color_correction)
     )
 
     diff_radial_distances = np.diff(radial_distances)
@@ -89,19 +92,21 @@ def brightness_integral(
             Theta=scattering_angle, C=phase_coefficients
         )
         T = source_funcs.interplanetary_temperature(R=R_helio, T_0=T_0, delta=delta)
+        # color_correction = get_color_correction(T=T, freq=freq)
         B_nu = source_funcs.blackbody_emission(T=T, freq=freq)
 
         density = component.get_density(
             pixel_positions=X_helio, earth_position=earth_position
         )
         emission_current = density * (
-            albedo * solar_flux * phase_function + (1 - albedo) * (emissivity * B_nu)
+            albedo * solar_flux * phase_function
+            + (1 - albedo) * (emissivity * B_nu)# * color_correction)
         )
 
         integrated_emission += (emission_previous + emission_current) * dr / 2
         emission_previous = emission_current
 
-    return integrated_emission 
+    return integrated_emission
 
 
 def _get_interpolated_source_parameters(

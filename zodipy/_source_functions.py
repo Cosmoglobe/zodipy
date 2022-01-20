@@ -8,7 +8,9 @@ c = const.c.value
 k_B = const.k_B.value
 
 
-def blackbody_emission(T: Union[float, np.ndarray], freq: float) -> np.ndarray:
+def blackbody_emission(
+    T: Union[float, np.ndarray], freq: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
     """Returns the blackbody emission for a temperature T and frequency freq.
 
     Parameters
@@ -26,6 +28,30 @@ def blackbody_emission(T: Union[float, np.ndarray], freq: float) -> np.ndarray:
     freq *= 1e9
     term1 = (2 * h * freq ** 3) / c ** 2
     term2 = np.expm1((h * freq) / (k_B * T))
+
+    return term1 / term2
+
+
+def blackbody_emission_wavelen(
+    T: Union[float, np.ndarray], wavelen: Union[float, np.ndarray]
+) -> Union[float, np.ndarray]:
+    """Returns the blackbody emission for a temperature T and wavelength wavelen.
+
+    Parameters
+    ----------
+    T
+        Temperature of the blackbody [K].
+    wavelen
+        Frequency [micron].
+
+    Returns
+    -------
+        Blackbody emission [W / m^2 Hz sr].
+    """
+
+    wavelen *= 1e-6
+    term1 = (2 * h * c ** 2) / wavelen ** 5
+    term2 = np.expm1((h * c) / (wavelen * k_B * T))
 
     return term1 / term2
 
