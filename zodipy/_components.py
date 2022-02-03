@@ -108,7 +108,7 @@ class Component(ABC):
             + X_prime[2] * cos(self.i)
         )
 
-        X_earth_prime = X_earth - self.X_component[0]
+        X_earth_prime = np.expand_dims(X_earth, axis=1) - self.X_component
         θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
             X_earth_prime[1], X_earth_prime[0]
         )
@@ -229,13 +229,15 @@ class Band(Component):
     ) -> np.ndarray:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime) / R_prime
+        ζ = np.abs(Z_prime / R_prime)
         ζ_over_δ_ζ = ζ / self.delta_zeta
-        term1 = (3 * self.n_0 / R_prime) * np.exp(-((ζ_over_δ_ζ) ** 6))
-        term2 = 1 + ((ζ_over_δ_ζ) ** self.p) / self.v
-        term3 = 1 - np.exp(-((R_prime / self.delta_r) ** 20))
+        term1 = (3 * self.n_0 / R_prime)
+        term2 =  np.exp(-(ζ_over_δ_ζ ** 6))
+        # term2 = 1 + ((ζ_over_δ_ζ) ** self.p) / self.v
+        term3 = self.v + ζ_over_δ_ζ ** self.p
+        term4 = 1 - np.exp(-((R_prime / self.delta_r) ** 20))
 
-        return term1 * term2 * term3
+        return term1 * term2 * term3 * term4
 
 
 @dataclass
@@ -271,7 +273,7 @@ class Ring(Component):
     ) -> np.ndarray:
         """See base class for documentation."""
 
-        term1 = -(((R_prime - self.R) / self.sigma_r) ** 2)
+        term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
         term2 = np.abs(Z_prime) / self.sigma_z
 
         return self.n_0 * np.exp(term1 - term2)
@@ -325,8 +327,8 @@ class Feature(Component):
         Δθ[condition1] = Δθ[condition1] + 2 * π
         Δθ[condition2] = Δθ[condition2] - 2 * π
 
-        term1 = -(((R_prime - self.R) / self.sigma_r) ** 2)
+        term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
         term2 = np.abs(Z_prime) / self.sigma_z
-        term3 = (Δθ / self.sigma_theta) ** 2
+        term3 = Δθ ** 2 / (2 * self.sigma_theta ** 2)
 
         return self.n_0 * np.exp(term1 - term2 - term3)

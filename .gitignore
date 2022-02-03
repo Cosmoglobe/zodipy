@@ -6,7 +6,6 @@ __pycache__
 
 # Distribution / packaging
 dist
-
 # Testing
 .pytest_cache
 .mypy_cache
@@ -19,7 +18,12 @@ context.py
 test.py
 _utils.py
 _tabulate.py
+_bandpass.py
+_fitting_brightness_integral.py
+_fitting_simulation.py
 contour.py
 data
+dirbe
 zodi_mask.fits
 zodi_temp.fits
+timestream.npy

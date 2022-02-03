@@ -9,8 +9,9 @@ k_B = const.k_B.value
 
 
 def blackbody_emission(
-    T: Union[float, np.ndarray], freq: Union[float, np.ndarray]
-) -> Union[float, np.ndarray]:
+    T: Union[float, Sequence[float], np.ndarray],
+    freq: Union[float, Sequence[float], np.ndarray],
+) -> Union[float, Sequence[float], np.ndarray]:
     """Returns the blackbody emission for a temperature T and frequency freq.
 
     Parameters

@@ -1,18 +1,19 @@
-from typing import List, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
 import astropy.units as u
 import numpy as np
 
 from zodipy._model import InterplanetaryDustModel
 import zodipy._source_functions as source_funcs
-from zodipy._dirbe_bandpass import get_color_correction
+from zodipy._bandpass import get_color_correction, read_color_corr
+
 from zodipy._labels import Label
 
 
 def brightness_integral(
+    freq: float,
     model: InterplanetaryDustModel,
     component_label: Label,
-    freq: float,
     radial_distances: np.ndarray,
     observer_position: np.ndarray,
     earth_position: np.ndarray,
@@ -27,8 +28,6 @@ def brightness_integral(
         Interplanetary Dust Model.
     component_label
         Component to evaluate.
-    freq
-        Frequency [GHz] at which to evaluate to Zodiacal Emission.
     radial_distances
         Array of discrete radial distances from the observer [AU].
     observer_position
@@ -53,6 +52,7 @@ def brightness_integral(
         model=model,
         component=component_label,
     )
+
     T_0 = model.source_parameters["T_0"]
     delta = model.source_parameters["delta"]
 
@@ -68,8 +68,10 @@ def brightness_integral(
     phase_function = source_funcs.phase_function(
         Theta=scattering_angle, C=phase_coefficients
     )
+
     T = source_funcs.interplanetary_temperature(R=R_helio, T_0=T_0, delta=delta)
-    # color_correction = get_color_correction(T=T, freq=freq)
+
+    color_correction = get_color_correction(T=T, freq=freq)
 
     B_nu = source_funcs.blackbody_emission(T=T, freq=freq)
 
@@ -78,7 +80,7 @@ def brightness_integral(
     )
     emission_previous = density * (
         albedo * solar_flux * phase_function
-        + (1 - albedo) * (emissivity * B_nu)# * color_correction)
+        + (1 - albedo) * (emissivity * B_nu * color_correction)
     )
 
     diff_radial_distances = np.diff(radial_distances)
@@ -92,7 +94,7 @@ def brightness_integral(
             Theta=scattering_angle, C=phase_coefficients
         )
         T = source_funcs.interplanetary_temperature(R=R_helio, T_0=T_0, delta=delta)
-        # color_correction = get_color_correction(T=T, freq=freq)
+        color_correction = get_color_correction(T=T, freq=freq)
         B_nu = source_funcs.blackbody_emission(T=T, freq=freq)
 
         density = component.get_density(
@@ -100,7 +102,7 @@ def brightness_integral(
         )
         emission_current = density * (
             albedo * solar_flux * phase_function
-            + (1 - albedo) * (emissivity * B_nu)# * color_correction)
+            + (1 - albedo) * (emissivity * B_nu * color_correction)
         )
 
         integrated_emission += (emission_previous + emission_current) * dr / 2

@@ -1,16 +1,16 @@
-from typing import Dict
+from typing import Dict, Union, Sequence
 
 import healpy as hp
 import numpy as np
 
 from zodipy._labels import Label
-from zodipy._model import InterplanetaryDustModel
+from zodipy._model import InterplanetaryDustModel, model_registry
 from zodipy._brightness_integral import brightness_integral
 
 
 def instantaneous_emission(
     nside: int,
-    freq: float,
+    freq: Union[float, Sequence[float]],
     model: InterplanetaryDustModel,
     line_of_sights: Dict[Label, np.ndarray],
     observer_positions: np.ndarray,
@@ -74,7 +74,7 @@ def instantaneous_emission(
 
 def time_ordered_emission(
     nside: int,
-    freq: float,
+    freq: Union[float, Sequence[float]],
     model: InterplanetaryDustModel,
     line_of_sights: Dict[Label, np.ndarray],
     observer_position: np.ndarray,
@@ -153,6 +153,68 @@ def time_ordered_emission(
             model=model,
             component_label=label,
             freq=freq,
+            radial_distances=line_of_sights[label],
+            observer_position=observer_position,
+            earth_position=earth_position,
+            unit_vectors=unit_vectors,
+        )
+
+        time_stream[idx] = integrated_comp_emission[indicies]
+
+    return time_stream * 1e20
+
+
+def time_oredered_dirbe(
+    nside: int,
+    band: int,
+    line_of_sights: Dict[Label, np.ndarray],
+    observer_position: np.ndarray,
+    earth_position: np.ndarray,
+    pixel_chunk: np.ndarray,
+    bin: bool,
+    coord_out: str,
+) -> np.ndarray:
+
+    model = model_registry.get_model("DIRBE")
+
+    if bin:
+        pixels, counts = np.unique(pixel_chunk, return_counts=True)
+        unit_vectors = _get_rotated_unit_vectors(
+            nside=nside,
+            pixels=pixels,
+            coord_out=coord_out,
+        )
+        emission = np.zeros((len(model.components), hp.nside2npix(nside)))
+
+        for idx, label in enumerate(model.components):
+            integrated_comp_emission = fitting_brightness_integral(
+                model=model,
+                component_label=label,
+                band=band,
+                radial_distances=line_of_sights[label],
+                observer_position=observer_position,
+                earth_position=earth_position,
+                unit_vectors=unit_vectors,
+            )
+            emission[idx, pixels] = integrated_comp_emission
+
+        emission[:, pixels] *= counts
+
+        return emission * 1e20
+
+    pixels, indicies = np.unique(pixel_chunk, return_inverse=True)
+    unit_vectors = _get_rotated_unit_vectors(
+        nside=nside,
+        pixels=pixels,
+        coord_out=coord_out,
+    )
+    time_stream = np.zeros((len(model.components), len(pixel_chunk)))
+
+    for idx, label in enumerate(model.components):
+        integrated_comp_emission = fitting_brightness_integral(
+            model=model,
+            component_label=label,
+            band=band,
             radial_distances=line_of_sights[label],
             observer_position=observer_position,
             earth_position=earth_position,
