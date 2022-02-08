@@ -1,5 +1,5 @@
 
-<img src="imgs/zodipy_logo.png" width="350">
+<img src="imgs/zodipy_logo-nobg.png" width="350">
 
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
@@ -10,7 +10,7 @@
 
 
 *Zodipy* is a Python simulation tool for Zodiacal Emission (Interplanetary Dust Emission). It allows you to compute the 
-simulated emission in a timestream, or at an instant in time.
+simulated interplanetary dust emission for a timestream of pixels, or at an instant in time.
 
 ![plot](imgs/zodi_default.png)
 
@@ -22,10 +22,9 @@ The full set of features and use-cases will be documentated in the nearby future
 
 **Initializing an Interplantery Dust Model:** *Zodipy* implements the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) Interplanetary Dust Model. Additionally, it is possible to include the various emissivity fits from the Planck collaboration.
 ```python
-import zodipy
+from zodipy import Zodipy
 
-# Other options for models are "K98" (default), "Planck13", "Planck15"
-model = zodipy.InterplanetaryDustModel(model="Planck18")
+model = Zodipy(model="DIRBE")
 ```
 
 **Instantaneous emission:** We can make a map of the simulated instantaneous emission seen by an observer using the `get_instantaneous_emission` function, which queries the observer position given an epoch through the JPL Horizons API:
@@ -47,7 +46,7 @@ hp.mollview(emission, norm="hist")
 
 The `epochs` input must follow the convention used in [astroquery](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html). If multiple dates are passed to the function, the returned emission becomes the average over all instantaneous maps.
 
-Additionally, it is possible to retrieve the emission component-wise by setting `return_comps=True` in the function call. Following is an example of what the simulated emission seen from L2 for each component is at 6th of October 2021.
+The individual components can be retrieved by setting the keyword `return_comps=True`. Following is an example of the simulated *instantaneous emission* with Zodipy seen from L2 for each component at October 6th 2021.
 
 ![plot](imgs/comps.png)
 
@@ -56,61 +55,68 @@ Additionally, it is possible to retrieve the emission component-wise by setting 
 ```python
 import astropy.units as u
 import matplotlib.pyplot as plt
-import zodipy
+from zodipy import Zodipy
 
-model = zodipy.InterplanetaryDustModel()
+model = Zodipy()
 
+# Read in DIRBE tod information
+dirbe_tods = ...
 dirbe_pixels = ...
 dirbe_position = ...  
-earth_position = ...  
 
 timestream = model.get_time_ordered_emission(
     25*u.micron
     nside=128,
     pixels=dirbe_pixels,
-    observer_coordinates=dirbe_position,
-    earth_coordinates=earth_position
+    observer_pos=dirbe_position,
+    color_corr=True, # Include the DIRBE color correction factor
 )
 
-plt.plot(timestream)
+plt.plot(dirbe_tods, label="DIRBE TODS")
+plt.plot(timestream, label="Zodipy simulation")
+plt.legend()
+plt.show()
 ```
-![plot](imgs/tods.png)
+![plot](imgs/timestream.png)
 
 
-**Binned time-ordered emission:** By setting `bin=True` in the function call, the simulated emission is binned into a map. In the following, we compare *Zodipy* simulations with the observed time-ordered data by DIRBE.
+**Binned time-ordered emission:** By setting `bin=True` in the function call, the simulated emission is binned into a HEALPIX map. In the following, we compare *Zodipy* simulated maps with the observed binned time-ordered data by DIRBE in week maps.
 
 ```python
 import astropy.units as u
 import matplotlib.pyplot as plt
-import zodipy
+from zodipy import Zodipy
 
-model = zodipy.InterplanetaryDustModel()
+model = Zodipy()
 
+nside = 128
+wavelen = 25*u.micron
+
+dirbe_tod_chunks = [...]
 dirbe_pixel_chunks = [...]
 dirbe_positions = [...]
-earth_positions = [...]
 
 emission = np.zeros(hp.nside2npix(nside))
 hits_map = np.zeros(hp.nside2npix(nside))   
     
-for day, (pixels, dirbe_position, earth_position) in enumerate(
-    zip(dirbe_pixel_chunks, dirbe_positions, earth_positions),
+for day, (pixels, dirbe_pos) in enumerate(
+    zip(dirbe_pixel_chunks, dirbe_positions),
     start=1
 ):
     
+    # Get unique pixel hit and numbers to build hits_map
     unique_pixels, counts = np.unique(pixels, return_counts=True)
     hits_map[unique_pixels] += counts
 
     emission += model.get_time_ordered_emission(
-        25*u.micron,
-        nside=128,
+        wavelen,
+        nside=nside,
         pixels=pixels,
-        observer_position=dirbe_position,
-        earth_position=earth_positions,
-        bin=True
+        observer_pos=dirbe_position,
+        bin=True,
+        color_corr=True
     )
 
-    # We make a plot for each week.
     if day % 7 == 0:
         zodi_emission /= hits_map
         hp.mollview(zodi_emission)
@@ -119,6 +125,6 @@ for day, (pixels, dirbe_position, earth_position) in enumerate(
         emission = np.zeros(hp.nside2npix(nside)) 
         hits_map = np.zeros(hp.nside2npix(nside)) 
 ```
-| DIRBE TOD | Zodipy TOD Simulation|
-| :---: | :---: |
-|![plot](imgs/dirbe.gif) | ![plot](imgs/zodipy.gif)|
+
+![plot](imgs/tods.gif) 
+![plot](imgs/zodipy.gif)
