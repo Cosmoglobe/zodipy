@@ -60,7 +60,7 @@ def get_component_density_grid(
         + ZZ_prime * cos(component_class.i)
     )
 
-    X_earth_prime = earth_coords - component_class.X_component[0]
+    X_earth_prime = earth_coords - component_class.X_0[0]
     θ_prime = np.arctan2(YY_prime, ZZ_prime) - np.arctan2(
         X_earth_prime[1], X_earth_prime[0]
     )
