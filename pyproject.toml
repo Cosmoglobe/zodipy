@@ -15,20 +15,15 @@ astropy = "^4.3.1"
 astroquery = "^0.4.3"
 scipy = "^1.7.1"
 Pillow = ">=9.0.0"
-h5py = "^3.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 matplotlib = "^3.4.3"
-cosmoglobe = "^0.9.24"
-ipython = "^7.26.0"
+ipython = ">=7.31.1"
 black = "^21.7b0"
 mypy = "^0.910"
 tox = "^3.24.3"
-h5py = "^3.4.0"
 tox-poetry-installer = {extras = ["poetry"], version = "^0.8.2"}
-numba = "^0.55.0"
-imageio = "^2.14.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -37,9 +32,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 disable_error_code = ["misc"]
 overrides = [
-    { module = "numba.*", ignore_missing_imports = true },
     { module = "healpy.*", ignore_missing_imports = true },
     { module = "astropy.*", ignore_missing_imports = true },
     { module = "astroquery.*", ignore_missing_imports = true },
-    { module = "numba.*", ignore_missing_imports = true },
 ]
+exclude = "zodipy/(dirbe|_contour)"

@@ -19,11 +19,11 @@ test.py
 test2.py
 _utils.py
 _tabulate.py
-_bandpass.py
+# _bandpass.py
 _fitting_brightness_integral.py
 _fitting_simulation.py
 contour.py
-data
+# data
 dirbe
 zodi_mask.fits
 zodi_temp.fits

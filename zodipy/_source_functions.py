@@ -117,19 +117,20 @@ def get_interpolated_source_parameters(
     if emissivities is not None:
         emissivity_spectrum = emissivities["spectrum"]
         emissivity = np.interp(
-            freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
-            emissivity_spectrum,
+            freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()).value,
+            emissivity_spectrum.value,
             emissivities[component],
         )
+
     else:
-        emissivity = 1
+        emissivity = 1.0
 
     albedos = model.source_component_parameters.get("albedos")
     if albedos is not None:
         albedo_spectrum = albedos["spectrum"]
         albedo = np.interp(
-            freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
-            albedo_spectrum,
+            freq.to(albedo_spectrum.unit, equivalencies=u.spectral()).value,
+            albedo_spectrum.value,
             albedos[component],
         )
     else:
@@ -140,8 +141,8 @@ def get_interpolated_source_parameters(
         phase_spectrum = phases["spectrum"]
         phase_coefficients = [
             np.interp(
-                freq.to(phase_spectrum.unit, equivalencies=u.spectral()),
-                phase_spectrum,
+                freq.to(phase_spectrum.unit, equivalencies=u.spectral()).value,
+                phase_spectrum.value,
                 phase_coeff,
             )
             for phase_coeff in phases["coefficients"]

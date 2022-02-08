@@ -93,6 +93,7 @@ class Zodipy:
             Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
+        color_table: Optional[NDArray[np.float64]]
         if color_corr:
             wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
             band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
@@ -175,6 +176,7 @@ class Zodipy:
             Simulated timestream or map of Zodiacal emission in units of MJy/sr.
         """
 
+        color_table: Optional[NDArray[np.float64]]
         if color_corr:
             wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
             band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
