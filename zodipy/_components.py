@@ -48,7 +48,6 @@ class Component(ABC):
         Z_prime: NDArray[np.float64],
         *,
         θ_prime: NDArray[np.float64],
-        R_cloud: NDArray[np.float64],
     ) -> NDArray[np.float64]:
         """Returns the dust density at a shell around the observer.
 
@@ -146,14 +145,15 @@ class Component(ABC):
             X_helio=pixel_pos, X_earth=earth_pos
         )
 
-        X_cloud = pixel_pos - cloud_offset
-        R_cloud = np.linalg.norm(X_cloud, axis=0)
+        if isinstance(self, Band):
+            X_cloud = pixel_pos - cloud_offset
+            R_cloud = np.linalg.norm(X_cloud, axis=0)
+            R_prime = R_cloud
 
         return self.compute_density(
             R_prime=R_prime,
             Z_prime=Z_prime,
             θ_prime=θ_prime,
-            R_cloud=R_cloud,
         )
 
 
@@ -240,12 +240,11 @@ class Band(Component):
         self,
         R_prime: NDArray[np.float64],
         Z_prime: NDArray[np.float64],
-        R_cloud: NDArray[np.float64],
         **_,
     ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime / R_cloud)
+        ζ = np.abs(Z_prime / R_prime)
         ζ_over_δ_ζ = ζ / self.delta_zeta
         term1 = 3 * self.n_0 / R_prime
         term2 = np.exp(-(ζ_over_δ_ζ ** 6))
