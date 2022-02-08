@@ -1,6 +1,12 @@
-from typing import Sequence, Union
+from typing import Sequence, Union, List, Tuple
+
 import astropy.constants as const
+import astropy.units as u
 import numpy as np
+from numpy.typing import NDArray
+
+from zodipy._labels import Label
+from zodipy._model import InterplanetaryDustModel
 
 
 h = const.h.value
@@ -9,9 +15,9 @@ k_B = const.k_B.value
 
 
 def blackbody_emission(
-    T: Union[float, Sequence[float], np.ndarray],
-    freq: Union[float, Sequence[float], np.ndarray],
-) -> Union[float, Sequence[float], np.ndarray]:
+    T: Union[float, NDArray[np.float64]],
+    freq: Union[float, NDArray[np.float64]],
+) -> Union[float, NDArray[np.float64]]:
     """Returns the blackbody emission for a temperature T and frequency freq.
 
     Parameters
@@ -34,8 +40,8 @@ def blackbody_emission(
 
 
 def blackbody_emission_wavelen(
-    T: Union[float, np.ndarray], wavelen: Union[float, np.ndarray]
-) -> Union[float, np.ndarray]:
+    T: Union[float, NDArray[np.float64]], wavelen: Union[float, NDArray[np.float64]]
+) -> Union[float, NDArray[np.float64]]:
     """Returns the blackbody emission for a temperature T and wavelength wavelen.
 
     Parameters
@@ -57,7 +63,9 @@ def blackbody_emission_wavelen(
     return term1 / term2
 
 
-def interplanetary_temperature(R: np.ndarray, T_0: float, delta: float) -> np.ndarray:
+def interplanetary_temperature(
+    R: NDArray[np.float64], T_0: float, delta: float
+) -> NDArray[np.float64]:
     """Returns the Interplanetary Temperature given a radial distance from the Sun.
 
     Parameters
@@ -77,7 +85,9 @@ def interplanetary_temperature(R: np.ndarray, T_0: float, delta: float) -> np.nd
     return T_0 * R ** -delta
 
 
-def phase_function(Theta: np.ndarray, C: Sequence[float]) -> np.ndarray:
+def phase_function(
+    Theta: NDArray[np.float64], C: Sequence[float]
+) -> NDArray[np.float64]:
     """Returns the phase function.
 
     Parameters
@@ -96,3 +106,47 @@ def phase_function(Theta: np.ndarray, C: Sequence[float]) -> np.ndarray:
     N = 1 / (phase.sum())
 
     return N * phase
+
+
+def get_interpolated_source_parameters(
+    freq: u.Quantity, model: InterplanetaryDustModel, component: Label
+) -> Tuple[float, float, List[float]]:
+    """Returns interpolated source parameters given a frequency and a component."""
+
+    emissivities = model.source_component_parameters.get("emissivities")
+    if emissivities is not None:
+        emissivity_spectrum = emissivities["spectrum"]
+        emissivity = np.interp(
+            freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
+            emissivity_spectrum,
+            emissivities[component],
+        )
+    else:
+        emissivity = 1
+
+    albedos = model.source_component_parameters.get("albedos")
+    if albedos is not None:
+        albedo_spectrum = albedos["spectrum"]
+        albedo = np.interp(
+            freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
+            albedo_spectrum,
+            albedos[component],
+        )
+    else:
+        albedo = 0.0
+
+    phases = model.source_parameters.get("phase")
+    if phases is not None:
+        phase_spectrum = phases["spectrum"]
+        phase_coefficients = [
+            np.interp(
+                freq.to(phase_spectrum.unit, equivalencies=u.spectral()),
+                phase_spectrum,
+                phase_coeff,
+            )
+            for phase_coeff in phases["coefficients"]
+        ]
+    else:
+        phase_coefficients = [0.0, 0.0, 0.0]
+
+    return emissivity, albedo, phase_coefficients

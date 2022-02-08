@@ -1,22 +1,26 @@
-from typing import Dict, Union, Sequence
+from typing import Dict, Optional
 
 import healpy as hp
 import numpy as np
+from numpy.typing import NDArray
 
 from zodipy._labels import Label
-from zodipy._model import InterplanetaryDustModel, model_registry
+from zodipy._model import InterplanetaryDustModel
 from zodipy._brightness_integral import brightness_integral
+
+_SI_TO_MJY = 1e20
 
 
 def instantaneous_emission(
-    nside: int,
-    freq: Union[float, Sequence[float]],
     model: InterplanetaryDustModel,
-    line_of_sights: Dict[Label, np.ndarray],
-    observer_positions: np.ndarray,
-    earth_positions: np.ndarray,
+    freq: float,
+    nside: int,
+    line_of_sights: Dict[Label, NDArray[np.float64]],
+    observer_pos: NDArray[np.float64],
+    earth_pos: NDArray[np.float64],
+    color_table: Optional[NDArray[np.float64]],
     coord_out: str,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """Returns the simulated instantaneous emission.
 
     Parameters
@@ -28,12 +32,12 @@ def instantaneous_emission(
     model
         Interplanetary dust model.
     line_of_sights
-        Dictionary mapping radial line of sights from the observer to a 
+        Dictionary mapping radial line of sights from the observer to a
         Zodiacal component.
-    observer_positions
+    observer_pos
         A sequence of (or a single) heliocentric cartesian positions of the
         observer.
-    earth_positions
+    earth_pos
         A sequence of (or a single) heliocentric cartesian positions of the
         Earth.
     coord_out
@@ -52,37 +56,36 @@ def instantaneous_emission(
         coord_out=coord_out,
     )
     emission = np.zeros((len(model.components), npix))
-    for observer_position, earth_position in zip(
-        observer_positions,
-        earth_positions,
-    ):
-        for idx, component_label in enumerate(model.components):
+    for observer_position, earth_position in zip(observer_pos, earth_pos):
+        for idx, label in enumerate(model.components):
             integrated_comp_emission = brightness_integral(
                 model=model,
-                component_label=component_label,
+                component_label=label,
                 freq=freq,
-                radial_distances=line_of_sights[component_label],
-                observer_position=observer_position,
-                earth_position=earth_position,
+                radial_distances=line_of_sights[label],
+                observer_pos=observer_position,
+                earth_pos=earth_position,
+                color_table=color_table,
                 unit_vectors=unit_vectors,
             )
 
             emission[idx] += integrated_comp_emission
 
-    return emission * 1e20
+    return emission * _SI_TO_MJY
 
 
 def time_ordered_emission(
-    nside: int,
-    freq: Union[float, Sequence[float]],
     model: InterplanetaryDustModel,
-    line_of_sights: Dict[Label, np.ndarray],
-    observer_position: np.ndarray,
-    earth_position: np.ndarray,
-    pixel_chunk: np.ndarray,
+    nside: int,
+    freq: float,
+    line_of_sights: Dict[Label, NDArray[np.float64]],
+    observer_pos: NDArray[np.float64],
+    earth_pos: NDArray[np.float64],
+    pixel_chunk: NDArray[np.int64],
+    color_table: Optional[NDArray[np.float64]],
     bin: bool,
     coord_out: str,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """Simulates and returns the Zodiacal emission timestream.
 
     Parameters
@@ -94,11 +97,11 @@ def time_ordered_emission(
     model
         Interplanetary dust model.
     line_of_sights
-        Dictionary mapping radial line of sights from the observer to a 
+        Dictionary mapping radial line of sights from the observer to a
         Zodiacal component.
-    observer_position
+    observer_pos
         Heliocentric cartesian position of the observer.
-    earth_position
+    earth_pos
         Heliocentric cartesian position of the Earth.
     pixel_chunk
         An array representing a chunk of pixels where we assume the observer
@@ -118,9 +121,7 @@ def time_ordered_emission(
     if bin:
         pixels, counts = np.unique(pixel_chunk, return_counts=True)
         unit_vectors = _get_rotated_unit_vectors(
-            nside=nside,
-            pixels=pixels,
-            coord_out=coord_out,
+            nside=nside, pixels=pixels, coord_out=coord_out
         )
         emission = np.zeros((len(model.components), hp.nside2npix(nside)))
 
@@ -130,23 +131,22 @@ def time_ordered_emission(
                 component_label=label,
                 freq=freq,
                 radial_distances=line_of_sights[label],
-                observer_position=observer_position,
-                earth_position=earth_position,
+                observer_pos=observer_pos,
+                earth_pos=earth_pos,
+                color_table=color_table,
                 unit_vectors=unit_vectors,
             )
             emission[idx, pixels] = integrated_comp_emission
 
         emission[:, pixels] *= counts
 
-        return emission * 1e20
+        return emission * _SI_TO_MJY
 
     pixels, indicies = np.unique(pixel_chunk, return_inverse=True)
     unit_vectors = _get_rotated_unit_vectors(
-        nside=nside,
-        pixels=pixels,
-        coord_out=coord_out,
+        nside=nside, pixels=pixels, coord_out=coord_out
     )
-    time_stream = np.zeros((len(model.components), len(pixel_chunk)))
+    emission = np.zeros((len(model.components), len(pixel_chunk)))
 
     for idx, label in enumerate(model.components):
         integrated_comp_emission = brightness_integral(
@@ -154,81 +154,20 @@ def time_ordered_emission(
             component_label=label,
             freq=freq,
             radial_distances=line_of_sights[label],
-            observer_position=observer_position,
-            earth_position=earth_position,
+            observer_pos=observer_pos,
+            earth_pos=earth_pos,
+            color_table=color_table,
             unit_vectors=unit_vectors,
         )
 
-        time_stream[idx] = integrated_comp_emission[indicies]
+        emission[idx] = integrated_comp_emission[indicies]
 
-    return time_stream * 1e20
-
-
-def time_oredered_dirbe(
-    nside: int,
-    band: int,
-    line_of_sights: Dict[Label, np.ndarray],
-    observer_position: np.ndarray,
-    earth_position: np.ndarray,
-    pixel_chunk: np.ndarray,
-    bin: bool,
-    coord_out: str,
-) -> np.ndarray:
-
-    model = model_registry.get_model("DIRBE")
-
-    if bin:
-        pixels, counts = np.unique(pixel_chunk, return_counts=True)
-        unit_vectors = _get_rotated_unit_vectors(
-            nside=nside,
-            pixels=pixels,
-            coord_out=coord_out,
-        )
-        emission = np.zeros((len(model.components), hp.nside2npix(nside)))
-
-        for idx, label in enumerate(model.components):
-            integrated_comp_emission = fitting_brightness_integral(
-                model=model,
-                component_label=label,
-                band=band,
-                radial_distances=line_of_sights[label],
-                observer_position=observer_position,
-                earth_position=earth_position,
-                unit_vectors=unit_vectors,
-            )
-            emission[idx, pixels] = integrated_comp_emission
-
-        emission[:, pixels] *= counts
-
-        return emission * 1e20
-
-    pixels, indicies = np.unique(pixel_chunk, return_inverse=True)
-    unit_vectors = _get_rotated_unit_vectors(
-        nside=nside,
-        pixels=pixels,
-        coord_out=coord_out,
-    )
-    time_stream = np.zeros((len(model.components), len(pixel_chunk)))
-
-    for idx, label in enumerate(model.components):
-        integrated_comp_emission = fitting_brightness_integral(
-            model=model,
-            component_label=label,
-            band=band,
-            radial_distances=line_of_sights[label],
-            observer_position=observer_position,
-            earth_position=earth_position,
-            unit_vectors=unit_vectors,
-        )
-
-        time_stream[idx] = integrated_comp_emission[indicies]
-
-    return time_stream * 1e20
+    return emission * _SI_TO_MJY
 
 
 def _get_rotated_unit_vectors(
-    nside: int, pixels: np.ndarray, coord_out: str
-) -> np.ndarray:
+    nside: int, pixels: NDArray[np.int64], coord_out: str
+) -> NDArray[np.float64]:
     """Returns the unit vectors of a HEALPIX map given a requested output coordinate system.
 
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,

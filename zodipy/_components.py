@@ -5,6 +5,7 @@ from math import pi as π
 from typing import Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 @dataclass
@@ -38,12 +39,17 @@ class Component(ABC):
     def __post_init__(self) -> None:
         self.i = radians(self.i)
         self.Omega = radians(self.Omega)
-        self.X_component = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
+        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
 
     @abstractmethod
     def compute_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, *, θ_prime: np.ndarray
-    ) -> np.ndarray:
+        self,
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
+        *,
+        θ_prime: NDArray[np.float64],
+        R_cloud: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
         """Returns the dust density at a shell around the observer.
 
         Parameters
@@ -66,8 +72,8 @@ class Component(ABC):
         """
 
     def get_primed_coordinates(
-        self, X_helio: np.ndarray, X_earth: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        self, X_helio: NDArray[np.float64], X_earth: NDArray[np.float64]
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
         """Returns a set of coordinates for a component.
 
         Given a set of heliocentric ecliptic positions in space given by the
@@ -99,8 +105,8 @@ class Component(ABC):
             line-of-sight describe by `R_prime` and the Earth.
         """
 
-        X_prime = X_helio - self.X_component
-        R_prime = np.sqrt(X_prime[0] ** 2 + X_prime[1] ** 2 + X_prime[2] ** 2)
+        X_prime = X_helio - self.X_0
+        R_prime = np.linalg.norm(X_prime, axis=0)
 
         Z_prime = (
             X_prime[0] * sin(self.Omega) * sin(self.i)
@@ -108,7 +114,7 @@ class Component(ABC):
             + X_prime[2] * cos(self.i)
         )
 
-        X_earth_prime = np.expand_dims(X_earth, axis=1) - self.X_component
+        X_earth_prime = np.expand_dims(X_earth, axis=1) - self.X_0
         θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
             X_earth_prime[1], X_earth_prime[0]
         )
@@ -117,17 +123,18 @@ class Component(ABC):
 
     def get_density(
         self,
-        pixel_positions: np.ndarray,
-        earth_position: np.ndarray,
-    ) -> np.ndarray:
+        pixel_pos: NDArray[np.float64],
+        earth_pos: NDArray[np.float64],
+        cloud_offset: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
         """Returns the component density at a shell around the observer.
 
         Parameters
         ----------
-        pixel_positions
+        pixel_pos
             Heliocentric ecliptic cartesian coordinates of the considered
             pixels.
-        earth_position
+        earth_pos
             Heliocentric ecliptic cartesian coordinates of the Earth.
 
         Returns
@@ -136,12 +143,17 @@ class Component(ABC):
         """
 
         R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
-            X_helio=pixel_positions, X_earth=earth_position
+            X_helio=pixel_pos, X_earth=earth_pos
         )
+
+        X_cloud = pixel_pos - cloud_offset
+        R_cloud = np.linalg.norm(X_cloud, axis=0)
+
         return self.compute_density(
             R_prime=R_prime,
             Z_prime=Z_prime,
             θ_prime=θ_prime,
+            R_cloud=R_cloud,
         )
 
 
@@ -177,11 +189,11 @@ class Cloud(Component):
         super().__post_init__()
 
     def compute_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
-    ) -> np.ndarray:
+        self, R_prime: NDArray[np.float64], Z_prime: NDArray[np.float64], **_
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime) / R_prime
+        ζ = np.abs(Z_prime / R_prime)
         μ = self.mu
         g = np.zeros_like(ζ)
 
@@ -189,7 +201,7 @@ class Cloud(Component):
         g[condition] = ζ[condition] ** 2 / (2 * μ)
         g[~condition] = ζ[~condition] - (μ / 2)
 
-        return self.n_0 * R_prime ** -self.alpha * np.exp(-self.beta * g * self.gamma)
+        return self.n_0 * R_prime ** -self.alpha * np.exp(-self.beta * g ** self.gamma)
 
 
 @dataclass
@@ -225,15 +237,18 @@ class Band(Component):
         self.delta_zeta = radians(self.delta_zeta)
 
     def compute_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
-    ) -> np.ndarray:
+        self,
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
+        R_cloud: NDArray[np.float64],
+        **_,
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime / R_prime)
+        ζ = np.abs(Z_prime / R_cloud)
         ζ_over_δ_ζ = ζ / self.delta_zeta
-        term1 = (3 * self.n_0 / R_prime)
-        term2 =  np.exp(-(ζ_over_δ_ζ ** 6))
-        # term2 = 1 + ((ζ_over_δ_ζ) ** self.p) / self.v
+        term1 = 3 * self.n_0 / R_prime
+        term2 = np.exp(-(ζ_over_δ_ζ ** 6))
         term3 = self.v + ζ_over_δ_ζ ** self.p
         term4 = 1 - np.exp(-((R_prime / self.delta_r) ** 20))
 
@@ -269,8 +284,8 @@ class Ring(Component):
         super().__post_init__()
 
     def compute_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, **_
-    ) -> np.ndarray:
+        self, R_prime: NDArray[np.float64], Z_prime: NDArray[np.float64], **_
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
@@ -316,8 +331,12 @@ class Feature(Component):
         self.sigma_theta = radians(self.sigma_theta)
 
     def compute_density(
-        self, R_prime: np.ndarray, Z_prime: np.ndarray, θ_prime: np.ndarray
-    ) -> np.ndarray:
+        self,
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
+        θ_prime: NDArray[np.float64],
+        **_,
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         Δθ = θ_prime - self.theta

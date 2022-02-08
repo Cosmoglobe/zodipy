@@ -1,9 +1,11 @@
 from typing import Dict, Optional, Sequence, Union
 
-import numpy as np
 import astropy.units as u
+import numpy as np
+from numpy.typing import NDArray
 
 from zodipy._astroquery import query_target_positions
+from zodipy._bandpass import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._integration_config import integration_config_registry
 from zodipy._labels import LABEL_TO_CLASS
 import zodipy._simulation as simulation
@@ -13,20 +15,11 @@ from zodipy.models import model_registry
 class Zodipy:
     """The Zodipy simulation interface.
 
-    The geometry of the Zodiacal components used in Zodipy is guven by the 
-    Kelsall et al. (1998) Interplanetary Dust Model, which includes five (six) 
-    Zodiacal components:
+    Zodipy implements the Kelsall et al. (1998) Interplanetary Dust Model,
+    which includes five (six) Zodiacal components:
         - The Diffuse Cloud (cloud)
         - Three Asteroidal Bands (band1, band2, band3)
         - The Circumsolar Ring (ring) + The Earth-trailing Feature (feature)
-
-    The spectral parameters used when evaluating the line-of-sight parameters
-    can be selected by specifying a model, e.g "Planck13", which uses the 
-    source parameters (emissivities) fitted the Planck collaboration in their 
-    2013 analysis. 
-
-    NOTE: Currently Zodipy only supports the frequency range covered by the 
-    spectral parameters in the specified model.
     """
 
     def __init__(self, model: str = "DIRBE") -> None:
@@ -35,8 +28,8 @@ class Zodipy:
         Parameters
         ----------
         model
-            The name of the model to initialize. Defaults to `DIRBE` which 
-            uses the source parameters fit in K98.
+            The name of the model to initialize. Defaults to DIRBE. Other
+            possible models are: Planck13, Planck15, and, Planck18.
         """
 
         self.model = model_registry.get_model(model)
@@ -45,34 +38,35 @@ class Zodipy:
     @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
     def get_instantaneous_emission(
         self,
-        freq_or_wavelength: u.Quantity,
-        nside: int,
+        freq_or_wavelen: u.Quantity,
         *,
+        nside: int,
         observer: str = "L2",
         epochs: Optional[Union[float, Sequence[float], Dict[str, str]]] = None,
+        color_corr: bool = True,
         return_comps: bool = False,
         coord_out: str = "E",
-    ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
+    ) -> NDArray[np.float64]:
         """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
 
         By instantaneous emission we mean the emission observed at an instant
         in time. If multiple epochs are given, the returned emission will be
         the mean of all simulated instantaneous observations.
 
-        The location of the observer, and optionally, the Earth, are queried 
-        from the Horizons JPL ephemerides using `astroquery`, given an epoch 
+        The location of the observer, and optionally, the Earth, are queried
+        from the Horizons JPL ephemerides using `astroquery`, given an epoch
         defined by the `epochs` parameter.
 
         NOTE: This function returns the fullsky emission at a single time. This
-        means that line-of-sights that sometimes points directly towards the 
-        inner Solar System and through the Sun, where the dust density 
-        increases exponentially are evaluated. Such line-of-sights are unlikely 
-        to be observed by an actual observer, and as such, the simulated 
+        means that line-of-sights that sometimes points directly towards the
+        inner Solar System and through the Sun, where the dust density
+        increases exponentially are evaluated. Such line-of-sights are unlikely
+        to be observed by an actual observer, and as such, the simulated
         emission will appear very bright in these npregions.
 
         Parameters
         ----------
-        freq_or_wavelength
+        freq_or_wavelen
             Frequency or wavelength at which to evaluate the Zodiacal emission.
         nside
             HEALPIX map resolution parameter of the returned emission map.
@@ -99,7 +93,13 @@ class Zodipy:
             Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
-        freq = freq_or_wavelength.to("GHz", equivalencies=u.spectral())
+        if color_corr:
+            wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
+            band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
+            color_table = read_color_corr(band=band)
+        else:
+            color_table = None
+        freq = freq_or_wavelen.to("GHz", equivalencies=u.spectral())
 
         observer_positions = query_target_positions(observer, epochs)
         if self.model.includes_ring:
@@ -112,39 +112,34 @@ class Zodipy:
             freq=freq.value,
             model=self.model,
             line_of_sights=self.line_of_sights,
-            observer_positions=observer_positions,
-            earth_positions=earth_positions,
+            observer_pos=observer_positions,
+            earth_pos=earth_positions,
+            color_table=color_table,
             coord_out=coord_out,
         )
 
-        if return_comps:
-            return {
-                component_label.value: emission[idx]
-                for idx, component_label in enumerate(self.model.components)
-            }
+        return emission if return_comps else emission.sum(axis=0)
 
-        return emission.sum(axis=0)
-
-    @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
+    @u.quantity_input(freq_or_wavelen=("Hz", "m", "micron"))
     def get_time_ordered_emission(
         self,
-        freq_or_wavelength: u.Quantity,
-        nside: int,
+        freq_or_wavelen: u.Quantity,
         *,
-        pixels: np.ndarray,
-        observer_position: np.ndarray,
-        earth_position: Optional[np.ndarray] = None,
+        nside: int,
+        pixels: NDArray[np.int64],
+        observer_pos: NDArray[np.float64],
+        earth_pos: Optional[NDArray[np.float64]] = None,
+        color_corr: bool = True,
         bin: bool = False,
         return_comps: bool = False,
         coord_out: str = "E",
-    ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """Simulates and returns the Zodiacal emission [MJy/sr] in a timestream.
+    ) -> NDArray[np.float64]:
+        """Simulates and returns the Zodiacal emission as a timestream or a map
+        in units of MJy/sr.
 
-        Given a sequence of time-ordered pixels, the Zodiacal emission is
-        evaluated from a constant location in space given by the
-        `observer_position`. The `earth_position` is required for Interplanetary
-        Dust models that include the Earth-trailing Feature and Circum-solar
-        Ring components.
+        Given a chunk of pixels given by `pixels` observed from a location given
+        by `observer_pos`, the Zodiacal emission is computed through a per-pixel
+        line-of-sight evaluation.
 
         Parameters
         ----------
@@ -153,20 +148,23 @@ class Zodipy:
         nside
             HEALPIX map resolution parameter of the returned emission map.
         pixels
-            Sequence of time-ordered pixels.
-        observer_position
-            The heliocentric ecliptic cartesian position of the observer at
-            the time of observing the tods.
-        earth_position
-            The heliocentric ecliptic cartesian position of the Earth at the
-            time of observing the tods. If None, the observer is assumed to be
-            the Earth. Defaults to None.
+            Sequence of pixels observed while the observer was at the position
+            given by `observer_pos`.
+        observer_pos
+            The heliocentric ecliptic cartesian position of the observer.
+        earth_pos
+            The heliocentric ecliptic cartesian position of the Earth. If None,
+            the same position is used for the Earth and the observer. Defaults
+            to None.
+        color_corr
+            If True, the DIRBE color correction factors are used when evaluating
+            the model. NOTE: the frequency must match on of the central
+            frequencies of the DIRBE bands.
         bin
-            If True, the time-ordered sequence of emission per pixel is binned
-            into a HEALPIX map. Defaults to False.
-        return_comps
-            If True, the emission is returned component-wise in a dictionary.
+            If True, the output is a HEALPIX map instead of a timestream.
             Defaults to False.
+        return_comps
+            If True, the emission is returned component-wise. Defaults to False.
         coord_out
             Coordinate frame of the output map. Defaults to 'E' (heliocentric
             ecliptic coordinates).
@@ -174,34 +172,34 @@ class Zodipy:
         Returns
         -------
         emission
-            Simulated timestream of Zodiacal emission [MJy/sr] (optionally
-            binned into a HEALPIX map).
+            Simulated timestream or map of Zodiacal emission in units of MJy/sr.
         """
 
-        freq = freq_or_wavelength.to("GHz", equivalencies=u.spectral())
+        if color_corr:
+            wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
+            band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
+            color_table = read_color_corr(band=band)
+        else:
+            color_table = None
+        freq = freq_or_wavelen.to("GHz", equivalencies=u.spectral())
 
-        if earth_position is None:
-            earth_position = observer_position
+        if earth_pos is None:
+            earth_pos = observer_pos
 
         emission = simulation.time_ordered_emission(
+            model=self.model,
             nside=nside,
             freq=freq.value,
-            model=self.model,
             line_of_sights=self.line_of_sights,
-            observer_position=observer_position,
-            earth_position=earth_position,
+            observer_pos=observer_pos,
+            earth_pos=earth_pos,
             pixel_chunk=pixels,
+            color_table=color_table,
             bin=bin,
             coord_out=coord_out,
         )
 
-        if return_comps:
-            return {
-                component_label.value: emission[idx]
-                for idx, component_label in enumerate(self.model.components)
-            }
-
-        return emission.sum(axis=0)
+        return emission if return_comps else emission.sum(axis=0)
 
     def __str__(self) -> str:
         """String representation of the Interplanetary dust model used."""
