@@ -6,6 +6,7 @@ description = "Zodipy is a python tool that simulates the Zodiacal emission."
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "MIT"
+exclude = ["zodipy/dirbe"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
