@@ -18,6 +18,7 @@ context.py
 test.py
 test2.py
 _utils.py
+_contour.py
 _tabulate.py
 # _bandpass.py
 _fitting_brightness_integral.py

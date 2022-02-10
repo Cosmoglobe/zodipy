@@ -68,5 +68,8 @@ class ModelRegistry:
 
         return self._registry[name]
 
+    def get_registered_model_names(self) -> List[str]:
+        return list(self._registry.keys())
+
 
 model_registry = ModelRegistry()

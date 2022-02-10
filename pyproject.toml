@@ -37,4 +37,4 @@ overrides = [
     { module = "astropy.*", ignore_missing_imports = true },
     { module = "astroquery.*", ignore_missing_imports = true },
 ]
-exclude = "zodipy/(dirbe|_contour)"
+exclude = "zodipy/(dirbe|_contour|_tabulate|_utils)"

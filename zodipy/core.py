@@ -7,7 +7,6 @@ from numpy.typing import NDArray
 from zodipy._astroquery import query_target_positions
 from zodipy._bandpass import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._integration_config import integration_config_registry
-from zodipy._labels import LABEL_TO_CLASS
 import zodipy._simulation as simulation
 from zodipy.models import model_registry
 
@@ -16,20 +15,20 @@ class Zodipy:
     """The Zodipy simulation interface.
 
     Zodipy implements the Kelsall et al. (1998) Interplanetary Dust Model,
-    which includes five (six) Zodiacal components:
+    which includes the following Zodiacal components:
         - The Diffuse Cloud (cloud)
         - Three Asteroidal Bands (band1, band2, band3)
         - The Circumsolar Ring (ring) + The Earth-trailing Feature (feature)
     """
 
     def __init__(self, model: str = "DIRBE") -> None:
-        """Initializes the interface given a model (fitted source parameters).
+        """Initializes the interface given a model.
 
         Parameters
         ----------
         model
-            The name of the model to initialize. Defaults to DIRBE. Other
-            possible models are: Planck13, Planck15, and, Planck18.
+            The name of the model to initialize. Defaults to DIRBE. See all
+            available models in `zodipy.MODELS`.
         """
 
         self.model = model_registry.get_model(model)
@@ -208,15 +207,13 @@ class Zodipy:
 
         reprs = []
         for label in self.model.components:
-            component_class = LABEL_TO_CLASS[label]
-            component_repr = f"{component_class.__name__}" + "\n"
-            reprs.append(f"({label.value}): {component_repr}")
+            reprs.append(f"{label.value.capitalize()}\n")
 
         main_repr = "InterplanetaryDustModel("
         main_repr += f"\n  name: {self.model.name}"
-        main_repr += "\n  components( "
+        main_repr += f"\n  info: {self.model.doc}"
+        main_repr += "\n  components: "
         main_repr += "\n    " + "    ".join(reprs)
-        main_repr += "  )"
-        main_repr += "\n)"
+        main_repr += ")"
 
         return main_repr

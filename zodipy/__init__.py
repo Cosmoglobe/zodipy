@@ -1,3 +1,6 @@
 from zodipy.core import Zodipy
+from zodipy.models import model_registry
 
-__all__ = ("Zodipy",)
+MODELS = model_registry.get_registered_model_names()
+
+__all__ = ("Zodipy", "MODELS")

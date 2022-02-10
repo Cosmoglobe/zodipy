@@ -49,7 +49,7 @@ model_registry.register_model(
         "T_0": source_parameters.T_0_K98,
         "delta": source_parameters.delta_K98,
     },
-    doc=("The Interplanetary Dust Model used in the Planck 2013 analysis"),
+    doc=("The Interplanetary Dust Model used in the Planck 2013 analysis."),
 )
 
 
@@ -69,7 +69,7 @@ model_registry.register_model(
         "T_0": source_parameters.T_0_K98,
         "delta": source_parameters.delta_K98,
     },
-    doc=("The Interplanetary Dust Model used in the Planck 2015 analysis"),
+    doc=("The Interplanetary Dust Model used in the Planck 2015 analysis."),
 )
 
 
@@ -89,5 +89,5 @@ model_registry.register_model(
         "T_0": source_parameters.T_0_K98,
         "delta": source_parameters.delta_K98,
     },
-    doc=("The Interplanetary Dust Model used in the Planck 2018 analysis"),
+    doc=("The Interplanetary Dust Model used in the Planck 2018 analysis."),
 )
