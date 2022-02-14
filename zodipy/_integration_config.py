@@ -3,6 +3,7 @@ from typing import Dict
 
 import numpy as np
 import astropy.units as u
+from astropy.units import Quantity
 
 from zodipy._labels import Label
 
@@ -20,18 +21,18 @@ class IntegrationConfigRegistry:
     line-of-sight per component.
     """
 
-    _registry: Dict[str, Dict[Label, np.ndarray]] = field(default_factory=dict)
+    _registry: Dict[str, Dict[Label, Quantity[u.AU]]] = field(default_factory=dict)
 
     def register_config(
         self,
         name: str,
-        components: Dict[Label, np.ndarray],
+        components: Dict[Label, Quantity],
     ) -> None:
         """Adds a new integration config to the registry."""
 
         self._registry[name] = components
 
-    def get_config(self, name: str) -> Dict[Label, np.ndarray]:
+    def get_config(self, name: str) -> Dict[Label, Quantity]:
         """Returns an integration config from the registry."""
 
         if name not in self._registry:

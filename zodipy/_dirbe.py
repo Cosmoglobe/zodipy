@@ -71,8 +71,8 @@ def tabulate_color_correction() -> None:
 
         wavelen_ref = DIRBE_BAND_REF_WAVELENS[band - 1]
         blackbody_ratio = (
-            blackbody_emission_wavelen(T, wavelens_)
-        ) / blackbody_emission_wavelen(T, wavelen_ref)
+            blackbody_emission_lambda(T, wavelens_)
+        ) / blackbody_emission_lambda(T, wavelen_ref)
         wavelen_ratio = (wavelen_ref / wavelens_) * 1e-6
 
         term1 = np.trapz(blackbody_ratio * weights, wavelens)

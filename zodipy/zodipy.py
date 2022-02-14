@@ -2,13 +2,14 @@ from typing import Dict, Optional, Sequence, Union
 
 import astropy.units as u
 from astropy.units import Quantity
+import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
 from zodipy._astroquery import query_target_positions
-from zodipy._bandpass import DIRBE_BAND_REF_WAVELENS, read_color_corr
+from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
+from zodipy._brightness_integral import trapezoidal
 from zodipy._integration_config import integration_config_registry
-import zodipy._simulation as simulation
 from zodipy.models import model_registry
 
 
@@ -107,16 +108,32 @@ class Zodipy:
         else:
             earth_positions = observer_positions.copy()
 
-        emission = simulation.instantaneous_emission(
+        npix = hp.nside2npix(nside)
+        unit_vectors = _get_rotated_unit_vectors(
             nside=nside,
-            freq=freq,
-            model=self.model,
-            line_of_sights=self.line_of_sights,
-            observer_pos=observer_positions,
-            earth_pos=earth_positions,
-            color_table=color_table,
+            pixels=np.arange(npix),
             coord_out=coord_out,
         )
+        emission: Quantity[u.MJy / u.sr] = (
+            np.zeros((self.model.ncomps, hp.nside2npix(nside))) * u.MJy / u.sr
+        )
+        for observer_position, earth_position in zip(
+            observer_positions, earth_positions
+        ):
+            earth_position = np.expand_dims(earth_position, axis=1)
+            for idx, component in enumerate(self.model.components.items()):
+                integrated_comp_emission = trapezoidal(
+                    model=self.model,
+                    component=component,
+                    freq=freq,
+                    radial_distances=self.line_of_sights[component[0]],
+                    observer_pos=observer_position,
+                    earth_pos=earth_position,
+                    color_table=color_table,
+                    unit_vectors=unit_vectors,
+                )
+
+                emission[idx] += integrated_comp_emission
 
         return emission if return_comps else emission.sum(axis=0)
 
@@ -175,6 +192,10 @@ class Zodipy:
             Simulated timestream or map of Zodiacal emission in units of MJy/sr.
         """
 
+        earth_position = observer_pos if earth_pos is None else earth_pos
+        if earth_position.ndim == 1:
+            earth_position = np.expand_dims(earth_position, axis=1)
+
         if color_corr:
             freq_micron = freq.to("micron", equivalencies=u.spectral())
             try:
@@ -190,21 +211,51 @@ class Zodipy:
 
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        if earth_pos is None:
-            earth_pos = observer_pos
+        if bin:
+            pixels, counts = np.unique(pixels, return_counts=True)
+            unit_vectors = _get_rotated_unit_vectors(
+                nside=nside, pixels=pixels, coord_out=coord_out
+            )
+            emission: Quantity[u.MJy / u.sr] = (
+                np.zeros((self.model.ncomps, hp.nside2npix(nside))) * u.MJy / u.sr
+            )
+            for idx, component in enumerate(self.model.components.items()):
+                integrated_comp_emission = trapezoidal(
+                    model=self.model,
+                    component=component,
+                    freq=freq,
+                    radial_distances=self.line_of_sights[component[0]],
+                    observer_pos=observer_pos,
+                    earth_pos=earth_position,
+                    color_table=color_table,
+                    unit_vectors=unit_vectors,
+                )
+                emission[idx, pixels] = integrated_comp_emission
 
-        emission = simulation.time_ordered_emission(
-            model=self.model,
-            nside=nside,
-            freq=freq,
-            line_of_sights=self.line_of_sights,
-            observer_pos=observer_pos,
-            earth_pos=earth_pos,
-            pixel_chunk=pixels,
-            color_table=color_table,
-            bin=bin,
-            coord_out=coord_out,
-        )
+            emission[:, pixels] *= counts
+
+        else:
+            pixels, indicies = np.unique(pixels, return_inverse=True)
+            unit_vectors = _get_rotated_unit_vectors(
+                nside=nside, pixels=pixels, coord_out=coord_out
+            )
+            emission: Quantity[u.MJy / u.sr] = (
+                np.zeros((self.model.ncomps, len(pixels))) * u.MJy / u.sr
+            )
+
+            for idx, component in enumerate(self.model.components.items()):
+                integrated_comp_emission = trapezoidal(
+                    model=self.model,
+                    component=component,
+                    freq=freq,
+                    radial_distances=self.line_of_sights[component[0]],
+                    observer_pos=observer_pos,
+                    earth_pos=earth_position,
+                    color_table=color_table,
+                    unit_vectors=unit_vectors,
+                )
+
+                emission[idx] = integrated_comp_emission[indicies]
 
         return emission if return_comps else emission.sum(axis=0)
 
@@ -223,3 +274,21 @@ class Zodipy:
         main_repr += ")"
 
         return main_repr
+
+
+def _get_rotated_unit_vectors(
+    nside: int, pixels: NDArray[np.int64], coord_out: str
+) -> NDArray[np.float64]:
+    """Returns the unit vectors of a HEALPIX map given a requested output coordinate system.
+
+    Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
+    we need to rotate any unit vectors defined in another coordinate frame to
+    ecliptic before evaluating the model.
+    """
+
+    unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
+    if coord_out != "E":
+        unit_vectors = np.asarray(
+            hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
+        )
+    return unit_vectors
