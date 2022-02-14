@@ -47,7 +47,7 @@ class Zodipy:
         color_corr: bool = True,
         return_comps: bool = False,
         coord_out: str = "E",
-    ) -> NDArray[np.float64]:
+    ) -> Quantity[u.MJy / u.sr]:
         """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
 
         By instantaneous emission we mean the emission observed at an instant
