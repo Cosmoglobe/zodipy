@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Sequence, Union
 
 import astropy.units as u
+from astropy.units import Quantity
 import numpy as np
 from numpy.typing import NDArray
 
@@ -34,10 +35,10 @@ class Zodipy:
         self.model = model_registry.get_model(model)
         self.line_of_sights = integration_config_registry.get_config("default")
 
-    @u.quantity_input(freq_or_wavelength=("Hz", "m", "micron"))
+    @u.quantity_input
     def get_instantaneous_emission(
         self,
-        freq_or_wavelen: u.Quantity,
+        freq: Union[Quantity[u.Hz], Quantity[u.micron]],
         *,
         nside: int,
         observer: str = "L2",
@@ -92,14 +93,13 @@ class Zodipy:
             Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
-        color_table: Optional[NDArray[np.float64]]
         if color_corr:
-            wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
+            wavelen = freq.to("micron", equivalencies=u.spectral())
             band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
             color_table = read_color_corr(band=band)
         else:
             color_table = None
-        freq = freq_or_wavelen.to("GHz", equivalencies=u.spectral())
+        freq = freq.to("GHz", equivalencies=u.spectral())
 
         observer_positions = query_target_positions(observer, epochs)
         if self.model.includes_ring:
@@ -109,7 +109,7 @@ class Zodipy:
 
         emission = simulation.instantaneous_emission(
             nside=nside,
-            freq=freq.value,
+            freq=freq,
             model=self.model,
             line_of_sights=self.line_of_sights,
             observer_pos=observer_positions,
@@ -120,20 +120,20 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @u.quantity_input(freq_or_wavelen=("Hz", "m", "micron"))
+    @u.quantity_input
     def get_time_ordered_emission(
         self,
-        freq_or_wavelen: u.Quantity,
+        freq: Union[Quantity[u.Hz], Quantity[u.micron]],
         *,
         nside: int,
         pixels: NDArray[np.int64],
-        observer_pos: NDArray[np.float64],
-        earth_pos: Optional[NDArray[np.float64]] = None,
+        observer_pos: Quantity[u.au],
+        earth_pos: Optional[Quantity[u.au]] = None,
         color_corr: bool = True,
         bin: bool = False,
         return_comps: bool = False,
         coord_out: str = "E",
-    ) -> NDArray[np.float64]:
+    ) -> Quantity[u.MJy / u.sr]:
         """Simulates and returns the Zodiacal emission as a timestream or a map
         in units of MJy/sr.
 
@@ -143,8 +143,8 @@ class Zodipy:
 
         Parameters
         ----------
-        freq_or_wavelength
-            Frequency or wavelength at which to evaluate the Zodiacal emission.
+        freq
+            Frequency (or wavelength) at which to evaluate the Zodiacal emission.
         nside
             HEALPIX map resolution parameter of the returned emission map.
         pixels
@@ -175,14 +175,20 @@ class Zodipy:
             Simulated timestream or map of Zodiacal emission in units of MJy/sr.
         """
 
-        color_table: Optional[NDArray[np.float64]]
         if color_corr:
-            wavelen = freq_or_wavelen.to("micron", equivalencies=u.spectral())
-            band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
+            freq_micron = freq.to("micron", equivalencies=u.spectral())
+            try:
+                band = DIRBE_BAND_REF_WAVELENS.index(freq_micron.value) + 1
+            except IndexError:
+                raise IndexError(
+                    "Color correction is only supported at the frequencies that "
+                    "correspond to the center frequencies of DIRBE bands."
+                )
             color_table = read_color_corr(band=band)
         else:
             color_table = None
-        freq = freq_or_wavelen.to("GHz", equivalencies=u.spectral())
+
+        freq = freq.to("GHz", equivalencies=u.spectral())
 
         if earth_pos is None:
             earth_pos = observer_pos
@@ -190,7 +196,7 @@ class Zodipy:
         emission = simulation.time_ordered_emission(
             model=self.model,
             nside=nside,
-            freq=freq.value,
+            freq=freq,
             line_of_sights=self.line_of_sights,
             observer_pos=observer_pos,
             earth_pos=earth_pos,
@@ -206,7 +212,7 @@ class Zodipy:
         """String representation of the Interplanetary dust model used."""
 
         reprs = []
-        for label in self.model.components:
+        for label in self.model.component_labels:
             reprs.append(f"{label.value.capitalize()}\n")
 
         main_repr = "InterplanetaryDustModel("

@@ -1,6 +1,8 @@
 from typing import Optional, Sequence, Union, Dict
 
 from astroquery.jplhorizons import Horizons
+from astropy.units import Quantity
+import astropy.units as u
 import numpy as np
 
 
@@ -20,7 +22,7 @@ TARGET_MAPPINGS = {
 def query_target_positions(
     target: str,
     epochs: Optional[Union[float, Sequence[float], Dict[str, str]]] = None,
-) -> np.ndarray:
+) -> Quantity[u.AU]:
     """Returns the heliocentric cartesian positions of the target given some epoch.
 
     Parameters
@@ -56,4 +58,4 @@ def query_target_positions(
     y = R * np.cos(lat) * np.sin(lon)
     z = R * np.sin(lat)
 
-    return np.stack((x, y, z), axis=1)
+    return np.stack(Quantity([x, y, z], unit=u.AU), axis=1)

@@ -1,3 +1,4 @@
+from pyexpat import model
 from zodipy._model import model_registry
 from zodipy._labels import Label
 from zodipy import source_parameters
@@ -6,7 +7,7 @@ from zodipy import component_parameters
 
 model_registry.register_model(
     name="DIRBE",
-    components=[
+    component_labels=[
         Label.CLOUD,
         Label.BAND1,
         Label.BAND2,
@@ -30,10 +31,9 @@ model_registry.register_model(
     ),
 )
 
-
 model_registry.register_model(
     name="Planck13",
-    components=[
+    component_labels=[
         Label.CLOUD,
         Label.BAND1,
         Label.BAND2,
@@ -55,7 +55,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck15",
-    components=[
+    component_labels=[
         Label.CLOUD,
         Label.BAND1,
         Label.BAND2,
@@ -75,7 +75,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck18",
-    components=[
+    component_labels=[
         Label.CLOUD,
         Label.BAND1,
         Label.BAND2,

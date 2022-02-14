@@ -8,29 +8,33 @@ from zodipy._components import Component
 @dataclass
 class InterplanetaryDustModel:
     name: str
-    components: List[Label]
-    component_parameters: Dict[Label, Dict[str, float]]
+    component_labels: List[Label]
+    component_parameters: Dict[Label, Dict[str, Any]]
     source_component_parameters: Dict[str, Dict[Union[str, Label], Any]]
     source_parameters: Dict[str, Any]
     doc: str = ""
+    components: Dict[Label, Component] = field(default_factory=dict)
 
-    def get_initialized_component(self, label: Label) -> Component:
-        """Initializes and returns a Zodiacal Component from the model parameters."""
 
-        if label not in self.components:
-            raise ValueError(f"{label.value} is not included in the {self.name} model")
-
-        parameters = self.component_parameters[label]
-        component_class = LABEL_TO_CLASS[label]
-
-        return component_class(**parameters)
+    def __post_init__(self) -> None:
+        """Initialize all components."""
+        
+        for label in self.component_labels:
+            parameters = self.component_parameters[label]
+            component_class = LABEL_TO_CLASS[label]
+            self.components[label] = component_class(**parameters)
 
     @property
     def includes_ring(self) -> bool:
         """Returns True if the model includes an Earth-neighboring component."""
 
-        return Label.RING in self.components or Label.FEATURE in self.components
+        return Label.RING in self.component_labels or Label.FEATURE in self.component_labels
 
+    @property
+    def ncomps(self) -> int:
+        """Returns the number of components in the model."""
+
+        return len(self.component_labels)
 
 @dataclass
 class ModelRegistry:
@@ -41,8 +45,8 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        components: List[Label],
-        component_parameters: Dict[Label, Dict[str, float]],
+        component_labels: List[Label],
+        component_parameters: Dict[Label, Dict[str, Any]],
         source_component_parameters: Dict[str, Dict[Union[str, Label], Any]],
         source_parameters: Dict[str, Any],
         doc: str = "",
@@ -52,7 +56,7 @@ class ModelRegistry:
 
         self._registry[name] = InterplanetaryDustModel(
             name,
-            components,
+            component_labels,
             component_parameters,
             source_component_parameters,
             source_parameters,

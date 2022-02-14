@@ -1,14 +1,16 @@
 from typing import Any, Dict, Union
+
 import astropy.units as u
+from astropy.units import Quantity
 
 from zodipy._labels import Label
 
 
 delta_K98 = 0.46686259861486573
-T_0_K98 = 286
+T_0_K98 = 286 * u.K
 
-SPECTRUM_PLANCK: u.Quantity = [100.0, 143.0, 217.0, 353.0, 545.0, 857.0] * u.GHz
-SPECTRUM_DIRBE: u.Quantity = [1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240] * u.micron
+SPECTRUM_PLANCK = Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], unit=u.GHz)
+SPECTRUM_DIRBE = Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], unit=u.micron)
 
 EMISSIVITY_PLANCK_13: Dict[Union[str, Label], Any] = {
     Label.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
@@ -191,10 +193,8 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
 }
 
 PHASE_DIRBE: Dict[str, Any] = {
-    "coefficients": [
-        (-0.942, 0.121, -0.165, 0, 0, 0, 0, 0, 0, 0),
-        (-0.527, 0.187, -0.598, 0, 0, 0, 0, 0, 0, 0),
-        (-0.431, 0.172, -0.633, 0, 0, 0, 0, 0, 0, 0),
-    ],
+    "C_0": Quantity([-0.942, -0.527, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.sr),
+    "C_1": Quantity([0.121, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad/u.sr),
+    "C_2": Quantity([-0.165, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad),
     "spectrum": SPECTRUM_DIRBE,
 }

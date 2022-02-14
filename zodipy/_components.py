@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from math import radians, sin, cos
-from math import pi as π
 from typing import Tuple
 
+from astropy.units import Quantity
+import astropy.units as u
 import numpy as np
-from numpy.typing import NDArray
+
+π = np.pi * u.rad
 
 
 @dataclass
@@ -25,30 +26,40 @@ class Component(ABC):
     z_0
         z-offset from the Sun in helliocentric ecliptic cartesian coordinates.
     i
-        Inclination with respect to the ecliptic plane [deg].
+        Inclination with respect to the ecliptic plane.
     Omega
-        Ascending node [deg].
+        Ascending node.
     """
 
-    x_0: float
-    y_0: float
-    z_0: float
-    i: float
-    Omega: float
+    x_0: Quantity[u.AU]
+    y_0: Quantity[u.AU]
+    z_0: Quantity[u.AU]
+    i: Quantity[u.deg]
+    Omega: Quantity[u.deg]
 
     def __post_init__(self) -> None:
-        self.i = radians(self.i)
-        self.Omega = radians(self.Omega)
-        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
+        # [AU] -> [AU per 1 AU]
+        self.x_0 = self.x_0 / u.AU
+        self.y_0 = self.y_0 / u.AU
+        self.z_0 = self.z_0 / u.AU
+        self.X_0 = np.expand_dims(Quantity([self.x_0, self.y_0, self.z_0]), axis=1)
+
+        i_rad = self.i.to(u.rad)
+        Omega_rad = self.Omega.to(u.rad)
+
+        self.sin_i = np.sin(i_rad)
+        self.cos_i = np.cos(i_rad)
+        self.sin_Omega = np.sin(Omega_rad)
+        self.cos_Omega = np.cos(Omega_rad)
 
     @abstractmethod
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        R_prime: Quantity[u.dimensionless_unscaled],
+        Z_prime: Quantity[u.dimensionless_unscaled],
         *,
-        θ_prime: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
+        θ_prime: Quantity[u.rad],
+    ) -> Quantity[u.AU ** -1]:
         """Returns the dust density at a shell around the observer.
 
         Parameters
@@ -71,8 +82,14 @@ class Component(ABC):
         """
 
     def get_primed_coordinates(
-        self, X_helio: NDArray[np.float64], X_earth: NDArray[np.float64]
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+        self,
+        X_helio: Quantity[u.dimensionless_unscaled],
+        X_earth: Quantity[u.dimensionless_unscaled],
+    ) -> Tuple[
+        Quantity[u.dimensionless_unscaled],
+        Quantity[u.dimensionless_unscaled],
+        Quantity[u.rad],
+    ]:
         """Returns a set of coordinates for a component.
 
         Given a set of heliocentric ecliptic positions in space given by the
@@ -86,34 +103,35 @@ class Component(ABC):
         ----------
         X_helio
             Heliocentric ecliptic cartesian coordinates of each considered
-            pixel.
+            pixel. [AU / 1 AU]
         X_earth
-            Heliocentric ecliptic cartesian coordinates of the Earth.
+            Heliocentric ecliptic cartesian coordinates of the Earth. [AU / 1 AU]
 
         Returns
         -------
         R_prime
             Array of distances corresponding to discrete points along a
             line-of-sight for a shell surrounding the observer in the primed
-            coordinates.
+            coordinates. [AU / 1 AU]
         Z_prime
             Heights above the midplane in primed coordinates of a component
-            corresponding to the distances in `R_prime`.
+            corresponding to the distances in `R_prime`. [AU / 1 AU]
         θ_prime
             Relative mean lognitude between the discrete points along the
-            line-of-sight describe by `R_prime` and the Earth.
+            line-of-sight describe by `R_prime` and the Earth. [deg]
         """
+
+        X_earth_prime = X_earth - self.X_0
 
         X_prime = X_helio - self.X_0
         R_prime = np.linalg.norm(X_prime, axis=0)
 
         Z_prime = (
-            X_prime[0] * sin(self.Omega) * sin(self.i)
-            - X_prime[1] * cos(self.Omega) * sin(self.i)
-            + X_prime[2] * cos(self.i)
+            X_prime[0] * self.sin_Omega * self.sin_i
+            - X_prime[1] * self.cos_Omega * self.sin_i
+            + X_prime[2] * self.cos_i
         )
 
-        X_earth_prime = np.expand_dims(X_earth, axis=1) - self.X_0
         θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
             X_earth_prime[1], X_earth_prime[0]
         )
@@ -122,10 +140,10 @@ class Component(ABC):
 
     def get_density(
         self,
-        pixel_pos: NDArray[np.float64],
-        earth_pos: NDArray[np.float64],
-        cloud_offset: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
+        pixel_pos: Quantity[u.AU],
+        earth_pos: Quantity[u.AU],
+        cloud_offset: Quantity[u.dimensionless_unscaled],
+    ) -> Quantity[u.AU ** -1]:
         """Returns the component density at a shell around the observer.
 
         Parameters
@@ -135,18 +153,24 @@ class Component(ABC):
             pixels.
         earth_pos
             Heliocentric ecliptic cartesian coordinates of the Earth.
+        cloud_offset:
+            Off-set of the cloud component.
 
         Returns
         -------
             Density of a Zodiacal component at a shell around the observer.
         """
 
+        # [AU] -> [AU per 1 AU]
+        X_helio = pixel_pos / u.AU
+        X_earth = earth_pos / u.AU
+
         R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
-            X_helio=pixel_pos, X_earth=earth_pos
+            X_helio=X_helio, X_earth=X_earth
         )
 
         if isinstance(self, Band):
-            X_cloud = pixel_pos - cloud_offset
+            X_cloud = X_helio - cloud_offset
             R_cloud = np.linalg.norm(X_cloud, axis=0)
             R_prime = R_cloud
 
@@ -179,7 +203,7 @@ class Cloud(Component):
         Widening parameter for the modified fan.
     """
 
-    n_0: float
+    n_0: Quantity[u.AU ** -1]
     alpha: float
     beta: float
     gamma: float
@@ -189,8 +213,11 @@ class Cloud(Component):
         super().__post_init__()
 
     def compute_density(
-        self, R_prime: NDArray[np.float64], Z_prime: NDArray[np.float64], **_
-    ) -> NDArray[np.float64]:
+        self,
+        R_prime: Quantity[u.dimensionless_unscaled],
+        Z_prime: Quantity[u.dimensionless_unscaled],
+        **_,
+    ) -> Quantity[u.AU ** -1]:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime / R_prime)
@@ -226,22 +253,31 @@ class Band(Component):
         Inner radial cutoff.
     """
 
-    n_0: float
-    delta_zeta: float
+    n_0: Quantity[u.AU ** -1]
+    delta_zeta: Quantity[u.deg]
     v: float
     p: float
-    delta_r: float
+    delta_r: Quantity[u.AU]
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.delta_zeta = radians(self.delta_zeta)
+        self.delta_zeta = self.delta_zeta.to(u.rad)
+        # NOTE: zeta/delta_zeta has to be unitless in the K98 migrating band
+        # expression. We are unsure why the units of delta_zeta is given in
+        # degrees, but it could be due to some small angle approximation with
+        # cos theta. Nevertheless, we must divide away the units of radians
+        # for the zeta/delta_zeta to be unitless.
+        self.delta_zeta = self.delta_zeta / u.rad
+
+        # [AU] -> [AU per 1 AU]
+        self.delta_r = self.delta_r / u.AU
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        R_prime: Quantity[u.dimensionless_unscaled],
+        Z_prime: Quantity[u.dimensionless_unscaled],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> Quantity[u.AU ** -1]:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime / R_prime)
@@ -274,17 +310,25 @@ class Ring(Component):
         Vertical dispersion.
     """
 
-    n_0: float
-    R: float
-    sigma_r: float
-    sigma_z: float
+    n_0: Quantity[u.AU ** -1]
+    R: Quantity[u.AU]
+    sigma_r: Quantity[u.AU]
+    sigma_z: Quantity[u.AU]
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        # [AU] -> [AU per 1 AU]
+        self.R = self.R / u.AU
+        self.sigma_r = self.sigma_r / u.AU
+        self.sigma_z = self.sigma_z / u.AU
+
     def compute_density(
-        self, R_prime: NDArray[np.float64], Z_prime: NDArray[np.float64], **_
-    ) -> NDArray[np.float64]:
+        self,
+        R_prime: Quantity[u.dimensionless_unscaled],
+        Z_prime: Quantity[u.dimensionless_unscaled],
+        **_,
+    ) -> Quantity[u.AU ** -1]:
         """See base class for documentation."""
 
         term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
@@ -317,29 +361,33 @@ class Feature(Component):
         Longitude dispersion.
     """
 
-    n_0: float
-    R: float
-    sigma_r: float
-    sigma_z: float
-    theta: float
-    sigma_theta: float
+    n_0: Quantity[u.AU ** -1]
+    R: Quantity[u.AU]
+    sigma_r: Quantity[u.AU]
+    sigma_z: Quantity[u.AU]
+    theta: Quantity[u.deg]
+    sigma_theta: Quantity[u.deg]
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.theta = radians(self.theta)
-        self.sigma_theta = radians(self.sigma_theta)
+        self.theta = self.theta.to(u.rad)
+        self.sigma_theta = self.sigma_theta.to(u.rad)
+
+        # [AU] -> [AU per 1 AU]
+        self.R = self.R / u.AU
+        self.sigma_r = self.sigma_r / u.AU
+        self.sigma_z = self.sigma_z / u.AU
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
-        θ_prime: NDArray[np.float64],
+        R_prime: Quantity[u.dimensionless_unscaled],
+        Z_prime: Quantity[u.AU],
+        θ_prime: Quantity[u.rad],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> Quantity[u.AU ** -1]:
         """See base class for documentation."""
 
         Δθ = θ_prime - self.theta
-
         condition1 = Δθ < -π
         condition2 = Δθ > π
         Δθ[condition1] = Δθ[condition1] + 2 * π
