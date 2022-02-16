@@ -5,8 +5,9 @@ from typing import Tuple
 from astropy.units import Quantity
 import astropy.units as u
 import numpy as np
+from numpy.typing import NDArray
 
-π = np.pi * u.rad
+π = np.pi
 
 
 @dataclass
@@ -39,13 +40,13 @@ class Component(ABC):
 
     def __post_init__(self) -> None:
         # [AU] -> [AU per 1 AU]
-        self.x_0 = self.x_0 / u.AU
-        self.y_0 = self.y_0 / u.AU
-        self.z_0 = self.z_0 / u.AU
-        self.X_0 = np.expand_dims(Quantity([self.x_0, self.y_0, self.z_0]), axis=1)
+        self.x_0 = (self.x_0 / u.AU).value
+        self.y_0 = (self.y_0 / u.AU).value
+        self.z_0 = (self.z_0 / u.AU).value
+        self.X_0 = np.expand_dims(np.asarray([self.x_0, self.y_0, self.z_0]), axis=1)
 
-        i_rad = self.i.to(u.rad)
-        Omega_rad = self.Omega.to(u.rad)
+        i_rad = self.i.to(u.rad).value
+        Omega_rad = self.Omega.to(u.rad).value
 
         self.sin_i = np.sin(i_rad)
         self.cos_i = np.cos(i_rad)
@@ -55,11 +56,11 @@ class Component(ABC):
     @abstractmethod
     def compute_density(
         self,
-        R_prime: Quantity[u.dimensionless_unscaled],
-        Z_prime: Quantity[u.dimensionless_unscaled],
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
         *,
-        θ_prime: Quantity[u.rad],
-    ) -> Quantity[u.AU ** -1]:
+        θ_prime: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
         """Returns the dust density at a shell around the observer.
 
         Parameters
@@ -83,13 +84,9 @@ class Component(ABC):
 
     def get_primed_coordinates(
         self,
-        X_helio: Quantity[u.dimensionless_unscaled],
-        X_earth: Quantity[u.dimensionless_unscaled],
-    ) -> Tuple[
-        Quantity[u.dimensionless_unscaled],
-        Quantity[u.dimensionless_unscaled],
-        Quantity[u.rad],
-    ]:
+        X_helio: NDArray[np.float64],
+        X_earth: NDArray[np.float64],
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
         """Returns a set of coordinates for a component.
 
         Given a set of heliocentric ecliptic positions in space given by the
@@ -140,10 +137,10 @@ class Component(ABC):
 
     def get_density(
         self,
-        pixel_pos: Quantity[u.AU],
-        earth_pos: Quantity[u.AU],
-        cloud_offset: Quantity[u.dimensionless_unscaled],
-    ) -> Quantity[u.AU ** -1]:
+        pixel_pos: NDArray[np.float64],
+        earth_pos: NDArray[np.float64],
+        cloud_offset: NDArray[np.float64],
+    ) -> NDArray[np.float64]:
         """Returns the component density at a shell around the observer.
 
         Parameters
@@ -161,16 +158,12 @@ class Component(ABC):
             Density of a Zodiacal component at a shell around the observer.
         """
 
-        # [AU] -> [AU per 1 AU]
-        X_helio = pixel_pos / u.AU
-        X_earth = earth_pos / u.AU
-
         R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
-            X_helio=X_helio, X_earth=X_earth
+            X_helio=pixel_pos, X_earth=earth_pos
         )
 
         if isinstance(self, Band):
-            X_cloud = X_helio - cloud_offset
+            X_cloud = pixel_pos - cloud_offset
             R_cloud = np.linalg.norm(X_cloud, axis=0)
             R_prime = R_cloud
 
@@ -211,13 +204,14 @@ class Cloud(Component):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        self.n_0 = self.n_0.value
 
     def compute_density(
         self,
-        R_prime: Quantity[u.dimensionless_unscaled],
-        Z_prime: Quantity[u.dimensionless_unscaled],
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
         **_,
-    ) -> Quantity[u.AU ** -1]:
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime / R_prime)
@@ -261,23 +255,24 @@ class Band(Component):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        self.n_0 = self.n_0.value
         self.delta_zeta = self.delta_zeta.to(u.rad)
         # NOTE: zeta/delta_zeta has to be unitless in the K98 migrating band
         # expression. We are unsure why the units of delta_zeta is given in
         # degrees, but it could be due to some small angle approximation with
         # cos theta. Nevertheless, we must divide away the units of radians
         # for the zeta/delta_zeta to be unitless.
-        self.delta_zeta = self.delta_zeta / u.rad
+        self.delta_zeta = (self.delta_zeta / u.rad).value
 
         # [AU] -> [AU per 1 AU]
-        self.delta_r = self.delta_r / u.AU
+        self.delta_r = (self.delta_r / u.AU).value
 
     def compute_density(
         self,
-        R_prime: Quantity[u.dimensionless_unscaled],
-        Z_prime: Quantity[u.dimensionless_unscaled],
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
         **_,
-    ) -> Quantity[u.AU ** -1]:
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         ζ = np.abs(Z_prime / R_prime)
@@ -319,16 +314,17 @@ class Ring(Component):
         super().__post_init__()
 
         # [AU] -> [AU per 1 AU]
-        self.R = self.R / u.AU
-        self.sigma_r = self.sigma_r / u.AU
-        self.sigma_z = self.sigma_z / u.AU
+        self.n_0 = self.n_0.value
+        self.R = (self.R / u.AU).value
+        self.sigma_r = (self.sigma_r / u.AU).value
+        self.sigma_z = (self.sigma_z / u.AU).value
 
     def compute_density(
         self,
-        R_prime: Quantity[u.dimensionless_unscaled],
-        Z_prime: Quantity[u.dimensionless_unscaled],
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
         **_,
-    ) -> Quantity[u.AU ** -1]:
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
@@ -370,28 +366,28 @@ class Feature(Component):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.theta = self.theta.to(u.rad)
-        self.sigma_theta = self.sigma_theta.to(u.rad)
+        self.n_0 = self.n_0.value
+        self.theta = (self.theta.to(u.rad)).value
+        self.sigma_theta = (self.sigma_theta.to(u.rad)).value
 
         # [AU] -> [AU per 1 AU]
-        self.R = self.R / u.AU
-        self.sigma_r = self.sigma_r / u.AU
-        self.sigma_z = self.sigma_z / u.AU
+        self.R = (self.R / u.AU).value
+        self.sigma_r = (self.sigma_r / u.AU).value
+        self.sigma_z = (self.sigma_z / u.AU).value
 
     def compute_density(
         self,
-        R_prime: Quantity[u.dimensionless_unscaled],
-        Z_prime: Quantity[u.AU],
-        θ_prime: Quantity[u.rad],
+        R_prime: NDArray[np.float64],
+        Z_prime: NDArray[np.float64],
+        θ_prime: NDArray[np.float64],
         **_,
-    ) -> Quantity[u.AU ** -1]:
+    ) -> NDArray[np.float64]:
         """See base class for documentation."""
 
         Δθ = θ_prime - self.theta
-        condition1 = Δθ < -π
-        condition2 = Δθ > π
-        Δθ[condition1] = Δθ[condition1] + 2 * π
-        Δθ[condition2] = Δθ[condition2] - 2 * π
+        condition = Δθ < -π
+        Δθ[condition] += 2 * π
+        Δθ[~condition] -= 2 * π
 
         term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
         term2 = np.abs(Z_prime) / self.sigma_z

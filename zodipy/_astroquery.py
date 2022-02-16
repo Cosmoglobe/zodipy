@@ -5,6 +5,7 @@ from astropy.units import Quantity
 import astropy.units as u
 import numpy as np
 
+Epoch = Union[float, Sequence[float], Dict[str, str]]
 
 TARGET_MAPPINGS = {
     "planck": "Planck",
@@ -21,7 +22,7 @@ TARGET_MAPPINGS = {
 
 def query_target_positions(
     target: str,
-    epochs: Optional[Union[float, Sequence[float], Dict[str, str]]] = None,
+    epochs: Optional[Epoch] = None,
 ) -> Quantity[u.AU]:
     """Returns the heliocentric cartesian positions of the target given some epoch.
 

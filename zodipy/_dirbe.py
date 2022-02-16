@@ -1,12 +1,12 @@
 from typing import Sequence, Tuple, Union
 
 import astropy.units as u
-from astropy.units import Quantity
 import numpy as np
 from numpy.typing import NDArray
 
 from zodipy.data import DATA_DIR
 from zodipy._source_functions import blackbody_emission_lambda
+
 
 BANDPASS_PATH = DATA_DIR / "dirbe_spectral_response.dat"
 DIRBE_BAND_REF_WAVELENS = (1.25, 2.2, 3.5, 4.9, 12.0, 25.0, 60.0, 100.0, 140.0, 240.0)
@@ -90,17 +90,14 @@ def tabulate_color_correction() -> None:
             file.write(str_)
 
 
-def read_color_corr(band: int) -> Tuple[Quantity[u.K], NDArray[np.float64]]:
+def read_color_corr(band: int) -> NDArray[np.float64]:
     """Reads in DIRBE color correction factors."""
-    temperatures, color_corrs = np.loadtxt(
+
+    return np.loadtxt(
         f"{DATA_DIR}/dirbe_color_corr.dat",
         skiprows=1,
         usecols=(0, band),
-        unpack=True,
     )
-    temperatures *= u.K
-
-    return temperatures, color_corrs
 
 
 def get_normalized_weights(
