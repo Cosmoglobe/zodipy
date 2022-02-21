@@ -1,20 +1,17 @@
-from typing import Any, Dict, Tuple, Union
+from typing import Union
 
 import astropy.constants as const
 import astropy.units as u
-from astropy.units import Quantity
 import numpy as np
 from numpy.typing import NDArray
-
-from zodipy._labels import Label
-from zodipy._model import InterplanetaryDustModel
 
 
 h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
-R_sun = const.R_sun.value
+R_sun = const.R_sun.to(u.AU).value
 T_sun = 5778
+π = np.pi
 
 
 def blackbody_emission_nu(
@@ -42,7 +39,7 @@ def blackbody_emission_nu(
 
 def blackbody_emission_lambda(
     T: Union[float, NDArray[np.float64]],
-    freq:Union[float, NDArray[np.float64]],
+    freq: Union[float, NDArray[np.float64]],
 ) -> Union[float, NDArray[np.float64]]:
     """Returns the blackbody emission.
 
@@ -108,7 +105,7 @@ def interplanetary_temperature(
 
 def phase_function(
     Theta: NDArray[np.float64],
-    coeffs: Dict[str, float],
+    C0: float, C1: float, C2:float
 ) -> NDArray[np.float64]:
     """Returns the phase function.
 
@@ -124,71 +121,11 @@ def phase_function(
         The Phase funciton.
     """
 
-    C = coeffs["C_0"], coeffs["C_1"], coeffs["C_2"]
-    π = np.pi
-    Θ = Theta
-
     # Analytic integral to N:
     int_term1 = 2 * π
-    int_term2 = 2 * C[0]
-    int_term3 = π * C[1]
-    int_term4 = (np.exp(C[2] * π) + 1) / (C[2] ** 2 + 1)
+    int_term2 = 2 * C0
+    int_term3 = π * C1
+    int_term4 = (np.exp(C2 * π) + 1) / (C2 ** 2 + 1)
     N = 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
 
-    return N * (C[0] + C[1] * Θ + np.exp(C[2] * Θ))
-
-
-def get_source_parameters(
-    freq: float,
-    model: InterplanetaryDustModel,
-    component: Label,
-) -> Dict[str, Any]:
-    """Returns interpolated source parameters given a frequency and a component."""
-
-    freq_ = freq * u.GHz
-
-    parameters: Dict[str, Any] = {}
-
-    emissivities = model.source_component_parameters.get("emissivities")
-    if emissivities is not None:
-        emissivity_spectrum = emissivities["spectrum"]
-        parameters["emissivity"] = np.interp(
-            freq_.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
-            emissivity_spectrum,
-            emissivities[component],
-        )
-
-    else:
-        parameters["emissivity"] = 1.0
-
-    albedos = model.source_component_parameters.get("albedos")
-    if albedos is not None:
-        albedo_spectrum = albedos["spectrum"]
-        parameters["albedo"] = np.interp(
-            freq_.to(albedo_spectrum.unit, equivalencies=u.spectral()),
-            albedo_spectrum,
-            albedos[component],
-        )
-    else:
-        parameters["albedo"] = 0.0
-
-    phases = model.source_parameters.get("phase")
-    if phases is not None:
-        phase_spectrum = phases["spectrum"]
-        parameters["phase_coeffs"] = {
-            coeff: np.interp(
-                freq_.to(phase_spectrum.unit, equivalencies=u.spectral()),
-                phase_spectrum,
-                phases[coeff],
-            ).value
-            for coeff in ["C_0", "C_1", "C_2"]
-        }
-    else:
-        parameters["phase_coeffs"] = {"C_0": 0.0, "C_1": 0.0, "C_2": 0.0}
-
-    # Extract model parameters
-    parameters["T_0"] = model.source_parameters["T_0"].value
-    parameters["delta"] = model.source_parameters["delta"]
-    parameters["cloud_offset"] = model.components[component].X_0
-
-    return parameters
+    return N * (C0 + C1 * Theta + np.exp(C2 * Theta))

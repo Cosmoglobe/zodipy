@@ -1,101 +1,89 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-import astropy.units as u
-from astropy.units import Quantity
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._labels import Label
-from zodipy._model import InterplanetaryDustModel
 import zodipy._source_functions as source_funcs
 from zodipy._components import Component
+from zodipy._interp import (
+    interp_blackbody_emission_nu,
+    interp_interplanetary_temperature,
+)
 
 
 def trapezoidal(
+    component: Component,
     freq: float,
-    model: InterplanetaryDustModel,
-    component: Label,
-    radial_distances: NDArray[np.float64],
+    line_of_sight: NDArray[np.float64],
     observer_pos: NDArray[np.float64],
     earth_pos: NDArray[np.float64],
     unit_vectors: NDArray[np.float64],
-    color_table: Optional[NDArray[np.float64]],
+    cloud_offset: NDArray[np.float64],
+    source_parameters: Dict[str, Any],
 ) -> NDArray[np.float64]:
     """Returns the integrated Zodiacal emission for a component using the
     Trapezoidal method.
 
     Parameters
     ----------
+    component
+        Zodiacal component to evaluate.
     freq
         Frequency at which to evaluate the brightness integral [GHz].
-    model
-        Interplanetary Dust Model.
-    component
-        Component (label) to evaluate.
-    radial_distances
-        Array of discrete radial distances from the observer [AU].
+    line_of_sight
+        Array of discrete radial distances from the observer [AU / 1 AU].
     observer_pos
-        The heliocentric ecliptic cartesian position of the observer.
+        The heliocentric ecliptic cartesian position of the observer [AU / 1 AU].
     earth_pos
-        The heliocentric ecliptic cartesian position of the Earth.
+        The heliocentric ecliptic cartesian position of the Earth [AU / 1 AU].
     unit_vectors
         Heliocentric ecliptic cartesian unit vectors pointing to each
-        position in space we that we consider.
+        position in space we that we consider [AU / 1 AU].
+    cloud_offset
+        Heliocentric ecliptic offset for the Zodiacal Cloud component.
+    source_parameters
+        Dictionary containing various model and interpolated spectral
+        parameters required for the evaluation of the brightness integral.
 
     Returns
     -------
     integrated_emission
-        The line-of-sight integrated emission of the shells around an observer
-        for a Zodiacal Component.
+        The line-of-sight integrated emission for the observer [W / Hz / m^2 / sr].
     """
 
     integrated_emission = np.zeros(unit_vectors.shape[-1])
 
-    source_params = source_funcs.get_source_parameters(
-        freq=freq,
-        model=model,
+    emission_previous = get_step_emission(
         component=component,
-    )
-
-    emission_previous = get_emission(
-        component=model.components[component],
         freq=freq,
-        r=radial_distances[0],
+        r=line_of_sight[0],
         observer_pos=observer_pos,
         earth_pos=earth_pos,
         unit_vectors=unit_vectors,
-        cloud_offset=source_params["cloud_offset"],
-        color_table=color_table,
-        albedo=source_params["albedo"],
-        emissivity=source_params["emissivity"],
-        phase_coeff=source_params["phase_coeffs"],
-        T_0=source_params["T_0"],
-        delta=source_params["delta"],
+        cloud_offset=cloud_offset,
+        source_parameters=source_parameters,
     )
 
-    for r, dr in zip(radial_distances[1:], np.diff(radial_distances)):
-        emission_current = get_emission(
-            component=model.components[component],
+    for r, dr in zip(line_of_sight[1:], np.diff(line_of_sight)):
+        emission_current = get_step_emission(
+            component=component,
             freq=freq,
             r=r,
             observer_pos=observer_pos,
             earth_pos=earth_pos,
             unit_vectors=unit_vectors,
-            cloud_offset=source_params["cloud_offset"],
-            color_table=color_table,
-            albedo=source_params["albedo"],
-            emissivity=source_params["emissivity"],
-            phase_coeff=source_params["phase_coeffs"],
-            T_0=source_params["T_0"],
-            delta=source_params["delta"],
+            cloud_offset=cloud_offset,
+            source_parameters=source_parameters,
         )
+
         integrated_emission += (emission_previous + emission_current) * (dr / 2)
+
         emission_previous = emission_current
 
     return integrated_emission
 
 
-def get_emission(
+def get_step_emission(
     component: Component,
     freq: float,
     r: NDArray[np.float64],
@@ -103,42 +91,73 @@ def get_emission(
     earth_pos: NDArray[np.float64],
     unit_vectors: NDArray[np.float64],
     cloud_offset: NDArray[np.float64],
-    color_table: Optional[NDArray[np.float64]],
-    albedo: float,
-    emissivity: float,
-    phase_coeff: Dict[str, Any],
-    T_0: float,
-    delta: float,
-):
-    """Returns the source term in the brightness integral as defined in K98."""
+    source_parameters: Dict[str, Any],
+) -> NDArray[np.float64]:
+    """Returns the Zodiacal emission at a step along the line-of-sight.
 
-    r_u = r * unit_vectors
-    observer_pos = np.expand_dims(observer_pos, axis=1)
-    X_helio = r_u + observer_pos
+    Parameters
+    ----------
+    component
+        Zodiacal component to evaluate.
+    freq
+        Frequency at which to evaluate the brightness integral [GHz].
+    r
+        Radial distance along the line-of-sight [AU / 1 AU].
+    observer_pos
+        The heliocentric ecliptic cartesian position of the observer [AU / 1 AU].
+    earth_pos
+        The heliocentric ecliptic cartesian position of the Earth [AU / 1 AU].
+    unit_vectors
+        Heliocentric ecliptic cartesian unit vectors pointing to each
+        position in space we that we consider [AU / 1 AU].
+    cloud_offset
+        Heliocentric ecliptic offset for the Zodiacal Cloud component.
+    source_parameters
+        Dictionary containing various model and interpolated spectral
+        parameters required for the evaluation of the brightness integral.
+
+    Returns
+    -------
+    emission
+        The Zodiacal emission at a step along the line-of-sight 
+        [W / Hz / m^2 / sr].
+    """
+    
+    r_vec = r * unit_vectors
+
+    X_helio = r_vec + observer_pos
     R_helio = np.linalg.norm(X_helio, axis=0)
-    scattering_angle = np.arccos(np.sum(r_u * X_helio, axis=0) / (r * R_helio))
 
-    solar_flux = source_funcs.solar_flux(R=R_helio, freq=freq) / r
-    phase_function = source_funcs.phase_function(
-        Theta=scattering_angle,
-        coeffs=phase_coeff,
+    primed_coords = component.get_primed_coords(
+        X_helio=X_helio,
+        X_earth=earth_pos,
+        X0_cloud=cloud_offset,
     )
-    T = source_funcs.interplanetary_temperature(R=R_helio, T_0=T_0, delta=delta)
-    B_nu = source_funcs.blackbody_emission_nu(T=T, freq=freq)
+    density = component.compute_density(*primed_coords)
 
-    density = component.get_density(
-        pixel_pos=X_helio,
-        earth_pos=earth_pos,
-        cloud_offset=cloud_offset,
+    T = interp_interplanetary_temperature(
+        R=R_helio,
+        T_0=source_parameters["T_0"],
+        delta=source_parameters["delta"],
     )
+    B_nu = interp_blackbody_emission_nu(T=T, freq=freq)
 
-    emission = albedo * solar_flux * phase_function
+    albedo = source_parameters["albedo"]
+    emissivity = source_parameters["emissivity"]
+    phase_coeff = source_parameters["phase_coeffs"]
 
-    if color_table is not None:
-        color_corr_factor = np.interp(T, color_table[0], color_table[1])
-        emission += (1 - albedo) * (emissivity * B_nu * color_corr_factor)
-    else:
-        emission += (1 - albedo) * (emissivity * B_nu)
+    emission = (1 - albedo) * (emissivity * B_nu)
+
+    if (color_table := source_parameters["color_table"]) is not None:
+        color_corr_factor = np.interp(T, color_table[:, 0], color_table[:, 1])
+        emission *= color_corr_factor
+
+    if albedo > 0:
+        scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
+        solar_flux = source_funcs.solar_flux(R=R_helio, freq=freq)
+        phase_function = source_funcs.phase_function(scattering_angle, **phase_coeff)
+
+        emission += albedo * solar_flux * phase_function
 
     emission *= density
 

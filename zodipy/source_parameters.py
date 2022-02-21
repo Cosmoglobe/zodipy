@@ -193,8 +193,8 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
 }
 
 PHASE_DIRBE: Dict[str, Any] = {
-    "C_0": Quantity([-0.942, -0.527, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.sr),
-    "C_1": Quantity([0.121, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad/u.sr),
-    "C_2": Quantity([-0.165, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad),
+    "C0": Quantity([-0.942, -0.527, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.sr),
+    "C1": Quantity([0.121, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad/u.sr),
+    "C2": Quantity([-0.165, 0.187, -0.431, 0, 0, 0, 0, 0, 0, 0], unit=1/u.rad),
     "spectrum": SPECTRUM_DIRBE,
 }

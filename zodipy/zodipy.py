@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import astropy.units as u
 from astropy.units import Quantity
@@ -7,20 +7,29 @@ import numpy as np
 from numpy.typing import NDArray
 
 from zodipy._astroquery import query_target_positions, Epoch
-from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._brightness_integral import trapezoidal
+from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._integration_config import integration_config_registry
+from zodipy._interp import interp_source_parameters
+from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
 
 
 class Zodipy:
     """The Zodipy simulation interface.
 
-    Zodipy implements the Kelsall et al. (1998) Interplanetary Dust Model,
-    which includes the following Zodiacal components:
-        - The Diffuse Cloud (cloud)
-        - Three Asteroidal Bands (band1, band2, band3)
-        - The Circumsolar Ring (ring) + The Earth-trailing Feature (feature)
+    Zodipy allows the user to produce simulated timestreams or instantaneous
+    maps of the Interplanetary Dust emission. The IPD model implemented is the
+    Kelsall et al. (1998) model.
+
+    Methods
+    -------
+    get_time_oredered_emission
+    get_instantaneous_emission
+
+    Attributes
+    ----------
+
     """
 
     def __init__(self, model: str = "DIRBE") -> None:
@@ -32,9 +41,159 @@ class Zodipy:
             The name of the model to initialize. Defaults to DIRBE. See all
             available models in `zodipy.MODELS`.
         """
+        self._model = model_registry.get_model(model)
+        self._line_of_sights = integration_config_registry.get_config()
 
-        self.model = model_registry.get_model(model)
-        self.line_of_sights = integration_config_registry.get_config("default")
+    @property
+    def info(self) -> str:
+        """Returns the string representation of the IPD model."""
+
+        return str(self._model)
+
+    @property
+    def parameters(self) -> InterplanetaryDustModel:
+        """Returns the IPD model."""
+
+        return self._model
+
+    @u.quantity_input
+    def get_time_ordered_emission(
+        self,
+        freq: Union[Quantity[u.Hz], Quantity[u.m]],
+        *,
+        nside: int,
+        pixels: NDArray[np.int64],
+        observer_pos: Quantity[u.AU],
+        earth_pos: Optional[Quantity[u.AU]] = None,
+        color_corr: bool = False,
+        bin: bool = False,
+        return_comps: bool = False,
+        coord_out: str = "E",
+    ) -> Quantity[u.MJy / u.sr]:
+        """Returns the timestream (or the binned map) of the simulated Zodiacal emission.
+
+        Parameters
+        ----------
+        freq
+            Frequency (or wavelength) at which to evaluate the Zodiacal emission.
+        nside
+            HEALPIX map resolution parameter of the returned emission map.
+        pixels
+            Sequence of pixels observed while the observer was at the position
+            given by `observer_pos`.
+        observer_pos
+            The heliocentric ecliptic cartesian position of the observer.
+        earth_pos
+            The heliocentric ecliptic cartesian position of the Earth. If None,
+            the same position is used for the Earth and the observer. NOTE: The
+            further away from the Earth the observer gets, the worse this
+            assumption becomes. Defaults to None.
+        color_corr
+            If True, the DIRBE color correction is applied to the thermal
+            contribution of the emission. This is usefull for comparing the
+            output with the DIRBE TODs or maps.
+        bin
+            If True, the timestream is binned into a HEALPIX map. Defaults to
+            False. NOTE: The binned map will not be normalized by the number of
+            hits.
+        return_comps
+            If True, the emission is returned component-wise. Defaults to False.
+        coord_out
+            Coordinate frame of the output map. Defaults to 'E' (heliocentric
+            ecliptic coordinates).
+
+        Returns
+        -------
+        emission
+            Simulated timestream or binned map of Zodiacal emission [MJy/sr].
+        """
+
+        # Zodipy uses frequency convention.
+        freq = freq.to("GHz", equivalencies=u.spectral())
+
+        IPDmodel = self._model
+
+        source_parameters: Dict[str, Any] = {}
+        source_parameters["T_0"] = IPDmodel.source_parameters["T_0"]
+        source_parameters["delta"] = IPDmodel.source_parameters["delta"]
+        source_parameters["color_table"] = None
+
+        if color_corr:
+            # Get the DIRBE color correctoin factor.
+            wavelength = freq.to("micron", equivalencies=u.spectral())
+            try:
+                band = DIRBE_BAND_REF_WAVELENS.index(wavelength.value) + 1
+            except IndexError:
+                raise IndexError(
+                    "Color correction is only supported at central DIRBE "
+                    "wavelenghts."
+                )
+            source_parameters["color_table"] = read_color_corr(band=band)
+
+        earth_position = observer_pos if earth_pos is None else earth_pos
+        # We reshape the coordinates to broadcastable shapes.
+        if earth_position.ndim == 1:
+            earth_position = np.expand_dims(earth_position, axis=1)
+        if observer_pos.ndim == 1:
+            observer_pos = np.expand_dims(observer_pos, axis=1)
+
+        if bin:
+            unique_pixels, counts = np.unique(pixels, return_counts=True)
+            unit_vectors = _get_rotated_unit_vectors(
+                nside=nside, pixels=unique_pixels, coord_out=coord_out
+            )
+
+            emission = np.zeros((IPDmodel.ncomps, hp.nside2npix(nside)))
+            for idx, (label, component) in enumerate(IPDmodel.components.items()):
+                comp_source_params = interp_source_parameters(
+                    freq=freq, model=IPDmodel, component=label
+                )
+                source_parameters.update(comp_source_params)
+
+                emission[idx, unique_pixels] = trapezoidal(
+                    component=component,
+                    freq=freq.value,
+                    line_of_sight=self._line_of_sights[label].value,
+                    observer_pos=observer_pos.value,
+                    earth_pos=earth_position.value,
+                    unit_vectors=unit_vectors,
+                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
+                    source_parameters=source_parameters,
+                )
+
+            emission[:, unique_pixels] *= counts
+
+        else:
+            unique_pixels, indicies = np.unique(pixels, return_inverse=True)
+            unit_vectors = _get_rotated_unit_vectors(
+                nside=nside, pixels=unique_pixels, coord_out=coord_out
+            )
+
+            emission = np.zeros((IPDmodel.ncomps, len(pixels)))
+            for idx, (label, component) in enumerate(IPDmodel.components.items()):
+                comp_source_params = interp_source_parameters(
+                    freq=freq, model=IPDmodel, component=label
+                )
+                source_parameters.update(comp_source_params)
+
+                integrated_comp_emission = trapezoidal(
+                    component=component,
+                    freq=freq.value,
+                    line_of_sight=self._line_of_sights[label].value,
+                    observer_pos=observer_pos.value,
+                    earth_pos=earth_position.value,
+                    unit_vectors=unit_vectors,
+                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
+                    source_parameters=source_parameters,
+                )
+
+                # We map the unique pixel hits back to the timestream
+                emission[idx] = integrated_comp_emission[indicies]
+
+        # The output unit is [W / Hz / m^2 / sr] which we convert to [MJy/sr]
+        emission = (emission << (u.W / u.Hz / u.m ** 2 / u.sr)).to(u.MJy / u.sr)
+
+        return emission if return_comps else emission.sum(axis=0)
 
     @u.quantity_input
     def get_instantaneous_emission(
@@ -44,11 +203,11 @@ class Zodipy:
         nside: int,
         observer: str = "L2",
         epochs: Optional[Epoch] = None,
-        color_corr: bool = True,
+        color_corr: bool = False,
         return_comps: bool = False,
         coord_out: str = "E",
     ) -> Quantity[u.MJy / u.sr]:
-        """Simulates and returns the instantaneous Zodiacal Emission [MJy/sr].
+        """Returns the simulated instantaneous Zodiacal emission.
 
         The location of the observer are queried from the Horizons JPL
         ephemerides using `astroquery`, given an epoch defined by the `epochs`
@@ -61,7 +220,7 @@ class Zodipy:
         Parameters
         ----------
         freq
-            Frequency or wavelength at which to evaluate the Zodiacal emission.
+            Frequency (or wavelength) at which to evaluate the Zodiacal emission.
         nside
             HEALPIX map resolution parameter of the returned emission map.
         observer
@@ -76,7 +235,8 @@ class Zodipy:
             is used in UTC.
         color_corr
             If True, the DIRBE color correction is applied to the thermal
-            contribution. Set True if comparing with DIRBE TODs.
+            contribution of the emission. This is usefull for comparing the
+            output with the DIRBE TODs or maps.
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         coord_out
@@ -89,17 +249,31 @@ class Zodipy:
             Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
         """
 
-        if color_corr:
-            wavelen = freq.to("micron", equivalencies=u.spectral())
-            band = DIRBE_BAND_REF_WAVELENS.index(wavelen.value) + 1
-            color_table = read_color_corr(band=band)
-        else:
-            color_table = None
+        # Zodipy uses frequency convention.
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        observer_positions = query_target_positions(observer, epochs)
-        if self.model.includes_ring:
-            earth_positions = query_target_positions("earth", epochs)
+        IPDmodel = self._model
+
+        source_parameters: Dict[str, Any] = {}
+        source_parameters["T_0"] = IPDmodel.source_parameters["T_0"]
+        source_parameters["delta"] = IPDmodel.source_parameters["delta"]
+        source_parameters["color_table"] = None
+
+        if color_corr:
+            # Get the DIRBE color correctoin factor.
+            wavelength = freq.to("micron", equivalencies=u.spectral())
+            try:
+                band = DIRBE_BAND_REF_WAVELENS.index(wavelength.value) + 1
+            except IndexError:
+                raise IndexError(
+                    "Color correction is only supported at central DIRBE "
+                    "wavelenghts."
+                )
+            source_parameters["color_table"] = read_color_corr(band=band)
+
+        observer_positions = [query_target_positions(observer, epochs)]
+        if IPDmodel.includes_ring:
+            earth_positions = [query_target_positions("earth", epochs)]
         else:
             earth_positions = observer_positions.copy()
 
@@ -109,162 +283,38 @@ class Zodipy:
             pixels=np.arange(npix),
             coord_out=coord_out,
         )
-        emission: Quantity = np.zeros((self.model.ncomps, hp.nside2npix(nside))) * (
-            u.MJy / u.sr
-        )
+
+
+        emission = np.zeros((IPDmodel.ncomps, npix))
         for observer_position, earth_position in zip(
             observer_positions, earth_positions
         ):
-            earth_position = np.expand_dims(earth_position, axis=1)
-            for idx, component in enumerate(self.model.component_labels):
+            for idx, (label, component) in enumerate(IPDmodel.components.items()):
+                comp_source_params = interp_source_parameters(
+                    freq=freq, model=IPDmodel, component=label
+                )
+                source_parameters.update(comp_source_params)
+
                 integrated_comp_emission = trapezoidal(
-                    model=self.model,
                     component=component,
-                    freq=freq,
-                    radial_distances=self.line_of_sights[component],
-                    observer_pos=observer_position,
-                    earth_pos=earth_position,
-                    color_table=color_table,
+                    freq=freq.value,
+                    line_of_sight=self._line_of_sights[label].value,
+                    observer_pos=observer_position.value,
+                    earth_pos=earth_position.value,
                     unit_vectors=unit_vectors,
+                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
+                    source_parameters=source_parameters,
                 )
 
                 emission[idx] += integrated_comp_emission
 
-        emission /= len(observer_positions)  # Averaging the maps
+        # Averaging the maps
+        emission /= len(observer_positions)
 
-        return emission if return_comps else emission.sum(axis=0)
-
-    @u.quantity_input
-    def get_time_ordered_emission(
-        self,
-        freq: Union[Quantity[u.Hz], Quantity[u.m]],
-        *,
-        nside: int,
-        pixels: NDArray[np.int64],
-        observer_pos: Quantity[u.AU],
-        earth_pos: Optional[Quantity[u.AU]] = None,
-        color_corr: bool = True,
-        bin: bool = False,
-        return_comps: bool = False,
-        coord_out: str = "E",
-    ) -> Quantity[u.MJy / u.sr]:
-        """Returns the timestream (or binned map) of simulated Zodiacal emission.
-
-        Parameters
-        ----------
-        freq
-            Frequency or wavelength at which to evaluate the Zodiacal emission.
-        nside
-            HEALPIX map resolution parameter of the returned emission map.
-        pixels
-            Sequence of pixels observed while the observer was at the position
-            given by `observer_pos`.
-        observer_pos
-            The heliocentric ecliptic cartesian position of the observer.
-        earth_pos
-            The heliocentric ecliptic cartesian position of the Earth. If None,
-            the same position is used for the Earth and the observer. The
-            further away from the Earth the observer gets, the more important
-            this input gets for the accuracy. Defaults to None.
-        color_corr
-            If True, the DIRBE color correction is applied to the thermal
-            contribution. Set True if comparing with DIRBE TODs.
-        bin
-            If True, the output is a HEALPIX map instead of a timestream.
-            Defaults to False.
-        return_comps
-            If True, the emission is returned component-wise. Defaults to False.
-        coord_out
-            Coordinate frame of the output map. Defaults to 'E' (heliocentric
-            ecliptic coordinates).
-
-        Returns
-        -------
-        emission
-            Simulated timestream or map of Zodiacal emission in units of MJy/sr.
-        """
-
-        earth_position = observer_pos if earth_pos is None else earth_pos
-        if earth_position.ndim == 1:
-            earth_position = np.expand_dims(earth_position, axis=1)
-
-        if color_corr:
-            wavelength = freq.to("micron", equivalencies=u.spectral())
-            try:
-                band = DIRBE_BAND_REF_WAVELENS.index(wavelength.value) + 1
-            except IndexError:
-                raise IndexError(
-                    "Color correction is only supported at central DIRBE "
-                    "wavelenghts."
-                )
-            color_table = read_color_corr(band=band)
-        else:
-            color_table = None
-
-        freq = freq.to("GHz", equivalencies=u.spectral())
-
-        if bin:
-            pixels, counts = np.unique(pixels, return_counts=True)
-            unit_vectors = _get_rotated_unit_vectors(
-                nside=nside, pixels=pixels, coord_out=coord_out
-            )
-            emission = np.zeros((self.model.ncomps, hp.nside2npix(nside)))
-
-            for idx, component in enumerate(self.model.component_labels):
-                integrated_comp_emission = trapezoidal(
-                    model=self.model,
-                    component=component,
-                    freq=freq.value,
-                    radial_distances=self.line_of_sights[component].value,
-                    observer_pos=observer_pos.value,
-                    earth_pos=earth_position.value,
-                    color_table=color_table,
-                    unit_vectors=unit_vectors,
-                )
-                emission[idx, pixels] = integrated_comp_emission
-
-            emission[:, pixels] *= counts
-
-        else:
-            pixels, indicies = np.unique(pixels, return_inverse=True)
-            unit_vectors = _get_rotated_unit_vectors(
-                nside=nside, pixels=pixels, coord_out=coord_out
-            )
-            emission = np.zeros((self.model.ncomps, len(pixels)))
-
-            for idx, component in enumerate(self.model.component_labels):
-                integrated_comp_emission = trapezoidal(
-                    model=self.model,
-                    component=component,
-                    freq=freq.value,
-                    radial_distances=self.line_of_sights[component].value,
-                    observer_pos=observer_pos.value,
-                    earth_pos=earth_position.value,
-                    color_table=color_table,
-                    unit_vectors=unit_vectors,
-                )
-
-                emission[idx] = integrated_comp_emission[indicies]
-
+        # The output unit is [W / Hz / m^2 / sr] which we convert to [MJy/sr]
         emission = (emission << (u.W / u.Hz / u.m ** 2 / u.sr)).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
-
-    def __str__(self) -> str:
-        """String representation of the Interplanetary dust model."""
-
-        reprs = []
-        for label in self.model.component_labels:
-            reprs.append(f"{label.value.capitalize()}\n")
-
-        main_repr = "InterplanetaryDustModel("
-        main_repr += f"\n  name: {self.model.name}"
-        main_repr += f"\n  info: {self.model.doc}"
-        main_repr += "\n  components: "
-        main_repr += "\n    " + "    ".join(reprs)
-        main_repr += ")"
-
-        return main_repr
 
 
 def _get_rotated_unit_vectors(

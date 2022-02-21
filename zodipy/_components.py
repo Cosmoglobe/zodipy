@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
 from astropy.units import Quantity
 import astropy.units as u
@@ -59,7 +59,7 @@ class Component(ABC):
         R_prime: NDArray[np.float64],
         Z_prime: NDArray[np.float64],
         *,
-        θ_prime: NDArray[np.float64],
+        θ_prime: Optional[NDArray[np.float64]] = None,
     ) -> NDArray[np.float64]:
         """Returns the dust density at a shell around the observer.
 
@@ -82,96 +82,40 @@ class Component(ABC):
             Z_prime, and θ_prime.
         """
 
-    def get_primed_coordinates(
+    @abstractmethod
+    def get_primed_coords(
         self,
         X_helio: NDArray[np.float64],
-        X_earth: NDArray[np.float64],
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-        """Returns a set of coordinates for a component.
-
-        Given a set of heliocentric ecliptic positions in space given by the
-        unit vectors `X_unit` and `R_comp`, we compute the `R_helio`, `R_prime`,
-        `Z_prime`, and `θ_prime` coordinates as seen by and observer whos
-        heliocentric ecliptic coordinates are given by `X_observer`. These are
-        the coordinates required by the Interplanetary Dust Model to evalutate
-        the density of a Zodiacal Component at the given positions.
-
+        *,
+        X_earth: Optional[NDArray[np.float64]],
+        X0_cloud: Optional[NDArray[np.float64]],
+    ) -> Tuple[NDArray[np.float64], ...]:
+        """Returns R_prime, Z_prime, and optionally, θ_prime.
+        
+        These are the coordinates shifted to a componentcentric reference frame.
+        
         Parameters
         ----------
         X_helio
-            Heliocentric ecliptic cartesian coordinates of each considered
-            pixel. [AU / 1 AU]
+            Heliocentric ecliptic cartesian pixel positions.
         X_earth
-            Heliocentric ecliptic cartesian coordinates of the Earth. [AU / 1 AU]
+            Heliocentric ecliptic cartesian postion of the Earth.
+        X0_cloud 
+            Heliocentric ecliptic cartesian offset of the Cloud component.
 
         Returns
         -------
         R_prime
             Array of distances corresponding to discrete points along a
             line-of-sight for a shell surrounding the observer in the primed
-            coordinates. [AU / 1 AU]
+            coordinates.
         Z_prime
             Heights above the midplane in primed coordinates of a component
-            corresponding to the distances in `R_prime`. [AU / 1 AU]
+            corresponding to the distances in `R_prime`.
         θ_prime
             Relative mean lognitude between the discrete points along the
-            line-of-sight describe by `R_prime` and the Earth. [deg]
+            line-of-sight describe by `R_prime` and the Earth.
         """
-
-        X_earth_prime = X_earth - self.X_0
-
-        X_prime = X_helio - self.X_0
-        R_prime = np.linalg.norm(X_prime, axis=0)
-
-        Z_prime = (
-            X_prime[0] * self.sin_Omega * self.sin_i
-            - X_prime[1] * self.cos_Omega * self.sin_i
-            + X_prime[2] * self.cos_i
-        )
-
-        θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
-            X_earth_prime[1], X_earth_prime[0]
-        )
-
-        return R_prime, Z_prime, θ_prime
-
-    def get_density(
-        self,
-        pixel_pos: NDArray[np.float64],
-        earth_pos: NDArray[np.float64],
-        cloud_offset: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        """Returns the component density at a shell around the observer.
-
-        Parameters
-        ----------
-        pixel_pos
-            Heliocentric ecliptic cartesian coordinates of the considered
-            pixels.
-        earth_pos
-            Heliocentric ecliptic cartesian coordinates of the Earth.
-        cloud_offset:
-            Off-set of the cloud component.
-
-        Returns
-        -------
-            Density of a Zodiacal component at a shell around the observer.
-        """
-
-        R_prime, Z_prime, θ_prime = self.get_primed_coordinates(
-            X_helio=pixel_pos, X_earth=earth_pos
-        )
-
-        if isinstance(self, Band):
-            X_cloud = pixel_pos - cloud_offset
-            R_cloud = np.linalg.norm(X_cloud, axis=0)
-            R_prime = R_cloud
-
-        return self.compute_density(
-            R_prime=R_prime,
-            Z_prime=Z_prime,
-            θ_prime=θ_prime,
-        )
 
 
 @dataclass
@@ -205,6 +149,22 @@ class Cloud(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
         self.n_0 = self.n_0.value
+
+    def get_primed_coords(
+        self, X_helio: NDArray[np.float64], **_
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """See base class for documentation."""
+
+        X_prime = X_helio - self.X_0
+        R_prime = np.linalg.norm(X_prime, axis=0)
+
+        Z_prime = (
+            X_prime[0] * self.sin_Omega * self.sin_i
+            - X_prime[1] * self.cos_Omega * self.sin_i
+            + X_prime[2] * self.cos_i
+        )
+
+        return R_prime, Z_prime
 
     def compute_density(
         self,
@@ -267,6 +227,22 @@ class Band(Component):
         # [AU] -> [AU per 1 AU]
         self.delta_r = (self.delta_r / u.AU).value
 
+    def get_primed_coords(
+        self, X_helio: NDArray[np.float64], X0_cloud: NDArray[np.float64], **_
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """See base class for documentation."""
+
+        X_prime = X_helio - X0_cloud
+        R_prime = np.linalg.norm(X_prime, axis=0)
+
+        Z_prime = (
+            X_prime[0] * self.sin_Omega * self.sin_i
+            - X_prime[1] * self.cos_Omega * self.sin_i
+            + X_prime[2] * self.cos_i
+        )
+
+        return R_prime, Z_prime
+
     def compute_density(
         self,
         R_prime: NDArray[np.float64],
@@ -318,6 +294,22 @@ class Ring(Component):
         self.R = (self.R / u.AU).value
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
+
+    def get_primed_coords(
+        self, X_helio: NDArray[np.float64], **_
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """See base class for documentation."""
+
+        X_prime = X_helio - self.X_0
+        R_prime = np.linalg.norm(X_prime, axis=0)
+
+        Z_prime = (
+            X_prime[0] * self.sin_Omega * self.sin_i
+            - X_prime[1] * self.cos_Omega * self.sin_i
+            + X_prime[2] * self.cos_i
+        )
+
+        return R_prime, Z_prime
 
     def compute_density(
         self,
@@ -375,6 +367,30 @@ class Feature(Component):
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
 
+    def get_primed_coords(
+        self,
+        X_helio: NDArray[np.float64],
+        X_earth: NDArray[np.float64],
+        **_,
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+        """See base class for documentation."""
+
+        X_prime = X_helio - self.X_0
+        R_prime = np.linalg.norm(X_prime, axis=0)
+
+        Z_prime = (
+            X_prime[0] * self.sin_Omega * self.sin_i
+            - X_prime[1] * self.cos_Omega * self.sin_i
+            + X_prime[2] * self.cos_i
+        )
+        X_earth_prime = X_earth - self.X_0
+
+        θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
+            X_earth_prime[1], X_earth_prime[0]
+        )
+
+        return R_prime, Z_prime, θ_prime
+
     def compute_density(
         self,
         R_prime: NDArray[np.float64],
@@ -385,9 +401,10 @@ class Feature(Component):
         """See base class for documentation."""
 
         Δθ = θ_prime - self.theta
-        condition = Δθ < -π
-        Δθ[condition] += 2 * π
-        Δθ[~condition] -= 2 * π
+        condition1 = Δθ < -π
+        condition2 = Δθ > π
+        Δθ[condition1] = Δθ[condition1] + 2 * π
+        Δθ[condition2] = Δθ[condition2] - 2 * π
 
         term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
         term2 = np.abs(Z_prime) / self.sigma_z

@@ -13,6 +13,7 @@ RADIAL_CUTOFF = 5.2 * u.AU  # Distance to Jupiter in AU.
 RING_CUTOFF = 2.25 * u.AU
 FEATURE_CUTOFF = 1 * u.AU
 
+
 @dataclass
 class IntegrationConfigRegistry:
     """Container for registered integration configs.
@@ -32,7 +33,7 @@ class IntegrationConfigRegistry:
 
         self._registry[name] = components
 
-    def get_config(self, name: str) -> Dict[Label, Quantity]:
+    def get_config(self, name: str = "default") -> Dict[Label, Quantity]:
         """Returns an integration config from the registry."""
 
         if name not in self._registry:
@@ -57,4 +58,4 @@ integration_config_registry.register_config(
     },
 )
 
-DEFAULT_INTEGRATION_CONFIG = integration_config_registry.get_config("default")
+DEFAULT_INTEGRATION_CONFIG = integration_config_registry.get_config()

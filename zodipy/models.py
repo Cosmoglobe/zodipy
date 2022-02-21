@@ -1,4 +1,3 @@
-from pyexpat import model
 from zodipy._model import model_registry
 from zodipy._labels import Label
 from zodipy import source_parameters
