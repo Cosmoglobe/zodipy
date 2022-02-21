@@ -26,10 +26,6 @@ class Zodipy:
     -------
     get_time_oredered_emission
     get_instantaneous_emission
-
-    Attributes
-    ----------
-
     """
 
     def __init__(self, model: str = "DIRBE") -> None:
@@ -41,6 +37,7 @@ class Zodipy:
             The name of the model to initialize. Defaults to DIRBE. See all
             available models in `zodipy.MODELS`.
         """
+
         self._model = model_registry.get_model(model)
         self._line_of_sights = integration_config_registry.get_config()
 
