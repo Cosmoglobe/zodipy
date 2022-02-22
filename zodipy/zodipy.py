@@ -10,9 +10,10 @@ from zodipy._astroquery import query_target_positions, Epoch
 from zodipy._brightness_integral import trapezoidal
 from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._integration_config import integration_config_registry
-from zodipy._interp import interp_source_parameters
+from zodipy._interp import interp_comp_spectral_params
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
+from zodipy._labels import Label
 
 
 class Zodipy:
@@ -21,11 +22,6 @@ class Zodipy:
     Zodipy allows the user to produce simulated timestreams or instantaneous
     maps of the Interplanetary Dust emission. The IPD model implemented is the
     Kelsall et al. (1998) model.
-
-    Methods
-    -------
-    get_time_oredered_emission
-    get_instantaneous_emission
     """
 
     def __init__(self, model: str = "DIRBE") -> None:
@@ -108,31 +104,30 @@ class Zodipy:
         # Zodipy uses frequency convention.
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        IPDmodel = self._model
+        model = self._model
 
-        source_parameters: Dict[str, Any] = {}
-        source_parameters["T_0"] = IPDmodel.source_parameters["T_0"]
-        source_parameters["delta"] = IPDmodel.source_parameters["delta"]
-        source_parameters["color_table"] = None
-
+        params: Dict[str, Any] =  model.source_params.copy()
         if color_corr:
             # Get the DIRBE color correctoin factor.
-            wavelength = freq.to("micron", equivalencies=u.spectral())
+            lambda_ = freq.to("micron", equivalencies=u.spectral())
             try:
-                band = DIRBE_BAND_REF_WAVELENS.index(wavelength.value) + 1
+                band = DIRBE_BAND_REF_WAVELENS.index(lambda_.value) + 1
             except IndexError:
                 raise IndexError(
                     "Color correction is only supported at central DIRBE "
                     "wavelenghts."
                 )
-            source_parameters["color_table"] = read_color_corr(band=band)
+            params["color_table"] = read_color_corr(band=band)
+        else:
+            params["color_table"] = None
 
-        earth_position = observer_pos if earth_pos is None else earth_pos
+        earth_pos = observer_pos if earth_pos is None else earth_pos
+
         # We reshape the coordinates to broadcastable shapes.
-        if earth_position.ndim == 1:
-            earth_position = np.expand_dims(earth_position, axis=1)
-        if observer_pos.ndim == 1:
-            observer_pos = np.expand_dims(observer_pos, axis=1)
+        observer_pos = observer_pos.reshape(3, 1)
+        earth_pos = earth_pos.reshape(3, 1)
+
+        cloud_offset = model.comps[Label.CLOUD].X_0
 
         if bin:
             unique_pixels, counts = np.unique(pixels, return_counts=True)
@@ -140,22 +135,24 @@ class Zodipy:
                 nside=nside, pixels=unique_pixels, coord_out=coord_out
             )
 
-            emission = np.zeros((IPDmodel.ncomps, hp.nside2npix(nside)))
-            for idx, (label, component) in enumerate(IPDmodel.components.items()):
-                comp_source_params = interp_source_parameters(
-                    freq=freq, model=IPDmodel, component=label
+            emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
+            for idx, (label, component) in enumerate(model.comps.items()):
+                comp_spectral_params = interp_comp_spectral_params(
+                    component=label,
+                    freq=freq,
+                    spectral_params=model.spectral_params,
                 )
-                source_parameters.update(comp_source_params)
+                params.update(comp_spectral_params)
 
                 emission[idx, unique_pixels] = trapezoidal(
                     component=component,
                     freq=freq.value,
                     line_of_sight=self._line_of_sights[label].value,
                     observer_pos=observer_pos.value,
-                    earth_pos=earth_position.value,
+                    earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
-                    source_parameters=source_parameters,
+                    cloud_offset=cloud_offset,
+                    source_parameters=params,
                 )
 
             emission[:, unique_pixels] *= counts
@@ -166,22 +163,24 @@ class Zodipy:
                 nside=nside, pixels=unique_pixels, coord_out=coord_out
             )
 
-            emission = np.zeros((IPDmodel.ncomps, len(pixels)))
-            for idx, (label, component) in enumerate(IPDmodel.components.items()):
-                comp_source_params = interp_source_parameters(
-                    freq=freq, model=IPDmodel, component=label
+            emission = np.zeros((model.ncomps, len(pixels)))
+            for idx, (label, component) in enumerate(model.comps.items()):
+                comp_spectral_params = interp_comp_spectral_params(
+                    component=label,
+                    freq=freq,
+                    spectral_params=model.spectral_params,
                 )
-                source_parameters.update(comp_source_params)
+                params.update(comp_spectral_params)
 
                 integrated_comp_emission = trapezoidal(
                     component=component,
                     freq=freq.value,
                     line_of_sight=self._line_of_sights[label].value,
                     observer_pos=observer_pos.value,
-                    earth_pos=earth_position.value,
+                    earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
-                    source_parameters=source_parameters,
+                    cloud_offset=cloud_offset,
+                    source_parameters=params,
                 )
 
                 # We map the unique pixel hits back to the timestream
@@ -249,30 +248,30 @@ class Zodipy:
         # Zodipy uses frequency convention.
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        IPDmodel = self._model
+        model = self._model
 
-        source_parameters: Dict[str, Any] = {}
-        source_parameters["T_0"] = IPDmodel.source_parameters["T_0"]
-        source_parameters["delta"] = IPDmodel.source_parameters["delta"]
-        source_parameters["color_table"] = None
-
+        params: Dict[str, Any] = model.source_params.copy()
         if color_corr:
             # Get the DIRBE color correctoin factor.
-            wavelength = freq.to("micron", equivalencies=u.spectral())
+            lambda_ = freq.to("micron", equivalencies=u.spectral())
             try:
-                band = DIRBE_BAND_REF_WAVELENS.index(wavelength.value) + 1
+                band = DIRBE_BAND_REF_WAVELENS.index(lambda_.value) + 1
             except IndexError:
                 raise IndexError(
                     "Color correction is only supported at central DIRBE "
                     "wavelenghts."
                 )
-            source_parameters["color_table"] = read_color_corr(band=band)
+            params["color_table"] = read_color_corr(band=band)
+        else:
+            params["color_table"] = None
 
-        observer_positions = [query_target_positions(observer, epochs)]
-        if IPDmodel.includes_ring:
-            earth_positions = [query_target_positions("earth", epochs)]
+        observer_positions = query_target_positions(observer, epochs)
+        if model.includes_ring:
+            earth_positions = query_target_positions("earth", epochs)
         else:
             earth_positions = observer_positions.copy()
+
+        cloud_offset = model.comps[Label.CLOUD].X_0
 
         npix = hp.nside2npix(nside)
         unit_vectors = _get_rotated_unit_vectors(
@@ -281,16 +280,17 @@ class Zodipy:
             coord_out=coord_out,
         )
 
-
-        emission = np.zeros((IPDmodel.ncomps, npix))
+        emission = np.zeros((model.ncomps, npix))
         for observer_position, earth_position in zip(
             observer_positions, earth_positions
         ):
-            for idx, (label, component) in enumerate(IPDmodel.components.items()):
-                comp_source_params = interp_source_parameters(
-                    freq=freq, model=IPDmodel, component=label
+            for idx, (label, component) in enumerate(model.comps.items()):
+                comp_spectral_params = interp_comp_spectral_params(
+                    component=label,
+                    freq=freq,
+                    spectral_params=model.spectral_params,
                 )
-                source_parameters.update(comp_source_params)
+                params.update(comp_spectral_params)
 
                 integrated_comp_emission = trapezoidal(
                     component=component,
@@ -299,8 +299,8 @@ class Zodipy:
                     observer_pos=observer_position.value,
                     earth_pos=earth_position.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=IPDmodel.components[label.CLOUD].X_0,
-                    source_parameters=source_parameters,
+                    cloud_offset=cloud_offset,
+                    source_parameters=params,
                 )
 
                 emission[idx] += integrated_comp_emission

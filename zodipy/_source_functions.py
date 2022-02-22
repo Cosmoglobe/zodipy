@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Union
 
 import astropy.constants as const
@@ -103,9 +104,20 @@ def interplanetary_temperature(
     return T_0 * R ** -delta
 
 
+@lru_cache
+def phase_normalization(C0: float, C1: float, C2: float) -> float:
+    """Returns the analyitcal integral for the phase normalization factor N."""
+
+    int_term1 = 2 * π
+    int_term2 = 2 * C0
+    int_term3 = π * C1
+    int_term4 = (np.exp(C2 * π) + 1) / (C2 ** 2 + 1)
+
+    return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
+
+
 def phase_function(
-    Theta: NDArray[np.float64],
-    C0: float, C1: float, C2:float
+    Theta: NDArray[np.float64], C0: float, C1: float, C2: float
 ) -> NDArray[np.float64]:
     """Returns the phase function.
 
@@ -121,11 +133,6 @@ def phase_function(
         The Phase funciton.
     """
 
-    # Analytic integral to N:
-    int_term1 = 2 * π
-    int_term2 = 2 * C0
-    int_term3 = π * C1
-    int_term4 = (np.exp(C2 * π) + 1) / (C2 ** 2 + 1)
-    N = 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
+    N = phase_normalization(C0=C0, C1=C1, C2=C2)
 
-    return N * (C0 + C1 * Theta + np.exp(C2 * Theta))
+    return N * (C0 + C1 * Theta + np.exp(C2 * Theta)) 

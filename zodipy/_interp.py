@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Union
 from scipy import interpolate
 
 import astropy.units as u
@@ -8,67 +8,13 @@ from numpy.typing import NDArray
 import numpy as np
 
 from zodipy._labels import Label
-from zodipy._integration_config import EPS, RADIAL_CUTOFF
-from zodipy._model import InterplanetaryDustModel
-from zodipy._source_functions import blackbody_emission_nu, interplanetary_temperature
-
-
-DensityInterpolator = Callable[
-    [Union[Tuple[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]],
-    NDArray[np.float64],
-]
-
-INTERP_RANGES = {
-    Label.CLOUD: {
-        "R": np.linspace(EPS.value, RADIAL_CUTOFF.value, 1000),
-        "Z": np.linspace(-2, 2, 800),
-    },
-    Label.BAND1: {
-        "R": np.linspace(0.5, RADIAL_CUTOFF.value, 1000),
-        "Z": np.linspace(-2, 2, 800),
-    },
-    Label.BAND2: {
-        "R": np.linspace(0.2, RADIAL_CUTOFF.value, 1000),
-        "Z": np.linspace(-0.7, 0.7, 500),
-    },
-    Label.BAND3: {
-        "R": np.linspace(0.5, RADIAL_CUTOFF.value, 1000),
-        "Z": np.linspace(-2.5, 2.5, 900),
-    },
-    Label.RING: {"R": np.linspace(0.5, 1.5, 300), "Z": np.linspace(-0.5, 0.5, 500)},
-    Label.FEATURE: {
-        "R": np.linspace(0.5, 1.5, 300),
-        "Z": np.linspace(-0.5, 0.5, 500),
-    },
-}
-
-
-def get_density_interpolators(
-    model: InterplanetaryDustModel,
-) -> Dict[Label, Optional[DensityInterpolator]]:
-    """Returns a dictionary containing the tabulated densities of each component."""
-
-    interpolators: Dict[Label, Optional[DensityInterpolator]] = {}
-    for label, component in model.components.items():
-        R = INTERP_RANGES[label]["R"]
-        Z = INTERP_RANGES[label]["Z"]
-        RR, ZZ = np.meshgrid(R, Z, indexing="ij")
-
-        # The Earth-trailing feature is not stationary in and cannot be
-        # easily tabulated.
-        if label is Label.FEATURE:
-            interpolators[label] = None
-
-        else:
-            tabulated_density = component.compute_density(R_prime=RR, Z_prime=ZZ)
-            interpolators[label] = interpolate.RegularGridInterpolator(
-                points=(R, Z),
-                values=tabulated_density,
-                bounds_error=False,
-                fill_value=0.0,
-            )
-
-    return interpolators
+from zodipy._integration_config import EPS
+from zodipy._source_functions import (
+    blackbody_emission_nu,
+    interplanetary_temperature,
+    R_sun,
+    T_sun,
+)
 
 
 @lru_cache
@@ -84,7 +30,7 @@ def tabulated_blackbody_emission_nu(
 
 
 def interp_blackbody_emission_nu(
-    freq: float, T: NDArray[np.float64]
+    freq: float, T: Union[float, NDArray[np.float64]]
 ) -> NDArray[np.float64]:
     """Returns the interpolated black body emission for a temperature."""
 
@@ -117,50 +63,68 @@ def interp_interplanetary_temperature(
     return f(R)
 
 
-def interp_source_parameters(
-    freq: Quantity[u.GHz],
-    model: InterplanetaryDustModel,
+def interp_solar_flux(
+    R: NDArray[np.float64], freq: float, T: float = T_sun
+) -> NDArray[np.float64]:
+    """Returns the interpolated solar flux.
+
+    Parameteers
+    -----------
+    freq
+        Frequency [GHz].
+    T
+        Temperature [K].
+
+    Returns
+    -------
+        Solar flux at some distance R from the Sun in AU.
+    """
+
+    return np.pi * interp_blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
+
+
+def interp_comp_spectral_params(
     component: Label,
-) -> Dict[str, Any]:
+    freq: Quantity[u.GHz],
+    spectral_params: Dict[Any, Any],
+) -> Dict[Any, Any]:
     """Returns interpolated source parameters given a frequency and a component."""
 
-    parameters: Dict[str, Any] = {}
-    for component in model.component_labels:
-        emissivities = model.source_component_parameters.get("emissivities")
-        if emissivities is not None:
-            emissivity_spectrum = emissivities["spectrum"]
-            parameters["emissivity"] = np.interp(
-                freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
-                emissivity_spectrum,
-                emissivities[component],
-            )
+    params: Dict[Any, Any] = {}
+    emissivities = spectral_params.get("emissivities")
+    if emissivities is not None:
+        emissivity_spectrum = emissivities["spectrum"]
+        params["emissivity"] = np.interp(
+            freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
+            emissivity_spectrum,
+            emissivities[component],
+        )
+    else:
+        params["emissivity"] = 1.0
 
-        else:
-            parameters["emissivity"] = 1.0
+    albedos = spectral_params.get("albedos")
+    if albedos is not None:
+        albedo_spectrum = albedos["spectrum"]
+        params["albedo"] = np.interp(
+            freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
+            albedo_spectrum,
+            albedos[component],
+        )
+    else:
+        params["albedo"] = 0.0
 
-        albedos = model.source_component_parameters.get("albedos")
-        if albedos is not None:
-            albedo_spectrum = albedos["spectrum"]
-            parameters["albedo"] = np.interp(
-                freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
-                albedo_spectrum,
-                albedos[component],
-            )
-        else:
-            parameters["albedo"] = 0.0
+    phases = spectral_params.get("phase")
+    if phases is not None:
+        phase_spectrum = phases["spectrum"]
+        params["phase_coeffs"] = {
+            coeff: np.interp(
+                freq.to(phase_spectrum.unit, equivalencies=u.spectral()),
+                phase_spectrum,
+                phases[coeff],
+            ).value
+            for coeff in ["C0", "C1", "C2"]
+        }
+    else:
+        params["phase_coeffs"] = {"C0": 0.0, "C1": 0.0, "C2": 0.0}
 
-        phases = model.source_parameters.get("phase")
-        if phases is not None:
-            phase_spectrum = phases["spectrum"]
-            parameters["phase_coeffs"] = {
-                coeff: np.interp(
-                    freq.to(phase_spectrum.unit, equivalencies=u.spectral()),
-                    phase_spectrum,
-                    phases[coeff],
-                ).value
-                for coeff in ["C0", "C1", "C2"]
-            }
-        else:
-            parameters["phase_coeffs"] = {"C0": 0.0, "C1": 0.0, "C2": 0.0}
-
-    return parameters
+    return params

@@ -8,6 +8,7 @@ from zodipy._components import Component
 from zodipy._interp import (
     interp_blackbody_emission_nu,
     interp_interplanetary_temperature,
+    interp_solar_flux
 )
 
 
@@ -154,7 +155,7 @@ def get_step_emission(
 
     if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = source_funcs.solar_flux(R=R_helio, freq=freq)
+        solar_flux = interp_solar_flux(R=R_helio, freq=freq)
         phase_function = source_funcs.phase_function(scattering_angle, **phase_coeff)
 
         emission += albedo * solar_flux * phase_function

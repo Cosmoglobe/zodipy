@@ -1,53 +1,50 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
-from zodipy._labels import Label, LABEL_TO_CLASS
 from zodipy._components import Component
+from zodipy._labels import Label, LABEL_TO_CLASS
 
 
 @dataclass
 class InterplanetaryDustModel:
     name: str
-    component_labels: List[Label]
-    component_parameters: Dict[Label, Dict[str, Any]]
-    source_component_parameters: Dict[str, Dict[Union[str, Label], Any]]
-    source_parameters: Dict[str, Any]
+    comp_labels: List[Label]
+    comp_params: Dict[Label, Dict[str, Any]]
+    spectral_params: Dict[Any, Any]
+    source_params: Dict[str, Any]
     doc: str = ""
-    components: Dict[Label, Component] = field(default_factory=dict)
+    comps: Dict[Label, Component] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Initialize all components."""
 
-        if Label.CLOUD not in self.component_labels:
+        if Label.CLOUD not in self.comp_labels:
             raise ValueError(
                 "The cloud component is required component for the K98 model"
             )
 
-        for label in self.component_labels:
-            parameters = self.component_parameters[label]
+        for label in self.comp_labels:
+            parameters = self.comp_params[label]
             component_class = LABEL_TO_CLASS[label]
-            self.components[label] = component_class(**parameters)
+            self.comps[label] = component_class(**parameters)
 
     @property
     def includes_ring(self) -> bool:
         """Returns True if the model includes an Earth-neighboring component."""
 
-        return (
-            Label.RING in self.component_labels
-            or Label.FEATURE in self.component_labels
-        )
+        return Label.RING in self.comp_labels or Label.FEATURE in self.comp_labels
 
     @property
     def ncomps(self) -> int:
         """Returns the number of components in the model."""
 
-        return len(self.component_labels)
+        return len(self.comp_labels)
 
     def __str__(self) -> str:
         """String representation of the Interplanetary dust model."""
 
         reprs = []
-        for label in self.component_labels:
+        for label in self.comp_labels:
             reprs.append(f"{label.value.capitalize()}\n")
 
         main_repr = "InterplanetaryDustModel("
@@ -69,10 +66,10 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        component_labels: List[Label],
-        component_parameters: Dict[Label, Dict[str, Any]],
-        source_component_parameters: Dict[str, Dict[Union[str, Label], Any]],
-        source_parameters: Dict[str, Any],
+        comp_labels: List[Label],
+        comp_params: Dict[Label, Dict[str, Any]],
+        spectral_params: Dict[Any, Any],
+        source_params: Dict[str, Any],
         doc: str = "",
     ) -> None:
         if name in self._registry:
@@ -80,10 +77,10 @@ class ModelRegistry:
 
         self._registry[name] = InterplanetaryDustModel(
             name,
-            component_labels,
-            component_parameters,
-            source_component_parameters,
-            source_parameters,
+            comp_labels,
+            comp_params,
+            spectral_params,
+            source_params,
             doc,
         )
 

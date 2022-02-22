@@ -59,4 +59,6 @@ def query_target_positions(
     y = R * np.cos(lat) * np.sin(lon)
     z = R * np.sin(lat)
 
-    return np.stack(Quantity([x, y, z], unit=u.AU), axis=0)
+    if len(R) > 1:
+        return [np.expand_dims(Quantity([x,y,z], unit=u.AU), axis=1) for x,y,z in zip(x,y,z)]
+    return [np.stack(Quantity([x, y, z], unit=u.AU), axis=0)]
