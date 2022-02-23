@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from zodipy._source_functions import blackbody_emission_nu, interplanetary_temperature
+from zodipy._source_funcs import blackbody_emission_nu, interplanetary_temperature
 
 
 TEMPERATURE = 30

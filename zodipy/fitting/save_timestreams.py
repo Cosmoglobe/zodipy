@@ -1,6 +1,5 @@
 from typing import List
 import astropy.units as u
-import emcee 
 import healpy as hp
 import h5py
 import matplotlib.pyplot as plt
@@ -10,48 +9,54 @@ from tqdm import tqdm
 
 from zodipy import Zodipy
 from zodipy._labels import CompLabel
-from zodipy.fitting.fit_template import fit_template
+from zodipy._model import InterplanetaryDustModel
 from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS
 from zodipy.dirbe.scripts.dirbe_time_position import get_earth_position
 
-np.random.seed(420)
+
 
 # This is my path to the TODS, you need to specify this your self.
-PATH_TO_TODS = "/home/daniel/data/dirbe/h5/"
-
-# Can find the OG maps on OLA. (also smoothed and ud_graded @ /mn/stornext/d14/Planck1/daniher/data/zodi/zodipy_data/
-template_file= "/home/daniel/data/npipe6v20/npipe6v20_857_map_n0128_42arcmin_uK.fits"
-
-template     = hp.read_map(template_file)
-template     = template-np.min(template)
-
-ecl_template = np.asarray(hp.rotator.Rotator(coord=["G","E"]).rotate_map_pixel(template))
+PATH_TO_TODS = "/Users/metinsan/Documents/doktor/data/dirbe/tod/"
 
 model = Zodipy()
+
+def reset_emissivities(model: InterplanetaryDustModel) -> None:
+    """Sets the emissivities of a model to 1."""
+
+    for label in CompLabel:
+        model.spectral_params["emissivities"][label] = tuple([
+            1.0 for _ in range(len(DIRBE_BAND_REF_WAVELENS))
+        ])
+
+reset_emissivities(model._model)
+
 
 BAND = 6
 nside = 128
 npix = hp.nside2npix(nside)
 freq = DIRBE_BAND_REF_WAVELENS[BAND - 1] * u.micron
 
-def fit_emissivities(band: int):
-    """Currently this only binnes the TODS."""
+def save_timestreams(band: int):
+    """Saves the DIRBE and corresponding zodipy simulated timestream to files."""
 
     DATA_PATH = f"{PATH_TO_TODS}/Phot{band:02}.hdf5"
-
 
     timestreams: List[NDArray[np.float32]] = []
     zodipy_timestreams: List[NDArray[np.float32]] = []
 
     with h5py.File(DATA_PATH, "r") as file:
 
-        for idx, tod_chunk in enumerate(tqdm(file)):
+        for tod_chunk in tqdm(file):
             tods = np.asarray(file[f"{tod_chunk}/A/tod"][()], dtype=np.float32)
             pixels = np.asarray(file[f"{tod_chunk}/A/pix"][()], dtype=np.int32)
             times = np.asarray(file[f"{tod_chunk}/A/time"][()], dtype=np.float32)
 
             condition = tods > 0
             filtered_tods = tods[condition]
+
+            if not filtered_tods.size > 0:
+                continue
+
             filtered_pixels = pixels[condition]
             filtered_times = times[condition]
             time = filtered_times[int(len(filtered_times)/2)]
@@ -69,31 +74,12 @@ def fit_emissivities(band: int):
             timestreams.append(filtered_tods)
             zodipy_timestreams.append(zodipy_tods)
 
-            plt.plot(timestreams[idx], label="dirbe")
-            plt.plot(zodipy_timestreams[idx].sum(axis=0), label="zodipy")
-            plt.show()
+        full_timestream = np.concatenate(timestreams)
+        full_zodipy_timestream = np.concatenate(zodipy_timestreams, axis=1)
 
+        np.save(f"DIRBE_timestream_band{BAND}.npy", full_timestream)
+        np.save(f"zodipy_timestream_band{BAND}_unit_emissivity.npy", full_zodipy_timestream.value)
 
+save_timestreams(band=BAND)
 
-emission, hits = fit_emissivities(band=BAND)
-emission /= hits
-mask     = (hits > 0.0)
-
-ngibbs = 1000
-
-amps = np.zeros(ngibbs)
-
-for i in tqdm(range(ngibbs)):
-
-    amps[i] = fit_template(emission,hits,ecl_template,mask,sample=True)
-
-a_mean = np.mean(amps)
-a_std  = np.std(amps)
-
-print(f"amplitude mean: {a_mean}, amplitude std: {a_std}")
-
-dust_corr_map = emission-a_mean*ecl_template
-
-mean    = np.mean(dust_corr_map[mask]) 
-std     = np.std(dust_corr_map[mask])
-print(mean,std)
+    
