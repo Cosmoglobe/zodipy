@@ -2,23 +2,23 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
 from zodipy._components import Component
-from zodipy._labels import Label, LABEL_TO_CLASS
+from zodipy._labels import CompLabel, LABEL_TO_CLASS
 
 
 @dataclass
 class InterplanetaryDustModel:
     name: str
-    comp_labels: List[Label]
-    comp_params: Dict[Label, Dict[str, Any]]
+    comp_labels: List[CompLabel]
+    comp_params: Dict[CompLabel, Dict[str, Any]]
     spectral_params: Dict[Any, Any]
     source_params: Dict[str, Any]
     doc: str = ""
-    comps: Dict[Label, Component] = field(default_factory=dict)
+    comps: Dict[CompLabel, Component] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Initialize all components."""
 
-        if Label.CLOUD not in self.comp_labels:
+        if CompLabel.CLOUD not in self.comp_labels:
             raise ValueError(
                 "The cloud component is required component for the K98 model"
             )
@@ -32,7 +32,7 @@ class InterplanetaryDustModel:
     def includes_ring(self) -> bool:
         """Returns True if the model includes an Earth-neighboring component."""
 
-        return Label.RING in self.comp_labels or Label.FEATURE in self.comp_labels
+        return CompLabel.RING in self.comp_labels or CompLabel.FEATURE in self.comp_labels
 
     @property
     def ncomps(self) -> int:
@@ -66,8 +66,8 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        comp_labels: List[Label],
-        comp_params: Dict[Label, Dict[str, Any]],
+        comp_labels: List[CompLabel],
+        comp_params: Dict[CompLabel, Dict[str, Any]],
         spectral_params: Dict[Any, Any],
         source_params: Dict[str, Any],
         doc: str = "",

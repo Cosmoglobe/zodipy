@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from zodipy.data import DATA_DIR
-from zodipy._source_functions import blackbody_emission_lambda
+from zodipy._source_funcs import blackbody_emission_lambda
 
 
 BANDPASS_PATH = DATA_DIR / "dirbe_spectral_response.dat"
