@@ -5,7 +5,7 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import numba
-import tqdm
+from tqdm import tqdm
 
 from zodipy import Zodipy
 from zodipy._labels import CompLabel
@@ -16,6 +16,9 @@ BAND = 6
 nside = 128
 
 
+# This is my path to the TODS, you need to specify this your self.
+PATH_TO_TODS = "/Users/metinsan/Documents/doktor/data/dirbe/tod/"
+
 @numba.njit
 def accumuate_tods(emission, pixels, tods):
     for i in range(len(tods)):
@@ -24,7 +27,9 @@ def accumuate_tods(emission, pixels, tods):
     return emission
 
 def fit_emissivities(band: int):
-    DATA_PATH = f"/Users/metinsan/Documents/doktor/data/dirbe/tod/Phot{band:02}.hdf5"
+    """Currently this only binnes the TODS."""
+
+    DATA_PATH = f"{PATH_TO_TODS}/Phot{band:02}.hdf5"
 
     with h5py.File(DATA_PATH, "r") as file:
         npix = hp.nside2npix(nside)
@@ -54,7 +59,7 @@ def fit_emissivities(band: int):
 
 
 
-emission, hits = fit_emissivities()(band=BAND)
+emission, hits = fit_emissivities(band=BAND)
 hp.mollview(hits, norm="hist")
 plt.show()
 emission /= hits
