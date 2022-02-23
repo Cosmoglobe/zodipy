@@ -1,29 +1,29 @@
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 from zodipy._model import model_registry
-from zodipy import component_parameters
-from zodipy import spectral_parameters
-from zodipy import source_parameters
+from zodipy import comp_params
+from zodipy import spectral_params
+from zodipy import source_params
 
 
 model_registry.register_model(
     name="DIRBE",
     comp_labels=[
-        Label.CLOUD,
-        Label.BAND1,
-        Label.BAND2,
-        Label.BAND3,
-        Label.RING,
-        Label.FEATURE,
+        CompLabel.CLOUD,
+        CompLabel.BAND1,
+        CompLabel.BAND2,
+        CompLabel.BAND3,
+        CompLabel.RING,
+        CompLabel.FEATURE,
     ],
-    comp_params=component_parameters.K98,
+    comp_params=comp_params.K98,
     spectral_params={
-        "emissivities": spectral_parameters.EMISSIVITY_DIRBE,
-        "albedos": spectral_parameters.ALBEDO_DIRBE,
-        "phase": spectral_parameters.PHASE_DIRBE,
+        "emissivities": spectral_params.EMISSIVITY_DIRBE,
+        "albedos": spectral_params.ALBEDO_DIRBE,
+        "phase": spectral_params.PHASE_DIRBE,
     },
     source_params={
-        "T_0": source_parameters.K98["T_0"],
-        "delta": source_parameters.K98["delta"],
+        "T_0": source_params.K98["T_0"],
+        "delta": source_params.K98["delta"],
     },
     doc=(
         "The Interplanetary Dust Model used in the DIRBE analysis. See "
@@ -34,20 +34,20 @@ model_registry.register_model(
 model_registry.register_model(
     name="Planck13",
     comp_labels=[
-        Label.CLOUD,
-        Label.BAND1,
-        Label.BAND2,
-        Label.BAND3,
-        Label.RING,
-        Label.FEATURE,
+        CompLabel.CLOUD,
+        CompLabel.BAND1,
+        CompLabel.BAND2,
+        CompLabel.BAND3,
+        CompLabel.RING,
+        CompLabel.FEATURE,
     ],
-    comp_params=component_parameters.K98,
+    comp_params=comp_params.K98,
     spectral_params={
-        "emissivities": spectral_parameters.EMISSIVITY_PLANCK_13,
+        "emissivities": spectral_params.EMISSIVITY_PLANCK_13,
     },
     source_params={
-        "T_0": source_parameters.K98["T_0"],
-        "delta": source_parameters.K98["delta"],
+        "T_0": source_params.K98["T_0"],
+        "delta": source_params.K98["delta"],
     },
     doc=("The Interplanetary Dust Model used in the Planck 2013 analysis."),
 )
@@ -56,18 +56,18 @@ model_registry.register_model(
 model_registry.register_model(
     name="Planck15",
     comp_labels=[
-        Label.CLOUD,
-        Label.BAND1,
-        Label.BAND2,
-        Label.BAND3,
+        CompLabel.CLOUD,
+        CompLabel.BAND1,
+        CompLabel.BAND2,
+        CompLabel.BAND3,
     ],
-    comp_params=component_parameters.K98,
+    comp_params=comp_params.K98,
     spectral_params={
-        "emissivities": spectral_parameters.EMISSIVITY_PLANCK_15,
+        "emissivities": spectral_params.EMISSIVITY_PLANCK_15,
     },
     source_params={
-        "T_0": source_parameters.K98["T_0"],
-        "delta": source_parameters.K98["delta"],
+        "T_0": source_params.K98["T_0"],
+        "delta": source_params.K98["delta"],
     },
     doc=("The Interplanetary Dust Model used in the Planck 2015 analysis."),
 )
@@ -76,18 +76,18 @@ model_registry.register_model(
 model_registry.register_model(
     name="Planck18",
     comp_labels=[
-        Label.CLOUD,
-        Label.BAND1,
-        Label.BAND2,
-        Label.BAND3,
+        CompLabel.CLOUD,
+        CompLabel.BAND1,
+        CompLabel.BAND2,
+        CompLabel.BAND3,
     ],
-    comp_params=component_parameters.K98,
+    comp_params=comp_params.K98,
     spectral_params={
-        "emissivities": spectral_parameters.EMISSIVITY_PLANCK_18,
+        "emissivities": spectral_params.EMISSIVITY_PLANCK_18,
     },
     source_params={
-        "T_0": source_parameters.K98["T_0"],
-        "delta": source_parameters.K98["delta"],
+        "T_0": source_params.K98["T_0"],
+        "delta": source_params.K98["delta"],
     },
     doc=("The Interplanetary Dust Model used in the Planck 2018 analysis."),
 )

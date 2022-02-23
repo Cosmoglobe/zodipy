@@ -1,8 +1,8 @@
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 import astropy.units as u
 
 K98 = {
-    Label.CLOUD: dict(
+    CompLabel.CLOUD: dict(
         x_0=0.011887800744346281 * u.AU,
         y_0=0.0054765064662263777 * u.AU,
         z_0=-0.0021530908020710744 * u.AU,
@@ -14,7 +14,7 @@ K98 = {
         gamma=0.94206179393358036,
         mu=0.18873176489090190,
     ),
-    Label.BAND1: dict(
+    CompLabel.BAND1: dict(
         x_0=0.0 * u.AU,
         y_0=0.0 * u.AU,
         z_0=0.0 * u.AU,
@@ -26,7 +26,7 @@ K98 = {
         p=4.0,
         delta_r=1.5 * u.AU,
     ),
-    Label.BAND2: dict(
+    CompLabel.BAND2: dict(
         x_0=0.0 * u.AU,
         y_0=0.0 * u.AU,
         z_0=0.0 * u.AU,
@@ -38,7 +38,7 @@ K98 = {
         p=4.0,
         delta_r=0.94121881201651147 * u.AU,
     ),
-    Label.BAND3: dict(
+    CompLabel.BAND3: dict(
         x_0=0.0 * u.AU,
         y_0=0.0 * u.AU,
         z_0=0.0 * u.AU,
@@ -50,7 +50,7 @@ K98 = {
         p=4.0,
         delta_r=1.5 * u.AU,
     ),
-    Label.RING: dict(
+    CompLabel.RING: dict(
         x_0=0.0 * u.AU,
         y_0=0.0 * u.AU,
         z_0=0.0 * u.AU,
@@ -61,7 +61,7 @@ K98 = {
         sigma_r=0.025000000372529030 * u.AU,
         sigma_z=0.054068037356978099 * u.AU,
     ),
-    Label.FEATURE: dict(
+    CompLabel.FEATURE: dict(
         x_0=0.0 * u.AU,
         y_0=0.0 * u.AU,
         z_0=0.0 * u.AU,
