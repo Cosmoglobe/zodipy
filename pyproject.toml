@@ -26,6 +26,10 @@ mypy = "^0.910"
 tox = "^3.24.3"
 tox-poetry-installer = {extras = ["poetry"], version = "^0.8.3"}
 emcee = "^3.1.1"
+tqdm = "^4.62.3"
+corner = "^2.2.1"
+h5py = "^3.6.0"
+numba = "^0.55.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
