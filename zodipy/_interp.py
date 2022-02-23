@@ -7,9 +7,9 @@ from astropy.units import Quantity
 from numpy.typing import NDArray
 import numpy as np
 
-from zodipy._labels import Label
-from zodipy._integration_config import EPS
-from zodipy._source_functions import (
+from zodipy._labels import CompLabel
+from zodipy._los_config import EPS
+from zodipy._source_funcs import (
     blackbody_emission_nu,
     interplanetary_temperature,
     R_sun,
@@ -84,7 +84,7 @@ def interp_solar_flux(
 
 
 def interp_comp_spectral_params(
-    component: Label,
+    comp_label: CompLabel,
     freq: Quantity[u.GHz],
     spectral_params: Dict[Any, Any],
 ) -> Dict[Any, Any]:
@@ -97,7 +97,7 @@ def interp_comp_spectral_params(
         params["emissivity"] = np.interp(
             freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
             emissivity_spectrum,
-            emissivities[component],
+            emissivities[comp_label],
         )
     else:
         params["emissivity"] = 1.0
@@ -108,7 +108,7 @@ def interp_comp_spectral_params(
         params["albedo"] = np.interp(
             freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
             albedo_spectrum,
-            albedos[component],
+            albedos[comp_label],
         )
     else:
         params["albedo"] = 0.0

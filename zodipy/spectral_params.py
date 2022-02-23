@@ -3,42 +3,42 @@ from typing import Any, Dict, Union
 import astropy.units as u
 from astropy.units import Quantity
 
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 
 
 SPECTRUM_PLANCK = Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], unit=u.GHz)
 SPECTRUM_DIRBE = Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], unit=u.micron)
 
-EMISSIVITY_PLANCK_13: Dict[Union[str, Label], Any] = {
-    Label.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
-    Label.BAND1: (1.129, 1.463, 2.024, 2.035, 2.235, 1.777),
-    Label.BAND2: (0.674, 0.530, 0.338, 0.436, 0.718, 0.716),
-    Label.BAND3: (1.106, 1.794, 2.507, 2.400, 3.193, 2.870),
-    Label.RING: (0.163, -0.252, -0.185, -0.211, 0.591, 0.578),
-    Label.FEATURE: (0.252, -0.002, 0.243, 0.676, -0.182, 0.423),
+EMISSIVITY_PLANCK_13: Dict[Union[str, CompLabel], Any] = {
+    CompLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
+    CompLabel.BAND1: (1.129, 1.463, 2.024, 2.035, 2.235, 1.777),
+    CompLabel.BAND2: (0.674, 0.530, 0.338, 0.436, 0.718, 0.716),
+    CompLabel.BAND3: (1.106, 1.794, 2.507, 2.400, 3.193, 2.870),
+    CompLabel.RING: (0.163, -0.252, -0.185, -0.211, 0.591, 0.578),
+    CompLabel.FEATURE: (0.252, -0.002, 0.243, 0.676, -0.182, 0.423),
     "spectrum": SPECTRUM_PLANCK,
 }
 
-EMISSIVITY_PLANCK_15: Dict[Union[str, Label], Any] = {
-    Label.CLOUD: (0.012, 0.022, 0.051, 0.106, 0.167, 0.256),
-    Label.BAND1: (1.02, 1.23, 1.30, 1.58, 1.74, 2.06),
-    Label.BAND2: (0.08, 0.15, 0.15, 0.39, 0.54, 0.85),
-    Label.BAND3: (0.72, 1.16, 1.27, 1.88, 2.54, 3.37),
-    "spectrum": SPECTRUM_PLANCK,
-}
-
-
-EMISSIVITY_PLANCK_18: Dict[Union[str, Label], Any] = {
-    Label.CLOUD: (0.018, 0.020, 0.042, 0.082, 0.179, 0.304),
-    Label.BAND1: (0.54, 1.00, 1.11, 1.52, 1.47, 1.58),
-    Label.BAND2: (0.07, 0.17, 0.21, 0.35, 0.49, 0.70),
-    Label.BAND3: (0.19, 0.84, 1.12, 1.77, 1.84, 2.11),
+EMISSIVITY_PLANCK_15: Dict[Union[str, CompLabel], Any] = {
+    CompLabel.CLOUD: (0.012, 0.022, 0.051, 0.106, 0.167, 0.256),
+    CompLabel.BAND1: (1.02, 1.23, 1.30, 1.58, 1.74, 2.06),
+    CompLabel.BAND2: (0.08, 0.15, 0.15, 0.39, 0.54, 0.85),
+    CompLabel.BAND3: (0.72, 1.16, 1.27, 1.88, 2.54, 3.37),
     "spectrum": SPECTRUM_PLANCK,
 }
 
 
-EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
-    Label.CLOUD: (
+EMISSIVITY_PLANCK_18: Dict[Union[str, CompLabel], Any] = {
+    CompLabel.CLOUD: (0.018, 0.020, 0.042, 0.082, 0.179, 0.304),
+    CompLabel.BAND1: (0.54, 1.00, 1.11, 1.52, 1.47, 1.58),
+    CompLabel.BAND2: (0.07, 0.17, 0.21, 0.35, 0.49, 0.70),
+    CompLabel.BAND3: (0.19, 0.84, 1.12, 1.77, 1.84, 2.11),
+    "spectrum": SPECTRUM_PLANCK,
+}
+
+
+EMISSIVITY_DIRBE: Dict[Union[str, CompLabel], Any] = {
+    CompLabel.CLOUD: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -50,7 +50,7 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
         0.67694205881047387,
         0.51912085401950736,
     ),
-    Label.BAND1: (
+    CompLabel.BAND1: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -62,7 +62,7 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
         1.1317240279481993,
         1.3996145963796358,
     ),
-    Label.BAND2: (
+    CompLabel.BAND2: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -74,7 +74,7 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
         1.1317240279481993,
         1.3996145963796358,
     ),
-    Label.BAND3: (
+    CompLabel.BAND3: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -86,7 +86,7 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
         1.1317240279481993,
         1.3996145963796358,
     ),
-    Label.RING: (
+    CompLabel.RING: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -98,7 +98,7 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
         1.1515825707787077,
         0.85763800994217443,
     ),
-    Label.FEATURE: (
+    CompLabel.FEATURE: (
         1.0,
         1.0,
         1.6598924040649741,
@@ -113,8 +113,8 @@ EMISSIVITY_DIRBE: Dict[Union[str, Label], Any] = {
     "spectrum": SPECTRUM_DIRBE,
 }
 
-ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
-    Label.CLOUD: (
+ALBEDO_DIRBE: Dict[Union[str, CompLabel], Any] = {
+    CompLabel.CLOUD: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,
@@ -126,7 +126,7 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
         0.0,
         0.0,
     ),
-    Label.BAND1: (
+    CompLabel.BAND1: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,
@@ -138,7 +138,7 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
         0.0,
         0.0,
     ),
-    Label.BAND2: (
+    CompLabel.BAND2: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,
@@ -150,7 +150,7 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
         0.0,
         0.0,
     ),
-    Label.BAND3: (
+    CompLabel.BAND3: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,
@@ -162,7 +162,7 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
         0.0,
         0.0,
     ),
-    Label.RING: (
+    CompLabel.RING: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,
@@ -174,7 +174,7 @@ ALBEDO_DIRBE: Dict[Union[str, Label], Any] = {
         0.0,
         0.0,
     ),
-    Label.FEATURE: (
+    CompLabel.FEATURE: (
         0.20411939612669797,
         0.25521132892052301,
         0.21043660481632315,

@@ -7,13 +7,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from zodipy._astroquery import query_target_positions, Epoch
-from zodipy._brightness_integral import trapezoidal
+from zodipy._integral import trapezoidal
 from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
-from zodipy._integration_config import integration_config_registry
+from zodipy._los_config import integration_config_registry
 from zodipy._interp import interp_comp_spectral_params
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 
 
 class Zodipy:
@@ -127,7 +127,7 @@ class Zodipy:
         observer_pos = observer_pos.reshape(3, 1)
         earth_pos = earth_pos.reshape(3, 1)
 
-        cloud_offset = model.comps[Label.CLOUD].X_0
+        cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
         if bin:
             unique_pixels, counts = np.unique(pixels, return_counts=True)
@@ -138,21 +138,21 @@ class Zodipy:
             emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(model.comps.items()):
                 comp_spectral_params = interp_comp_spectral_params(
-                    component=label,
+                    comp_label=label,
                     freq=freq,
                     spectral_params=model.spectral_params,
                 )
                 params.update(comp_spectral_params)
 
                 emission[idx, unique_pixels] = trapezoidal(
-                    component=component,
+                    comp=component,
                     freq=freq.value,
                     line_of_sight=self._line_of_sights[label].value,
                     observer_pos=observer_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     cloud_offset=cloud_offset,
-                    source_parameters=params,
+                    source_params=params,
                 )
 
             emission[:, unique_pixels] *= counts
@@ -166,21 +166,21 @@ class Zodipy:
             emission = np.zeros((model.ncomps, len(pixels)))
             for idx, (label, component) in enumerate(model.comps.items()):
                 comp_spectral_params = interp_comp_spectral_params(
-                    component=label,
+                    comp_label=label,
                     freq=freq,
                     spectral_params=model.spectral_params,
                 )
                 params.update(comp_spectral_params)
 
                 integrated_comp_emission = trapezoidal(
-                    component=component,
+                    comp=component,
                     freq=freq.value,
                     line_of_sight=self._line_of_sights[label].value,
                     observer_pos=observer_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     cloud_offset=cloud_offset,
-                    source_parameters=params,
+                    source_params=params,
                 )
 
                 # We map the unique pixel hits back to the timestream
@@ -271,7 +271,7 @@ class Zodipy:
         else:
             earth_positions = observer_positions.copy()
 
-        cloud_offset = model.comps[Label.CLOUD].X_0
+        cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
         npix = hp.nside2npix(nside)
         unit_vectors = _get_rotated_unit_vectors(
@@ -286,21 +286,21 @@ class Zodipy:
         ):
             for idx, (label, component) in enumerate(model.comps.items()):
                 comp_spectral_params = interp_comp_spectral_params(
-                    component=label,
+                    comp_label=label,
                     freq=freq,
                     spectral_params=model.spectral_params,
                 )
                 params.update(comp_spectral_params)
 
                 integrated_comp_emission = trapezoidal(
-                    component=component,
+                    comp=component,
                     freq=freq.value,
                     line_of_sight=self._line_of_sights[label].value,
                     observer_pos=observer_position.value,
                     earth_pos=earth_position.value,
                     unit_vectors=unit_vectors,
                     cloud_offset=cloud_offset,
-                    source_parameters=params,
+                    source_params=params,
                 )
 
                 emission[idx] += integrated_comp_emission

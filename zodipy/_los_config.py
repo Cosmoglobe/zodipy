@@ -5,7 +5,7 @@ import numpy as np
 import astropy.units as u
 from astropy.units import Quantity
 
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 
 
 EPS = np.finfo(float).eps * u.AU  # Smallest non zero value.
@@ -15,25 +15,25 @@ FEATURE_CUTOFF = 1 * u.AU
 
 
 @dataclass
-class IntegrationConfigRegistry:
+class LOSConfigRegistry:
     """Container for registered integration configs.
 
     By integration config, we mean a mapping of discrete points along a
     line-of-sight per component.
     """
 
-    _registry: Dict[str, Dict[Label, Quantity[u.AU]]] = field(default_factory=dict)
+    _registry: Dict[str, Dict[CompLabel, Quantity[u.AU]]] = field(default_factory=dict)
 
     def register_config(
         self,
         name: str,
-        components: Dict[Label, Quantity],
+        comps: Dict[CompLabel, Quantity],
     ) -> None:
         """Adds a new integration config to the registry."""
 
-        self._registry[name] = components
+        self._registry[name] = comps
 
-    def get_config(self, name: str = "default") -> Dict[Label, Quantity]:
+    def get_config(self, name: str = "default") -> Dict[CompLabel, Quantity]:
         """Returns an integration config from the registry."""
 
         if name not in self._registry:
@@ -44,18 +44,18 @@ class IntegrationConfigRegistry:
         return self._registry[name]
 
 
-integration_config_registry = IntegrationConfigRegistry()
+integration_config_registry = LOSConfigRegistry()
 
 integration_config_registry.register_config(
     name="default",
-    components={
-        Label.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 155),
-        Label.BAND1: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        Label.BAND2: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        Label.BAND3: np.linspace(EPS, RADIAL_CUTOFF, 50),
-        Label.RING: np.linspace(EPS, RING_CUTOFF, 50),
-        Label.FEATURE: np.linspace(EPS, FEATURE_CUTOFF, 50),
+    comps={
+        CompLabel.CLOUD: np.linspace(EPS, RADIAL_CUTOFF, 155),
+        CompLabel.BAND1: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        CompLabel.BAND2: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        CompLabel.BAND3: np.linspace(EPS, RADIAL_CUTOFF, 50),
+        CompLabel.RING: np.linspace(EPS, RING_CUTOFF, 50),
+        CompLabel.FEATURE: np.linspace(EPS, FEATURE_CUTOFF, 50),
     },
 )
 
-DEFAULT_INTEGRATION_CONFIG = integration_config_registry.get_config()
+DEFAULT_LOS_CONFIG = integration_config_registry.get_config()
