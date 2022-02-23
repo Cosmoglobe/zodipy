@@ -11,6 +11,7 @@ from tqdm import tqdm
 from zodipy import Zodipy
 from zodipy._labels import CompLabel
 from zodipy.fitting.fit_template import fit_template
+from zodipy.fitting.evaluate_likelihood import eval_like
 from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS
 from zodipy.dirbe.scripts.dirbe_time_position import get_earth_position
 
@@ -74,26 +75,92 @@ def fit_emissivities(band: int):
             plt.show()
 
 
+# BIG DANIEL TESTING BLOCK
+# import numba
 
-emission, hits = fit_emissivities(band=BAND)
-emission /= hits
-mask     = (hits > 0.0)
+# @numba.njit
+# def accumuate_tods(emission, pixels, tods):
+#     for i in range(len(tods)):
+#         emission[pixels[i]] += tods[i]
 
-ngibbs = 1000
+#     return emission
+# def fit_emissivities(band: int):
+#     """Currently this only binnes the TODS."""
 
-amps = np.zeros(ngibbs)
+#     DATA_PATH = f"{PATH_TO_TODS}/Phot{band:02}.hdf5"
 
-for i in tqdm(range(ngibbs)):
+#     with h5py.File(DATA_PATH, "r") as file:
+#         npix = hp.nside2npix(nside)
 
-    amps[i] = fit_template(emission,hits,ecl_template,mask,sample=True)
+#         emission = np.zeros(npix)
+#         hits = np.zeros_like(emission)
 
-a_mean = np.mean(amps)
-a_std  = np.std(amps)
+#         for tod_chunk in tqdm(file):
+#             pixels = np.asarray(file[f"{tod_chunk}/A/pix"][()])
+#             tod = np.asarray(file[f"{tod_chunk}/A/tod"][()], dtype=np.float64)
 
-print(f"amplitude mean: {a_mean}, amplitude std: {a_std}")
+#             condition = tod > 0
+#             filtered_tods = tod[condition]
+#             filtered_pixels = pixels[condition]
+#             emission = accumuate_tods(
+#                 emission=emission,
+#                 pixels=filtered_pixels,
+#                 tods=filtered_tods,
+#             )
+#             unique_pixels, pixel_counts = np.unique(
+#                 filtered_pixels, return_counts=True
+#             )
 
-dust_corr_map = emission-a_mean*ecl_template
+#             hits[unique_pixels] += pixel_counts
 
-mean    = np.mean(dust_corr_map[mask]) 
-std     = np.std(dust_corr_map[mask])
-print(mean,std)
+#     return emission, hits
+
+
+# emission, hits = fit_emissivities(band=BAND)
+# emission /= hits
+# mask     = (hits > 0.0)
+
+# ngibbs = 1000
+
+# # Check the likelihood for a range of amplitudes
+# amps = np.zeros(ngibbs)
+# lnL  = np.zeros(ngibbs)
+# x    = np.linspace(1,ngibbs,ngibbs)
+
+# for i in tqdm(range(ngibbs)):
+
+#     amps[i] = fit_template(emission,hits,ecl_template,mask,sample=True)
+#     fitmap = amps[i]*ecl_template
+#     lnL[i] = eval_like(emission,hits,fitmap,mask)
+
+# fig, ax = plt.subplots(2,1)
+
+# ax[0].plot(x,amps)
+# ax[1].plot(x,lnL)
+# plt.show()
+
+# wurr = np.where(lnL == np.max([lnL]))
+
+# print(amps[wurr])
+
+# res = emission-amps[wurr]*ecl_template
+
+# mean = np.mean(res[mask])
+# std  = np.std(res[mask])
+
+
+# hp.mollview(res,min=mean-std,max=mean+std)
+# plt.show()
+
+# exit()
+    
+# a_mean = np.mean(amps)
+# a_std  = np.std(amps)
+
+# print(f"amplitude mean: {a_mean}, amplitude std: {a_std}")
+
+# dust_corr_map = emission-a_mean*ecl_template
+
+# mean    = np.mean(dust_corr_map[mask]) 
+# std     = np.std(dust_corr_map[mask])
+# print(mean,std)
