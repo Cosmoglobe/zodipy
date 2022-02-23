@@ -5,15 +5,15 @@ import healpy as hp
 import numpy as np
 import matplotlib.pyplot as plt
 
-from zodipy._brightness_integral import brightness_integral
+from zodipy._integral import brightness_integral
 from zodipy.models import model_registry
-from zodipy._labels import Label
+from zodipy._labels import CompLabel
 
 NSIDE = 128
 NPIX = hp.nside2npix(NSIDE)
 FREQ = (25*u.micron).to("GHz", equivalencies=u.spectral()).value
 MODEL = model_registry.get_model("DIRBE")
-COMPONENT = Label.CLOUD
+COMPONENT = CompLabel.CLOUD
 LOS = np.linspace(0.001, 10, 50)
 OBSERVER_POS = np.array([1.0, 0.0, 0.0])
 UNIT_VECTORS = np.asarray(hp.pix2vec(NSIDE, np.arange(NPIX)))
