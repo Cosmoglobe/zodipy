@@ -375,6 +375,31 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "imageio"
+version = "2.16.0"
+description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+numpy = ">=1.20.0"
+pillow = ">=8.3.2"
+
+[package.extras]
+build = ["wheel"]
+dev = ["invoke", "pytest", "pytest-cov", "fsspec", "black", "flake8"]
+docs = ["sphinx", "numpydoc", "pydata-sphinx-theme"]
+ffmpeg = ["imageio-ffmpeg", "psutil"]
+fits = ["astropy"]
+full = ["astropy", "black", "flake8", "fsspec", "gdal", "imageio-ffmpeg", "invoke", "itk", "numpydoc", "psutil", "pydata-sphinx-theme", "pytest", "pytest-cov", "sphinx", "tifffile", "wheel"]
+gdal = ["gdal"]
+itk = ["itk"]
+linting = ["black", "flake8"]
+test = ["invoke", "pytest", "pytest-cov", "fsspec"]
+tifffile = ["tifffile"]
+
+[[package]]
 name = "iniconfig"
 version = "1.1.1"
 description = "iniconfig: brain-dead simple config-ini parsing"
@@ -1098,7 +1123,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <=3.10"
-content-hash = "7ec6d2d0d3a4c90586cd3b53d43ea707ea1f991fdabb184c447a5600b7c542c1"
+content-hash = "559ea74cdd7a66a87fd2403fce6d932b4e5327480a152c0ab6a5293d636f8126"
 
 [metadata.files]
 appnope = [
@@ -1315,6 +1340,10 @@ html5lib = [
 idna = [
     {file = "idna-3.2-py3-none-any.whl", hash = "sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a"},
     {file = "idna-3.2.tar.gz", hash = "sha256:467fbad99067910785144ce333826c71fb0e63a425657295239737f7ecd125f3"},
+]
+imageio = [
+    {file = "imageio-2.16.0-py3-none-any.whl", hash = "sha256:1ee35330318bcb0ce25de778fc1f61555558a159433a568887d7e3d0317ce63c"},
+    {file = "imageio-2.16.0.tar.gz", hash = "sha256:7f7d8d8e1eb6f8bb1d15e0dd93bee3f72026a4c3b96e9c690e42f403f7bdea3e"},
 ]
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},

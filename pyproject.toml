@@ -30,6 +30,7 @@ tqdm = "^4.62.3"
 corner = "^2.2.1"
 h5py = "^3.6.0"
 numba = "^0.55.1"
+imageio = "^2.16.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

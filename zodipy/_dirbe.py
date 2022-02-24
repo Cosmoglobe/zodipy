@@ -64,7 +64,7 @@ def get_color_correction(T: Union[float, np.ndarray], freq: float) -> float:
 def tabulate_color_correction() -> None:
     T = np.expand_dims(np.linspace(50, 1000, 200), axis=1)
     color_corrs = np.zeros((10, len(T)))
-    for band in range(1, 10):
+    for band in range(1, 11):
         wavelens, weights = get_dirbe_bandpass(band)
         wavelens_ = np.expand_dims(wavelens, axis=0)
         weights = np.expand_dims(weights, axis=0)
@@ -106,3 +106,4 @@ def get_normalized_weights(
     """Returns a normalized bandpass weights."""
 
     return weights / np.trapz(weights, freqs)
+
