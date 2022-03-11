@@ -129,12 +129,12 @@ def get_step_emission(
     X_helio = r_vec + observer_pos
     R_helio = np.linalg.norm(X_helio, axis=0)
 
-    primed_coords = comp.get_primed_coords(
+    compcentric_coords = comp.get_compcentric_coordinates(
         X_helio=X_helio,
         X_earth=earth_pos,
         X0_cloud=cloud_offset,
     )
-    density = comp.compute_density(*primed_coords)
+    density = comp.compute_density(*compcentric_coords)
 
     T = interp_interplanetary_temperature(
         R=R_helio,
@@ -148,7 +148,6 @@ def get_step_emission(
     phase_coeff = source_params["phase_coeffs"]
 
     emission = (1 - albedo) * (emissivity * B_nu)
-
     if (color_table := source_params["color_table"]) is not None:
         color_corr_factor = np.interp(T, color_table[:, 0], color_table[:, 1])
         emission *= color_corr_factor
@@ -157,7 +156,6 @@ def get_step_emission(
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = interp_solar_flux(R=R_helio, freq=freq)
         phase_function = source_funcs.phase_function(scattering_angle, **phase_coeff)
-
         emission += albedo * solar_flux * phase_function
 
     emission *= density

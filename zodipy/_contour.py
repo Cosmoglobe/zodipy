@@ -1,78 +1,42 @@
-from math import sin, cos
-from typing import Tuple, Sequence, Union
+from typing import List, Union
+
+import numpy as np
+from numpy.typing import NDArray
 
 from zodipy.models import model_registry
+from zodipy._model import InterplanetaryDustModel
 from zodipy._labels import CompLabel
-import numpy as np
-import astropy.constants as const
+
+DEFAULT_EARTH_POS = np.asarray([1.0, 0.0, 0.0])
 
 
-def get_component_density_grid(
-    component: str,
-    model: str = "K98",
-    earth_coords: Sequence[float] = (0, 1, 0),
-    xy_lim: int = 5,
-    z_lim: int = 1,
-    n: int = 200,
-    return_grid: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
-    """Returns a 3D grid of the components density.
+def tabulate_density(
+    grid: Union[NDArray[np.float64], List[NDArray[np.float64]]],
+    model: Union[str, InterplanetaryDustModel] = "DIRBE",
+    earth_coords: NDArray[np.float64] = DEFAULT_EARTH_POS,
+) -> NDArray[np.float64]:
+    """Tabulates the component densities for a meshgrid."""
 
-    Parameters
-    ----------
-    component
-        The component for which we grid the density.
-    model
-        The Interplanetary Dust Model that contains the component.
-    xy_lim
-        xy-limit in AU.
-    z_lim
-        z-limit in AU.
-    n
-        Number of grid points in each axis.
-    return_grid
-        If True, then the meshgrid is returned alongside the density_grid.
+    if not isinstance(model, InterplanetaryDustModel):
+        model = model_registry.get_model(model)
 
-    Returns
-    -------
-    density_grid, XX, YY, ZZ
-        3D grid of the density of the component.
-    """
+    if not isinstance(grid, np.ndarray):
+        grid = np.asarray(grid)
 
-    _model = model_registry.get_model(model)
-    component_class = _model.get_initialized_component(CompLabel(component))
+    x0_cloud = model.comps[CompLabel.CLOUD].x_0
+    earth_coords = np.reshape(earth_coords, (3, 1, 1, 1))
 
-    x_helio = np.linspace(-xy_lim, xy_lim, n)
-    y_helio = x_helio.copy()
-    z_helio = np.linspace(-z_lim, z_lim, n)
+    density_grid = np.zeros((model.ncomps, *grid.shape[1:]))
+    for idx, comp in enumerate(model.comps.values()):
+        comp.X_0 = np.reshape(comp.X_0, (3, 1, 1, 1))
+        comp_coords = comp.get_compcentric_coordinates(
+            X_helio=grid,
+            X_earth=earth_coords,
+            X0_cloud=x0_cloud,
+        )
 
-    x_prime = x_helio - component_class.x_0
-    y_prime = y_helio - component_class.y_0
-    z_prime = z_helio - component_class.z_0
+        density_grid[idx] = comp.compute_density(*comp_coords)
+        comp.X_0 = np.reshape(comp.X_0, (3, 1))
 
-    XX_helio, YY_helio, ZZ_helio = np.meshgrid(x_helio, y_helio, z_helio)
-    XX_prime, YY_prime, ZZ_prime = np.meshgrid(x_prime, y_prime, z_prime)
-
-    R_prime = np.sqrt(XX_prime ** 2 + YY_prime ** 2 + ZZ_prime ** 2)
-    Z_prime = (
-        XX_prime * sin(component_class.Omega) * sin(component_class.i)
-        - YY_prime * cos(component_class.Omega) * sin(component_class.i)
-        + ZZ_prime * cos(component_class.i)
-    )
-
-    X_earth_prime = earth_coords - component_class.X_0[0]
-    θ_prime = np.arctan2(YY_prime, ZZ_prime) - np.arctan2(
-        X_earth_prime[1], X_earth_prime[0]
-    )
-
-    density_grid = component_class.compute_density(
-        R_prime=R_prime, Z_prime=Z_prime, θ_prime=θ_prime
-    )
-
-    # The densities in the model is given in units of 1 / AU
-    density_grid *= const.au.value
-
-    if return_grid:
-        return density_grid, XX_helio, YY_helio, ZZ_helio
 
     return density_grid

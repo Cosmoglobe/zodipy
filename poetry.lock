@@ -230,12 +230,48 @@ pastel = ">=0.2.0,<0.3.0"
 pylev = ">=1.3,<2.0"
 
 [[package]]
+name = "cmasher"
+version = "1.6.3"
+description = "Scientific colormaps for making accessible, informative and 'cmashing' plots"
+category = "dev"
+optional = false
+python-versions = ">=3.6, <4"
+
+[package.dependencies]
+colorspacious = ">=1.1.0"
+e13tools = ">=0.9.4"
+matplotlib = ">=2.2.4"
+numpy = ">=1.16.0"
+
+[[package]]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "colorspacious"
+version = "1.1.2"
+description = "A powerful, accurate, and easy-to-use Python library for doing colorspace conversions"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
+name = "commonmark"
+version = "0.9.1"
+description = "Python parser for the CommonMark Markdown spec"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.extras]
+test = ["flake8 (==3.7.8)", "hypothesis (==3.55.3)"]
 
 [[package]]
 name = "corner"
@@ -253,6 +289,26 @@ arviz = ["arviz (>=0.9)"]
 dev = ["pytest (>=3.6)", "pytest-cov (>=2.6.1)", "black", "isort", "toml", "arviz (>=0.9)", "sphinx (>=1.7.5)", "pandoc", "myst-nb", "sphinx-book-theme", "pre-commit", "flake8", "pep517", "twine"]
 docs = ["arviz (>=0.9)", "sphinx (>=1.7.5)", "pandoc", "myst-nb", "sphinx-book-theme"]
 test = ["pytest (>=3.6)", "pytest-cov (>=2.6.1)", "black", "isort", "toml"]
+
+[[package]]
+name = "cosmoglobe"
+version = "0.9.55"
+description = "A Python package for interfacing the Cosmoglobe Sky Model with commander3 outputs for the purpose of producing astrophysical sky maps."
+category = "dev"
+optional = false
+python-versions = ">=3.8,<=3.10"
+
+[package.dependencies]
+astropy = ">=5.0.1"
+click = ">=8.0.1"
+cmasher = ">=1.6.3,<2.0.0"
+h5py = ">=3.0.0"
+healpy = ">=1.15.2,<2.0.0"
+numba = ">=0.55.1,<0.56.0"
+numpy = ">=1.21"
+Pillow = ">=9.0.0"
+rich = ">=10.14.0,<11.0.0"
+tqdm = ">=4.62.3,<5.0.0"
 
 [[package]]
 name = "cryptography"
@@ -301,6 +357,18 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "e13tools"
+version = "0.9.6"
+description = "A collection of utility functions"
+category = "dev"
+optional = false
+python-versions = ">=3.6, <4"
+
+[package.dependencies]
+matplotlib = ">=2.2.4"
+numpy = ">=1.16.0"
+
+[[package]]
 name = "emcee"
 version = "3.1.1"
 description = "The Python ensemble sampling toolkit for MCMC"
@@ -336,11 +404,11 @@ numpy = ">=1.14.5"
 
 [[package]]
 name = "healpy"
-version = "1.15.0"
+version = "1.15.2"
 description = "Healpix tools package for Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 astropy = "*"
@@ -701,6 +769,18 @@ docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-
 test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
 
 [[package]]
+name = "plotly"
+version = "5.6.0"
+description = "An open-source, interactive data visualization library for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+six = "*"
+tenacity = ">=6.2.0"
+
+[[package]]
 name = "pluggy"
 version = "1.0.0"
 description = "plugin and hook calling mechanisms for python"
@@ -929,6 +1009,22 @@ python-versions = "*"
 requests = ">=2.0.1,<3.0.0"
 
 [[package]]
+name = "rich"
+version = "10.16.2"
+description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+category = "dev"
+optional = false
+python-versions = ">=3.6.2,<4.0.0"
+
+[package.dependencies]
+colorama = ">=0.4.0,<0.5.0"
+commonmark = ">=0.9.0,<0.10.0"
+pygments = ">=2.6.0,<3.0.0"
+
+[package.extras]
+jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
+
+[[package]]
 name = "scipy"
 version = "1.7.1"
 description = "SciPy: Scientific Library for Python"
@@ -974,6 +1070,17 @@ description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
 python-versions = ">=3.6"
+
+[[package]]
+name = "tenacity"
+version = "8.0.1"
+description = "Retry code until it succeeds"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 name = "toml"
@@ -1123,7 +1230,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <=3.10"
-content-hash = "559ea74cdd7a66a87fd2403fce6d932b4e5327480a152c0ab6a5293d636f8126"
+content-hash = "c8c9d6ba91a8fb2c853bee9e1631658bf0f9a642d72789d07099ba4c4196a97f"
 
 [metadata.files]
 appnope = [
@@ -1253,13 +1360,29 @@ clikit = [
     {file = "clikit-0.4.3-py2.py3-none-any.whl", hash = "sha256:71e321b7795a2a6c4888629f43365d52db071737e668ab16861121d7dd3ada09"},
     {file = "clikit-0.4.3.tar.gz", hash = "sha256:6e2d7e115e7c7b35bceb0209109935ab2f9ab50910e9ff2293f7fa0b7abf973e"},
 ]
+cmasher = [
+    {file = "cmasher-1.6.3-py3-none-any.whl", hash = "sha256:5d856d24e03f04fb7b2b38c7ca4a8081516b2774d0fa30c6140e94d5153e8066"},
+    {file = "cmasher-1.6.3.tar.gz", hash = "sha256:242e206e58ad6115ff0a5a5405a1ddae80efd1cb03a06dc23db44e710e7c9f23"},
+]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
+colorspacious = [
+    {file = "colorspacious-1.1.2-py2.py3-none-any.whl", hash = "sha256:c78befa603cea5dccb332464e7dd29e96469eebf6cd5133029153d1e69e3fd6f"},
+    {file = "colorspacious-1.1.2.tar.gz", hash = "sha256:5e9072e8cdca889dac445c35c9362a22ccf758e97b00b79ff0d5a7ba3e11b618"},
+]
+commonmark = [
+    {file = "commonmark-0.9.1-py2.py3-none-any.whl", hash = "sha256:da2f38c92590f83de410ba1a3cbceafbc74fee9def35f9251ba9a971d6d66fd9"},
+    {file = "commonmark-0.9.1.tar.gz", hash = "sha256:452f9dc859be7f06631ddcb328b6919c67984aca654e5fefb3914d54691aed60"},
+]
 corner = [
     {file = "corner-2.2.1-py3-none-any.whl", hash = "sha256:a187860e62e71e5be33088383314588edb98d1c6ac2614bf107561cb1f6581b3"},
     {file = "corner-2.2.1.tar.gz", hash = "sha256:d39f1d9ad31093bb2aa06d80b23573e51ad7130af4c4af0931fca745a64751e5"},
+]
+cosmoglobe = [
+    {file = "cosmoglobe-0.9.55-py3-none-any.whl", hash = "sha256:4d5302e03e7cfc1b257f406e9cab008c3cc0ffdab7dfb7d2405eb07e89088709"},
+    {file = "cosmoglobe-0.9.55.tar.gz", hash = "sha256:e32c6d39be9e18ed4606f1b78cff90c1a7a664a4049166832ae1f62c75fb171c"},
 ]
 cryptography = [
     {file = "cryptography-3.4.8-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:a00cf305f07b26c351d8d4e1af84ad7501eca8a342dedf24a7acb0e7b7406e14"},
@@ -1292,6 +1415,10 @@ distlib = [
     {file = "distlib-0.3.2-py2.py3-none-any.whl", hash = "sha256:23e223426b28491b1ced97dc3bbe183027419dfc7982b4fa2f05d5f3ff10711c"},
     {file = "distlib-0.3.2.zip", hash = "sha256:106fef6dc37dd8c0e2c0a60d3fca3e77460a48907f335fa28420463a6f799736"},
 ]
+e13tools = [
+    {file = "e13tools-0.9.6-py3-none-any.whl", hash = "sha256:2611f98c176f6fdaecba50ffeeb37c639a921331098bb8c0569773b699cea89b"},
+    {file = "e13tools-0.9.6.tar.gz", hash = "sha256:1c6eab60825a644e4a47f65dc692c0474552c5f0180f2d5a7fc5730e2954d0f5"},
+]
 emcee = [
     {file = "emcee-3.1.1-py2.py3-none-any.whl", hash = "sha256:e01d68a84725f6c0734c3c31394e88a7252b12fddb44efe981e10956a7028a93"},
     {file = "emcee-3.1.1.tar.gz", hash = "sha256:48ffc6a7f5c51760b7a836056184c7286a9959ef81b45b977b02794f1210fb5c"},
@@ -1319,19 +1446,15 @@ h5py = [
     {file = "h5py-3.6.0.tar.gz", hash = "sha256:8752d2814a92aba4e2b2a5922d2782d0029102d99caaf3c201a566bc0b40db29"},
 ]
 healpy = [
-    {file = "healpy-1.15.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:7e0bc24c3d3aeb1ef81b9b0473a497355a288e24d6bbfda753633484fe41df97"},
-    {file = "healpy-1.15.0-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:c18d3089e8eae36af8789a74510136cbe22bc7b0fabfa7fe584d37fec74cda63"},
-    {file = "healpy-1.15.0-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:28b6c60a331d05649563ca73a139d93836c8ebafe17f99a590bd45a98d3e290c"},
-    {file = "healpy-1.15.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:d2baa63cdfb5757e22cff79b6f1d2448d67d1dbf449c5596a38eba91ed12a690"},
-    {file = "healpy-1.15.0-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:5df1248a465807312361fe9bba8b5e02e47c458ce72379730a73d48ef0206735"},
-    {file = "healpy-1.15.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:3501537abfda74fcd63b3157d93e4d56acadd5ad3d8545106bf635f5cb01ebb5"},
-    {file = "healpy-1.15.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:257abd88dfe9deb8818116ec0294a53e41f1c7ac9b0795700a04e419e08f8d85"},
-    {file = "healpy-1.15.0-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:548bfdfb6263d829c1c1a69ac4e3d4a7d059b8068a56ca42d18f79d2dcd6c953"},
-    {file = "healpy-1.15.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:82822762be56ac1db4655a685cb609bcff310158fb2214eedbcd8592608a06a4"},
-    {file = "healpy-1.15.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:a3f91214f3b2b17fbe2e027c2903317cda7ede05efc2b7f32d84f50f1ad9681d"},
-    {file = "healpy-1.15.0-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:832085ee5f2a2e342dbeb36b2acf567b74e2d2e3d0d5fa6651fbdf48e16661f4"},
-    {file = "healpy-1.15.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:deb21d0b2a41a6efa2b896028501145f91a7507db942f605dbfad46b9ef9331c"},
-    {file = "healpy-1.15.0.tar.gz", hash = "sha256:e09300a9f24e40b07f09ca7a7026d640a0478960b6ca6a5fc85052c0bb4335bf"},
+    {file = "healpy-1.15.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:6cb706590711d9bbe423066d6c3f93b6fa9f5594bd99f832b991f3635b2aff11"},
+    {file = "healpy-1.15.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:46a8e023cafc4d9076b80a96ac9b060175973e719f5a6934578b1470de48c816"},
+    {file = "healpy-1.15.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:226cb8b4a0d882327453ed06bae9bea71e4769d8e6dce990f25270d4c9aa46ca"},
+    {file = "healpy-1.15.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8070a5de53c0655cd753511c4596b8d94e5319604d2093c0cf6bbe9919a971a9"},
+    {file = "healpy-1.15.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:f3ff6a7d25c0b057cb0e50cb01de8d22bae8d3d493ddcc08b7606e3c7bcf36a7"},
+    {file = "healpy-1.15.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:790959ac1e5a88b3e0cffed3743c87f7d00e43021c6391b830368721e565a045"},
+    {file = "healpy-1.15.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b8edda2ba872eb74ccb422b20978b8b66a576f43ad1e9a4ddfb27decfe620065"},
+    {file = "healpy-1.15.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c8d7a279815446d12d6cc3e2c030d893dac785ac65f11314e2932638970c5f8"},
+    {file = "healpy-1.15.2.tar.gz", hash = "sha256:d559ad287a78d3b500919a5cb9e4dff3cb63c1b3a2e23edf62819c871ccacf7f"},
 ]
 html5lib = [
     {file = "html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d"},
@@ -1660,6 +1783,10 @@ platformdirs = [
     {file = "platformdirs-2.3.0-py3-none-any.whl", hash = "sha256:8003ac87717ae2c7ee1ea5a84a1a61e87f3fbd16eb5aadba194ea30a9019f648"},
     {file = "platformdirs-2.3.0.tar.gz", hash = "sha256:15b056538719b1c94bdaccb29e5f81879c7f7f0f4a153f46086d155dffcd4f0f"},
 ]
+plotly = [
+    {file = "plotly-5.6.0-py2.py3-none-any.whl", hash = "sha256:20277d211ea0e00e2a86d31e9f865a1ab45a7b17576f3bb865992ecbf15db093"},
+    {file = "plotly-5.6.0.tar.gz", hash = "sha256:d86e44ebde38f4753dff982ab9b5e03cf872aab8fdf53a403e999ed378154331"},
+]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
@@ -1829,6 +1956,10 @@ requests-toolbelt = [
     {file = "requests-toolbelt-0.8.0.tar.gz", hash = "sha256:f6a531936c6fa4c6cfce1b9c10d5c4f498d16528d2a54a22ca00011205a187b5"},
     {file = "requests_toolbelt-0.8.0-py2.py3-none-any.whl", hash = "sha256:42c9c170abc2cacb78b8ab23ac957945c7716249206f90874651971a4acff237"},
 ]
+rich = [
+    {file = "rich-10.16.2-py3-none-any.whl", hash = "sha256:c59d73bd804c90f747c8d7b1d023b88f2a9ac2454224a4aeaf959b21eeb42d03"},
+    {file = "rich-10.16.2.tar.gz", hash = "sha256:720974689960e06c2efdb54327f8bf0cdbdf4eae4ad73b6c94213cad405c371b"},
+]
 scipy = [
     {file = "scipy-1.7.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:2a0eeaab01258e0870c4022a6cd329aef3b7c6c2b606bd7cf7bb2ba9820ae561"},
     {file = "scipy-1.7.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3f52470e0548cdb74fb8ddf06773ffdcca7c97550f903b1c51312ec19243a7f7"},
@@ -1865,6 +1996,10 @@ six = [
 soupsieve = [
     {file = "soupsieve-2.2.1-py3-none-any.whl", hash = "sha256:c2c1c2d44f158cdbddab7824a9af8c4f83c76b1e23e049479aa432feb6c4c23b"},
     {file = "soupsieve-2.2.1.tar.gz", hash = "sha256:052774848f448cf19c7e959adf5566904d525f33a3f8b6ba6f6f8f26ec7de0cc"},
+]
+tenacity = [
+    {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
+    {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

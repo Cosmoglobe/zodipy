@@ -9,27 +9,25 @@ from numpy.typing import NDArray
 
 π = np.pi
 
-
 @dataclass
 class Component(ABC):
     """Base class for an Interplanetary Dust Component.
 
-    This class defines a method for getting the coordinates to a shell at
-    distance R around an observer in the primed coordinate system
-    (component-centric ecliptic cartesian coordinates).
+    Any component that inherits from this class needs to implement the two
+    abstract methods `get_compcentric_coordinates` and `compute_density`.
 
-    Attributes
+    Parameters
     ----------
     x_0
-        x-offset from the Sun in helliocentric ecliptic cartesian coordinates.
+        x-offset from the Sun in heliocentric ecliptic coordinates in AU.
     y_0
-        y-offset from the Sun in helliocentric ecliptic cartesian coordinates.
+        y-offset from the Sun in heliocentric ecliptic coordinates in AU.
     z_0
-        z-offset from the Sun in helliocentric ecliptic cartesian coordinates.
+        z-offset from the Sun in heliocentric ecliptic coordinates in AU.
     i
-        Inclination with respect to the ecliptic plane.
+        Inclination with respect to the ecliptic planein deg.
     Omega
-        Ascending node.
+        Ascending node in deg.
     """
 
     x_0: Quantity[u.AU]
@@ -45,76 +43,75 @@ class Component(ABC):
         self.z_0 = (self.z_0 / u.AU).value
         self.X_0 = np.expand_dims(np.asarray([self.x_0, self.y_0, self.z_0]), axis=1)
 
+        # Converting i and Omega to to rad
         i_rad = self.i.to(u.rad).value
         Omega_rad = self.Omega.to(u.rad).value
 
+        # Computing frequently used variables
         self.sin_i = np.sin(i_rad)
         self.cos_i = np.cos(i_rad)
         self.sin_Omega = np.sin(Omega_rad)
         self.cos_Omega = np.cos(Omega_rad)
 
     @abstractmethod
-    def compute_density(
+    def get_compcentric_coordinates(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        X_helio: NDArray[np.float_],
         *,
-        θ_prime: Optional[NDArray[np.float64]] = None,
-    ) -> NDArray[np.float64]:
-        """Returns the dust density at a shell around the observer.
+        X_earth: Optional[NDArray[np.float_]],
+        X0_cloud: Optional[NDArray[np.float_]],
+    ) -> Tuple[NDArray[np.float_], ...]:
+        """Return the component-centric coordinates of points in the Solar System.
 
-        Parameters
-        ----------
-        R_prime
-            Array of distances corresponding to discrete points along a
-            line-of-sight for a shell surrounding the observer in the primed
-            coordinates.
-        Z_prime
-            Heights above the midplane in primed coordinates of a component
-            corresponding to the distances in `R_prime`.
-        θ_prime
-            Relative mean lognitude between the discrete points along the
-            line-of-sight describe by `R_prime` and the Earth.
-
-        Returns
-        -------
-            Density of the component at the coordinates given by R_prime,
-            Z_prime, and θ_prime.
-        """
-
-    @abstractmethod
-    def get_primed_coords(
-        self,
-        X_helio: NDArray[np.float64],
-        *,
-        X_earth: Optional[NDArray[np.float64]],
-        X0_cloud: Optional[NDArray[np.float64]],
-    ) -> Tuple[NDArray[np.float64], ...]:
-        """Returns R_prime, Z_prime, and optionally, θ_prime.
-        
-        These are the coordinates shifted to a componentcentric reference frame.
-        
         Parameters
         ----------
         X_helio
-            Heliocentric ecliptic cartesian pixel positions.
+            Heliocentric ecliptic coordinates (x, y, z) of points in the Solar 
+            System.
         X_earth
-            Heliocentric ecliptic cartesian postion of the Earth.
-        X0_cloud 
-            Heliocentric ecliptic cartesian offset of the Cloud component.
+            Heliocentric ecliptic coordinates of the Earth.
+        X0_cloud
+            Heliocentric ecliptic coordinates of the Cloud components center
+            (required to compute the density of the dust bands as defined in the
+            DIRBE model).
 
         Returns
         -------
-        R_prime
-            Array of distances corresponding to discrete points along a
-            line-of-sight for a shell surrounding the observer in the primed
-            coordinates.
-        Z_prime
-            Heights above the midplane in primed coordinates of a component
-            corresponding to the distances in `R_prime`.
-        θ_prime
-            Relative mean lognitude between the discrete points along the
-            line-of-sight describe by `R_prime` and the Earth.
+        R_comp
+            Component-centric radial distances to points in the Solar System.
+        Z_comp
+            Heights above the midplane of the component at points in the Solar
+            System in component-centric coordinates.
+        θ_comp
+            Component-centric longitude between Earth and points in the Solar
+            System (Only used for the Earth-trailing Feature).
+        """
+
+    @abstractmethod
+    def compute_density(
+        self,
+        R_comp: NDArray[np.float_],
+        Z_comp: NDArray[np.float_],
+        *,
+        θ_comp: Optional[NDArray[np.float_]] = None,
+    ) -> NDArray[np.float_]:
+        """Returns the dust density of a component at points in the Solar System
+        given by `R_comp` and `Z_comp`.
+
+        Parameters
+        ----------
+        R_comp
+            Component-centric radial distances to points in the Solar System.
+        Z_comp
+            Heights above the midplane of the component at points in the Solar
+            System in component-centric coordinates.
+        θ_comp
+            Component-centric longitude between Earth and points in the Solar
+            System (Only used for the Earth-trailing Feature).
+
+        Returns
+        -------
+            Density of the component at points in the Solar System.
         """
 
 
@@ -122,11 +119,7 @@ class Component(ABC):
 class Cloud(Component):
     """The Zodiacal Diffuse Cloud component.
 
-    This class represents the diffuse cloud in the K98 IPD model. It provides a
-    method to estimate the density of the diffuse cloud at a shell around the
-    observer.
-
-    Attributes
+    Parameters
     ----------
     n_0
         Density at 1 AU.
@@ -150,31 +143,31 @@ class Cloud(Component):
         super().__post_init__()
         self.n_0 = self.n_0.value
 
-    def get_primed_coords(
-        self, X_helio: NDArray[np.float64], **_
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def get_compcentric_coordinates(
+        self, X_helio: NDArray[np.float_], **_
+    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
 
-        X_prime = X_helio - self.X_0
-        R_prime = np.linalg.norm(X_prime, axis=0)
+        X_comp = X_helio - self.X_0
+        R_comp = np.linalg.norm(X_comp, axis=0)
 
-        Z_prime = (
-            X_prime[0] * self.sin_Omega * self.sin_i
-            - X_prime[1] * self.cos_Omega * self.sin_i
-            + X_prime[2] * self.cos_i
+        Z_comp = (
+            X_comp[0] * self.sin_Omega * self.sin_i
+            - X_comp[1] * self.cos_Omega * self.sin_i
+            + X_comp[2] * self.cos_i
         )
 
-        return R_prime, Z_prime
+        return R_comp, Z_comp
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        R_comp: NDArray[np.float_],
+        Z_comp: NDArray[np.float_],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime / R_prime)
+        ζ = np.abs(Z_comp / R_comp)
         μ = self.mu
         g = np.zeros_like(ζ)
 
@@ -182,18 +175,14 @@ class Cloud(Component):
         g[condition] = ζ[condition] ** 2 / (2 * μ)
         g[~condition] = ζ[~condition] - (μ / 2)
 
-        return self.n_0 * R_prime ** -self.alpha * np.exp(-self.beta * g ** self.gamma)
+        return self.n_0 * R_comp ** -self.alpha * np.exp(-self.beta * g ** self.gamma)
 
 
 @dataclass
 class Band(Component):
     """The Zodiacal Astroidal Band component.
 
-    This class represents the Astroidal Dust Band components in the K98 IPD
-    model. It provides a method to estimate the density of the dust bands at a
-    shell around the observer.
-
-    Attributes
+    Parameters
     ----------
     n_0
         Density at 3 AU.
@@ -227,36 +216,40 @@ class Band(Component):
         # [AU] -> [AU per 1 AU]
         self.delta_r = (self.delta_r / u.AU).value
 
-    def get_primed_coords(
-        self, X_helio: NDArray[np.float64], X0_cloud: NDArray[np.float64], **_
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def get_compcentric_coordinates(
+        self, X_helio: NDArray[np.float_], X0_cloud: NDArray[np.float_], **_
+    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
 
-        X_prime = X_helio - X0_cloud
-        R_prime = np.linalg.norm(X_prime, axis=0)
+        X_comp = X_helio - X0_cloud
+        R_comp = np.linalg.norm(X_comp, axis=0)
 
-        Z_prime = (
-            X_prime[0] * self.sin_Omega * self.sin_i
-            - X_prime[1] * self.cos_Omega * self.sin_i
-            + X_prime[2] * self.cos_i
+        Z_comp = (
+            X_comp[0] * self.sin_Omega * self.sin_i
+            - X_comp[1] * self.cos_Omega * self.sin_i
+            + X_comp[2] * self.cos_i
         )
 
-        return R_prime, Z_prime
+        return R_comp, Z_comp
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        R_comp: NDArray[np.float_],
+        Z_comp: NDArray[np.float_],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
-        ζ = np.abs(Z_prime / R_prime)
+        ζ = np.abs(Z_comp / R_comp)
         ζ_over_δ_ζ = ζ / self.delta_zeta
-        term1 = 3 * self.n_0 / R_prime
+        term1 = 3 * self.n_0 / R_comp
         term2 = np.exp(-(ζ_over_δ_ζ ** 6))
-        term3 = self.v + ζ_over_δ_ζ ** self.p
-        term4 = 1 - np.exp(-((R_prime / self.delta_r) ** 20))
+
+        # Differs from eq 8 in K98 by a factor of 1/self.v. See Planck XIV
+        # section 4.1.2.
+        term3 = 1 + (ζ_over_δ_ζ ** self.p) / self.v
+
+        term4 = 1 - np.exp(-((R_comp / self.delta_r) ** 20))
 
         return term1 * term2 * term3 * term4
 
@@ -265,11 +258,7 @@ class Band(Component):
 class Ring(Component):
     """The Zodiacal Circum-solar Ring component.
 
-    This class represents the Circum-solar Ring component in the K98 IPD model.
-    It provides a method to estimate the density of the Circum-solar Ring at a
-    shell around the observer.
-
-    Attributes
+    Parameters
     ----------
     n_0
         Density at 1 AU.
@@ -295,32 +284,34 @@ class Ring(Component):
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
 
-    def get_primed_coords(
-        self, X_helio: NDArray[np.float64], **_
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def get_compcentric_coordinates(
+        self, X_helio: NDArray[np.float_], **_
+    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
 
-        X_prime = X_helio - self.X_0
-        R_prime = np.linalg.norm(X_prime, axis=0)
+        X_comp = X_helio - self.X_0
+        R_comp = np.linalg.norm(X_comp, axis=0)
 
-        Z_prime = (
-            X_prime[0] * self.sin_Omega * self.sin_i
-            - X_prime[1] * self.cos_Omega * self.sin_i
-            + X_prime[2] * self.cos_i
+        Z_comp = (
+            X_comp[0] * self.sin_Omega * self.sin_i
+            - X_comp[1] * self.cos_Omega * self.sin_i
+            + X_comp[2] * self.cos_i
         )
 
-        return R_prime, Z_prime
+        return R_comp, Z_comp
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
+        R_comp: NDArray[np.float_],
+        Z_comp: NDArray[np.float_],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
-        term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
-        term2 = np.abs(Z_prime) / self.sigma_z
+        # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
+        # term. See Planck 2013 XIV, section 4.1.3.
+        term1 = -((R_comp - self.R) ** 2) / self.sigma_r ** 2
+        term2 = np.abs(Z_comp) / self.sigma_z
 
         return self.n_0 * np.exp(term1 - term2)
 
@@ -329,11 +320,7 @@ class Ring(Component):
 class Feature(Component):
     """The Zodiacal Earth-trailing Feature component.
 
-    This class represents the Earth-trailing Feature component in the K98 IPD
-    model. It provides a method to estimate the density of the Earth-trailing
-    Feature at a shell around the observer.
-
-    Attributes
+    Parameters
     ----------
     n_0
         Density at 1 AU.
@@ -367,47 +354,49 @@ class Feature(Component):
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
 
-    def get_primed_coords(
+    def get_compcentric_coordinates(
         self,
-        X_helio: NDArray[np.float64],
-        X_earth: NDArray[np.float64],
+        X_helio: NDArray[np.float_],
+        X_earth: NDArray[np.float_],
         **_,
-    ) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    ) -> Tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
 
-        X_prime = X_helio - self.X_0
-        R_prime = np.linalg.norm(X_prime, axis=0)
+        X_comp = X_helio - self.X_0
+        R_comp = np.linalg.norm(X_comp, axis=0)
 
-        Z_prime = (
-            X_prime[0] * self.sin_Omega * self.sin_i
-            - X_prime[1] * self.cos_Omega * self.sin_i
-            + X_prime[2] * self.cos_i
+        Z_comp = (
+            X_comp[0] * self.sin_Omega * self.sin_i
+            - X_comp[1] * self.cos_Omega * self.sin_i
+            + X_comp[2] * self.cos_i
         )
-        X_earth_prime = X_earth - self.X_0
+        X_earth_comp = X_earth - self.X_0
 
-        θ_prime = np.arctan2(X_prime[1], X_prime[0]) - np.arctan2(
-            X_earth_prime[1], X_earth_prime[0]
+        θ_comp = np.arctan2(X_comp[1], X_comp[0]) - np.arctan2(
+            X_earth_comp[1], X_earth_comp[0]
         )
 
-        return R_prime, Z_prime, θ_prime
+        return R_comp, Z_comp, θ_comp
 
     def compute_density(
         self,
-        R_prime: NDArray[np.float64],
-        Z_prime: NDArray[np.float64],
-        θ_prime: NDArray[np.float64],
+        R_comp: NDArray[np.float_],
+        Z_comp: NDArray[np.float_],
+        θ_comp: NDArray[np.float_],
         **_,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
-        Δθ = θ_prime - self.theta
+        Δθ = θ_comp - self.theta
         condition1 = Δθ < -π
         condition2 = Δθ > π
         Δθ[condition1] = Δθ[condition1] + 2 * π
         Δθ[condition2] = Δθ[condition2] - 2 * π
 
-        term1 = -((R_prime - self.R) ** 2) / (2 * self.sigma_r ** 2)
-        term2 = np.abs(Z_prime) / self.sigma_z
-        term3 = Δθ ** 2 / (2 * self.sigma_theta ** 2)
+        # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
+        # term. See Planck 2013 XIV, section 4.1.3.
+        exp_term = (R_comp - self.R) ** 2 / self.sigma_r ** 2
+        exp_term += np.abs(Z_comp) / self.sigma_z
+        exp_term += Δθ ** 2 / self.sigma_theta ** 2
 
-        return self.n_0 * np.exp(term1 - term2 - term3)
+        return self.n_0 * np.exp(-exp_term)
