@@ -17,9 +17,11 @@ UNKNOWN.egg-info
 context.py
 test.py
 test2.py
+test3.py
 _utils.py
 _contour.py
 _tabulate.py
+fitting
 # _bandpass.py
 _fitting_brightness_integral.py
 _fitting_simulation.py
@@ -29,3 +31,4 @@ dirbe
 zodi_mask.fits
 zodi_temp.fits
 timestream.npy
+
