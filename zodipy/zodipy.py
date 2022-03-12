@@ -1,12 +1,17 @@
-from typing import Any, Dict, Literal, Optional, Sequence, Union
+from typing import Literal, Optional, Sequence, Union, Tuple
 
 import astropy.units as u
 from astropy.units import Quantity
+from astropy.time import Time
+from astropy.coordinates import (
+    get_body,
+    HeliocentricMeanEcliptic,
+    solar_system_ephemeris,
+)
 import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._astroquery import query_target_positions, Epoch
 from zodipy._integral import trapezoidal
 from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._los_config import integration_config_registry
@@ -15,47 +20,68 @@ from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
 from zodipy._labels import CompLabel
 
+__all__ = ("Zodipy",)
+
+# L2 not included in the astropy ephem so we manually include support for it
+# by assuming its located at a constant distance radially from the Earth.
+ADDITIONAL_SUPPORTED_OBSERVERS = ["semb-l2"]
+DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
+
 
 class Zodipy:
-    """The Zodipy simulation interface.
+    """The Zodipy interface.
 
-    Zodipy allows the user to produce simulated timestreams or instantaneous
-    maps of the Interplanetary Dust emission. The IPD model implemented is the
-    Kelsall et al. (1998) model.
+    Zodipy allows the user to produce simulated timestreams or binned maps of
+    Interplanetary Dust emission as predicted by the Kelsall et al. (1998) model.
     """
 
-    def __init__(self, model: str = "DIRBE") -> None:
-        """Initializes the interface given a model.
+    def __init__(self, model: str = "DIRBE", ephemeris: str = "de432s") -> None:
+        """Initializes the interface given a model and an emphemeris.
 
         Parameters
         ----------
         model
             The name of the model to initialize. Defaults to DIRBE. See all
             available models in `zodipy.MODELS`.
+        ephemeris
+            Ephemeris used to compute the positions of the observer and Earth.
+            Defaults to 'de432s' which requires downloading a 10 MB file.
+            See https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+            for more information on available ephemeridises.
         """
 
         self._model = model_registry.get_model(model)
         self._line_of_sights = integration_config_registry.get_config()
+        solar_system_ephemeris.set(ephemeris)
 
     @property
-    def info(self) -> str:
+    def ipd_info(self) -> str:
         """Returns the string representation of the IPD model."""
 
         return str(self._model)
 
     @property
-    def parameters(self) -> InterplanetaryDustModel:
+    def ipd(self) -> InterplanetaryDustModel:
         """Returns the IPD model."""
 
         return self._model
+
+    @property
+    def observers(self) -> Tuple[str, ...]:
+        """Returns all observers suported by the ephemeridis."""
+
+        observers = list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBSERVERS
+
+        return tuple(observers)
 
     @u.quantity_input
     def get_emission(
         self,
         freq: Union[Quantity[u.Hz], Quantity[u.m]],
-        obs_pos: Quantity[u.AU],
+        obs_time: Time,
+        obs: str = "earth",
         *,
-        earth_pos: Optional[Quantity[u.AU]] = None,
+        obs_pos: Optional[Quantity[u.AU]] = None,
         pixels: Optional[Sequence[int]] = None,
         theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
         phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
@@ -66,31 +92,33 @@ class Zodipy:
         coord_out: Literal["E", "G", "C"] = "E",
         dirbe_colorcorr: bool = False,
     ) -> Quantity[u.MJy / u.sr]:
-        """Simulates and returns a timestream of Zodiacal Emission.
+        """Returns a Zodiacal Emission timestream.
 
-        This function takes in an observer position (`observer_pos`) and a
-        sequence of pointings, either in the form of angles on the sky
-        (`theta`, `phi`), or as HEALPIX pixels at some resolution
-        (`pixels`, `nside`). It then returns the emission an experiment would
-        observe from that position as a timestream.
+        This function takes as arguments a frequency or wavelength (`freq`),
+        time of observation (`obs_time`), an observer (`obs`) for which the
+        position is computed using the ephemeris specified when initializing
+        `Zodipy` or an observer position (`obs_pos`) which overrides `obs`.
+        Furthermore, the pointing of the observer is specified either in the 
+        form of angles on the sky (`theta`, `phi`), or as HEALPIX pixels at
+        some resolution (`pixels`, `nside`).
 
         Parameters
         ----------
         freq
-            Frequency (or wavelength) at which to evaluate the Zodiacal emission.
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
             Must have units compatible with Hz or m.
+        obs_time
+            Time of observation (`astropy.time.Time` object).
+        obs
+            The solar system observer. A list of all support observers (for a 
+            given ephemeridis) is specified in `observers` attribute of the 
+            `zodipy.Zodipy` instance. Defaults to 'earth'.
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
-        earth_pos
-            The heliocentric ecliptic cartesian position of the Earth in AU. If 
-            None, the same position is used for the Earth and the observer. This 
-            approximation is only valid for observers close to the Earth. For 
-            far-away observers, the circum-solar
-            to resolve the Circum-solar ring and Earth-trailing Feature for observer
-            far from the Earth. Defaults to None.
+            Overrides the `obs` argument. Default is None.
         pixels
-            Sequence of observed pixels while the observer was at the position
-            given by `observer_pos`.
+            A single, or a sequence of HEALPIX pixels representing points on 
+            the sky.
         theta, phi
             Angular coordinates (co-latitude, longitude) of a point, or a
             sequence of points, on the sphere. Units must be radians or degrees.
@@ -104,21 +132,31 @@ class Zodipy:
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         binned
-            If True, the timestream is binned into a HEALPIX map. Defaults to
-            False.
+            If True, the emission is binned into a HEALPIX map with resolution 
+            given by the `nside` argument. Defaults to False.
         coord_out
-            Coordinate frame of the output map. Defaults to 'E' (heliocentric
-            ecliptic coordinates).
+            Coordinate frame of the output map. Available options are: 'E', 'G', 
+            and 'C'. Defaults to 'E' (Ecliptic coordinates)
         dirbe_colorcorr
             If True, the DIRBE color correction is applied to the thermal
             contribution of the emission. This is usefull for comparing the
-            output with the DIRBE TODs or maps.
+            output with the DIRBE TODs or maps. TODO: Change this to accept
+            color correction tables instead of being a bool.
 
         Returns
         -------
         emission
-            Simulated timestream or binned map of Zodiacal emission [MJy/sr].
+            Sequence of simulated Zodiacal emission in units of 'MJy/sr' for 
+            each pointing. If the pointing is provided in a time-ordered manner, 
+            then the output of this function can be interpreted as the observered 
+            Zodiacal Emission timestream.
         """
+
+        if obs.lower() not in self.observers:
+            raise ValueError(
+                f"observer {obs!r} not supported by ephemeridis "
+                f"{solar_system_ephemeris._value!r}"
+            )
 
         if pixels is not None:
             if nside is None:
@@ -162,12 +200,32 @@ class Zodipy:
             theta = theta.to(u.deg)
             phi = phi.to(u.deg)
 
+        earth_skycoord = get_body("Earth", time=obs_time)
+        earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
+        earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
+
+        if obs_pos is None:
+            # IF observer is L2 we need to approximate the position
+            if obs.lower() in ADDITIONAL_SUPPORTED_OBSERVERS:
+                earth_magnitude = np.linalg.norm(earth_pos)
+                earth_unit_vec = earth_pos / earth_magnitude
+                l2_magnitude = earth_magnitude + DISTANCE_FROM_EARTH_TO_L2
+                obs_pos = earth_unit_vec * l2_magnitude
+            else:
+                obs_skycoord = get_body(obs, time=obs_time)
+                obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
+                obs_pos = obs_skycoord.represent_as("cartesian").xyz.to(u.AU)
+
+        # We reshape the coordinates to broadcastable shapes.
+        obs_pos = obs_pos.reshape(3, 1)
+        earth_pos = earth_pos.reshape(3, 1)
+
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        params = model.source_params.copy()
         model = self._model
+        params = model.source_params.copy()
         if dirbe_colorcorr:
-            # Get the DIRBE color correctoin factor.
+            # Get the DIRBE color colorcorr factor.
             lambda_ = freq.to("micron", equivalencies=u.spectral())
             try:
                 band = DIRBE_BAND_REF_WAVELENS.index(lambda_.value) + 1
@@ -180,11 +238,6 @@ class Zodipy:
         else:
             params["color_table"] = None
 
-        earth_pos = obs_pos if earth_pos is None else earth_pos
-
-        # We reshape the coordinates to broadcastable shapes.
-        obs_pos = obs_pos.reshape(3, 1)
-        earth_pos = earth_pos.reshape(3, 1)
 
         cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
@@ -279,127 +332,6 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @u.quantity_input
-    def get_instantaneous_emission(
-        self,
-        freq: Union[Quantity[u.Hz], Quantity[u.m]],
-        *,
-        nside: int,
-        observer: str = "L2",
-        epochs: Optional[Epoch] = None,
-        color_corr: bool = False,
-        return_comps: bool = False,
-        coord_out: str = "E",
-    ) -> Quantity[u.MJy / u.sr]:
-        """Returns the simulated instantaneous Zodiacal emission.
-
-        The location of the observer are queried from the Horizons JPL
-        ephemerides using `astroquery`, given an epoch defined by the `epochs`
-        parameter.
-
-        NOTE: This function returns the fullsky emission at a single time. This
-        implies that line-of-sights that look directly in towards the Sun is
-        included in the emission.
-
-        Parameters
-        ----------
-        freq
-            Frequency (or wavelength) at which to evaluate the Zodiacal emission.
-        nside
-            HEALPIX map resolution parameter of the returned emission map.
-        observer
-            The name of the observer for which we quiery its location given
-            the `epochs` parameter. Defaults to 'L2'.
-        epochs
-            The observeration times given as a single epoch, or a list of epochs
-            in JD or MJD format, or a dictionary defining a range of times and
-            dates; the range dictionary has to be of the form
-            {'start':'YYYY-MM-DD [HH:MM:SS]', 'stop':'YYYY-MM-DD [HH:MM:SS]',
-            'step':'n[y|d|h|m|s]'}. If no epochs are provided, the current time
-            is used in UTC.
-        color_corr
-            If True, the DIRBE color correction is applied to the thermal
-            contribution of the emission. This is usefull for comparing the
-            output with the DIRBE TODs or maps.
-        return_comps
-            If True, the emission is returned component-wise. Defaults to False.
-        coord_out
-            Coordinate frame of the output map. Defaults to 'E' (heliocenteric
-            ecliptic coordinates).
-
-        Returns
-        -------
-        emission
-            Simulated (mean) instantaneous Zodiacal emission [MJy/sr].
-        """
-
-        # Zodipy uses frequency convention.
-        freq = freq.to("GHz", equivalencies=u.spectral())
-
-        model = self._model
-
-        params: Dict[str, Any] = model.source_params.copy()
-        if color_corr:
-            # Get the DIRBE color correctoin factor.
-            lambda_ = freq.to("micron", equivalencies=u.spectral())
-            try:
-                band = DIRBE_BAND_REF_WAVELENS.index(lambda_.value) + 1
-            except IndexError:
-                raise IndexError(
-                    "Color correction is only supported at central DIRBE "
-                    "wavelenghts."
-                )
-            params["color_table"] = read_color_corr(band=band)
-        else:
-            params["color_table"] = None
-
-        observer_positions = query_target_positions(observer, epochs)
-        if model.includes_ring:
-            earth_positions = query_target_positions("earth", epochs)
-        else:
-            earth_positions = observer_positions.copy()
-
-        cloud_offset = model.comps[CompLabel.CLOUD].X_0
-
-        npix = hp.nside2npix(nside)
-        unit_vectors = _rotated_pix2vec(
-            nside=nside,
-            pixels=np.arange(npix),
-            coord_out=coord_out,
-        )
-
-        emission = np.zeros((model.ncomps, npix))
-        for observer_position, earth_position in zip(
-            observer_positions, earth_positions
-        ):
-            for idx, (label, component) in enumerate(model.comps.items()):
-                comp_spectral_params = interp_comp_spectral_params(
-                    comp_label=label,
-                    freq=freq,
-                    spectral_params=model.spectral_params,
-                )
-                params.update(comp_spectral_params)
-
-                integrated_comp_emission = trapezoidal(
-                    comp=component,
-                    freq=freq.value,
-                    line_of_sight=self._line_of_sights[label].value,
-                    observer_pos=observer_position.value,
-                    earth_pos=earth_position.value,
-                    unit_vectors=unit_vectors,
-                    cloud_offset=cloud_offset,
-                    source_params=params,
-                )
-
-                emission[idx] += integrated_comp_emission
-
-        # Averaging the maps
-        emission /= len(observer_positions)
-
-        # The output unit is [W / Hz / m^2 / sr] which we convert to [MJy/sr]
-        emission = (emission << (u.W / u.Hz / u.m ** 2 / u.sr)).to(u.MJy / u.sr)
-
-        return emission if return_comps else emission.sum(axis=0)
 
 
 def _rotated_pix2vec(
