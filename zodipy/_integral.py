@@ -149,8 +149,7 @@ def get_step_emission(
 
     emission = (1 - albedo) * (emissivity * B_nu)
     if (color_table := source_params["color_table"]) is not None:
-        color_corr_factor = np.interp(T, color_table[:, 0], color_table[:, 1])
-        emission *= color_corr_factor
+        emission *= np.interp(T, *color_table)
 
     if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))

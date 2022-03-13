@@ -13,12 +13,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from zodipy._integral import trapezoidal
-from zodipy._dirbe import DIRBE_BAND_REF_WAVELENS, read_color_corr
 from zodipy._los_config import integration_config_registry
 from zodipy._interp import interp_comp_spectral_params
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
 from zodipy._labels import CompLabel
+
 
 __all__ = ("Zodipy",)
 
@@ -82,7 +82,7 @@ class Zodipy:
         obs: str = "earth",
         *,
         obs_pos: Optional[Quantity[u.AU]] = None,
-        pixels: Optional[Sequence[int]] = None,
+        pixels: Optional[Union[int, Sequence[int], NDArray[np.int_]]] = None,
         theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
         phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
         nside: Optional[int] = None,
@@ -90,7 +90,7 @@ class Zodipy:
         binned: bool = False,
         return_comps: bool = False,
         coord_out: Literal["E", "G", "C"] = "E",
-        dirbe_colorcorr: bool = False,
+        colorcorr_table: Optional[NDArray[np.float_]] = None,
     ) -> Quantity[u.MJy / u.sr]:
         """Returns a Zodiacal Emission timestream.
 
@@ -137,11 +137,11 @@ class Zodipy:
         coord_out
             Coordinate frame of the output map. Available options are: 'E', 'G', 
             and 'C'. Defaults to 'E' (Ecliptic coordinates)
-        dirbe_colorcorr
-            If True, the DIRBE color correction is applied to the thermal
-            contribution of the emission. This is usefull for comparing the
-            output with the DIRBE TODs or maps. TODO: Change this to accept
-            color correction tables instead of being a bool.
+        colorcorr_table
+            An array of shape (2, n) where the first column is temperatures
+            in K, and the second column the corresponding color corrections.
+            The color corrections should be for B(lambda, T) and is only applied
+            to the thermal contribution of the emission.
 
         Returns
         -------
@@ -203,14 +203,13 @@ class Zodipy:
         earth_skycoord = get_body("Earth", time=obs_time)
         earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
         earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
-
         if obs_pos is None:
             # IF observer is L2 we need to approximate the position
-            if obs.lower() in ADDITIONAL_SUPPORTED_OBSERVERS:
-                earth_magnitude = np.linalg.norm(earth_pos)
-                earth_unit_vec = earth_pos / earth_magnitude
-                l2_magnitude = earth_magnitude + DISTANCE_FROM_EARTH_TO_L2
-                obs_pos = earth_unit_vec * l2_magnitude
+            if obs.lower() == "semb-l2":
+                earth_length = np.linalg.norm(earth_pos)
+                earth_unit_vec = earth_pos / earth_length
+                semb_l2_length = earth_length + DISTANCE_FROM_EARTH_TO_L2
+                obs_pos = earth_unit_vec * semb_l2_length
             else:
                 obs_skycoord = get_body(obs, time=obs_time)
                 obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
@@ -224,20 +223,7 @@ class Zodipy:
 
         model = self._model
         params = model.source_params.copy()
-        if dirbe_colorcorr:
-            # Get the DIRBE color colorcorr factor.
-            lambda_ = freq.to("micron", equivalencies=u.spectral())
-            try:
-                band = DIRBE_BAND_REF_WAVELENS.index(lambda_.value) + 1
-            except IndexError:
-                raise IndexError(
-                    "Color correction is only supported at central DIRBE "
-                    "wavelenghts."
-                )
-            params["color_table"] = read_color_corr(band=band)
-        else:
-            params["color_table"] = None
-
+        params["color_table"] = colorcorr_table
 
         cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
@@ -335,8 +321,8 @@ class Zodipy:
 
 
 def _rotated_pix2vec(
-    pixels: Sequence[int], nside: int, coord_out: str
-) -> NDArray[np.float64]:
+    pixels: Union[Sequence[int], NDArray[np.int_]], nside: int, coord_out: str
+) -> NDArray[np.float_]:
     """Returns rotated unit vetors from pixels.
 
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
@@ -358,7 +344,7 @@ def _rotated_ang2vec(
     theta: Union[Quantity[u.rad], Quantity[u.deg]],
     lonlat: bool,
     coord_out: str,
-) -> NDArray[np.float64]:
+) -> NDArray[np.float_]:
     """Returns rotated unit vectors from angles.
 
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
@@ -372,3 +358,4 @@ def _rotated_ang2vec(
             hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
         )
     return unit_vectors
+
