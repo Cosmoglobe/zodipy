@@ -1,60 +1,49 @@
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from __future__ import annotations
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, List, Optional, Union
+
+from astropy.units import Quantity
+import astropy.units as u
 
 from zodipy._components import Component
 from zodipy._labels import CompLabel, LABEL_TO_CLASS
+
+__all__ = ("InterplanetaryDustModel", "ModelRegistry")
+
+ModelDict = Dict[str, Any]
 
 
 @dataclass
 class InterplanetaryDustModel:
     name: str
-    comp_labels: List[CompLabel]
     comp_params: Dict[CompLabel, Dict[str, Any]]
-    spectral_params: Dict[Any, Any]
-    source_params: Dict[str, Any]
-    doc: str = ""
-    comps: Dict[CompLabel, Component] = field(default_factory=dict)
+    emissivities: Dict[CompLabel, List[float]]
+    emissivity_spectrum: Union[Quantity[u.Hz], Quantity[u.m]]
+    T_0: Quantity[u.K]
+    delta: float
+    albedos: Optional[Dict[CompLabel, List[float]]] = None
+    albedo_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None
+    phase_coeffs: Optional[Dict[str, Quantity]] = None
+    phase_coeffs_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None
+    meta: Dict[str, Any] = field(default_factory=dict)
+    comps: Dict[CompLabel, Component] = field(init=False)
 
-    def __post_init__(self) -> None:
-        """Initialize all components."""
+    def __post_init__(self):
+        self.comps: Dict[CompLabel, Component] = {
+            comp: LABEL_TO_CLASS[comp](**params)
+            for comp, params in self.comp_params.items()
+        }
 
-        if CompLabel.CLOUD not in self.comp_labels:
-            raise ValueError(
-                "The cloud component is required component for the K98 model"
-            )
+    @classmethod
+    def from_dict(cls, model_dict: ModelDict) -> InterplanetaryDustModel:
+        return InterplanetaryDustModel(**model_dict)
 
-        for label in self.comp_labels:
-            parameters = self.comp_params[label]
-            component_class = LABEL_TO_CLASS[label]
-            self.comps[label] = component_class(**parameters)
-
-    @property
-    def includes_ring(self) -> bool:
-        """Returns True if the model includes an Earth-neighboring component."""
-
-        return CompLabel.RING in self.comp_labels or CompLabel.FEATURE in self.comp_labels
+    def to_dict(self) -> ModelDict:
+        return asdict(self)
 
     @property
     def ncomps(self) -> int:
-        """Returns the number of components in the model."""
-
-        return len(self.comp_labels)
-
-    def __str__(self) -> str:
-        """String representation of the Interplanetary dust model."""
-
-        reprs = []
-        for label in self.comp_labels:
-            reprs.append(f"{label.value.capitalize()}\n")
-
-        main_repr = "InterplanetaryDustModel("
-        main_repr += f"\n  name: {self.name}"
-        main_repr += f"\n  info: {self.doc}"
-        main_repr += "\n  components: "
-        main_repr += "\n    " + "    ".join(reprs)
-        main_repr += ")"
-
-        return main_repr
+        return len(self.comp_params)
 
 
 @dataclass
@@ -66,23 +55,40 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        comp_labels: List[CompLabel],
         comp_params: Dict[CompLabel, Dict[str, Any]],
-        spectral_params: Dict[Any, Any],
-        source_params: Dict[str, Any],
-        doc: str = "",
+        emissivities: Dict[CompLabel, List[float]],
+        emissivity_spectrum: Union[Quantity[u.Hz], Quantity[u.m]],
+        T_0: Quantity[u.K],
+        delta: float,
+        albedos: Optional[Dict[CompLabel, List[float]]] = None,
+        albedo_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None,
+        phase_coeffs: Optional[Dict[str, Quantity]] = None,
+        phase_coeffs_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None,
+        meta: Optional[Dict[str, Any]] = None,
     ) -> None:
+
         if name in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 
         self._registry[name] = InterplanetaryDustModel(
-            name,
-            comp_labels,
-            comp_params,
-            spectral_params,
-            source_params,
-            doc,
+            name=name,
+            comp_params=comp_params,
+            albedos=albedos,
+            albedo_spectrum=albedo_spectrum,
+            emissivities=emissivities,
+            emissivity_spectrum=emissivity_spectrum,
+            phase_coeffs=phase_coeffs,
+            phase_coeffs_spectrum=phase_coeffs_spectrum,
+            T_0=T_0,
+            delta=delta,
+            meta=meta,
         )
+
+    def register_model_from_dict(self, model_dict: ModelDict) -> None:
+        if (name := model_dict["name"]) in self._registry:
+            raise ValueError(f"a model by the name {name!s} is already registered.")
+
+        self._registry[name] = InterplanetaryDustModel.from_dict(model_dict)
 
     def get_model(self, name: str) -> InterplanetaryDustModel:
         if name not in self._registry:

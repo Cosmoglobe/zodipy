@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from astropy.units import Quantity
 import astropy.units as u
@@ -8,6 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 π = np.pi
+
 
 @dataclass
 class Component(ABC):
@@ -33,8 +34,8 @@ class Component(ABC):
     x_0: Quantity[u.AU]
     y_0: Quantity[u.AU]
     z_0: Quantity[u.AU]
-    i: Quantity[u.deg]
-    Omega: Quantity[u.deg]
+    i: Union[Quantity[u.deg], Quantity[u.rad]]
+    Omega: Union[Quantity[u.deg], Quantity[u.rad]]
 
     def __post_init__(self) -> None:
         # [AU] -> [AU per 1 AU]
@@ -43,71 +44,37 @@ class Component(ABC):
         self.z_0 = (self.z_0 / u.AU).value
         self.X_0 = np.expand_dims(np.asarray([self.x_0, self.y_0, self.z_0]), axis=1)
 
-        # Converting i and Omega to to rad
-        i_rad = self.i.to(u.rad).value
-        Omega_rad = self.Omega.to(u.rad).value
+        self.i = self.i.to(u.rad).value
+        self.Omega = self.Omega.to(u.rad).value
 
         # Computing frequently used variables
-        self.sin_i = np.sin(i_rad)
-        self.cos_i = np.cos(i_rad)
-        self.sin_Omega = np.sin(Omega_rad)
-        self.cos_Omega = np.cos(Omega_rad)
-
-    @abstractmethod
-    def get_compcentric_coordinates(
-        self,
-        X_helio: NDArray[np.float_],
-        *,
-        X_earth: Optional[NDArray[np.float_]],
-        X0_cloud: Optional[NDArray[np.float_]],
-    ) -> Tuple[NDArray[np.float_], ...]:
-        """Return the component-centric coordinates of points in the Solar System.
-
-        Parameters
-        ----------
-        X_helio
-            Heliocentric ecliptic coordinates (x, y, z) of points in the Solar 
-            System.
-        X_earth
-            Heliocentric ecliptic coordinates of the Earth.
-        X0_cloud
-            Heliocentric ecliptic coordinates of the Cloud components center
-            (required to compute the density of the dust bands as defined in the
-            DIRBE model).
-
-        Returns
-        -------
-        R_comp
-            Component-centric radial distances to points in the Solar System.
-        Z_comp
-            Heights above the midplane of the component at points in the Solar
-            System in component-centric coordinates.
-        θ_comp
-            Component-centric longitude between Earth and points in the Solar
-            System (Only used for the Earth-trailing Feature).
-        """
+        self.sin_i = np.sin(self.i)
+        self.cos_i = np.cos(self.i)
+        self.sin_Omega = np.sin(self.Omega)
+        self.cos_Omega = np.cos(self.Omega)
 
     @abstractmethod
     def compute_density(
         self,
-        R_comp: NDArray[np.float_],
-        Z_comp: NDArray[np.float_],
+        X_helio: NDArray[np.float_],
         *,
-        θ_comp: Optional[NDArray[np.float_]] = None,
+        X_earth: Optional[NDArray[np.float_]],
+        X_0_cloud: Optional[NDArray[np.float_]],
     ) -> NDArray[np.float_]:
         """Returns the dust density of a component at points in the Solar System
-        given by `R_comp` and `Z_comp`.
+        given by 'X_helio'.
 
         Parameters
         ----------
-        R_comp
-            Component-centric radial distances to points in the Solar System.
-        Z_comp
-            Heights above the midplane of the component at points in the Solar
-            System in component-centric coordinates.
-        θ_comp
-            Component-centric longitude between Earth and points in the Solar
-            System (Only used for the Earth-trailing Feature).
+        X_helio
+            Heliocentric ecliptic coordinates (x, y, z) of points in the Solar
+            System.
+        X_earth
+            Heliocentric ecliptic coordinates of the Earth. Required for the
+            Earth-trailing Feature-
+        X_0_cloud
+            Heliocentric ecliptic coordinates of the Diffuse Clouds offset.
+            Required for the Dust Bands.
 
         Returns
         -------
@@ -143,9 +110,7 @@ class Cloud(Component):
         super().__post_init__()
         self.n_0 = self.n_0.value
 
-    def get_compcentric_coordinates(
-        self, X_helio: NDArray[np.float_], **_
-    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
+    def compute_density(self, X_helio: NDArray[np.float_], **_) -> NDArray[np.float_]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
@@ -156,16 +121,6 @@ class Cloud(Component):
             - X_comp[1] * self.cos_Omega * self.sin_i
             + X_comp[2] * self.cos_i
         )
-
-        return R_comp, Z_comp
-
-    def compute_density(
-        self,
-        R_comp: NDArray[np.float_],
-        Z_comp: NDArray[np.float_],
-        **_,
-    ) -> NDArray[np.float_]:
-        """See base class for documentation."""
 
         ζ = np.abs(Z_comp / R_comp)
         μ = self.mu
@@ -197,7 +152,7 @@ class Band(Component):
     """
 
     n_0: Quantity[u.AU ** -1]
-    delta_zeta: Quantity[u.deg]
+    delta_zeta: Union[Quantity[u.deg], Quantity[u.rad]]
     v: float
     p: float
     delta_r: Quantity[u.AU]
@@ -211,17 +166,16 @@ class Band(Component):
         # degrees, but it could be due to some small angle approximation with
         # cos theta. Nevertheless, we must divide away the units of radians
         # for the zeta/delta_zeta to be unitless.
+
         self.delta_zeta = (self.delta_zeta / u.rad).value
+        self.delta_r = (self.delta_r / u.AU).value  # [AU] -> [AU per 1 AU]
 
-        # [AU] -> [AU per 1 AU]
-        self.delta_r = (self.delta_r / u.AU).value
-
-    def get_compcentric_coordinates(
-        self, X_helio: NDArray[np.float_], X0_cloud: NDArray[np.float_], **_
+    def compute_density(
+        self, X_helio: NDArray[np.float_], X_0_cloud: NDArray[np.float_], **_
     ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
 
-        X_comp = X_helio - X0_cloud
+        X_comp = X_helio - X_0_cloud
         R_comp = np.linalg.norm(X_comp, axis=0)
 
         Z_comp = (
@@ -229,16 +183,6 @@ class Band(Component):
             - X_comp[1] * self.cos_Omega * self.sin_i
             + X_comp[2] * self.cos_i
         )
-
-        return R_comp, Z_comp
-
-    def compute_density(
-        self,
-        R_comp: NDArray[np.float_],
-        Z_comp: NDArray[np.float_],
-        **_,
-    ) -> NDArray[np.float_]:
-        """See base class for documentation."""
 
         ζ = np.abs(Z_comp / R_comp)
         ζ_over_δ_ζ = ζ / self.delta_zeta
@@ -277,14 +221,14 @@ class Ring(Component):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        self.n_0 = self.n_0.value
 
         # [AU] -> [AU per 1 AU]
-        self.n_0 = self.n_0.value
         self.R = (self.R / u.AU).value
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
 
-    def get_compcentric_coordinates(
+    def compute_density(
         self, X_helio: NDArray[np.float_], **_
     ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
         """See base class for documentation."""
@@ -297,17 +241,6 @@ class Ring(Component):
             - X_comp[1] * self.cos_Omega * self.sin_i
             + X_comp[2] * self.cos_i
         )
-
-        return R_comp, Z_comp
-
-    def compute_density(
-        self,
-        R_comp: NDArray[np.float_],
-        Z_comp: NDArray[np.float_],
-        **_,
-    ) -> NDArray[np.float_]:
-        """See base class for documentation."""
-
         # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
         # term. See Planck 2013 XIV, section 4.1.3.
         term1 = -((R_comp - self.R) ** 2) / self.sigma_r ** 2
@@ -354,7 +287,7 @@ class Feature(Component):
         self.sigma_r = (self.sigma_r / u.AU).value
         self.sigma_z = (self.sigma_z / u.AU).value
 
-    def get_compcentric_coordinates(
+    def compute_density(
         self,
         X_helio: NDArray[np.float_],
         X_earth: NDArray[np.float_],
@@ -375,17 +308,6 @@ class Feature(Component):
         θ_comp = np.arctan2(X_comp[1], X_comp[0]) - np.arctan2(
             X_earth_comp[1], X_earth_comp[0]
         )
-
-        return R_comp, Z_comp, θ_comp
-
-    def compute_density(
-        self,
-        R_comp: NDArray[np.float_],
-        Z_comp: NDArray[np.float_],
-        θ_comp: NDArray[np.float_],
-        **_,
-    ) -> NDArray[np.float_]:
-        """See base class for documentation."""
 
         Δθ = θ_comp - self.theta
         condition1 = Δθ < -π

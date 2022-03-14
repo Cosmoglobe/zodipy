@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -8,7 +8,7 @@ from zodipy._components import Component
 from zodipy._interp import (
     interp_blackbody_emission_nu,
     interp_interplanetary_temperature,
-    interp_solar_flux
+    interp_solar_flux,
 )
 
 
@@ -20,7 +20,12 @@ def trapezoidal(
     earth_pos: NDArray[np.float64],
     unit_vectors: NDArray[np.float64],
     cloud_offset: NDArray[np.float64],
-    source_params: Dict[str, Any],
+    T_0: float,
+    delta: float,
+    emissivity: float,
+    albedo: float,
+    phase_coeffs: List[float],
+    colorcorr_table: Optional[NDArray[np.float_]],
 ) -> NDArray[np.float64]:
     """Returns the integrated Zodiacal emission for a component using the
     Trapezoidal method.
@@ -62,7 +67,12 @@ def trapezoidal(
         earth_pos=earth_pos,
         unit_vectors=unit_vectors,
         cloud_offset=cloud_offset,
-        source_params=source_params,
+        T_0=T_0,
+        delta=delta,
+        emissivity=emissivity,
+        albedo=albedo,
+        phase_coeffs=phase_coeffs,
+        colorcorr_table=colorcorr_table,
     )
 
     for r, dr in zip(line_of_sight[1:], np.diff(line_of_sight)):
@@ -74,7 +84,12 @@ def trapezoidal(
             earth_pos=earth_pos,
             unit_vectors=unit_vectors,
             cloud_offset=cloud_offset,
-            source_params=source_params,
+            T_0=T_0,
+            delta=delta,
+            emissivity=emissivity,
+            albedo=albedo,
+            phase_coeffs=phase_coeffs,
+            colorcorr_table=colorcorr_table,
         )
 
         integrated_emission += (emission_previous + emission_current) * (dr / 2)
@@ -92,7 +107,12 @@ def get_step_emission(
     earth_pos: NDArray[np.float64],
     unit_vectors: NDArray[np.float64],
     cloud_offset: NDArray[np.float64],
-    source_params: Dict[str, Any],
+    T_0: float,
+    delta: float,
+    emissivity: float,
+    albedo: float,
+    phase_coeffs: List[float],
+    colorcorr_table: Optional[NDArray[np.float_]],
 ) -> NDArray[np.float64]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
 
@@ -120,41 +140,37 @@ def get_step_emission(
     Returns
     -------
     emission
-        The Zodiacal emission at a step along the line-of-sight 
+        The Zodiacal emission at a step along the line-of-sight
         [W / Hz / m^2 / sr].
     """
-    
+
     r_vec = r * unit_vectors
 
     X_helio = r_vec + observer_pos
     R_helio = np.linalg.norm(X_helio, axis=0)
 
-    compcentric_coords = comp.get_compcentric_coordinates(
+    density = comp.compute_density(
         X_helio=X_helio,
         X_earth=earth_pos,
-        X0_cloud=cloud_offset,
+        X_0_cloud=cloud_offset,
     )
-    density = comp.compute_density(*compcentric_coords)
 
     T = interp_interplanetary_temperature(
         R=R_helio,
-        T_0=source_params["T_0"],
-        delta=source_params["delta"],
+        T_0=T_0,
+        delta=delta,
     )
     B_nu = interp_blackbody_emission_nu(T=T, freq=freq)
 
-    albedo = source_params["albedo"]
-    emissivity = source_params["emissivity"]
-    phase_coeff = source_params["phase_coeffs"]
-
     emission = (1 - albedo) * (emissivity * B_nu)
-    if (color_table := source_params["color_table"]) is not None:
-        emission *= np.interp(T, *color_table)
+
+    if colorcorr_table is not None:
+        emission *= np.interp(T, *colorcorr_table)
 
     if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = interp_solar_flux(R=R_helio, freq=freq)
-        phase_function = source_funcs.phase_function(scattering_angle, **phase_coeff)
+        phase_function = source_funcs.phase_function(scattering_angle, *phase_coeffs)
         emission += albedo * solar_flux * phase_function
 
     emission *= density

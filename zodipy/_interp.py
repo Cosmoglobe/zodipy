@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Any, Callable, Dict, Union
+from typing import Callable, Dict, List, Optional, Union
 from scipy import interpolate
 
 import astropy.units as u
@@ -84,47 +84,54 @@ def interp_solar_flux(
 
 
 def interp_comp_spectral_params(
-    comp_label: CompLabel,
     freq: Quantity[u.GHz],
-    spectral_params: Dict[Any, Any],
-) -> Dict[Any, Any]:
-    """Returns interpolated source parameters given a frequency and a component."""
+    emissivities: Dict[CompLabel, List[float]],
+    emissivity_spectrum: Union[Quantity[u.Hz], Quantity[u.m]],
+    albedos: Optional[Dict[CompLabel, List[float]]],
+    albedo_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]],
+) -> Dict[CompLabel, Dict[str, float]]:
 
-    params: Dict[Any, Any] = {}
-    emissivities = spectral_params.get("emissivities")
-    if emissivities is not None:
-        emissivity_spectrum = emissivities["spectrum"]
-        params["emissivity"] = np.interp(
+    interp_params: Dict[CompLabel, Dict[str, float]] = {
+        comp_label: {} for comp_label in emissivities
+    }
+
+    for comp, emiss_list in emissivities.items():
+        interp_params[comp]["emissivity"] = np.interp(
             freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
             emissivity_spectrum,
-            emissivities[comp_label],
+            emiss_list,
         )
-    else:
-        params["emissivity"] = 1.0
 
-    albedos = spectral_params.get("albedos")
-    if albedos is not None:
-        albedo_spectrum = albedos["spectrum"]
-        params["albedo"] = np.interp(
-            freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
-            albedo_spectrum,
-            albedos[comp_label],
-        )
+    if albedos is not None and albedo_spectrum is not None:
+        for comp, albedo_list in albedos.items():
+            interp_params[comp]["albedo"] = np.interp(
+                freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
+                albedo_spectrum,
+                albedo_list,
+            )
     else:
-        params["albedo"] = 0.0
+        for comp in emissivities:
+            interp_params[comp]["albedo"] = 0.0
 
-    phases = spectral_params.get("phase")
-    if phases is not None:
-        phase_spectrum = phases["spectrum"]
-        params["phase_coeffs"] = {
-            coeff: np.interp(
-                freq.to(phase_spectrum.unit, equivalencies=u.spectral()),
-                phase_spectrum,
-                phases[coeff],
+    return interp_params
+
+
+def interp_phase_coeffs(
+    freq: Quantity[u.GHz],
+    phase_coeffs: Optional[Dict[str, Quantity]] = None,
+    phase_coeffs_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None,
+) -> List[float]:
+
+    if phase_coeffs is not None and phase_coeffs_spectrum is not None:
+        interp_phase_coeffs = [
+            np.interp(
+                freq.to(phase_coeffs_spectrum.unit, equivalencies=u.spectral()),
+                phase_coeffs_spectrum,
+                coeff,
             ).value
-            for coeff in ["C0", "C1", "C2"]
-        }
+            for coeff in phase_coeffs.values()
+        ]
     else:
-        params["phase_coeffs"] = {"C0": 0.0, "C1": 0.0, "C2": 0.0}
+        interp_phase_coeffs = [0.0 for _ in range(3)]
 
-    return params
+    return interp_phase_coeffs

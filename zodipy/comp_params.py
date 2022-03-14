@@ -75,3 +75,7 @@ K98 = {
         sigma_theta=12.115210933938741 * u.deg,
     ),
 }
+
+PLANCK = K98.copy()
+PLANCK.pop(CompLabel.RING)
+PLANCK.pop(CompLabel.FEATURE)

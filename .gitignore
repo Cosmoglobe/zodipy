@@ -31,8 +31,8 @@ dirbe
 zodi_mask.fits
 zodi_temp.fits
 timestream.npy
-data/dirbe_pos.dat
-data/dirbe_spectral_response.dat
+zodipy/data/dirbe_pos.dat
+zodipy/data/dirbe_spectral_response.dat
 
 #deprecated
 _astroquery.py

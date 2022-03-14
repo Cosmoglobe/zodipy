@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 
 from zodipy._integral import trapezoidal
 from zodipy._los_config import integration_config_registry
-from zodipy._interp import interp_comp_spectral_params
+from zodipy._interp import interp_phase_coeffs, interp_comp_spectral_params
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
 from zodipy._labels import CompLabel
@@ -55,16 +55,14 @@ class Zodipy:
         solar_system_ephemeris.set(ephemeris)
 
     @property
-    def ipd_info(self) -> str:
-        """Returns the string representation of the IPD model."""
-
-        return str(self._model)
-
-    @property
-    def ipd(self) -> InterplanetaryDustModel:
+    def ipd_model(self) -> InterplanetaryDustModel:
         """Returns the IPD model."""
 
         return self._model
+
+    @property
+    def info(self) -> Optional[str]:
+        return self._model.meta.get("info")
 
     @property
     def observers(self) -> Tuple[str, ...]:
@@ -98,7 +96,7 @@ class Zodipy:
         time of observation (`obs_time`), an observer (`obs`) for which the
         position is computed using the ephemeris specified when initializing
         `Zodipy` or an observer position (`obs_pos`) which overrides `obs`.
-        Furthermore, the pointing of the observer is specified either in the 
+        Furthermore, the pointing of the observer is specified either in the
         form of angles on the sky (`theta`, `phi`), or as HEALPIX pixels at
         some resolution (`pixels`, `nside`).
 
@@ -110,14 +108,14 @@ class Zodipy:
         obs_time
             Time of observation (`astropy.time.Time` object).
         obs
-            The solar system observer. A list of all support observers (for a 
-            given ephemeridis) is specified in `observers` attribute of the 
+            The solar system observer. A list of all support observers (for a
+            given ephemeridis) is specified in `observers` attribute of the
             `zodipy.Zodipy` instance. Defaults to 'earth'.
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
             Overrides the `obs` argument. Default is None.
         pixels
-            A single, or a sequence of HEALPIX pixels representing points on 
+            A single, or a sequence of HEALPIX pixels representing points on
             the sky.
         theta, phi
             Angular coordinates (co-latitude, longitude) of a point, or a
@@ -132,10 +130,10 @@ class Zodipy:
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         binned
-            If True, the emission is binned into a HEALPIX map with resolution 
+            If True, the emission is binned into a HEALPIX map with resolution
             given by the `nside` argument. Defaults to False.
         coord_out
-            Coordinate frame of the output map. Available options are: 'E', 'G', 
+            Coordinate frame of the output map. Available options are: 'E', 'G',
             and 'C'. Defaults to 'E' (Ecliptic coordinates)
         colorcorr_table
             An array of shape (2, n) where the first column is temperatures
@@ -146,9 +144,9 @@ class Zodipy:
         Returns
         -------
         emission
-            Sequence of simulated Zodiacal emission in units of 'MJy/sr' for 
-            each pointing. If the pointing is provided in a time-ordered manner, 
-            then the output of this function can be interpreted as the observered 
+            Sequence of simulated Zodiacal emission in units of 'MJy/sr' for
+            each pointing. If the pointing is provided in a time-ordered manner,
+            then the output of this function can be interpreted as the observered
             Zodiacal Emission timestream.
         """
 
@@ -164,8 +162,7 @@ class Zodipy:
                     "get_time_ordered_emission() got an argument for 'pixels', "
                     "but argument 'nside' is missing"
                 )
-            if np.size(pixels) == 1:
-                pixels = np.expand_dims(pixels, axis=0)
+            pixels = np.expand_dims(pixels, axis=0) if np.size(pixels) == 1 else pixels
 
         if binned and nside is None:
             raise ValueError(
@@ -180,25 +177,25 @@ class Zodipy:
             )
 
         if theta is not None and phi is not None:
-            if phi.size == 1:
-                phi = np.expand_dims(phi, axis=0)
-            if theta.size == 1:
-                theta = np.expand_dims(theta, axis=0)
+            phi = np.expand_dims(phi, axis=0) if phi.size == 1 else phi
+            theta = np.expand_dims(theta, axis=0) if theta.size == 1 else theta
+            if lonlat:
+                theta = theta.to(u.deg)
+                phi = phi.to(u.deg)
 
-        if pixels is not None and (phi is not None or theta is not None):
-            raise ValueError(
-                "get_time_ordered_emission() got an argument for both 'pixels'"
-                "and 'theta' or 'phi' but can only use one of the two"
-            )
-
-        if lonlat:
-            if pixels is not None:
+        if pixels is not None:
+            if phi is not None or theta is not None:
+                raise ValueError(
+                    "get_time_ordered_emission() got an argument for both 'pixels'"
+                    "and 'theta' or 'phi' but can only use one of the two"
+                )
+            if lonlat:
                 raise ValueError(
                     "get_time_ordered_emission() has 'lonlat' set to True "
                     "but 'theta' and 'phi' is not given"
                 )
-            theta = theta.to(u.deg)
-            phi = phi.to(u.deg)
+
+        model = self._model
 
         earth_skycoord = get_body("Earth", time=obs_time)
         earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
@@ -221,10 +218,18 @@ class Zodipy:
 
         freq = freq.to("GHz", equivalencies=u.spectral())
 
-        model = self._model
-        params = model.source_params.copy()
-        params["color_table"] = colorcorr_table
-
+        phase_coeffs = interp_phase_coeffs(
+            freq,
+            phase_coeffs=model.phase_coeffs,
+            phase_coeffs_spectrum=model.phase_coeffs_spectrum,
+        )
+        spectral_comp_parameters = interp_comp_spectral_params(
+            freq=freq,
+            emissivities=model.emissivities,
+            emissivity_spectrum=model.emissivity_spectrum,
+            albedos=model.albedos,
+            albedo_spectrum=model.albedo_spectrum,
+        )
         cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
         if binned:
@@ -248,15 +253,7 @@ class Zodipy:
                 )
 
             emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
-
             for idx, (label, component) in enumerate(model.comps.items()):
-                comp_spectral_params = interp_comp_spectral_params(
-                    comp_label=label,
-                    freq=freq,
-                    spectral_params=model.spectral_params,
-                )
-                params.update(comp_spectral_params)
-
                 emission[idx, unique_pixels] = trapezoidal(
                     comp=component,
                     freq=freq.value,
@@ -265,7 +262,12 @@ class Zodipy:
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     cloud_offset=cloud_offset,
-                    source_params=params,
+                    T_0=model.T_0.value,
+                    delta=model.delta,
+                    emissivity=spectral_comp_parameters[label]["emissivity"],
+                    albedo=spectral_comp_parameters[label]["albedo"],
+                    phase_coeffs=phase_coeffs,
+                    colorcorr_table=colorcorr_table,
                 )
 
             emission[:, unique_pixels] *= counts
@@ -289,16 +291,9 @@ class Zodipy:
                     lonlat=lonlat,
                     coord_out=coord_out,
                 )
-                emission = np.zeros((model.ncomps, len(phi)))
+                emission = np.zeros((model.ncomps, len(theta)))
 
             for idx, (label, component) in enumerate(model.comps.items()):
-                comp_spectral_params = interp_comp_spectral_params(
-                    comp_label=label,
-                    freq=freq,
-                    spectral_params=model.spectral_params,
-                )
-                params.update(comp_spectral_params)
-
                 integrated_comp_emission = trapezoidal(
                     comp=component,
                     freq=freq.value,
@@ -307,17 +302,20 @@ class Zodipy:
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     cloud_offset=cloud_offset,
-                    source_params=params,
+                    T_0=model.T_0.value,
+                    delta=model.delta,
+                    emissivity=spectral_comp_parameters[label]["emissivity"],
+                    albedo=spectral_comp_parameters[label]["albedo"],
+                    phase_coeffs=phase_coeffs,
+                    colorcorr_table=colorcorr_table,
                 )
 
-                # We map the unique pixel hits back to the timestream
                 emission[idx] = integrated_comp_emission[indicies]
 
-        # The output unit is [W / Hz / m^2 / sr] which we convert to [MJy/sr]
+        # The output unit is W/Hz/m^2/sr which we convert to MJy/sr
         emission = (emission << (u.W / u.Hz / u.m ** 2 / u.sr)).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
-
 
 
 def _rotated_pix2vec(
@@ -358,4 +356,3 @@ def _rotated_ang2vec(
             hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
         )
     return unit_vectors
-
