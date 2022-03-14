@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Sequence, Union, Tuple
+from typing import Literal, Optional, Sequence, Type, Union, Tuple
 
 import astropy.units as u
 from astropy.units import Quantity
@@ -87,7 +87,8 @@ class Zodipy:
         lonlat: bool = False,
         binned: bool = False,
         return_comps: bool = False,
-        coord_out: Literal["E", "G", "C"] = "E",
+        coord_in: Literal["E", "G", "C"] = "E",
+        coord_out: Optional[Literal["E", "G", "C"]] = None,
         colorcorr_table: Optional[NDArray[np.float_]] = None,
     ) -> Quantity[u.MJy / u.sr]:
         """Returns a Zodiacal Emission timestream.
@@ -116,10 +117,12 @@ class Zodipy:
             Overrides the `obs` argument. Default is None.
         pixels
             A single, or a sequence of HEALPIX pixels representing points on
-            the sky.
+            the sky. The `nside` parameter, which specifies the resolution of
+            these pixels, must also be provided along with this argument.
         theta, phi
-            Angular coordinates (co-latitude, longitude) of a point, or a
+            Angular coordinates (co-latitude, longitude ) of a point, or a
             sequence of points, on the sphere. Units must be radians or degrees.
+            co-latitude must be in [0, pi] rad, and longitude in [0, 2*pi] rad.
         nside
             HEALPIX map resolution parameter of the pixels (and optionally the
             binned output map). Must be specified if `pixels` is provided or if
@@ -127,14 +130,19 @@ class Zodipy:
         lonlat
             If True, input angles (`theta`, `phi`) are assumed to be longitude
             and latitude, otherwise, they are co-latitude and longitude.
+            longitude must be in []
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         binned
             If True, the emission is binned into a HEALPIX map with resolution
             given by the `nside` argument. Defaults to False.
+        coord_in
+            Coordinates frame of the pointing. Assumes 'E' (ecliptic coordinates)
+            by default.
         coord_out
-            Coordinate frame of the output map. Available options are: 'E', 'G',
-            and 'C'. Defaults to 'E' (Ecliptic coordinates)
+            Coordinate frame of the binned output map. By default, the if binned
+            is True, the map is binned in the same coordinate frame as the input
+            pointing.
         colorcorr_table
             An array of shape (2, n) where the first column is temperatures
             in K, and the second column the corresponding color corrections.
@@ -157,12 +165,23 @@ class Zodipy:
             )
 
         if pixels is not None:
+            if phi is not None or theta is not None:
+                raise ValueError(
+                    "get_time_ordered_emission() got an argument for both 'pixels'"
+                    "and 'theta' or 'phi' but can only use one of the two"
+                )
             if nside is None:
                 raise ValueError(
                     "get_time_ordered_emission() got an argument for 'pixels', "
                     "but argument 'nside' is missing"
                 )
-            pixels = np.expand_dims(pixels, axis=0) if np.size(pixels) == 1 else pixels
+            if lonlat:
+                raise ValueError(
+                    "get_time_ordered_emission() has 'lonlat' set to True "
+                    "but 'theta' and 'phi' is not given"
+                )
+            if np.size(pixels) == 1:
+                pixels = np.expand_dims(pixels, axis=0)
 
         if binned and nside is None:
             raise ValueError(
@@ -177,23 +196,27 @@ class Zodipy:
             )
 
         if theta is not None and phi is not None:
-            phi = np.expand_dims(phi, axis=0) if phi.size == 1 else phi
-            theta = np.expand_dims(theta, axis=0) if theta.size == 1 else theta
+            if phi.size == 1:
+                phi = np.expand_dims(phi, axis=0)
+            if theta.size == 1:
+                theta = np.expand_dims(theta, axis=0)
             if lonlat:
                 theta = theta.to(u.deg)
                 phi = phi.to(u.deg)
+            else:
+                theta = theta.to(u.rad)
+                phi = phi.to(u.rad)
 
-        if pixels is not None:
-            if phi is not None or theta is not None:
-                raise ValueError(
-                    "get_time_ordered_emission() got an argument for both 'pixels'"
-                    "and 'theta' or 'phi' but can only use one of the two"
-                )
-            if lonlat:
-                raise ValueError(
-                    "get_time_ordered_emission() has 'lonlat' set to True "
-                    "but 'theta' and 'phi' is not given"
-                )
+        if coord_out is None:
+            coord_out = coord_in
+        elif not binned:
+            raise ValueError(
+                "get_time_ordered_emission() got an argument for 'coord_out' "
+                "but 'binned' is False. "
+            )
+
+        if not isinstance(obs_time, Time):
+            raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
         model = self._model
 
@@ -235,22 +258,32 @@ class Zodipy:
         if binned:
             if pixels is not None:
                 unique_pixels, counts = np.unique(pixels, return_counts=True)
-                unit_vectors = _rotated_pix2vec(
+                unit_vectors = _get_ecliptic_unit_vectors(
+                    coord_in=coord_in,
                     pixels=unique_pixels,
-                    coord_out=coord_out,
                     nside=nside,
                 )
-
             else:
                 unique_angles, counts = np.unique(
                     np.asarray([theta, phi]), return_counts=True, axis=1
                 )
                 unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
-                unit_vectors = _rotated_ang2vec(
-                    *unique_angles,
+                unit_vectors = _get_ecliptic_unit_vectors(
+                    coord_in=coord_in,
+                    theta=unique_angles[0],
+                    phi=unique_angles[1],
                     lonlat=lonlat,
-                    coord_out=coord_out,
                 )
+            if coord_out != coord_in:
+                if pixels is not None:
+                    rotated_unit_vectors = hp.Rotator(coord=[coord_in, coord_out])(
+                        hp.pix2vec(nside, unique_pixels)
+                    )
+                else:
+                    rotated_unit_vectors = hp.Rotator(coord=[coord_in, coord_out])(
+                        np.transpose(hp.ang2vec(phi, theta, lonlat=lonlat))
+                    )
+                unique_pixels = hp.vec2pix(nside, *rotated_unit_vectors, nest=False)
 
             emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(model.comps.items()):
@@ -275,9 +308,9 @@ class Zodipy:
         else:
             if pixels is not None:
                 unique_pixels, indicies = np.unique(pixels, return_inverse=True)
-                unit_vectors = _rotated_pix2vec(
+                unit_vectors = _get_ecliptic_unit_vectors(
+                    coord_in=coord_in,
                     pixels=unique_pixels,
-                    coord_out=coord_out,
                     nside=nside,
                 )
                 emission = np.zeros((model.ncomps, len(pixels)))
@@ -286,10 +319,11 @@ class Zodipy:
                 unique_angles, indicies = np.unique(
                     np.asarray([theta, phi]), return_inverse=True, axis=1
                 )
-                unit_vectors = _rotated_ang2vec(
-                    *unique_angles,
+                unit_vectors = _get_ecliptic_unit_vectors(
+                    coord_in=coord_in,
+                    theta=unique_angles[0],
+                    phi=unique_angles[1],
                     lonlat=lonlat,
-                    coord_out=coord_out,
                 )
                 emission = np.zeros((model.ncomps, len(theta)))
 
@@ -318,41 +352,25 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
 
-def _rotated_pix2vec(
-    pixels: Union[Sequence[int], NDArray[np.int_]], nside: int, coord_out: str
+def _get_ecliptic_unit_vectors(
+    coord_in: str,
+    pixels: Optional[Union[Sequence[int], NDArray[np.int_]]] = None,
+    nside: Optional[int] = None,
+    phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
+    theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
+    lonlat: bool = False,
 ) -> NDArray[np.float_]:
-    """Returns rotated unit vetors from pixels.
+    """Returns ecliptic unit vectors from some pointing.
 
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
     we need to rotate any unit vectors defined in another coordinate frame to
-    ecliptic before evaluating the model.
+    ecliptic before evaluating the model. If the output map is requested in some
+    other reference frame, we rotate to that
     """
 
-    unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
-    if coord_out != "E":
-        unit_vectors = np.asarray(
-            hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
-        )
+    if pixels is None:
+        unit_vectors = np.asarray(hp.ang2vec(phi, theta, lonlat=lonlat)).transpose()
+    else:
+        unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
 
-    return unit_vectors
-
-
-def _rotated_ang2vec(
-    phi: Union[Quantity[u.rad], Quantity[u.deg]],
-    theta: Union[Quantity[u.rad], Quantity[u.deg]],
-    lonlat: bool,
-    coord_out: str,
-) -> NDArray[np.float_]:
-    """Returns rotated unit vectors from angles.
-
-    Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
-    we need to rotate any unit vectors defined in another coordinate frame to
-    ecliptic before evaluating the model.
-    """
-
-    unit_vectors = np.asarray(hp.ang2vec(phi, theta, lonlat=lonlat)).transpose()
-    if coord_out != "E":
-        unit_vectors = np.asarray(
-            hp.rotator.Rotator(coord=[coord_out, "E"])(unit_vectors)
-        )
-    return unit_vectors
+    return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))
