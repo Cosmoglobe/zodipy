@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Sequence
 
 from astropy.units import Quantity
 import astropy.units as u
@@ -10,35 +10,33 @@ from zodipy._labels import CompLabel, LABEL_TO_CLASS
 
 __all__ = ("InterplanetaryDustModel", "ModelRegistry")
 
-ModelDict = Dict[str, Any]
-
 
 @dataclass
 class InterplanetaryDustModel:
     name: str
-    comp_params: Dict[CompLabel, Dict[str, Any]]
-    emissivities: Dict[CompLabel, List[float]]
-    emissivity_spectrum: Union[Quantity[u.Hz], Quantity[u.m]]
+    comp_params: dict[CompLabel, dict[str, Any]]
+    emissivities: dict[CompLabel, Sequence[float]]
+    emissivity_spectrum: Quantity[u.Hz] | Quantity[u.m]
     T_0: Quantity[u.K]
     delta: float
-    albedos: Optional[Dict[CompLabel, List[float]]] = None
-    albedo_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None
-    phase_coeffs: Optional[Dict[str, Quantity]] = None
-    phase_coeffs_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None
-    meta: Dict[str, Any] = field(default_factory=dict)
-    comps: Dict[CompLabel, Component] = field(init=False)
+    albedos: Optional[dict[CompLabel, Sequence[float]]] = None
+    albedo_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
+    phase_coeffs: Optional[dict[str, Quantity]] = None
+    phase_coeffs_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
+    meta: dict[str, Any] = field(default_factory=dict)
+    comps: dict[CompLabel, Component] = field(init=False)
 
     def __post_init__(self):
-        self.comps: Dict[CompLabel, Component] = {
+        self.comps: dict[CompLabel, Component] = {
             comp: LABEL_TO_CLASS[comp](**params)
             for comp, params in self.comp_params.items()
         }
 
     @classmethod
-    def from_dict(cls, model_dict: ModelDict) -> InterplanetaryDustModel:
+    def from_dict(cls, model_dict: dict[str, Any]) -> InterplanetaryDustModel:
         return InterplanetaryDustModel(**model_dict)
 
-    def to_dict(self) -> ModelDict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @property
@@ -50,21 +48,21 @@ class InterplanetaryDustModel:
 class ModelRegistry:
     """Container for registered InterplanetaryDustModel's."""
 
-    _registry: Dict[str, InterplanetaryDustModel] = field(default_factory=dict)
+    _registry: dict[str, InterplanetaryDustModel] = field(default_factory=dict)
 
     def register_model(
         self,
         name: str,
-        comp_params: Dict[CompLabel, Dict[str, Any]],
-        emissivities: Dict[CompLabel, List[float]],
-        emissivity_spectrum: Union[Quantity[u.Hz], Quantity[u.m]],
+        comp_params: dict[CompLabel, dict[str, Any]],
+        emissivities: dict[CompLabel, Sequence[float]],
+        emissivity_spectrum: Quantity[u.Hz] | Quantity[u.m],
         T_0: Quantity[u.K],
         delta: float,
-        albedos: Optional[Dict[CompLabel, List[float]]] = None,
-        albedo_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None,
-        phase_coeffs: Optional[Dict[str, Quantity]] = None,
-        phase_coeffs_spectrum: Optional[Union[Quantity[u.Hz], Quantity[u.m]]] = None,
-        meta: Optional[Dict[str, Any]] = None,
+        albedos: Optional[dict[CompLabel, Sequence[float]]] = None,
+        albedo_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None,
+        phase_coeffs: Optional[dict[str, Quantity]] = None,
+        phase_coeffs_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None,
+        meta: Optional[dict[str, Any]] = None,
     ) -> None:
 
         if name in self._registry:
@@ -84,7 +82,7 @@ class ModelRegistry:
             meta=meta,
         )
 
-    def register_model_from_dict(self, model_dict: ModelDict) -> None:
+    def register_model_from_dict(self, model_dict: dict[str, Any]) -> None:
         if (name := model_dict["name"]) in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 
@@ -99,7 +97,7 @@ class ModelRegistry:
 
         return self._registry[name]
 
-    def get_registered_model_names(self) -> List[str]:
+    def get_registered_model_names(self) -> list[str]:
         return list(self._registry.keys())
 
 

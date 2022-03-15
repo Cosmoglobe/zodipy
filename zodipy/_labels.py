@@ -1,5 +1,5 @@
+from __future__ import annotations
 from enum import Enum
-from typing import Dict, Type
 
 from zodipy._components import Component, Cloud, Band, Ring, Feature
 
@@ -15,7 +15,7 @@ class CompLabel(Enum):
     FEATURE = "feature"
 
 
-LABEL_TO_CLASS: Dict[CompLabel, Type[Component]] = {
+LABEL_TO_CLASS: dict[CompLabel, type[Component]] = {
     CompLabel.CLOUD: Cloud,
     CompLabel.BAND1: Band,
     CompLabel.BAND2: Band,

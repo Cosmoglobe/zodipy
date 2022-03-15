@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,18 +15,18 @@ from zodipy._interp import (
 def trapezoidal(
     comp: Component,
     freq: float,
-    line_of_sight: NDArray[np.float64],
-    observer_pos: NDArray[np.float64],
-    earth_pos: NDArray[np.float64],
-    unit_vectors: NDArray[np.float64],
-    cloud_offset: NDArray[np.float64],
+    line_of_sight: NDArray[np.float_],
+    observer_pos: NDArray[np.float_],
+    earth_pos: NDArray[np.float_],
+    unit_vectors: NDArray[np.float_],
+    cloud_offset: NDArray[np.float_],
     T_0: float,
     delta: float,
     emissivity: float,
     albedo: float,
-    phase_coeffs: List[float],
+    phase_coeffs: Sequence[float],
     colorcorr_table: Optional[NDArray[np.float_]],
-) -> NDArray[np.float64]:
+) -> NDArray[np.float_]:
     """Returns the integrated Zodiacal emission for a component using the
     Trapezoidal method.
 
@@ -102,18 +102,18 @@ def trapezoidal(
 def get_step_emission(
     comp: Component,
     freq: float,
-    r: NDArray[np.float64],
-    observer_pos: NDArray[np.float64],
-    earth_pos: NDArray[np.float64],
-    unit_vectors: NDArray[np.float64],
-    cloud_offset: NDArray[np.float64],
+    r: NDArray[np.float_],
+    observer_pos: NDArray[np.float_],
+    earth_pos: NDArray[np.float_],
+    unit_vectors: NDArray[np.float_],
+    cloud_offset: NDArray[np.float_],
     T_0: float,
     delta: float,
     emissivity: float,
     albedo: float,
-    phase_coeffs: List[float],
+    phase_coeffs: Sequence[float],
     colorcorr_table: Optional[NDArray[np.float_]],
-) -> NDArray[np.float64]:
+) -> NDArray[np.float_]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
 
     Parameters

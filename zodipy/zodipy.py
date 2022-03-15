@@ -1,31 +1,30 @@
-from typing import Literal, Optional, Sequence, Type, Union, Tuple
+from typing import Literal, Optional, Sequence, Tuple, Union
 
-import astropy.units as u
-from astropy.units import Quantity
-from astropy.time import Time
 from astropy.coordinates import (
     get_body,
     HeliocentricMeanEcliptic,
     solar_system_ephemeris,
 )
+import astropy.units as u
+from astropy.units import Quantity, quantity_input
+from astropy.time import Time
 import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
 from zodipy._integral import trapezoidal
-from zodipy._los_config import integration_config_registry
 from zodipy._interp import interp_phase_coeffs, interp_comp_spectral_params
+from zodipy._labels import CompLabel
+from zodipy._los_config import integration_config_registry
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
-from zodipy._labels import CompLabel
 
 
 __all__ = ("Zodipy",)
 
-# L2 not included in the astropy ephem so we manually include support for it
-# by assuming its located at a constant distance radially from the Earth.
-ADDITIONAL_SUPPORTED_OBSERVERS = ["semb-l2"]
-DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
+# L2 not included in the astropy api so we manually include support for it.
+ADDITIONAL_SUPPORTED_OBS = ["semb-l2"]
+DISTANCE_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 
 
 class Zodipy:
@@ -68,11 +67,11 @@ class Zodipy:
     def observers(self) -> Tuple[str, ...]:
         """Returns all observers suported by the ephemeridis."""
 
-        observers = list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBSERVERS
+        observers = list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBS
 
         return tuple(observers)
 
-    @u.quantity_input
+    @quantity_input
     def get_emission(
         self,
         freq: Union[Quantity[u.Hz], Quantity[u.m]],
@@ -161,7 +160,7 @@ class Zodipy:
         if obs.lower() not in self.observers:
             raise ValueError(
                 f"observer {obs!r} not supported by ephemeridis "
-                f"{solar_system_ephemeris._value!r}"
+                f"{solar_system_ephemeris._value!r} or 'Zodipy'"
             )
 
         if pixels is not None:
@@ -195,10 +194,14 @@ class Zodipy:
                 "'phi' or 'theta'"
             )
 
-        if theta is not None and phi is not None:
-            if phi.size == 1:
-                phi = np.expand_dims(phi, axis=0)
+        if (theta is not None) and (phi is not None):
+            if theta.size != phi.size:
+                raise ValueError(
+                    "get_time_ordered_emission() got arguments 'theta' and 'phi' "
+                    "with different size "
+                )
             if theta.size == 1:
+                phi = np.expand_dims(phi, axis=0)
                 theta = np.expand_dims(theta, axis=0)
             if lonlat:
                 theta = theta.to(u.deg)
@@ -224,23 +227,24 @@ class Zodipy:
         earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
         earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
         if obs_pos is None:
-            # IF observer is L2 we need to approximate the position
             if obs.lower() == "semb-l2":
+                # We assume that L2 is located at a constant distance from the 
+                # Earth along Earths unit vector in heliocentric coordinates.
                 earth_length = np.linalg.norm(earth_pos)
                 earth_unit_vec = earth_pos / earth_length
-                semb_l2_length = earth_length + DISTANCE_FROM_EARTH_TO_L2
+                semb_l2_length = earth_length + DISTANCE_EARTH_TO_L2
                 obs_pos = earth_unit_vec * semb_l2_length
             else:
                 obs_skycoord = get_body(obs, time=obs_time)
                 obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
                 obs_pos = obs_skycoord.represent_as("cartesian").xyz.to(u.AU)
-
-        # We reshape the coordinates to broadcastable shapes.
         obs_pos = obs_pos.reshape(3, 1)
         earth_pos = earth_pos.reshape(3, 1)
 
+        # If the specific value of freq is not covered by the fitted spectral
+        # parameters in the model we interpolate/extrapolate to find a new
+        # emissivity, albedo and scattering phase coefficients.
         freq = freq.to("GHz", equivalencies=u.spectral())
-
         phase_coeffs = interp_phase_coeffs(
             freq,
             phase_coeffs=model.phase_coeffs,
@@ -253,6 +257,7 @@ class Zodipy:
             albedos=model.albedos,
             albedo_spectrum=model.albedo_spectrum,
         )
+
         cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
         if binned:
@@ -303,6 +308,7 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
 
+            # We multiply my the counts to return the un-normalized map
             emission[:, unique_pixels] *= counts
 
         else:
@@ -344,6 +350,7 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
 
+                # We map the uniquely observed pointings back to the timestream
                 emission[idx] = integrated_comp_emission[indicies]
 
         # The output unit is W/Hz/m^2/sr which we convert to MJy/sr
@@ -360,8 +367,7 @@ def _get_ecliptic_unit_vectors(
     theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
     lonlat: bool = False,
 ) -> NDArray[np.float_]:
-    """Returns ecliptic unit vectors from some pointing.
-
+    """
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
     we need to rotate any unit vectors defined in another coordinate frame to
     ecliptic before evaluating the model. If the output map is requested in some

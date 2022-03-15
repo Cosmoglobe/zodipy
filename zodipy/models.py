@@ -1,7 +1,6 @@
 from zodipy._model import model_registry
 from zodipy import comp_params
 from zodipy import source_params
-from zodipy import source_params
 
 
 model_registry.register_model(

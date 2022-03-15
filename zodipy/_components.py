@@ -1,6 +1,7 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Optional
 
 from astropy.units import Quantity
 import astropy.units as u
@@ -34,8 +35,8 @@ class Component(ABC):
     x_0: Quantity[u.AU]
     y_0: Quantity[u.AU]
     z_0: Quantity[u.AU]
-    i: Union[Quantity[u.deg], Quantity[u.rad]]
-    Omega: Union[Quantity[u.deg], Quantity[u.rad]]
+    i: Quantity[u.deg] | Quantity[u.rad]
+    Omega: Quantity[u.deg] | Quantity[u.rad]
 
     def __post_init__(self) -> None:
         # [AU] -> [AU per 1 AU]
@@ -58,8 +59,8 @@ class Component(ABC):
         self,
         X_helio: NDArray[np.float_],
         *,
-        X_earth: Optional[NDArray[np.float_]],
-        X_0_cloud: Optional[NDArray[np.float_]],
+        X_earth: Optional[NDArray[np.float_]] = None,
+        X_0_cloud: Optional[NDArray[np.float_]] = None,
     ) -> NDArray[np.float_]:
         """Returns the dust density of a component at points in the Solar System
         given by 'X_helio'.
@@ -152,7 +153,7 @@ class Band(Component):
     """
 
     n_0: Quantity[u.AU ** -1]
-    delta_zeta: Union[Quantity[u.deg], Quantity[u.rad]]
+    delta_zeta: Quantity[u.deg] | Quantity[u.rad]
     v: float
     p: float
     delta_r: Quantity[u.AU]
@@ -172,7 +173,7 @@ class Band(Component):
 
     def compute_density(
         self, X_helio: NDArray[np.float_], X_0_cloud: NDArray[np.float_], **_
-    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
         X_comp = X_helio - X_0_cloud
@@ -230,7 +231,7 @@ class Ring(Component):
 
     def compute_density(
         self, X_helio: NDArray[np.float_], **_
-    ) -> Tuple[NDArray[np.float_], NDArray[np.float_]]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
@@ -292,7 +293,7 @@ class Feature(Component):
         X_helio: NDArray[np.float_],
         X_earth: NDArray[np.float_],
         **_,
-    ) -> Tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]:
+    ) -> NDArray[np.float_]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0

@@ -1,5 +1,5 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict
 
 import numpy as np
 import astropy.units as u
@@ -22,18 +22,18 @@ class LOSConfigRegistry:
     line-of-sight per component.
     """
 
-    _registry: Dict[str, Dict[CompLabel, Quantity[u.AU]]] = field(default_factory=dict)
+    _registry: dict[str, dict[CompLabel, Quantity[u.AU]]] = field(default_factory=dict)
 
     def register_config(
         self,
         name: str,
-        comps: Dict[CompLabel, Quantity],
+        comps: dict[CompLabel, Quantity],
     ) -> None:
         """Adds a new integration config to the registry."""
 
         self._registry[name] = comps
 
-    def get_config(self, name: str = "default") -> Dict[CompLabel, Quantity]:
+    def get_config(self, name: str = "default") -> dict[CompLabel, Quantity[u.AU]]:
         """Returns an integration config from the registry."""
 
         if name not in self._registry:

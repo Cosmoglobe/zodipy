@@ -1,4 +1,4 @@
-from typing import List, Union
+from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,10 +11,10 @@ DEFAULT_EARTH_POS = np.asarray([1.0, 0.0, 0.0])
 
 
 def tabulate_density(
-    grid: Union[NDArray[np.float64], List[NDArray[np.float64]]],
-    model: Union[str, InterplanetaryDustModel] = "DIRBE",
-    earth_coords: NDArray[np.float64] = DEFAULT_EARTH_POS,
-) -> NDArray[np.float64]:
+    grid: NDArray[np.float_] | list[NDArray[np.float_]],
+    model: str | InterplanetaryDustModel = "DIRBE",
+    earth_coords: NDArray[np.float_] = DEFAULT_EARTH_POS,
+) -> NDArray[np.float_]:
     """Tabulates the component densities for a meshgrid."""
 
     if not isinstance(model, InterplanetaryDustModel):
@@ -29,14 +29,11 @@ def tabulate_density(
     density_grid = np.zeros((model.ncomps, *grid.shape[1:]))
     for idx, comp in enumerate(model.comps.values()):
         comp.X_0 = np.reshape(comp.X_0, (3, 1, 1, 1))
-        comp_coords = comp.get_compcentric_coordinates(
+        density_grid[idx] = comp.compute_density(
             X_helio=grid,
             X_earth=earth_coords,
-            X0_cloud=x0_cloud,
+            X_0_cloud=x0_cloud,
         )
-
-        density_grid[idx] = comp.compute_density(*comp_coords)
         comp.X_0 = np.reshape(comp.X_0, (3, 1))
-
 
     return density_grid

@@ -1,7 +1,4 @@
-from typing import Dict, List
-
 import astropy.units as u
-from astropy.units import Quantity
 
 from zodipy._labels import CompLabel
 
@@ -11,7 +8,7 @@ delta_K98 = 0.46686259861486573
 SPECTRUM_PLANCK = [100.0, 143.0, 217.0, 353.0, 545.0, 857.0] * u.GHz
 SPECTRUM_DIRBE = [1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240] * u.micron
 
-EMISSIVITY_PLANCK_13: Dict[CompLabel, List[float]] = {
+EMISSIVITY_PLANCK_13 = {
     CompLabel.CLOUD: [0.003, -0.014, 0.031, 0.168, 0.223, 0.301],
     CompLabel.BAND1: [1.129, 1.463, 2.024, 2.035, 2.235, 1.777],
     CompLabel.BAND2: [0.674, 0.530, 0.338, 0.436, 0.718, 0.716],
@@ -20,7 +17,7 @@ EMISSIVITY_PLANCK_13: Dict[CompLabel, List[float]] = {
     CompLabel.FEATURE: [0.252, -0.002, 0.243, 0.676, -0.182, 0.423],
 }
 
-EMISSIVITY_PLANCK_15: Dict[CompLabel, List[float]] = {
+EMISSIVITY_PLANCK_15 = {
     CompLabel.CLOUD: [0.012, 0.022, 0.051, 0.106, 0.167, 0.256],
     CompLabel.BAND1: [1.02, 1.23, 1.30, 1.58, 1.74, 2.06],
     CompLabel.BAND2: [0.08, 0.15, 0.15, 0.39, 0.54, 0.85],
@@ -28,7 +25,7 @@ EMISSIVITY_PLANCK_15: Dict[CompLabel, List[float]] = {
 }
 
 
-EMISSIVITY_PLANCK_18: Dict[CompLabel, List[float]] = {
+EMISSIVITY_PLANCK_18 = {
     CompLabel.CLOUD: [0.018, 0.020, 0.042, 0.082, 0.179, 0.304],
     CompLabel.BAND1: [0.54, 1.00, 1.11, 1.52, 1.47, 1.58],
     CompLabel.BAND2: [0.07, 0.17, 0.21, 0.35, 0.49, 0.70],
@@ -36,7 +33,7 @@ EMISSIVITY_PLANCK_18: Dict[CompLabel, List[float]] = {
 }
 
 
-EMISSIVITY_DIRBE: Dict[CompLabel, List[float]] = {
+EMISSIVITY_DIRBE = {
     CompLabel.CLOUD: [
         1.0,
         1.0,
@@ -111,7 +108,7 @@ EMISSIVITY_DIRBE: Dict[CompLabel, List[float]] = {
     ],
 }
 
-ALBEDO_DIRBE: Dict[CompLabel, List[float]] = {
+ALBEDO_DIRBE = {
     CompLabel.CLOUD: [
         0.20411939612669797,
         0.25521132892052301,
@@ -186,7 +183,7 @@ ALBEDO_DIRBE: Dict[CompLabel, List[float]] = {
     ],
 }
 
-PHASE_FUNC_DIRBE: Dict[str, Quantity] = {
+PHASE_FUNC_DIRBE = {
     "C0": [-0.942, -0.527, -0.431, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] / u.sr,
     "C1": [0.121, 0.187, 0.172, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] / (u.rad / u.sr),
     "C2": [-0.165, -0.598, -0.633, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] / u.sr,

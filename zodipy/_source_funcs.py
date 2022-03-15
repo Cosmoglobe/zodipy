@@ -1,5 +1,5 @@
+from __future__ import annotations
 from functools import lru_cache
-from typing import Union
 
 import astropy.constants as const
 import astropy.units as u
@@ -16,8 +16,8 @@ T_sun = 5778
 
 
 def blackbody_emission_nu(
-    T: Union[float, NDArray[np.float64]], freq: Union[float, NDArray[np.float64]]
-) -> NDArray[np.float64]:
+    T: float | NDArray[np.float_], freq: float | NDArray[np.float_]
+) -> NDArray[np.float_]:
     """Returns the blackbody emission.
 
     Parameters
@@ -39,9 +39,9 @@ def blackbody_emission_nu(
 
 
 def blackbody_emission_lambda(
-    T: Union[float, NDArray[np.float64]],
-    freq: Union[float, NDArray[np.float64]],
-) -> Union[float, NDArray[np.float64]]:
+    T: float | NDArray[np.float_],
+    freq: float | NDArray[np.float_],
+) -> float | NDArray[np.float_]:
     """Returns the blackbody emission.
 
     Parameters
@@ -63,8 +63,8 @@ def blackbody_emission_lambda(
 
 
 def solar_flux(
-    R: NDArray[np.float64], freq: float, T: float = T_sun
-) -> NDArray[np.float64]:
+    R: NDArray[np.float_], freq: float, T: float = T_sun
+) -> NDArray[np.float_]:
     """Returns the solar flux observed at some distance R from the Sun in AU.
 
     Parameteers
@@ -83,8 +83,8 @@ def solar_flux(
 
 
 def interplanetary_temperature(
-    R: NDArray[np.float64], T_0: float, delta: float
-) -> NDArray[np.float64]:
+    R: NDArray[np.float_], T_0: float, delta: float
+) -> NDArray[np.float_]:
     """Returns the Interplanetary Temperature given a radial distance from the Sun.
 
     Parameters
@@ -117,8 +117,8 @@ def phase_normalization(C0: float, C1: float, C2: float) -> float:
 
 
 def phase_function(
-    Theta: NDArray[np.float64], C0: float, C1: float, C2: float
-) -> NDArray[np.float64]:
+    Theta: NDArray[np.float_], C0: float, C1: float, C2: float
+) -> NDArray[np.float_]:
     """Returns the phase function.
 
     Parameters
