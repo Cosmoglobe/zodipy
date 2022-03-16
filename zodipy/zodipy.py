@@ -87,7 +87,6 @@ class Zodipy:
         binned: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-        coord_out: Optional[Literal["E", "G", "C"]] = None,
         colorcorr_table: Optional[NDArray[np.float_]] = None,
     ) -> Quantity[u.MJy / u.sr]:
         """Returns a Zodiacal Emission timestream.
@@ -134,14 +133,11 @@ class Zodipy:
             If True, the emission is returned component-wise. Defaults to False.
         binned
             If True, the emission is binned into a HEALPIX map with resolution
-            given by the `nside` argument. Defaults to False.
+            given by the `nside` argument in the coordinate frame corresponding to
+            `coord_in`. Defaults to False.
         coord_in
             Coordinates frame of the pointing. Assumes 'E' (ecliptic coordinates)
             by default.
-        coord_out
-            Coordinate frame of the binned output map. By default, the if binned
-            is True, the map is binned in the same coordinate frame as the input
-            pointing.
         colorcorr_table
             An array of shape (2, n) where the first column is temperatures
             in K, and the second column the corresponding color corrections.
@@ -210,14 +206,6 @@ class Zodipy:
                 theta = theta.to(u.rad)
                 phi = phi.to(u.rad)
 
-        if coord_out is None:
-            coord_out = coord_in
-        elif not binned:
-            raise ValueError(
-                "get_time_ordered_emission() got an argument for 'coord_out' "
-                "but 'binned' is False. "
-            )
-
         if not isinstance(obs_time, Time):
             raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
@@ -278,19 +266,6 @@ class Zodipy:
                     theta=unique_angles[0],
                     phi=unique_angles[1],
                     lonlat=lonlat,
-                )
-            if coord_out != coord_in:
-                if pixels is not None:
-                    rotated_unit_vectors = hp.Rotator(coord=[coord_in, coord_out])(
-                        hp.pix2vec(nside, unique_pixels)
-                    )
-                else:
-                    rotated_unit_vectors = hp.Rotator(coord=[coord_in, coord_out])(
-                        np.transpose(hp.ang2vec(*unique_angles, lonlat=lonlat))
-                    )
-                unique_pixels, counts = np.unique(
-                    hp.vec2pix(nside, *rotated_unit_vectors),
-                    return_counts=True,
                 )
 
             emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
