@@ -23,21 +23,15 @@ class InterplanetaryDustModel:
     albedo_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
     phase_coeffs: Optional[dict[str, Quantity]] = None
     phase_coeffs_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
-    meta: dict[str, Any] = field(default_factory=dict)
+    meta: Optional[dict[str, Any]] = field(default_factory=dict)
     comps: dict[CompLabel, Component] = field(init=False)
 
     def __post_init__(self):
+        # Initialize the component classes from the `comp_params` dict.
         self.comps: dict[CompLabel, Component] = {
             comp: LABEL_TO_CLASS[comp](**params)
             for comp, params in self.comp_params.items()
         }
-
-    @classmethod
-    def from_dict(cls, model_dict: dict[str, Any]) -> InterplanetaryDustModel:
-        return InterplanetaryDustModel(**model_dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
 
     @property
     def ncomps(self) -> int:

@@ -228,7 +228,7 @@ class Zodipy:
         earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
         if obs_pos is None:
             if obs.lower() == "semb-l2":
-                # We assume that L2 is located at a constant distance from the 
+                # We assume that L2 is located at a constant distance from the
                 # Earth along Earths unit vector in heliocentric coordinates.
                 earth_length = np.linalg.norm(earth_pos)
                 earth_unit_vec = earth_pos / earth_length
@@ -286,9 +286,12 @@ class Zodipy:
                     )
                 else:
                     rotated_unit_vectors = hp.Rotator(coord=[coord_in, coord_out])(
-                        np.transpose(hp.ang2vec(phi, theta, lonlat=lonlat))
+                        np.transpose(hp.ang2vec(*unique_angles, lonlat=lonlat))
                     )
-                unique_pixels = hp.vec2pix(nside, *rotated_unit_vectors, nest=False)
+                unique_pixels, counts = np.unique(
+                    hp.vec2pix(nside, *rotated_unit_vectors),
+                    return_counts=True,
+                )
 
             emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(model.comps.items()):
@@ -308,7 +311,6 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
 
-            # We multiply my the counts to return the un-normalized map
             emission[:, unique_pixels] *= counts
 
         else:
@@ -350,7 +352,6 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
 
-                # We map the uniquely observed pointings back to the timestream
                 emission[idx] = integrated_comp_emission[indicies]
 
         # The output unit is W/Hz/m^2/sr which we convert to MJy/sr
@@ -369,13 +370,12 @@ def _get_ecliptic_unit_vectors(
 ) -> NDArray[np.float_]:
     """
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
-    we need to rotate any unit vectors defined in another coordinate frame to
-    ecliptic before evaluating the model. If the output map is requested in some
-    other reference frame, we rotate to that
+    we need to rotate any unit vectors (obtained from the pointing) defined in 
+    another coordinate frame to ecliptic before evaluating the model.
     """
 
     if pixels is None:
-        unit_vectors = np.asarray(hp.ang2vec(phi, theta, lonlat=lonlat)).transpose()
+        unit_vectors = np.asarray(hp.ang2vec(theta, phi, lonlat=lonlat)).transpose()
     else:
         unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
 

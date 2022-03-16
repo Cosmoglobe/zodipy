@@ -22,7 +22,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck13",
-    comp_params=comp_params.PLANCK,
+    comp_params=comp_params.K98,
     emissivities=source_params.EMISSIVITY_PLANCK_13,
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
