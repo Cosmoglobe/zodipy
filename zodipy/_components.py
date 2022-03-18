@@ -57,11 +57,11 @@ class Component(ABC):
     @abstractmethod
     def compute_density(
         self,
-        X_helio: NDArray[np.float_],
+        X_helio: NDArray[np.floating],
         *,
-        X_earth: Optional[NDArray[np.float_]] = None,
-        X_0_cloud: Optional[NDArray[np.float_]] = None,
-    ) -> NDArray[np.float_]:
+        X_earth: Optional[NDArray[np.floating]] = None,
+        X_0_cloud: Optional[NDArray[np.floating]] = None,
+    ) -> NDArray[np.floating]:
         """Returns the dust density of a component at points in the Solar System
         given by 'X_helio'.
 
@@ -111,11 +111,11 @@ class Cloud(Component):
         super().__post_init__()
         self.n_0 = self.n_0.value
 
-    def compute_density(self, X_helio: NDArray[np.float_], **_) -> NDArray[np.float_]:
+    def compute_density(self, X_helio: NDArray[np.floating], **_) -> NDArray[np.floating]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.linalg.norm(X_comp, axis=0)
+        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -172,12 +172,12 @@ class Band(Component):
         self.delta_r = (self.delta_r / u.AU).value  # [AU] -> [AU per 1 AU]
 
     def compute_density(
-        self, X_helio: NDArray[np.float_], X_0_cloud: NDArray[np.float_], **_
-    ) -> NDArray[np.float_]:
+        self, X_helio: NDArray[np.floating], X_0_cloud: NDArray[np.floating], **_
+    ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
         X_comp = X_helio - X_0_cloud
-        R_comp = np.linalg.norm(X_comp, axis=0)
+        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -230,12 +230,12 @@ class Ring(Component):
         self.sigma_z = (self.sigma_z / u.AU).value
 
     def compute_density(
-        self, X_helio: NDArray[np.float_], **_
-    ) -> NDArray[np.float_]:
+        self, X_helio: NDArray[np.floating], **_
+    ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.linalg.norm(X_comp, axis=0)
+        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -290,14 +290,14 @@ class Feature(Component):
 
     def compute_density(
         self,
-        X_helio: NDArray[np.float_],
-        X_earth: NDArray[np.float_],
+        X_helio: NDArray[np.floating],
+        X_earth: NDArray[np.floating],
         **_,
-    ) -> NDArray[np.float_]:
+    ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.linalg.norm(X_comp, axis=0)
+        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i

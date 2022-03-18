@@ -1,15 +1,20 @@
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
 
 from astropy.units import Quantity
 import astropy.units as u
+import numpy as np
+from numpy.typing import NDArray
 
 from zodipy._components import Component
 from zodipy._labels import CompLabel, LABEL_TO_CLASS
 
 __all__ = ("InterplanetaryDustModel", "ModelRegistry")
 
+
+class CloudComponentMissingError(Exception):
+    """Raised if an `InterplanetaryDustModel` model is missing the Diffuse Cloud."""
 
 @dataclass
 class InterplanetaryDustModel:
@@ -23,11 +28,15 @@ class InterplanetaryDustModel:
     albedo_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
     phase_coeffs: Optional[dict[str, Quantity]] = None
     phase_coeffs_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None
-    meta: Optional[dict[str, Any]] = field(default_factory=dict)
+    meta: dict[str, Any] = field(default_factory=dict)
     comps: dict[CompLabel, Component] = field(init=False)
 
-    def __post_init__(self):
-        # Initialize the component classes from the `comp_params` dict.
+    def __post_init__(self) -> None:
+        if CompLabel.CLOUD not in self.comp_params:
+            raise CloudComponentMissingError(
+                f"""InterplanetaryDustModel {self.name!r} is missing the "
+                "Diffuse Cloud component."""
+            )
         self.comps: dict[CompLabel, Component] = {
             comp: LABEL_TO_CLASS[comp](**params)
             for comp, params in self.comp_params.items()
@@ -36,6 +45,10 @@ class InterplanetaryDustModel:
     @property
     def ncomps(self) -> int:
         return len(self.comp_params)
+
+    @property
+    def cloud_offset(self) -> NDArray[np.floating]:
+        return self.comps[CompLabel.CLOUD].X_0
 
 
 @dataclass
@@ -62,6 +75,9 @@ class ModelRegistry:
         if name in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 
+        if meta is None:
+            meta = {}
+
         self._registry[name] = InterplanetaryDustModel(
             name=name,
             comp_params=comp_params,
@@ -75,12 +91,6 @@ class ModelRegistry:
             delta=delta,
             meta=meta,
         )
-
-    def register_model_from_dict(self, model_dict: dict[str, Any]) -> None:
-        if (name := model_dict["name"]) in self._registry:
-            raise ValueError(f"a model by the name {name!s} is already registered.")
-
-        self._registry[name] = InterplanetaryDustModel.from_dict(model_dict)
 
     def get_model(self, name: str) -> InterplanetaryDustModel:
         if name not in self._registry:

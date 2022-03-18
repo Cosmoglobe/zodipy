@@ -21,7 +21,7 @@ from zodipy._source_funcs import (
 @lru_cache
 def tabulated_blackbody_emission_nu(
     freq: float,
-) -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
+) -> Callable[[NDArray[np.floating]], NDArray[np.floating]]:
     """Returns tabulated, cached array of blackbody emission."""
 
     T_range = np.linspace(50, 10000, 5000)
@@ -31,8 +31,8 @@ def tabulated_blackbody_emission_nu(
 
 
 def interp_blackbody_emission_nu(
-    freq: float, T: float | NDArray[np.float64]
-) -> NDArray[np.float64]:
+    freq: float, T: float | NDArray[np.floating]
+) -> NDArray[np.floating]:
     """Returns the interpolated black body emission for a temperature."""
 
     f = tabulated_blackbody_emission_nu(freq=freq)
@@ -45,7 +45,7 @@ def interp_blackbody_emission_nu(
 @lru_cache
 def tabulated_interplanetary_temperature(
     T_0: float, delta: float
-) -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
+) -> Callable[[NDArray[np.floating]], NDArray[np.floating]]:
     """Returns tabulated, cached array of interplanetary temperatures."""
 
     R_range = np.linspace(EPS.value, 15, 5000)
@@ -55,8 +55,8 @@ def tabulated_interplanetary_temperature(
 
 
 def interp_interplanetary_temperature(
-    R: NDArray[np.float64], T_0: float, delta: float
-) -> NDArray[np.float64]:
+    R: NDArray[np.floating], T_0: float, delta: float
+) -> NDArray[np.floating]:
     """Returns the intepolated interplanetary temperature."""
 
     f = tabulated_interplanetary_temperature(T_0=T_0, delta=delta)
@@ -65,8 +65,8 @@ def interp_interplanetary_temperature(
 
 
 def interp_solar_flux(
-    R: NDArray[np.float64], freq: float, T: float = T_sun
-) -> NDArray[np.float64]:
+    R: NDArray[np.floating], freq: float, T: float = T_sun
+) -> NDArray[np.floating]:
     """Returns the interpolated solar flux.
 
     Parameteers

@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Tuple, Union
 
 from astropy.coordinates import (
     get_body,
@@ -14,7 +14,6 @@ from numpy.typing import NDArray
 
 from zodipy._integral import trapezoidal
 from zodipy._interp import interp_phase_coeffs, interp_comp_spectral_params
-from zodipy._labels import CompLabel
 from zodipy._los_config import integration_config_registry
 from zodipy._model import InterplanetaryDustModel
 from zodipy.models import model_registry
@@ -64,12 +63,10 @@ class Zodipy:
         return self._model.meta.get("info")
 
     @property
-    def observers(self) -> Tuple[str, ...]:
+    def observers(self) -> List[str]:
         """Returns all observers suported by the ephemeridis."""
 
-        observers = list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBS
-
-        return tuple(observers)
+        return list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBS
 
     @quantity_input
     def get_emission(
@@ -79,7 +76,7 @@ class Zodipy:
         obs: str = "earth",
         *,
         obs_pos: Optional[Quantity[u.AU]] = None,
-        pixels: Optional[Union[int, Sequence[int], NDArray[np.int_]]] = None,
+        pixels: Optional[Union[int, Sequence[int], NDArray[np.integer]]] = None,
         theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
         phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
         nside: Optional[int] = None,
@@ -87,7 +84,7 @@ class Zodipy:
         binned: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-        colorcorr_table: Optional[NDArray[np.float_]] = None,
+        colorcorr_table: Optional[NDArray[np.floating]] = None,
     ) -> Quantity[u.MJy / u.sr]:
         """Returns a Zodiacal Emission timestream.
 
@@ -209,30 +206,13 @@ class Zodipy:
         if not isinstance(obs_time, Time):
             raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
-        model = self._model
-
-        earth_skycoord = get_body("Earth", time=obs_time)
-        earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
-        earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
-        if obs_pos is None:
-            if obs.lower() == "semb-l2":
-                # We assume that L2 is located at a constant distance from the
-                # Earth along Earths unit vector in heliocentric coordinates.
-                earth_length = np.linalg.norm(earth_pos)
-                earth_unit_vec = earth_pos / earth_length
-                semb_l2_length = earth_length + DISTANCE_EARTH_TO_L2
-                obs_pos = earth_unit_vec * semb_l2_length
-            else:
-                obs_skycoord = get_body(obs, time=obs_time)
-                obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
-                obs_pos = obs_skycoord.represent_as("cartesian").xyz.to(u.AU)
-        obs_pos = obs_pos.reshape(3, 1)
-        earth_pos = earth_pos.reshape(3, 1)
+        obs_pos, earth_pos = _get_solar_system_bodies(obs, obs_time, obs_pos)
 
         # If the specific value of freq is not covered by the fitted spectral
         # parameters in the model we interpolate/extrapolate to find a new
         # emissivity, albedo and scattering phase coefficients.
         freq = freq.to("GHz", equivalencies=u.spectral())
+        model = self._model
         phase_coeffs = interp_phase_coeffs(
             freq,
             phase_coeffs=model.phase_coeffs,
@@ -245,8 +225,6 @@ class Zodipy:
             albedos=model.albedos,
             albedo_spectrum=model.albedo_spectrum,
         )
-
-        cloud_offset = model.comps[CompLabel.CLOUD].X_0
 
         if binned:
             if pixels is not None:
@@ -277,7 +255,7 @@ class Zodipy:
                     observer_pos=obs_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=cloud_offset,
+                    cloud_offset=model.cloud_offset,
                     T_0=model.T_0.value,
                     delta=model.delta,
                     emissivity=spectral_comp_parameters[label]["emissivity"],
@@ -318,7 +296,7 @@ class Zodipy:
                     observer_pos=obs_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=cloud_offset,
+                    cloud_offset=model.cloud_offset,
                     T_0=model.T_0.value,
                     delta=model.delta,
                     emissivity=spectral_comp_parameters[label]["emissivity"],
@@ -335,17 +313,44 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
 
+def _get_solar_system_bodies(
+    obs: str, obs_time: Time, obs_pos: Optional[Quantity]
+) -> Tuple[Quantity[u.AU], Quantity[u.AU]]:
+    """Returns the observer and Earth's position."""
+
+    earth_skycoord = get_body("Earth", time=obs_time)
+    earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
+    earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
+
+    if obs_pos is None:
+        if obs.lower() == "semb-l2":
+            # We assume that L2 is located at a constant distance from the
+            # Earth along Earths unit vector in heliocentric coordinates.
+            earth_length = np.linalg.norm(earth_pos)
+            earth_unit_vec = earth_pos / earth_length
+            semb_l2_length = earth_length + DISTANCE_EARTH_TO_L2
+            obs_pos_ = earth_unit_vec * semb_l2_length
+        else:
+            obs_skycoord = get_body(obs, time=obs_time)
+            obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
+            obs_pos_ = obs_skycoord.represent_as("cartesian").xyz.to(u.AU)
+    else:
+        obs_pos_ = obs_pos
+
+    return obs_pos_.reshape(3, 1), earth_pos.reshape(3, 1)
+
+
 def _get_ecliptic_unit_vectors(
     coord_in: str,
-    pixels: Optional[Union[Sequence[int], NDArray[np.int_]]] = None,
+    pixels: Optional[Union[Sequence[int], NDArray[np.integer]]] = None,
     nside: Optional[int] = None,
     phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
     theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
     lonlat: bool = False,
-) -> NDArray[np.float_]:
+) -> NDArray[np.floating]:
     """
     Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
-    we need to rotate any unit vectors (obtained from the pointing) defined in 
+    we need to rotate any unit vectors (obtained from the pointing) defined in
     another coordinate frame to ecliptic before evaluating the model.
     """
 

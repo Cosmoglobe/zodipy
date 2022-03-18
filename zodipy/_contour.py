@@ -11,10 +11,10 @@ DEFAULT_EARTH_POS = np.asarray([1.0, 0.0, 0.0])
 
 
 def tabulate_density(
-    grid: NDArray[np.float_] | list[NDArray[np.float_]],
+    grid: NDArray[np.floating] | list[NDArray[np.floating]],
     model: str | InterplanetaryDustModel = "DIRBE",
-    earth_coords: NDArray[np.float_] = DEFAULT_EARTH_POS,
-) -> NDArray[np.float_]:
+    earth_coords: NDArray[np.floating] = DEFAULT_EARTH_POS,
+) -> NDArray[np.floating]:
     """Tabulates the component densities for a meshgrid."""
 
     if not isinstance(model, InterplanetaryDustModel):

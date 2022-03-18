@@ -3,7 +3,7 @@ from typing import Optional, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-import zodipy._source_funcs as source_funcs
+from zodipy._source_funcs import phase_function
 from zodipy._components import Component
 from zodipy._interp import (
     interp_blackbody_emission_nu,
@@ -15,18 +15,18 @@ from zodipy._interp import (
 def trapezoidal(
     comp: Component,
     freq: float,
-    line_of_sight: NDArray[np.float_],
-    observer_pos: NDArray[np.float_],
-    earth_pos: NDArray[np.float_],
-    unit_vectors: NDArray[np.float_],
-    cloud_offset: NDArray[np.float_],
+    line_of_sight: NDArray[np.floating],
+    observer_pos: NDArray[np.floating],
+    earth_pos: NDArray[np.floating],
+    unit_vectors: NDArray[np.floating],
+    cloud_offset: NDArray[np.floating],
     T_0: float,
     delta: float,
     emissivity: float,
     albedo: float,
     phase_coeffs: Sequence[float],
-    colorcorr_table: Optional[NDArray[np.float_]],
-) -> NDArray[np.float_]:
+    colorcorr_table: Optional[NDArray[np.floating]],
+) -> NDArray[np.floating]:
     """Returns the integrated Zodiacal emission for a component using the
     Trapezoidal method.
 
@@ -102,18 +102,18 @@ def trapezoidal(
 def get_step_emission(
     comp: Component,
     freq: float,
-    r: NDArray[np.float_],
-    observer_pos: NDArray[np.float_],
-    earth_pos: NDArray[np.float_],
-    unit_vectors: NDArray[np.float_],
-    cloud_offset: NDArray[np.float_],
+    r: NDArray[np.floating],
+    observer_pos: NDArray[np.floating],
+    earth_pos: NDArray[np.floating],
+    unit_vectors: NDArray[np.floating],
+    cloud_offset: NDArray[np.floating],
     T_0: float,
     delta: float,
     emissivity: float,
     albedo: float,
     phase_coeffs: Sequence[float],
-    colorcorr_table: Optional[NDArray[np.float_]],
-) -> NDArray[np.float_]:
+    colorcorr_table: Optional[NDArray[np.floating]],
+) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
 
     Parameters
@@ -147,7 +147,7 @@ def get_step_emission(
     r_vec = r * unit_vectors
 
     X_helio = r_vec + observer_pos
-    R_helio = np.linalg.norm(X_helio, axis=0)
+    R_helio = np.sqrt(X_helio[0]**2 + X_helio[1]**2 + X_helio[2]**2)
 
     density = comp.compute_density(
         X_helio=X_helio,
@@ -170,8 +170,8 @@ def get_step_emission(
     if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = interp_solar_flux(R=R_helio, freq=freq)
-        phase_function = source_funcs.phase_function(scattering_angle, *phase_coeffs)
-        emission += albedo * solar_flux * phase_function
+        phase = phase_function(scattering_angle, *phase_coeffs)
+        emission += albedo * solar_flux * phase
 
     emission *= density
 
