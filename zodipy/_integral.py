@@ -169,7 +169,7 @@ def get_step_emission(
 
     if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = interp_solar_flux(R=R_helio, freq=freq)
+        solar_flux = interp_solar_flux(R_helio, freq)
         phase = phase_function(scattering_angle, *phase_coeffs)
         emission += albedo * solar_flux * phase
 

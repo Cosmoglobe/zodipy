@@ -7,7 +7,7 @@ from zodipy.models import model_registry
 from zodipy._model import InterplanetaryDustModel
 from zodipy._labels import CompLabel
 
-DEFAULT_EARTH_POS = np.asarray([1.0, 0.0, 0.0])
+DEFAULT_EARTH_POS = np.array([1.0, 0.0, 0.0])
 
 
 def tabulate_density(

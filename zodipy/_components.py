@@ -39,20 +39,15 @@ class Component(ABC):
     Omega: Quantity[u.deg] | Quantity[u.rad]
 
     def __post_init__(self) -> None:
-        # [AU] -> [AU per 1 AU]
-        self.x_0 = (self.x_0 / u.AU).value
-        self.y_0 = (self.y_0 / u.AU).value
-        self.z_0 = (self.z_0 / u.AU).value
-        self.X_0 = np.expand_dims(np.asarray([self.x_0, self.y_0, self.z_0]), axis=1)
-
-        self.i = self.i.to(u.rad).value
-        self.Omega = self.Omega.to(u.rad).value
+        self.X_0 = np.expand_dims(
+            [self.x_0.value, self.y_0.value, self.z_0.value], axis=1,
+        )
 
         # Computing frequently used variables
-        self.sin_i = np.sin(self.i)
-        self.cos_i = np.cos(self.i)
-        self.sin_Omega = np.sin(self.Omega)
-        self.cos_Omega = np.cos(self.Omega)
+        self.sin_i = np.sin(self.i).value
+        self.cos_i = np.cos(self.i).value
+        self.sin_Omega = np.sin(self.Omega).value
+        self.cos_Omega = np.cos(self.Omega).value
 
     @abstractmethod
     def compute_density(
@@ -109,13 +104,15 @@ class Cloud(Component):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.n_0 = self.n_0.value
+        self.n_0 = self.n_0.value 
 
-    def compute_density(self, X_helio: NDArray[np.floating], **_) -> NDArray[np.floating]:
+    def compute_density(
+        self, X_helio: NDArray[np.floating], **_
+    ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
+        R_comp = np.sqrt(X_comp[0] ** 2 + X_comp[1] ** 2 + X_comp[2] ** 2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -161,15 +158,8 @@ class Band(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
         self.n_0 = self.n_0.value
-        self.delta_zeta = self.delta_zeta.to(u.rad)
-        # NOTE: zeta/delta_zeta has to be unitless in the K98 migrating band
-        # expression. We are unsure why the units of delta_zeta is given in
-        # degrees, but it could be due to some small angle approximation with
-        # cos theta. Nevertheless, we must divide away the units of radians
-        # for the zeta/delta_zeta to be unitless.
-
-        self.delta_zeta = (self.delta_zeta / u.rad).value
-        self.delta_r = (self.delta_r / u.AU).value  # [AU] -> [AU per 1 AU]
+        self.delta_zeta = self.delta_zeta.to(u.rad).value
+        self.delta_r = self.delta_r.value
 
     def compute_density(
         self, X_helio: NDArray[np.floating], X_0_cloud: NDArray[np.floating], **_
@@ -177,7 +167,7 @@ class Band(Component):
         """See base class for documentation."""
 
         X_comp = X_helio - X_0_cloud
-        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
+        R_comp = np.sqrt(X_comp[0] ** 2 + X_comp[1] ** 2 + X_comp[2] ** 2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -223,11 +213,9 @@ class Ring(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
         self.n_0 = self.n_0.value
-
-        # [AU] -> [AU per 1 AU]
-        self.R = (self.R / u.AU).value
-        self.sigma_r = (self.sigma_r / u.AU).value
-        self.sigma_z = (self.sigma_z / u.AU).value
+        self.R = self.R.value
+        self.sigma_r = self.sigma_r.value
+        self.sigma_z = self.sigma_z.value
 
     def compute_density(
         self, X_helio: NDArray[np.floating], **_
@@ -235,7 +223,7 @@ class Ring(Component):
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
+        R_comp = np.sqrt(X_comp[0] ** 2 + X_comp[1] ** 2 + X_comp[2] ** 2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
@@ -280,13 +268,11 @@ class Feature(Component):
     def __post_init__(self) -> None:
         super().__post_init__()
         self.n_0 = self.n_0.value
-        self.theta = (self.theta.to(u.rad)).value
-        self.sigma_theta = (self.sigma_theta.to(u.rad)).value
-
-        # [AU] -> [AU per 1 AU]
-        self.R = (self.R / u.AU).value
-        self.sigma_r = (self.sigma_r / u.AU).value
-        self.sigma_z = (self.sigma_z / u.AU).value
+        self.theta = self.theta.to(u.rad).value
+        self.sigma_theta = self.sigma_theta.to(u.rad).value
+        self.R = self.R.value
+        self.sigma_r = self.sigma_r.value
+        self.sigma_z = self.sigma_z.value
 
     def compute_density(
         self,
@@ -297,7 +283,7 @@ class Feature(Component):
         """See base class for documentation."""
 
         X_comp = X_helio - self.X_0
-        R_comp = np.sqrt(X_comp[0]**2 + X_comp[1]**2 + X_comp[2]**2)
+        R_comp = np.sqrt(X_comp[0] ** 2 + X_comp[1] ** 2 + X_comp[2] ** 2)
 
         Z_comp = (
             X_comp[0] * self.sin_Omega * self.sin_i
