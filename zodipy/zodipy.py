@@ -29,23 +29,23 @@ DISTANCE_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 class Zodipy:
     """The Zodipy interface.
 
-    Zodipy allows the user to produce simulated timestreams or binned maps of
-    Interplanetary Dust emission as predicted by the Kelsall et al. (1998) model.
+    Zodipy simulates the Zodiacal emission that a Solar System observer is
+    predicted to see given the Kelsall et al. (1998) interplanetary dust model. 
     """
 
     def __init__(self, model: str = "DIRBE", ephemeris: str = "de432s") -> None:
-        """Initializes the interface given a model and an emphemeris.
+        """Initializes Zodipy for a given a model and emphemeris.
 
         Parameters
         ----------
         model
-            The name of the model to initialize. Defaults to DIRBE. See all
-            available models in `zodipy.MODELS`.
+            The name of the interplanetary dust model. Defaults to DIRBE. See all
+            available models with `zodipy.MODELS`.
         ephemeris
             Ephemeris used to compute the positions of the observer and Earth.
-            Defaults to 'de432s' which requires downloading a 10 MB file.
-            See https://docs.astropy.org/en/stable/coordinates/solarsystem.html
-            for more information on available ephemeridises.
+            Defaults to 'de432s' which requires downloading (and caching) a 10 
+            MB file. For more information on available ephemeridis, please visit
+            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
         """
 
         self._model = model_registry.get_model(model)
@@ -53,7 +53,7 @@ class Zodipy:
         solar_system_ephemeris.set(ephemeris)
 
     @property
-    def ipd_model(self) -> InterplanetaryDustModel:
+    def model(self) -> InterplanetaryDustModel:
         """Returns the IPD model."""
 
         return self._model
@@ -86,15 +86,16 @@ class Zodipy:
         coord_in: Literal["E", "G", "C"] = "E",
         colorcorr_table: Optional[NDArray[np.floating]] = None,
     ) -> Quantity[u.MJy / u.sr]:
-        """Returns a Zodiacal Emission timestream.
+        """Returns simulated Zodiacal Emission.
 
         This function takes as arguments a frequency or wavelength (`freq`),
-        time of observation (`obs_time`), an observer (`obs`) for which the
-        position is computed using the ephemeris specified when initializing
-        `Zodipy` or an observer position (`obs_pos`) which overrides `obs`.
-        Furthermore, the pointing of the observer is specified either in the
-        form of angles on the sky (`theta`, `phi`), or as HEALPIX pixels at
-        some resolution (`pixels`, `nside`).
+        time of observation (`obs_time`), an a Solar System observer (`obs`).
+        The position of the observer is computed using the pehemeris specified 
+        in the initialization of `Zodipy`. Optionally, the observer position 
+        can be explicitly specified with the `obs_pos` argument, which 
+        overrides`obs`. The pointing, for which to compute the emission, is 
+        specified either in the form of angles on the sky (`theta`, `phi`), or 
+        as HEALPIX pixels at some resolution (`pixels`, `nside`).
 
         Parameters
         ----------
@@ -125,7 +126,7 @@ class Zodipy:
         lonlat
             If True, input angles (`theta`, `phi`) are assumed to be longitude
             and latitude, otherwise, they are co-latitude and longitude.
-            longitude must be in []
+            Seeting lonlat to True corresponds to theta=RA, phi=DEC
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         binned

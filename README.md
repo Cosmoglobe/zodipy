@@ -1,5 +1,5 @@
 
-<img src="imgs/zodipy_logo-nobg.png" width="350">
+<img src="imgs/zodipy_logo.png" width="350">
 
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
@@ -9,122 +9,92 @@
 ---
 
 
-*Zodipy* is a Python simulation tool for Zodiacal Emission (Interplanetary Dust Emission). It allows you to compute the 
-simulated interplanetary dust emission for a timestream of pixels, or at an instant in time.
+*Zodipy* is a Python tool for predicting the observer Interplanetary Dust Emission for a Solar System observer, either in the form of timestreams or binned maps.
 
-![plot](imgs/zodi_default.png)
+![plot](imgs/zodipy_map.png)
 
-## Installing
-Zodipy is available at PyPI and can be installed with ``pip install zodipy``.
 
-## Features
-The full set of features and use-cases will be documentated in the nearby future.
+# Usage
+A full introduction to *Zodipy* and its use-cases can be found in the [documentation]().
 
-**Initializing an Interplantery Dust Model:** *Zodipy* implements the [Kelsall et al. (1998)](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract) Interplanetary Dust Model. Additionally, it is possible to include the various emissivity fits from the Planck collaboration.
+**Interplanetary Dust models:** select between built in models.
 ```python
 from zodipy import Zodipy
 
-model = Zodipy(model="DIRBE")
+model = Zodipy(model="DIRBE") # DIRBE
+model = Zodipy(model="Planck18") # Planck 2018
 ```
 
-**Instantaneous emission:** We can make a map of the simulated instantaneous emission seen by an observer using the `get_instantaneous_emission` function, which queries the observer position given an epoch through the JPL Horizons API:
+**Get emission from a point on the sky:** choose a frequency/wavelength, an observer, a time of observation, and angular coordinates (co-latitude, longitude).
+```python
+import astropy.units as u
+from astropy.time import Time
+
+model.get_emission(
+    25*u.micron,
+    obs="earth",
+    obs_time=Time.now(),
+    theta=10*u.deg,
+    phi=40*u.deg,
+)
+>> <Quantity [16.65684599] MJy / sr>
+```
+
+**Get emission from a sequence of angular coordinates:** `theta` and `phi` can be a sequence of angles that can represent some time-ordered pointing.
+```python
+theta = [10.1, 10.5, 11.1, 11.5] * u.deg # Longitude
+phi = [40.2, 39.9, 39.8, 41.3] * u.deg # Latitude
+
+model.get_emission(
+    25*u.micron,
+    obs="earth",
+    obs_time=Time.now(),
+    theta=theta,
+    phi=phi,
+    lonlat=True,
+)
+>> <Quantity [29.11106315, 29.33735654, 29.41248579, 28.30858417] MJy / sr>
+```
+
+
+**Get emission from pixel indices on a HEALPIX grid:** a sequence of pixel indicies along with an NSIDE parameter can be used.
+```python
+model.get_emission(
+    25*u.micron,
+    obs="earth",
+    obs_time=Time.now(),
+    pixels=[24654, 12937, 26135],
+    nside=128,
+)
+>> <Quantity [17.77385144, 19.7889428 , 22.44797121] MJy / sr>
+```
+
+**Get binned emission component-wise:** the emission can be binned to a HEALPIX map, and also returned component-wise.
 ```python
 import healpy as hp
-import astropy.units as u
-
-emission = model.get_instantaneous_emission(
-    800*u.GHz, 
-    nside=256, 
-    observer="Planck", 
-    epochs=59215,  # 2010-01-01 (iso) in MJD
-    coord_out="G"
-)
-
-hp.mollview(emission, norm="hist")
-```
-![plot](imgs/zodi_planck.png)
-
-The `epochs` input must follow the convention used in [astroquery](https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html). If multiple dates are passed to the function, the returned emission becomes the average over all instantaneous maps.
-
-The individual components can be retrieved by setting the keyword `return_comps=True`. Following is an example of the simulated *instantaneous emission* with Zodipy seen from L2 for each component at October 6th 2021.
-
-![plot](imgs/comps.png)
-
-
-**Time-ordered emission:** We can make a time-stream of simulated emission for a sequence of time-ordered pixels using the `get_time_ordered_emission` function. This requires specifying the heliocentric ecliptic cartesian position of the observer (and optionally the Earth) associated with each chunk of pixels. In the following we use the first day of time-ordered pixels from the DIRBE instrument of the COBE satellite (Photometric Band 6, Detector A, first day of observations) to make a simulated time-stream:
-```python
-import astropy.units as u
-import matplotlib.pyplot as plt
-from zodipy import Zodipy
-
-model = Zodipy()
-
-# Read in DIRBE tod information
-dirbe_tods = ...
-dirbe_pixels = ...
-dirbe_position = ...  
-
-timestream = model.get_time_ordered_emission(
-    25*u.micron
-    nside=128,
-    pixels=dirbe_pixels,
-    observer_pos=dirbe_position,
-    color_corr=True, # Include the DIRBE color correction factor
-)
-
-plt.plot(dirbe_tods, label="DIRBE TODS")
-plt.plot(timestream, label="Zodipy simulation")
-plt.legend()
-plt.show()
-```
-![plot](imgs/timestream.png)
-
-
-**Binned time-ordered emission:** By setting `bin=True` in the function call, the simulated emission is binned into a HEALPIX map. In the following, we compare *Zodipy* simulated maps with the observed binned time-ordered data by DIRBE in week maps.
-
-```python
-import astropy.units as u
-import matplotlib.pyplot as plt
-from zodipy import Zodipy
-
-model = Zodipy()
+import numpy as np
 
 nside = 128
-wavelen = 25*u.micron
 
-dirbe_tod_chunks = [...]
-dirbe_pixel_chunks = [...]
-dirbe_positions = [...]
-
-emission = np.zeros(hp.nside2npix(nside))
-hits_map = np.zeros(hp.nside2npix(nside))   
-    
-for day, (pixels, dirbe_pos) in enumerate(
-    zip(dirbe_pixel_chunks, dirbe_positions),
-    start=1
-):
-    
-    # Get unique pixel hit and numbers to build hits_map
-    unique_pixels, counts = np.unique(pixels, return_counts=True)
-    hits_map[unique_pixels] += counts
-
-    emission += model.get_time_ordered_emission(
-        wavelen,
-        nside=nside,
-        pixels=pixels,
-        observer_pos=dirbe_position,
-        bin=True,
-        color_corr=True
-    )
-
-    if day % 7 == 0:
-        zodi_emission /= hits_map
-        hp.mollview(zodi_emission)
-
-        # Reset emission and hits map for next week
-        emission = np.zeros(hp.nside2npix(nside)) 
-        hits_map = np.zeros(hp.nside2npix(nside)) 
+model.get_emission(
+    25*u.micron,
+    obs="earth",
+    obs_time=Time.now(),
+    pixels=np.arange(hp.nside2npix(nside)),
+    nside=nside,
+    binned=True,
+    return_comps=True
+).shape
+>> (6, 196608)
 ```
 
-![plot](imgs/tods.gif) 
-![plot](imgs/zodipy.gif)
+# Documentation
+A detailed introduction along with a tutorial of how to use *Zodipy* can be found in the [documentation]().
+# Installing
+Zodipy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
+
+# Scientific paper
+- San et al. (2022). Zodipy: software for simulating Interplanetary Dust Emission. Manuscript in preparation.
+
+
+<!-- *Zodipy* defaults to using the interplanetary dust model developed by the DIRBE team, and the `de432s` JPL ephemeris (10 MB file downloaded and cached first time `Zodipy` is initialized). The ephemeris is used to compute the position of the relevant Solar System bodies through the `astropy.coordinates.solar_system_ephemeris` api.  -->

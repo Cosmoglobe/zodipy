@@ -524,6 +524,17 @@ format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors
 format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator (>0.1.0)", "rfc3339-validator"]
 
 [[package]]
+name = "jwst-backgrounds"
+version = "1.1.2"
+description = "Retrieve and plot JWST background information"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+healpy = ">=1.10"
+
+[[package]]
 name = "keyring"
 version = "20.0.1"
 description = "Store and access your passwords safely."
@@ -1173,7 +1184,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <=3.10"
-content-hash = "086dcdd11af737ba10aa56f6fd918700df5e46e5e9ba7daea00f83dfa4e92894"
+content-hash = "5e56ea4fbdc48649665474962b8ad4db8bccb3fd1a04ae7eb3786eb4def90cd3"
 
 [metadata.files]
 appnope = [
@@ -1425,6 +1436,11 @@ jplephem = [
 jsonschema = [
     {file = "jsonschema-3.2.0-py2.py3-none-any.whl", hash = "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163"},
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
+]
+jwst-backgrounds = [
+    {file = "jwst_backgrounds-1.1.2-py3-none-any.whl", hash = "sha256:eba4a3f582d9cfdde288e09ec3bf7f9cc8079043f371dba83dd4e33f4442769c"},
+    {file = "jwst_backgrounds-1.1.2-py3.7.egg", hash = "sha256:946e9e0c2456b0181e60eefbeade2f9265e06f117dabb82d64937709e934ca94"},
+    {file = "jwst_backgrounds-1.1.2.tar.gz", hash = "sha256:e9dd6cd8d802b15e0e54774192fccf91ebc71611f641827020dbd88d6cffcbf6"},
 ]
 keyring = [
     {file = "keyring-20.0.1-py2.py3-none-any.whl", hash = "sha256:c674f032424b4bffc62abeac5523ec49cc84aed07a480c3233e0baf618efc15c"},
