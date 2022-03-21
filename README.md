@@ -15,7 +15,7 @@
 
 
 # Usage
-A full introduction to *Zodipy* and its use-cases will shorly be available in the [documentation]().
+A full introduction to *Zodipy* and its use-cases can be found in the [documentation](https://zodipy.readthedocs.io/en/latest/).
 
 **Interplanetary Dust models:** select between built in models.
 ```python
@@ -89,7 +89,7 @@ model.get_emission(
 ```
 
 # Documentation
-A detailed introduction along with a tutorial of how to use *Zodipy* will shortly be available in the [documentation]().
+A detailed introduction along with a tutorial of how to use *Zodipy* will shortly be available in the [documentation](https://zodipy.readthedocs.io/en/latest/).
 # Installing
 Zodipy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
