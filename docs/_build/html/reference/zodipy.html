@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>zodipy.Zodipy &#8212; Zodipy 0.5.0 documentation</title>
+    
+    <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  
+    
+    <link rel="stylesheet"
+      href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+    
+      
+  
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/pydata-sphinx-theme.css" />
+    
+    <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="zodipy._components" href="components.html" />
+    <link rel="prev" title="Reference" href="../reference.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+
+<a class="navbar-brand" href="../index.html">
+  <img src="../_static/zodipy_logo.png" class="logo" alt="logo">
+</a>
+
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../introduction.html">
+  Introduction
+ </a>
+</li>
+
+<li class="toctree-l1 current active nav-item">
+ <a class="reference internal nav-link" href="../reference.html">
+  Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/MetinSa/zodipy" rel="noopener" target="_blank" title="GitHub"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar">
+              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     zodipy.Zodipy
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="components.html">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     zodipy._components
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="models.html">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     zodipy._model
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+              </div>
+              <div class="sidebar-end-items">
+              </div>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+
+<nav id="bd-toc-nav">
+    
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <section id="zodipy-zodipy">
+<span id="zodipy-overview"></span><h1><code class="docutils literal notranslate"><span class="pre">zodipy.Zodipy</span></code><a class="headerlink" href="#zodipy-zodipy" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="zodipy.Zodipy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy.</span></span><span class="sig-name descname"><span class="pre">Zodipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DIRBE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ephemeris</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'de432s'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/zodipy.html#Zodipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy.Zodipy" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Zodipy interface.</p>
+<p>Zodipy simulates the Zodiacal emission that a Solar System observer is
+predicted to see given the Kelsall et al. (1998) interplanetary dust model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="zodipy.Zodipy.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DIRBE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ephemeris</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'de432s'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/zodipy.html#Zodipy.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy.Zodipy.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes Zodipy for a given a model and emphemeris.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the interplanetary dust model. Defaults to DIRBE. See all
+available models with <cite>zodipy.MODELS</cite>.</p></li>
+<li><p><strong>ephemeris</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Ephemeris used to compute the positions of the observer and Earth.
+Defaults to ‘de432s’ which requires downloading (and caching) a 10
+MB file. For more information on available ephemeridis, please visit
+<a class="reference external" href="https://docs.astropy.org/en/stable/coordinates/solarsystem.html">https://docs.astropy.org/en/stable/coordinates/solarsystem.html</a></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="zodipy.Zodipy.get_emission">
+<span class="sig-name descname"><span class="pre">get_emission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'earth'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nside</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lonlat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">binned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_comps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'E'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorcorr_table</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/zodipy.html#Zodipy.get_emission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy.Zodipy.get_emission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns simulated Zodiacal Emission.</p>
+<p>This function takes as arguments a frequency or wavelength (<cite>freq</cite>),
+time of observation (<cite>obs_time</cite>), an a Solar System observer (<cite>obs</cite>).
+The position of the observer is computed using the pehemeris specified
+in the initialization of <cite>Zodipy</cite>. Optionally, the observer position
+can be explicitly specified with the <cite>obs_pos</cite> argument, which
+overrides`obs`. The pointing, for which to compute the emission, is
+specified either in the form of angles on the sky (<cite>theta</cite>, <cite>phi</cite>), or
+as HEALPIX pixels at some resolution (<cite>pixels</cite>, <cite>nside</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>]]) – Frequency or wavelength at which to evaluate the Zodiacal emission.
+Must have units compatible with Hz or m.</p></li>
+<li><p><strong>obs_time</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Time</span></code>) – Time of observation (<cite>astropy.time.Time</cite> object).</p></li>
+<li><p><strong>obs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The solar system observer. A list of all support observers (for a
+given ephemeridis) is specified in <cite>observers</cite> attribute of the
+<cite>zodipy.Zodipy</cite> instance. Defaults to ‘earth’.</p></li>
+<li><p><strong>obs_pos</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>]]) – The heliocentric ecliptic cartesian position of the observer in AU.
+Overrides the <cite>obs</cite> argument. Default is None.</p></li>
+<li><p><strong>pixels</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">integer</span></code>]], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – A single, or a sequence of HEALPIX pixels representing points on
+the sky. The <cite>nside</cite> parameter, which specifies the resolution of
+these pixels, must also be provided along with this argument.</p></li>
+<li><p><strong>theta</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Angular coordinates (co-latitude, longitude ) of a point, or a
+sequence of points, on the sphere. Units must be radians or degrees.
+co-latitude must be in [0, pi] rad, and longitude in [0, 2*pi] rad.</p></li>
+<li><p><strong>phi</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Quantity</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Angular coordinates (co-latitude, longitude ) of a point, or a
+sequence of points, on the sphere. Units must be radians or degrees.
+co-latitude must be in [0, pi] rad, and longitude in [0, 2*pi] rad.</p></li>
+<li><p><strong>nside</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – HEALPIX map resolution parameter of the pixels (and optionally the
+binned output map). Must be specified if <cite>pixels</cite> is provided or if
+<cite>binned</cite> is set to True.</p></li>
+<li><p><strong>lonlat</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, input angles (<cite>theta</cite>, <cite>phi</cite>) are assumed to be longitude
+and latitude, otherwise, they are co-latitude and longitude.
+Seeting lonlat to True corresponds to theta=RA, phi=DEC</p></li>
+<li><p><strong>return_comps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, the emission is returned component-wise. Defaults to False.</p></li>
+<li><p><strong>binned</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, the emission is binned into a HEALPIX map with resolution
+given by the <cite>nside</cite> argument in the coordinate frame corresponding to
+<cite>coord_in</cite>. Defaults to False.</p></li>
+<li><p><strong>coord_in</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[‘E’, ‘G’, ‘C’]) – Coordinates frame of the pointing. Assumes ‘E’ (ecliptic coordinates)
+by default.</p></li>
+<li><p><strong>colorcorr_table</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">floating</span></code>]]]) – An array of shape (2, n) where the first column is temperatures
+in K, and the second column the corresponding color corrections.
+The color corrections should be for B(lambda, T) and is only applied
+to the thermal contribution of the emission.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sequence of simulated Zodiacal emission in units of ‘MJy/sr’ for
+each pointing. If the pointing is provided in a time-ordered manner,
+then the output of this function can be interpreted as the observered
+Zodiacal Emission timestream.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>emission</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="zodipy.Zodipy.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#zodipy._model.InterplanetaryDustModel" title="zodipy._model.InterplanetaryDustModel"><span class="pre">zodipy._model.InterplanetaryDustModel</span></a></em><a class="headerlink" href="#zodipy.Zodipy.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the IPD model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="models.html#zodipy._model.InterplanetaryDustModel" title="zodipy._model.InterplanetaryDustModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">InterplanetaryDustModel</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="zodipy.Zodipy.observers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">observers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#zodipy.Zodipy.observers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all observers suported by the ephemeridis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="../reference.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Reference</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="components.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code></p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+    <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2022, Metin San.<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
