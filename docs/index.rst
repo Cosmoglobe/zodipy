@@ -20,4 +20,5 @@ maps.
    :caption: Contents:
 
    introduction.rst
+   tutorials.rst
    reference.rst
