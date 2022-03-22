@@ -3,9 +3,9 @@
 Reference
 =========
 
-The main interface to `Zodipy` is called :ref:`Zodipy overview`. This is the part of the code
-the user interacts with. The implementation of the Interplanetary Dust Models
-and the Zodiacal components can be found in :ref:`components overview` and :ref:`model overview`.
+The interface of `Zodipy` is the :ref:`Zodipy overview` class. The
+implementation of the Interplanetary Dust Models and the Zodiacal components can
+be found in :ref:`components overview` and :ref:`model overview`.
 
 .. toctree::
     :maxdepth: 3

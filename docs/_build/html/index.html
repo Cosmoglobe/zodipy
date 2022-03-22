@@ -139,9 +139,31 @@
               
               <div class="toc-item">
                 
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
 
 <nav id="bd-toc-nav">
-    
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installation">
+   Installation
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#dependencies">
+     Dependencies
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#user-guide">
+   User Guide
+  </a>
+ </li>
+</ul>
+
 </nav>
               </div>
               
@@ -167,13 +189,32 @@
 Solar System observer sees, either in the form of timestreams or binned HEALPIX
 maps.</p>
 <img alt="An example map from Zodipy" class="align-center" src="_images/zodipy_map.png" />
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p><cite>Zodipy</cite> is available on PyPI, and can be installed with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install zodipy
+</pre></div>
+</div>
+<section id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Python &gt;= 3.8</p></li>
+<li><p>astropy &gt;= 5.0.1</p></li>
+<li><p>numpy &gt;= 1.21</p></li>
+<li><p>healpy</p></li>
+<li><p>scipy</p></li>
+<li><p>jplephem</p></li>
+</ul>
+</section>
+</section>
+<section id="user-guide">
+<h2>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="introduction.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#user-interface">User Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="introduction.html#interplanetary-dust-models">Interplanetary Dust Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="introduction.html#a-quick-example">A Quick Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#the-get-emission-function">The <code class="docutils literal notranslate"><span class="pre">get_emission</span></code> Function</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials (coming soon)</a></li>
@@ -185,6 +226,7 @@ maps.</p>
 </li>
 </ul>
 </div>
+</section>
 </section>
 
 

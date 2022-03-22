@@ -14,10 +14,31 @@ maps.
    :align: center
    :alt: An example map from Zodipy
 
+Installation
+------------
+
+`Zodipy` is available on PyPI, and can be installed with:
+
+.. code-block:: bash
+
+   pip install zodipy
+
+------------
+Dependencies
+------------
+
+- Python >= 3.8
+- astropy >= 5.0.1
+- numpy >= 1.21
+- healpy
+- scipy
+- jplephem
+
+User Guide
+----------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    introduction.rst
    tutorials.rst

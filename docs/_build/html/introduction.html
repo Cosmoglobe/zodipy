@@ -34,7 +34,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Reference" href="reference.html" />
+    <link rel="next" title="Tutorials (coming soon)" href="tutorials.html" />
     <link rel="prev" title="Zodipy" href="index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -75,6 +75,12 @@
     <li class="toctree-l1 current active nav-item">
  <a class="current reference internal nav-link" href="#">
   Introduction
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="tutorials.html">
+  Tutorials (coming soon)
  </a>
 </li>
 
@@ -141,8 +147,8 @@
 <nav id="bd-toc-nav">
     <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#installation">
-   Installation
+  <a class="reference internal nav-link" href="#user-interface">
+   User Interface
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -151,8 +157,14 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#a-quick-example">
-   A Quick Example
+  <a class="reference internal nav-link" href="#the-get-emission-function">
+   The
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     get_emission
+    </span>
+   </code>
+   Function
   </a>
  </li>
 </ul>
@@ -185,35 +197,47 @@ position of the observer explicitly. Additionally, the user must specify the
 pointing of the observer, either in form of angular coordinates <code class="docutils literal notranslate"><span class="pre">theta</span></code> and
 <code class="docutils literal notranslate"><span class="pre">phi</span></code>, or though pixel numbers refering to the pixels on a HEALPIX grid.</p>
 <p>The software is described in further detail in <em>San et al. 2022</em> (in preperation).</p>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p><cite>Zodipy</cite> is available on PyPI, and can be installed with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">zodipy</span></code>.
-It has the following dependencies:</p>
-<ul class="simple">
-<li><p>Python &gt;= 3.8</p></li>
-<li><p>astropy &gt;= 5.0.1</p></li>
-<li><p>numpy &gt;= 1.21</p></li>
-<li><p>healpy</p></li>
-<li><p>scipy</p></li>
-<li><p>jplephem</p></li>
-</ul>
+<section id="user-interface">
+<h2>User Interface<a class="headerlink" href="#user-interface" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>Zodipy</cite> interface is given by the <a class="reference internal" href="reference/zodipy.html#zodipy-overview"><span class="std std-ref">zodipy.Zodipy</span></a> class. It is intialized as following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">()</span>
+</pre></div>
+</div>
 </section>
 <section id="interplanetary-dust-models">
 <h2>Interplanetary Dust Models<a class="headerlink" href="#interplanetary-dust-models" title="Permalink to this headline">¶</a></h2>
-<p>The default Interplanetary Dust model used in <cite>zodipy</cite> is the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K">DIRBE model</a>. Other options
-are:</p>
+<p>The default Interplanetary Dust model used in <cite>Zodipy</cite> is the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K">DIRBE model</a>.
+Other built in models are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract">Planck 2013</a></p></li>
-<li><p><a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P">Planck 2015</a></p></li>
-<li><p><a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P">Planck 2018</a></p></li>
+<li><p>Planck13 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract">Planck Collaboration et al. 2014</a>)</p></li>
+<li><p>Planck15 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P">Planck Collaboration et al. 2016</a>)</p></li>
+<li><p>Planck18 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P">Planck Collaboration et al. 2020</a>)</p></li>
 </ul>
 </div></blockquote>
+<p>Selecting one of this is done in the intialization of <cite>Zodipy</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;Planck15&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
-<section id="a-quick-example">
-<h2>A Quick Example<a class="headerlink" href="#a-quick-example" title="Permalink to this headline">¶</a></h2>
-<p>Here is a simple example of using <cite>Zodipy</cite> to simulate the Zodiacal emission
-from a point on the sky:</p>
+<section id="the-get-emission-function">
+<h2>The <code class="docutils literal notranslate"><span class="pre">get_emission</span></code> Function<a class="headerlink" href="#the-get-emission-function" title="Permalink to this headline">¶</a></h2>
+<p>Once <cite>Zodipy</cite> is initialized, the next step is to simulate some emission. This
+is done through the <code class="docutils literal notranslate"><span class="pre">get_emission</span></code> function (see <a class="reference internal" href="reference/zodipy.html#zodipy-overview"><span class="std std-ref">zodipy.Zodipy</span></a>). This
+function takes the following main arguments.</p>
+<ul class="simple">
+<li><p><strong>freq</strong> (required): must be an <code class="docutils literal notranslate"><span class="pre">astropy.quantity.Quantity</span></code> object with units of frequnecy or length, and represents the frequency / wavelength for which we want to simulate the Zodiacal emission.</p></li>
+<li><p><strong>obs_time</strong> (required): must be an <code class="docutils literal notranslate"><span class="pre">astropy.time.Time</span></code> object that represents the time of observation.</p></li>
+<li><p><strong>obs</strong>: a string representing the observer, e.g. “earth”.</p></li>
+<li><p><strong>pixels</strong> and <strong>nside</strong>: <code class="docutils literal notranslate"><span class="pre">Pixels</span></code> must be a <code class="docutils literal notranslate"><span class="pre">sequence[int]</span></code> or an <code class="docutils literal notranslate"><span class="pre">NDArray[int]</span></code> representing the pixel indicies on a HEALPIX grid, and <code class="docutils literal notranslate"><span class="pre">nside</span></code> is an integer representing the resolution of the HEALPIX grid.</p></li>
+<li><p><strong>theta</strong> and <strong>phi</strong>: Angular coordinates on the sky (co-latitude, longitude). Must be <code class="docutils literal notranslate"><span class="pre">astropy.quantity.Quantity</span></code> objects with units of either degrees or radians.</p></li>
+</ul>
+<p>Below is a minimal example where we use the <code class="docutils literal notranslate"><span class="pre">get_emission</span></code> function to compute
+the emission as predicted by the “Planck18” model and seen by an observer
+located at the Sun-Earth-Moon-Barycenter L2, who observes a point on the sky given by the coordinate
+<code class="docutils literal notranslate"><span class="pre">theta</span></code> and <code class="docutils literal notranslate"><span class="pre">phi</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
 <span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
@@ -223,15 +247,16 @@ from a point on the sky:</p>
 <span class="n">emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_emission</span><span class="p">(</span>
    <span class="mi">100</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
    <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;SEMB-L2&quot;</span><span class="p">,</span>
-   <span class="n">obs_time</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+   <span class="n">obs_time</span><span class="o">=</span><span class="n">Time</span><span class="p">(</span><span class="s2">&quot;2022-06-14&quot;</span><span class="p">),</span>
    <span class="n">theta</span><span class="o">=</span><span class="mf">23.4</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">,</span>
    <span class="n">phi</span><span class="o">=-</span><span class="mi">30</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span>
 <span class="p">)</span>
 
 <span class="o">&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">emission</span><span class="p">)</span>
-<span class="o">&lt;</span><span class="n">Quantity</span> <span class="p">[</span><span class="mf">0.85517232</span><span class="p">]</span> <span class="n">MJy</span> <span class="o">/</span> <span class="n">sr</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">Quantity</span> <span class="p">[</span><span class="mf">0.73169181</span><span class="p">]</span> <span class="n">MJy</span> <span class="o">/</span> <span class="n">sr</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+<p>For more information on the <code class="docutils literal notranslate"><span class="pre">get_emission</span></code> function and all of its optional arguments, please see <a class="reference internal" href="reference/zodipy.html#zodipy-overview"><span class="std std-ref">zodipy.Zodipy</span></a>.</p>
 </section>
 </section>
 
@@ -248,10 +273,10 @@ from a point on the sky:</p>
             <p class="prev-next-title">Zodipy</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="reference.html" title="next page">
+    <a class='right-next' id="next-link" href="tutorials.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Reference</p>
+        <p class="prev-next-title">Tutorials (coming soon)</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
