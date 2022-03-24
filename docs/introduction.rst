@@ -30,6 +30,7 @@ Other built in models are:
    - Planck13 (`Planck Collaboration et al. 2014 <https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>`_)
    - Planck15 (`Planck Collaboration et al. 2016 <https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P>`_)
    - Planck18 (`Planck Collaboration et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P>`_)
+   - Odegard (`Odegard et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract>`_)
 
 Selecting one of this is done in the intialization of `Zodipy`:
 

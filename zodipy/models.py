@@ -51,3 +51,14 @@ model_registry.register_model(
     delta=source_params.delta_K98,
     meta={"info": "The Interplanetary Dust Model used in the Planck 2018 analysis."},
 )
+
+model_registry.register_model(
+    name="Odegard",
+    comp_params=comp_params.PLANCK,
+    emissivities=source_params.EMISSIVITY_ODEGARD,
+    emissivity_spectrum=source_params.SPECTRUM_PLANCK,
+    T_0=source_params.T_0_K98,
+    delta=source_params.delta_K98,
+    meta={"info": "The Interplanetary Dust Model used in the Odegard et al. (2019) analysis."},
+)
+

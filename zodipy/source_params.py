@@ -32,6 +32,13 @@ EMISSIVITY_PLANCK_18 = {
     CompLabel.BAND3: [0.19, 0.84, 1.12, 1.77, 1.84, 2.11],
 }
 
+EMISSIVITY_ODEGARD = {
+    CompLabel.CLOUD: [0.014, 0.023, 0.063, 0.132, 0.210, 0.285],
+    CompLabel.BAND1: [1.25, 1.39, 1.85, 2.41, 2.81, 3.23],
+    CompLabel.BAND2: [0.15, 0.22, 0.40, 0.80, 1.11, 1.58],
+    CompLabel.BAND3: [0.50, 0.89, 1.22, 1.96, 2.81, 3.60],
+}
+
 
 EMISSIVITY_DIRBE = {
     CompLabel.CLOUD: [
