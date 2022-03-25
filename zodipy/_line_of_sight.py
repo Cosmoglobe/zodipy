@@ -2,16 +2,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
-import astropy.units as u
-from astropy.units import Quantity
+from numpy.typing import NDArray
 
 from zodipy._labels import CompLabel
 
 
-EPS = np.finfo(float).eps * u.AU  # Smallest non zero value.
-RADIAL_CUTOFF = 5.2 * u.AU  # Distance to Jupiter in AU.
-RING_CUTOFF = 2.25 * u.AU
-FEATURE_CUTOFF = 1 * u.AU
+# Distances are in AU
+EPS = np.finfo(float).eps  # Smallest non zero value.
+RADIAL_CUTOFF = 5.2
+RING_CUTOFF = 2.25
+FEATURE_CUTOFF = 1
 
 
 @dataclass
@@ -22,18 +22,22 @@ class LOSConfigRegistry:
     line-of-sight per component.
     """
 
-    _registry: dict[str, dict[CompLabel, Quantity[u.AU]]] = field(default_factory=dict)
+    _registry: dict[str, dict[CompLabel, NDArray[np.floating]]] = field(
+        default_factory=dict
+    )
 
     def register_config(
         self,
         name: str,
-        comps: dict[CompLabel, Quantity],
+        comps: dict[CompLabel, NDArray[np.floating]],
     ) -> None:
         """Adds a new integration config to the registry."""
 
         self._registry[name] = comps
 
-    def get_config(self, name: str = "default") -> dict[CompLabel, Quantity[u.AU]]:
+    def get_config(
+        self, name: str = "default"
+    ) -> dict[CompLabel, NDArray[np.floating]]:
         """Returns an integration config from the registry."""
 
         if name not in self._registry:

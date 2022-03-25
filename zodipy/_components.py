@@ -13,7 +13,7 @@ from numpy.typing import NDArray
 
 @dataclass
 class Component(ABC):
-    """Base class for an Interplanetary Dust Component.
+    """Base class for a DIRBE Interplanetary Dust Component.
 
     Any component that inherits from this class needs to implement the two
     abstract methods `get_compcentric_coordinates` and `compute_density`.

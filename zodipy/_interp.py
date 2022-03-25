@@ -1,15 +1,13 @@
 from __future__ import annotations
 from functools import lru_cache
-from typing import Callable, Optional, Sequence
+from typing import Callable
 from scipy import interpolate
 
-import astropy.units as u
-from astropy.units import Quantity
+
 from numpy.typing import NDArray
 import numpy as np
 
-from zodipy._labels import CompLabel
-from zodipy._los_config import EPS
+from zodipy._line_of_sight import EPS
 from zodipy._source_funcs import (
     blackbody_emission_nu,
     interplanetary_temperature,
@@ -48,7 +46,7 @@ def tabulated_interplanetary_temperature(
 ) -> Callable[[NDArray[np.floating]], NDArray[np.floating]]:
     """Returns tabulated, cached array of interplanetary temperatures."""
 
-    R_range = np.linspace(EPS.value, 15, 5000)
+    R_range = np.linspace(EPS, 15, 5000)
     tabulated_T = interplanetary_temperature(R_range, T_0, delta)
 
     return interpolate.interp1d(R_range, tabulated_T)
@@ -82,57 +80,3 @@ def interp_solar_flux(
     """
 
     return np.pi * interp_blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
-
-
-def interp_comp_spectral_params(
-    freq: Quantity[u.GHz],
-    emissivities: dict[CompLabel, Sequence[float]],
-    emissivity_spectrum: Quantity[u.Hz] | Quantity[u.m],
-    albedos: Optional[dict[CompLabel, Sequence[float]]],
-    albedo_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]],
-) -> dict[CompLabel, dict[str, float]]:
-
-    interp_params: dict[CompLabel, dict[str, float]] = {
-        comp_label: {} for comp_label in emissivities
-    }
-
-    for comp, emiss_Sequence in emissivities.items():
-        interp_params[comp]["emissivity"] = np.interp(
-            freq.to(emissivity_spectrum.unit, equivalencies=u.spectral()),
-            emissivity_spectrum,
-            emiss_Sequence,
-        )
-
-    if albedos is not None and albedo_spectrum is not None:
-        for comp, albedo_Sequence in albedos.items():
-            interp_params[comp]["albedo"] = np.interp(
-                freq.to(albedo_spectrum.unit, equivalencies=u.spectral()),
-                albedo_spectrum,
-                albedo_Sequence,
-            )
-    else:
-        for comp in emissivities:
-            interp_params[comp]["albedo"] = 0.0
-
-    return interp_params
-
-
-def interp_phase_coeffs(
-    freq: Quantity[u.GHz],
-    phase_coeffs: Optional[dict[str, Quantity]] = None,
-    phase_coeffs_spectrum: Optional[Quantity[u.Hz] | Quantity[u.m]] = None,
-) -> Sequence[float]:
-
-    if phase_coeffs is not None and phase_coeffs_spectrum is not None:
-        interp_phase_coeffs = [
-            np.interp(
-                freq.to(phase_coeffs_spectrum.unit, equivalencies=u.spectral()),
-                phase_coeffs_spectrum,
-                coeff,
-            ).value
-            for coeff in phase_coeffs.values()
-        ]
-    else:
-        interp_phase_coeffs = [0.0 for _ in range(3)]
-
-    return interp_phase_coeffs

@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from zodipy.models import model_registry
-from zodipy._model import InterplanetaryDustModel
+from zodipy._model import Model
 from zodipy._labels import CompLabel
 
 DEFAULT_EARTH_POS = np.array([1.0, 0.0, 0.0])
@@ -12,12 +12,12 @@ DEFAULT_EARTH_POS = np.array([1.0, 0.0, 0.0])
 
 def tabulate_density(
     grid: NDArray[np.floating] | list[NDArray[np.floating]],
-    model: str | InterplanetaryDustModel = "DIRBE",
+    model: str | Model = "DIRBE",
     earth_coords: NDArray[np.floating] = DEFAULT_EARTH_POS,
 ) -> NDArray[np.floating]:
     """Tabulates the component densities for a meshgrid."""
 
-    if not isinstance(model, InterplanetaryDustModel):
+    if not isinstance(model, Model):
         model = model_registry.get_model(model)
 
     if not isinstance(grid, np.ndarray):

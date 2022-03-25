@@ -14,9 +14,6 @@ model_registry.register_model(
     albedo_spectrum=source_params.SPECTRUM_DIRBE,
     phase_coeffs=source_params.PHASE_FUNC_DIRBE,
     phase_coeffs_spectrum=source_params.SPECTRUM_DIRBE,
-    meta={
-        "info": "The Interplanetary Dust Model used in the DIRBE analysis. See Kelsall et al. (1998) for more information."
-    },
 )
 
 
@@ -27,7 +24,6 @@ model_registry.register_model(
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
     delta=source_params.delta_K98,
-    meta={"info": "The Interplanetary Dust Model used in the Planck 2013 analysis."},
 )
 
 
@@ -38,7 +34,6 @@ model_registry.register_model(
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
     delta=source_params.delta_K98,
-    meta={"info": "The Interplanetary Dust Model used in the Planck 2015 analysis."},
 )
 
 
@@ -49,7 +44,6 @@ model_registry.register_model(
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
     delta=source_params.delta_K98,
-    meta={"info": "The Interplanetary Dust Model used in the Planck 2018 analysis."},
 )
 
 model_registry.register_model(
@@ -59,6 +53,4 @@ model_registry.register_model(
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
     delta=source_params.delta_K98,
-    meta={"info": "The Interplanetary Dust Model used in the Odegard et al. (2019) analysis."},
 )
-
