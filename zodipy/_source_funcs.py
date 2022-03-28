@@ -38,30 +38,6 @@ def blackbody_emission_nu(
     return term1 / term2
 
 
-def blackbody_emission_lambda(
-    T: float | NDArray[np.floating],
-    freq: float | NDArray[np.floating],
-) -> float | NDArray[np.floating]:
-    """Returns the blackbody emission.
-
-    Parameters
-    ----------
-    T
-        Temperature of the blackbody.
-    freq
-        Frequency.
-
-    Returns
-    -------
-        Blackbody emission [W / m^2 Hz sr].
-    """
-    freq *= 1e-6
-    term1 = (2 * h * c ** 2) / freq ** 5
-    term2 = np.expm1(((h * c) / (freq * k_B * T)))
-
-    return term1 / term2
-
-
 def solar_flux(
     R: NDArray[np.floating], freq: float, T: float = T_sun
 ) -> NDArray[np.floating]:
@@ -135,4 +111,4 @@ def phase_function(
 
     N = phase_normalization(C0=C0, C1=C1, C2=C2)
 
-    return N * (C0 + C1 * Theta + np.exp(C2 * Theta)) 
+    return N * (C0 + C1 * Theta + np.exp(C2 * Theta))

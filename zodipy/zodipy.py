@@ -22,7 +22,6 @@ from zodipy._interp import (
 )
 from zodipy._source_funcs import phase_function
 from zodipy._line_of_sight import integration_config_registry
-from zodipy._model import Model
 from zodipy.models import model_registry
 
 
@@ -207,13 +206,11 @@ class Zodipy:
 
         line_of_sights = integration_config_registry.get_config()
 
+        freq = freq.to("GHz", equivalencies=u.spectral())
         # If the specific value of freq is not covered by the fitted spectral
         # parameters in the model we interpolate/extrapolate to find a new
         # emissivity, albedo and scattering phase coefficients.
-        freq = freq.to("GHz", equivalencies=u.spectral())
-        model = self.model
-        phase_coeffs = model.get_interp_phase_coeffs(freq)
-        spectral_parameters = model.get_interp_spectral_params(freq)
+        extrapolated_parameters = self.model.get_extrapolated_parameters(freq)
 
         if binned:
             if pixels is not None:
@@ -235,25 +232,26 @@ class Zodipy:
                     lonlat=lonlat,
                 )
 
-            emission = np.zeros((model.ncomps, hp.nside2npix(nside)))
-            for idx, (label, component) in enumerate(model.comps.items()):
-                get_step_emission = partial(
+            emission = np.zeros((self.model.ncomps, hp.nside2npix(nside)))
+            for idx, (label, component) in enumerate(self.model.comps.items()):
+                emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                get_step_emission_func = partial(
                     _get_step_emission,
-                    comp=component,
                     freq=freq.value,
                     observer_pos=obs_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=model.cloud_offset,
-                    T_0=model.T_0.value,
-                    delta=model.delta,
-                    emissivity=spectral_parameters[label]["emissivity"],
-                    albedo=spectral_parameters[label]["albedo"],
-                    phase_coeffs=phase_coeffs,
+                    comp=component,
+                    cloud_offset=self.model.cloud_offset,
+                    T_0=self.model.T_0.value,
+                    delta=self.model.delta,
+                    emissivity=emissivity,
+                    albedo=albedo,
+                    phase_coefficients=phase_coefficients,
                     colorcorr_table=colorcorr_table,
                 )
                 emission[idx, unique_pixels] = trapezoidal(
-                    step_emission_func=get_step_emission,
+                    step_emission_func=get_step_emission_func,
                     line_of_sight=line_of_sights[label],
                 )
 
@@ -267,7 +265,7 @@ class Zodipy:
                     pixels=unique_pixels,
                     nside=nside,
                 )
-                emission = np.zeros((model.ncomps, len(pixels)))
+                emission = np.zeros((self.model.ncomps, len(pixels)))
 
             else:
                 unique_angles, indicies = np.unique(
@@ -279,26 +277,27 @@ class Zodipy:
                     phi=unique_angles[1],
                     lonlat=lonlat,
                 )
-                emission = np.zeros((model.ncomps, len(theta)))
+                emission = np.zeros((self.model.ncomps, len(theta)))
 
-            for idx, (label, component) in enumerate(model.comps.items()):
-                get_step_emission = partial(
+            for idx, (label, component) in enumerate(self.model.comps.items()):
+                emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                get_step_emission_func = partial(
                     _get_step_emission,
-                    comp=component,
                     freq=freq.value,
                     observer_pos=obs_pos.value,
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
-                    cloud_offset=model.cloud_offset,
-                    T_0=model.T_0.value,
-                    delta=model.delta,
-                    emissivity=spectral_parameters[label]["emissivity"],
-                    albedo=spectral_parameters[label]["albedo"],
-                    phase_coeffs=phase_coeffs,
+                    comp=component,
+                    cloud_offset=self.model.cloud_offset,
+                    T_0=self.model.T_0.value,
+                    delta=self.model.delta,
+                    emissivity=emissivity,
+                    albedo=albedo,
+                    phase_coefficients=phase_coefficients,
                     colorcorr_table=colorcorr_table,
                 )
                 integrated_comp_emission = trapezoidal(
-                    step_emission_func=get_step_emission,
+                    step_emission_func=get_step_emission_func,
                     line_of_sight=line_of_sights[label],
                 )
 
@@ -361,17 +360,17 @@ def _get_ecliptic_unit_vectors(
 
 def _get_step_emission(
     r: float,
-    comp: Component,
     freq: float,
     observer_pos: NDArray[np.floating],
     earth_pos: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
+    comp: Component,
     cloud_offset: NDArray[np.floating],
     T_0: float,
     delta: float,
     emissivity: float,
-    albedo: float,
-    phase_coeffs: Sequence[float],
+    albedo: Optional[float],
+    phase_coefficients: Optional[Sequence[float]],
     colorcorr_table: Optional[NDArray[np.floating]],
 ) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
@@ -380,8 +379,6 @@ def _get_step_emission(
     ----------
     r
         Radial distance along the line-of-sight [AU / 1 AU].
-    comp
-        Zodiacal component to evaluate.
     freq
         Frequency at which to evaluate the brightness integral [GHz].
     observer_pos
@@ -391,8 +388,11 @@ def _get_step_emission(
     unit_vectors
         Heliocentric ecliptic cartesian unit vectors pointing to each
         position in space we that we consider [AU / 1 AU].
+    comp
+        Zodiacal component class.
     cloud_offset
-        Heliocentric ecliptic offset for the Zodiacal Cloud component.
+        Heliocentric ecliptic offset for the Zodiacal Cloud component in the 
+        model.
     source_params
         Dictionary containing various model and interpolated spectral
         parameters required for the evaluation of the brightness integral.
@@ -405,7 +405,6 @@ def _get_step_emission(
     """
 
     r_vec = r * unit_vectors
-
     X_helio = r_vec + observer_pos
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
@@ -414,7 +413,6 @@ def _get_step_emission(
         X_earth=earth_pos,
         X_0_cloud=cloud_offset,
     )
-
     T = interp_interplanetary_temperature(
         R=R_helio,
         T_0=T_0,
@@ -422,17 +420,21 @@ def _get_step_emission(
     )
     B_nu = interp_blackbody_emission_nu(T=T, freq=freq)
 
-    emission = (1 - albedo) * (emissivity * B_nu)
+    if albedo is not None and phase_coefficients is not None and albedo > 0:
+        emission = (1 - albedo) * (emissivity * B_nu)
 
-    if colorcorr_table is not None:
-        emission *= np.interp(T, *colorcorr_table)
+        if colorcorr_table is not None:
+            emission *= np.interp(T, *colorcorr_table)
 
-    if albedo > 0:
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = interp_solar_flux(R_helio, freq)
-        phase = phase_function(scattering_angle, *phase_coeffs)
+        phase = phase_function(scattering_angle, *phase_coefficients)
         emission += albedo * solar_flux * phase
 
-    emission *= density
+    else:
+        emission = emissivity * B_nu
 
-    return emission
+        if colorcorr_table is not None:
+            emission *= np.interp(T, *colorcorr_table)
+
+    return emission * density

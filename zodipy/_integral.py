@@ -17,7 +17,7 @@ def trapezoidal(
         Function that computes the Zodiacal emission at a step along the line 
         of sight.
     line_of_sight
-       The line of sight.
+       Representation of discrete points along a line of sight. 
 
     Returns
     -------

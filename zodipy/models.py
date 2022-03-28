@@ -5,7 +5,7 @@ from zodipy import source_params
 
 model_registry.register_model(
     name="DIRBE",
-    comp_params=comp_params.K98,
+    component_parameters=comp_params.K98,
     emissivities=source_params.EMISSIVITY_DIRBE,
     emissivity_spectrum=source_params.SPECTRUM_DIRBE,
     T_0=source_params.T_0_K98,
@@ -19,7 +19,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck13",
-    comp_params=comp_params.K98,
+    component_parameters=comp_params.K98,
     emissivities=source_params.EMISSIVITY_PLANCK_13,
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
@@ -29,7 +29,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck15",
-    comp_params=comp_params.PLANCK,
+    component_parameters=comp_params.PLANCK,
     emissivities=source_params.EMISSIVITY_PLANCK_15,
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
@@ -39,7 +39,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Planck18",
-    comp_params=comp_params.PLANCK,
+    component_parameters=comp_params.PLANCK,
     emissivities=source_params.EMISSIVITY_PLANCK_18,
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
@@ -48,7 +48,7 @@ model_registry.register_model(
 
 model_registry.register_model(
     name="Odegard",
-    comp_params=comp_params.PLANCK,
+    component_parameters=comp_params.PLANCK,
     emissivities=source_params.EMISSIVITY_ODEGARD,
     emissivity_spectrum=source_params.SPECTRUM_PLANCK,
     T_0=source_params.T_0_K98,
