@@ -2,7 +2,7 @@ import astropy.units as u
 
 from zodipy._labels import CompLabel
 
-T_0_K98 = 286 * u.K
+T_0_K98 = 286 # Kelvin
 delta_K98 = 0.46686259861486573
 
 SPECTRUM_PLANCK = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0) * u.GHz
