@@ -16,7 +16,8 @@ T_sun = 5778
 
 
 def blackbody_emission_nu(
-    T: float | NDArray[np.floating], freq: float | NDArray[np.floating]
+    freq: float | NDArray[np.floating],
+    T: float | NDArray[np.floating],
 ) -> NDArray[np.floating]:
     """Returns the blackbody emission.
 
@@ -31,6 +32,7 @@ def blackbody_emission_nu(
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
+    
     freq *= 1e9
     term1 = (2 * h * freq ** 3) / c ** 2
     term2 = np.expm1(((h * freq) / (k_B * T)))

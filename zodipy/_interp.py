@@ -19,25 +19,25 @@ from zodipy._source_funcs import (
 @lru_cache
 def tabulated_blackbody_emission_nu(
     freq: float,
-) -> Callable[[NDArray[np.floating]], NDArray[np.floating]]:
+) -> Callable[[float | NDArray[np.floating]], NDArray[np.floating]]:
     """Returns tabulated, cached array of blackbody emission."""
 
     T_range = np.linspace(50, 10000, 5000)
-    tabulated_bnu = blackbody_emission_nu(T=T_range, freq=freq)
+    tabulated_bnu = blackbody_emission_nu(freq, T_range)
 
     return interpolate.interp1d(T_range, tabulated_bnu)
 
 
-def interp_blackbody_emission_nu(
+def interpolate_blackbody_emission_nu(
     freq: float, T: float | NDArray[np.floating]
 ) -> NDArray[np.floating]:
     """Returns the interpolated black body emission for a temperature."""
 
-    f = tabulated_blackbody_emission_nu(freq=freq)
+    f = tabulated_blackbody_emission_nu(freq)
     try:
         return f(T)
     except ValueError:
-        return blackbody_emission_nu(T=T, freq=freq)
+        return blackbody_emission_nu(freq, T)
 
 
 @lru_cache
@@ -52,17 +52,17 @@ def tabulated_interplanetary_temperature(
     return interpolate.interp1d(R_range, tabulated_T)
 
 
-def interp_interplanetary_temperature(
+def interpolate_interplanetary_temperature(
     R: NDArray[np.floating], T_0: float, delta: float
 ) -> NDArray[np.floating]:
     """Returns the intepolated interplanetary temperature."""
 
-    f = tabulated_interplanetary_temperature(T_0=T_0, delta=delta)
+    f = tabulated_interplanetary_temperature(T_0, delta)
 
     return f(R)
 
 
-def interp_solar_flux(
+def interpolate_solar_flux(
     R: NDArray[np.floating], freq: float, T: float = T_sun
 ) -> NDArray[np.floating]:
     """Returns the interpolated solar flux.
@@ -79,4 +79,4 @@ def interp_solar_flux(
         Solar flux at some distance R from the Sun in AU.
     """
 
-    return np.pi * interp_blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
+    return np.pi * interpolate_blackbody_emission_nu(freq, T) * (R_sun / R) ** 2

@@ -16,9 +16,9 @@ from numpy.typing import NDArray
 from zodipy._components import Component
 from zodipy._integral import trapezoidal
 from zodipy._interp import (
-    interp_blackbody_emission_nu,
-    interp_interplanetary_temperature,
-    interp_solar_flux,
+    interpolate_blackbody_emission_nu,
+    interpolate_interplanetary_temperature,
+    interpolate_solar_flux,
 )
 from zodipy._source_funcs import phase_function
 from zodipy._line_of_sight import integration_config_registry
@@ -67,9 +67,9 @@ class Zodipy:
     def get_emission(
         self,
         freq: Union[Quantity[u.Hz], Quantity[u.m]],
-        obs_time: Time,
-        obs: str = "earth",
         *,
+        obs: str = "earth",
+        obs_time: Time = Time.now(),
         obs_pos: Optional[Quantity[u.AU]] = None,
         pixels: Optional[Union[int, Sequence[int], NDArray[np.integer]]] = None,
         theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
@@ -97,12 +97,13 @@ class Zodipy:
         freq
             Frequency or wavelength at which to evaluate the Zodiacal emission.
             Must have units compatible with Hz or m.
-        obs_time
-            Time of observation (`astropy.time.Time` object).
         obs
             The solar system observer. A list of all support observers (for a
             given ephemeridis) is specified in `observers` attribute of the
             `zodipy.Zodipy` instance. Defaults to 'earth'.
+        obs_time
+            Time of observation (`astropy.time.Time` object). Defaults to 
+            current time.
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
             Overrides the `obs` argument. Default is None.
@@ -360,6 +361,7 @@ def _get_ecliptic_unit_vectors(
 
 def _get_step_emission(
     r: float,
+    *,
     freq: float,
     observer_pos: NDArray[np.floating],
     earth_pos: NDArray[np.floating],
@@ -374,6 +376,8 @@ def _get_step_emission(
     colorcorr_table: Optional[NDArray[np.floating]],
 ) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
+
+    This function computes equation (1) in K98 along a step in ds.
 
     Parameters
     ----------
@@ -391,7 +395,7 @@ def _get_step_emission(
     comp
         Zodiacal component class.
     cloud_offset
-        Heliocentric ecliptic offset for the Zodiacal Cloud component in the 
+        Heliocentric ecliptic offset for the Zodiacal Cloud component in the
         model.
     source_params
         Dictionary containing various model and interpolated spectral
@@ -413,12 +417,8 @@ def _get_step_emission(
         X_earth=earth_pos,
         X_0_cloud=cloud_offset,
     )
-    T = interp_interplanetary_temperature(
-        R=R_helio,
-        T_0=T_0,
-        delta=delta,
-    )
-    B_nu = interp_blackbody_emission_nu(T=T, freq=freq)
+    T = interpolate_interplanetary_temperature(R_helio, T_0, delta)
+    B_nu = interpolate_blackbody_emission_nu(freq, T)
 
     if albedo is not None and phase_coefficients is not None and albedo > 0:
         emission = (1 - albedo) * (emissivity * B_nu)
@@ -427,7 +427,7 @@ def _get_step_emission(
             emission *= np.interp(T, *colorcorr_table)
 
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = interp_solar_flux(R_helio, freq)
+        solar_flux = interpolate_solar_flux(R_helio, freq)
         phase = phase_function(scattering_angle, *phase_coefficients)
         emission += albedo * solar_flux * phase
 
