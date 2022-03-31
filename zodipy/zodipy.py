@@ -15,12 +15,12 @@ from numpy.typing import NDArray
 
 from zodipy._components import Component
 from zodipy._integral import trapezoidal
-from zodipy._interp import (
-    interpolate_blackbody_emission_nu,
-    interpolate_interplanetary_temperature,
-    interpolate_solar_flux,
+from zodipy._source_funcs import (
+    phase_function,
+    interplanetary_temperature,
+    solar_flux,
+    blackbody_emission_nu,
 )
-from zodipy._source_funcs import phase_function
 from zodipy._line_of_sight import integration_config_registry
 from zodipy.models import model_registry
 
@@ -102,7 +102,7 @@ class Zodipy:
             given ephemeridis) is specified in `observers` attribute of the
             `zodipy.Zodipy` instance. Defaults to 'earth'.
         obs_time
-            Time of observation (`astropy.time.Time` object). Defaults to 
+            Time of observation (`astropy.time.Time` object). Defaults to
             current time.
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
@@ -417,8 +417,8 @@ def _get_step_emission(
         X_earth=earth_pos,
         X_0_cloud=cloud_offset,
     )
-    T = interpolate_interplanetary_temperature(R_helio, T_0, delta)
-    B_nu = interpolate_blackbody_emission_nu(freq, T)
+    T = interplanetary_temperature(R_helio, T_0, delta)
+    B_nu = blackbody_emission_nu(freq, T)
 
     if albedo is not None and phase_coefficients is not None and albedo > 0:
         emission = (1 - albedo) * (emissivity * B_nu)
@@ -427,9 +427,9 @@ def _get_step_emission(
             emission *= np.interp(T, *colorcorr_table)
 
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = interpolate_solar_flux(R_helio, freq)
+        sol_flux = solar_flux(R_helio, freq)
         phase = phase_function(scattering_angle, *phase_coefficients)
-        emission += albedo * solar_flux * phase
+        emission += albedo * sol_flux * phase
 
     else:
         emission = emissivity * B_nu

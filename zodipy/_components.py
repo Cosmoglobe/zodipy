@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from astropy.units import Quantity
-import astropy.units as u
 import numpy as np
 from numpy.typing import NDArray
 
@@ -27,27 +25,25 @@ class Component(ABC):
     z_0
         z-offset from the Sun in heliocentric ecliptic coordinates in AU.
     i
-        Inclination with respect to the ecliptic planein deg.
+        Inclination with respect to the ecliptic plane in deg.
     Omega
         Ascending node in deg.
     """
 
-    x_0: Quantity[u.AU]
-    y_0: Quantity[u.AU]
-    z_0: Quantity[u.AU]
-    i: Quantity[u.deg] | Quantity[u.rad]
-    Omega: Quantity[u.deg] | Quantity[u.rad]
+    x_0: float
+    y_0: float
+    z_0: float
+    i: float
+    Omega: float
 
     def __post_init__(self) -> None:
-        self.X_0 = np.expand_dims(
-            [self.x_0.value, self.y_0.value, self.z_0.value], axis=1,
-        )
+        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
 
-        # Computing frequently used variables
-        self.sin_i = np.sin(self.i).value
-        self.cos_i = np.cos(self.i).value
-        self.sin_Omega = np.sin(self.Omega).value
-        self.cos_Omega = np.cos(self.Omega).value
+        # Computing frequently used variables and converting from deg -> rad
+        self.sin_i = np.sin(np.radians(self.i))
+        self.cos_i = np.cos(np.radians(self.i))
+        self.sin_Omega = np.sin(np.radians(self.Omega))
+        self.cos_Omega = np.cos(np.radians(self.Omega))
 
     @abstractmethod
     def compute_density(
@@ -96,15 +92,11 @@ class Cloud(Component):
         Widening parameter for the modified fan.
     """
 
-    n_0: Quantity[u.AU ** -1]
+    n_0: float
     alpha: float
     beta: float
     gamma: float
     mu: float
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        self.n_0 = self.n_0.value 
 
     def compute_density(
         self, X_helio: NDArray[np.floating], **_
@@ -149,17 +141,17 @@ class Band(Component):
         Inner radial cutoff.
     """
 
-    n_0: Quantity[u.AU ** -1]
-    delta_zeta: Quantity[u.deg] | Quantity[u.rad]
+    n_0: float
+    delta_zeta: float
     v: float
     p: float
-    delta_r: Quantity[u.AU]
+    delta_r: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.n_0 = self.n_0.value
-        self.delta_zeta = self.delta_zeta.to(u.rad).value
-        self.delta_r = self.delta_r.value
+
+        # Converting from deg -> rad
+        self.delta_zeta = np.radians(self.delta_zeta)
 
     def compute_density(
         self, X_helio: NDArray[np.floating], X_0_cloud: NDArray[np.floating], **_
@@ -205,17 +197,10 @@ class Ring(Component):
         Vertical dispersion.
     """
 
-    n_0: Quantity[u.AU ** -1]
-    R: Quantity[u.AU]
-    sigma_r: Quantity[u.AU]
-    sigma_z: Quantity[u.AU]
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        self.n_0 = self.n_0.value
-        self.R = self.R.value
-        self.sigma_r = self.sigma_r.value
-        self.sigma_z = self.sigma_z.value
+    n_0: float
+    R: float
+    sigma_r: float
+    sigma_z: float
 
     def compute_density(
         self, X_helio: NDArray[np.floating], **_
@@ -258,21 +243,19 @@ class Feature(Component):
         Longitude dispersion.
     """
 
-    n_0: Quantity[u.AU ** -1]
-    R: Quantity[u.AU]
-    sigma_r: Quantity[u.AU]
-    sigma_z: Quantity[u.AU]
-    theta: Quantity[u.deg]
-    sigma_theta: Quantity[u.deg]
+    n_0: float
+    R: float
+    sigma_r: float
+    sigma_z: float
+    theta: float
+    sigma_theta: float
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.n_0 = self.n_0.value
-        self.theta = self.theta.to(u.rad).value
-        self.sigma_theta = self.sigma_theta.to(u.rad).value
-        self.R = self.R.value
-        self.sigma_r = self.sigma_r.value
-        self.sigma_z = self.sigma_z.value
+
+        # Converting from deg -> rad
+        self.theta = np.radians(self.theta)
+        self.sigma_theta = np.radians(self.sigma_theta)
 
     def compute_density(
         self,
