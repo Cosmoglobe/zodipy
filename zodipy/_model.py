@@ -22,14 +22,12 @@ class Model:
     T_0: float = T_0_K98
     delta: float = delta_K98
     comps: dict[CompLabel, Component] = field(init=False)
-    cloud_offset: NDArray[np.floating] = field(init=False)
 
     def __post_init__(self) -> None:
         self.comps = {
             comp: LABEL_TO_CLASS[comp](**params)
             for comp, params in self.component_parameters.items()
         }
-        self.cloud_offset = self.comps[CompLabel.CLOUD].X_0
 
     @property
     def ncomps(self) -> int:

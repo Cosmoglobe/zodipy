@@ -16,12 +16,12 @@ from numpy.typing import NDArray
 from zodipy._components import Component
 from zodipy._integral import trapezoidal
 from zodipy._source_funcs import (
-    phase_function,
-    interplanetary_temperature,
-    solar_flux,
-    blackbody_emission_nu,
+    get_phase_function,
+    get_interplanetary_temperature,
+    get_solar_flux,
+    get_blackbody_emission_nu,
 )
-from zodipy._line_of_sight import integration_config_registry
+from zodipy._line_of_sight import LineOfSight
 from zodipy.models import model_registry
 
 
@@ -205,8 +205,6 @@ class Zodipy:
 
         obs_pos, earth_pos = _get_solar_system_bodies(obs, obs_time, obs_pos)
 
-        line_of_sights = integration_config_registry.get_config()
-
         freq = freq.to("GHz", equivalencies=u.spectral())
         # If the specific value of freq is not covered by the fitted spectral
         # parameters in the model we interpolate/extrapolate to find a new
@@ -236,6 +234,11 @@ class Zodipy:
             emission = np.zeros((self.model.ncomps, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(self.model.comps.items()):
                 emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                line_of_sight = LineOfSight.from_comp_label(
+                    comp_label=label,
+                    obs_pos=tuple(obs_pos.squeeze().value),
+                    unit_vectors=unit_vectors,
+                )
                 get_step_emission_func = partial(
                     _get_step_emission,
                     freq=freq.value,
@@ -243,7 +246,6 @@ class Zodipy:
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     comp=component,
-                    cloud_offset=self.model.cloud_offset,
                     T_0=self.model.T_0,
                     delta=self.model.delta,
                     emissivity=emissivity,
@@ -253,7 +255,7 @@ class Zodipy:
                 )
                 emission[idx, unique_pixels] = trapezoidal(
                     step_emission_func=get_step_emission_func,
-                    line_of_sight=line_of_sights[label],
+                    line_of_sight=line_of_sight,
                 )
 
             emission[:, unique_pixels] *= counts
@@ -278,10 +280,16 @@ class Zodipy:
                     phi=unique_angles[1],
                     lonlat=lonlat,
                 )
+
                 emission = np.zeros((self.model.ncomps, len(theta)))
 
             for idx, (label, component) in enumerate(self.model.comps.items()):
                 emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                line_of_sight = LineOfSight.from_comp_label(
+                    comp_label=label,
+                    obs_pos=tuple(obs_pos.squeeze().value),
+                    unit_vectors=unit_vectors,
+                )
                 get_step_emission_func = partial(
                     _get_step_emission,
                     freq=freq.value,
@@ -289,7 +297,6 @@ class Zodipy:
                     earth_pos=earth_pos.value,
                     unit_vectors=unit_vectors,
                     comp=component,
-                    cloud_offset=self.model.cloud_offset,
                     T_0=self.model.T_0,
                     delta=self.model.delta,
                     emissivity=emissivity,
@@ -299,7 +306,7 @@ class Zodipy:
                 )
                 integrated_comp_emission = trapezoidal(
                     step_emission_func=get_step_emission_func,
-                    line_of_sight=line_of_sights[label],
+                    line_of_sight=line_of_sight,
                 )
 
                 emission[idx] = integrated_comp_emission[indicies]
@@ -360,14 +367,13 @@ def _get_ecliptic_unit_vectors(
 
 
 def _get_step_emission(
-    r: float,
+    r: Union[float, NDArray[np.floating]],
     *,
     freq: float,
     observer_pos: NDArray[np.floating],
     earth_pos: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
     comp: Component,
-    cloud_offset: NDArray[np.floating],
     T_0: float,
     delta: float,
     emissivity: float,
@@ -412,29 +418,25 @@ def _get_step_emission(
     X_helio = r_vec + observer_pos
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
-    density = comp.compute_density(
-        X_helio=X_helio,
-        X_earth=earth_pos,
-        X_0_cloud=cloud_offset,
-    )
-    T = interplanetary_temperature(R_helio, T_0, delta)
-    B_nu = blackbody_emission_nu(freq, T)
+    density = comp.compute_density(X_helio=X_helio, X_earth=earth_pos)
+    interplanetary_temperature = get_interplanetary_temperature(R_helio, T_0, delta)
+    blackbody_emission = get_blackbody_emission_nu(freq, interplanetary_temperature)
 
     if albedo is not None and phase_coefficients is not None and albedo > 0:
-        emission = (1 - albedo) * (emissivity * B_nu)
+        emission = (1 - albedo) * (emissivity * blackbody_emission)
 
         if colorcorr_table is not None:
-            emission *= np.interp(T, *colorcorr_table)
+            emission *= np.interp(interplanetary_temperature, *colorcorr_table)
 
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        sol_flux = solar_flux(R_helio, freq)
-        phase = phase_function(scattering_angle, *phase_coefficients)
-        emission += albedo * sol_flux * phase
+        solar_flux = get_solar_flux(R_helio, freq)
+        phase_function = get_phase_function(scattering_angle, *phase_coefficients)
+        emission += albedo * solar_flux * phase_function
 
     else:
-        emission = emissivity * B_nu
+        emission = emissivity * blackbody_emission
 
         if colorcorr_table is not None:
-            emission *= np.interp(T, *colorcorr_table)
+            emission *= np.interp(interplanetary_temperature, *colorcorr_table)
 
     return emission * density

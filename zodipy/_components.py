@@ -51,7 +51,6 @@ class Component(ABC):
         X_helio: NDArray[np.floating],
         *,
         X_earth: Optional[NDArray[np.floating]] = None,
-        X_0_cloud: Optional[NDArray[np.floating]] = None,
     ) -> NDArray[np.floating]:
         """Returns the dust density of a component at points in the Solar System
         given by 'X_helio'.
@@ -64,9 +63,6 @@ class Component(ABC):
         X_earth
             Heliocentric ecliptic coordinates of the Earth. Required for the
             Earth-trailing Feature-
-        X_0_cloud
-            Heliocentric ecliptic coordinates of the Diffuse Clouds offset.
-            Required for the Dust Bands.
 
         Returns
         -------
@@ -154,11 +150,11 @@ class Band(Component):
         self.delta_zeta = np.radians(self.delta_zeta)
 
     def compute_density(
-        self, X_helio: NDArray[np.floating], X_0_cloud: NDArray[np.floating], **_
+        self, X_helio: NDArray[np.floating], **_
     ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
-        X_comp = X_helio - X_0_cloud
+        X_comp = X_helio - self.X_0
         R_comp = np.sqrt(X_comp[0] ** 2 + X_comp[1] ** 2 + X_comp[2] ** 2)
 
         Z_comp = (

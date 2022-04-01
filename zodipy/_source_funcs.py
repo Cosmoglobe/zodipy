@@ -15,7 +15,7 @@ T_sun = 5778
 π = np.pi
 
 
-def blackbody_emission_nu(
+def get_blackbody_emission_nu(
     freq: float | NDArray[np.floating],
     T: float | NDArray[np.floating],
 ) -> NDArray[np.floating]:
@@ -40,7 +40,7 @@ def blackbody_emission_nu(
     return term1 / term2
 
 
-def solar_flux(
+def get_solar_flux(
     R: NDArray[np.floating], freq: float, T: float = T_sun
 ) -> NDArray[np.floating]:
     """Returns the solar flux observed at some distance R from the Sun in AU.
@@ -57,10 +57,10 @@ def solar_flux(
         Solar flux at some distance R from the Sun in AU.
     """
 
-    return np.pi * blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
+    return np.pi * get_blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
 
 
-def interplanetary_temperature(
+def get_interplanetary_temperature(
     R: NDArray[np.floating], T_0: float, delta: float
 ) -> NDArray[np.floating]:
     """Returns the Interplanetary Temperature given a radial distance from the Sun.
@@ -83,7 +83,7 @@ def interplanetary_temperature(
 
 
 @lru_cache
-def phase_normalization(C0: float, C1: float, C2: float) -> float:
+def get_phase_normalization(C0: float, C1: float, C2: float) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
 
     int_term1 = 2 * π
@@ -94,7 +94,7 @@ def phase_normalization(C0: float, C1: float, C2: float) -> float:
     return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
 
 
-def phase_function(
+def get_phase_function(
     Theta: NDArray[np.floating], C0: float, C1: float, C2: float
 ) -> NDArray[np.floating]:
     """Returns the phase function.
@@ -111,6 +111,6 @@ def phase_function(
         The Phase funciton.
     """
 
-    N = phase_normalization(C0=C0, C1=C1, C2=C2)
+    N = get_phase_normalization(C0=C0, C1=C1, C2=C2)
 
     return N * (C0 + C1 * Theta + np.exp(C2 * Theta))

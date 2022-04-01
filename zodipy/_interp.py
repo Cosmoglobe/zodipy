@@ -9,8 +9,8 @@ import numpy as np
 
 from zodipy._line_of_sight import EPS
 from zodipy._source_funcs import (
-    blackbody_emission_nu,
-    interplanetary_temperature,
+    get_blackbody_emission_nu,
+    get_interplanetary_temperature,
     R_sun,
     T_sun,
 )
@@ -23,7 +23,7 @@ def tabulated_blackbody_emission_nu(
     """Returns tabulated, cached array of blackbody emission."""
 
     T_range = np.linspace(50, 10000, 5000)
-    tabulated_bnu = blackbody_emission_nu(freq, T_range)
+    tabulated_bnu = get_blackbody_emission_nu(freq, T_range)
 
     return interpolate.interp1d(T_range, tabulated_bnu)
 
@@ -37,7 +37,7 @@ def interpolate_blackbody_emission_nu(
     try:
         return f(T)
     except ValueError:
-        return blackbody_emission_nu(freq, T)
+        return get_blackbody_emission_nu(freq, T)
 
 
 @lru_cache
@@ -47,7 +47,7 @@ def tabulated_interplanetary_temperature(
     """Returns tabulated, cached array of interplanetary temperatures."""
 
     R_range = np.linspace(EPS, 15, 5000)
-    tabulated_T = interplanetary_temperature(R_range, T_0, delta)
+    tabulated_T = get_interplanetary_temperature(R_range, T_0, delta)
 
     return interpolate.interp1d(R_range, tabulated_T)
 
