@@ -13,9 +13,9 @@ import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._components import Component
+from zodipy._component import Component
 from zodipy._integral import trapezoidal
-from zodipy._source_funcs import (
+from zodipy._source import (
     get_phase_function,
     get_interplanetary_temperature,
     get_solar_flux,
@@ -232,11 +232,11 @@ class Zodipy:
                 )
 
             emission = np.zeros((self.model.ncomps, hp.nside2npix(nside)))
-            for idx, (label, component) in enumerate(self.model.comps.items()):
+            for idx, (label, component) in enumerate(self.model.components.items()):
                 emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
                 line_of_sight = LineOfSight.from_comp_label(
                     comp_label=label,
-                    obs_pos=tuple(obs_pos.squeeze().value),
+                    obs_pos=tuple(obs_pos.value.squeeze()),
                     unit_vectors=unit_vectors,
                 )
                 get_comp_step_emission = partial(
@@ -282,11 +282,11 @@ class Zodipy:
 
                 emission = np.zeros((self.model.ncomps, len(theta)))
 
-            for idx, (label, component) in enumerate(self.model.comps.items()):
+            for idx, (label, component) in enumerate(self.model.components.items()):
                 emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
                 line_of_sight = LineOfSight.from_comp_label(
                     comp_label=label,
-                    obs_pos=tuple(obs_pos.squeeze().value),
+                    obs_pos=tuple(obs_pos.value.squeeze()),
                     unit_vectors=unit_vectors,
                 )
                 get_comp_step_emission = partial(

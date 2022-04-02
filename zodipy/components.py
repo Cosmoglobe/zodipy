@@ -1,7 +1,10 @@
-from zodipy._labels import CompLabel
+from __future__ import annotations
+from zodipy._component_label import CompLabel
+from zodipy._component import Component, Cloud, Band, Ring, Feature
 
-DIRBE = {
-    CompLabel.CLOUD: dict(
+
+DIRBE: dict[CompLabel, Component] = {
+    CompLabel.CLOUD: Cloud(
         x_0=0.011887800744346281,
         y_0=0.0054765064662263777,
         z_0=-0.0021530908020710744,
@@ -13,7 +16,7 @@ DIRBE = {
         gamma=0.94206179393358036,
         mu=0.18873176489090190,
     ),
-    CompLabel.BAND1: dict(
+    CompLabel.BAND1: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -25,7 +28,7 @@ DIRBE = {
         p=4.0,
         delta_r=1.5,
     ),
-    CompLabel.BAND2: dict(
+    CompLabel.BAND2: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -37,7 +40,7 @@ DIRBE = {
         p=4.0,
         delta_r=0.94121881201651147,
     ),
-    CompLabel.BAND3: dict(
+    CompLabel.BAND3: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -49,7 +52,7 @@ DIRBE = {
         p=4.0,
         delta_r=1.5,
     ),
-    CompLabel.RING: dict(
+    CompLabel.RING: Ring(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -60,7 +63,7 @@ DIRBE = {
         sigma_r=0.025000000372529030,
         sigma_z=0.054068037356978099,
     ),
-    CompLabel.FEATURE: dict(
+    CompLabel.FEATURE: Feature(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,

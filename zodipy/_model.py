@@ -1,37 +1,30 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Optional
 
 from astropy.units import Quantity
 import astropy.units as u
 import numpy as np
 
-from zodipy._components import Component
-from zodipy._labels import CompLabel, LABEL_TO_CLASS
+from zodipy._component import Component
+from zodipy._component_label import CompLabel
 from zodipy.source_params import T_0_DIRBE, delta_DIRBE
 
 
 @dataclass
 class Model:
     name: str
-    component_parameters: dict[CompLabel, dict[str, Any]]
+    components: dict[CompLabel, Component]
     spectrum: Quantity[u.Hz] | Quantity[u.m]
     emissivities: dict[CompLabel, tuple[float, ...]]
     albedos: dict[CompLabel, tuple[float, ...]] | None = None
     phase_coefficients: list[tuple[float, ...]] | None = None
     T_0: float = T_0_DIRBE
     delta: float = delta_DIRBE
-    comps: dict[CompLabel, Component] = field(init=False)
-
-    def __post_init__(self) -> None:
-        self.comps = {
-            comp: LABEL_TO_CLASS[comp](**params)
-            for comp, params in self.component_parameters.items()
-        }
 
     @property
     def ncomps(self) -> int:
-        return len(self.comps)
+        return len(self.components)
 
     def get_extrapolated_parameters(
         self, freq: Quantity[u.GHz] | Quantity[u.m]
@@ -43,10 +36,10 @@ class Model:
         ] = {}
         freq = freq.to(self.spectrum.unit, equivalencies=u.spectral())
 
-        for comp in self.comps:
-            emissivity = np.interp(freq, self.spectrum, self.emissivities[comp])
+        for component in self.components:
+            emissivity = np.interp(freq, self.spectrum, self.emissivities[component])
             if self.albedos is not None:
-                albedo = np.interp(freq, self.spectrum, self.albedos[comp])
+                albedo = np.interp(freq, self.spectrum, self.albedos[component])
             else:
                 albedo = None
             if self.phase_coefficients:
@@ -59,7 +52,7 @@ class Model:
             else:
                 phase_coefficient = None
 
-            extrapolated_parameters[comp] = emissivity, albedo, phase_coefficient
+            extrapolated_parameters[component] = emissivity, albedo, phase_coefficient
 
         return extrapolated_parameters
 
@@ -79,7 +72,7 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        component_parameters: dict[CompLabel, dict[str, Any]],
+        components: dict[CompLabel, Component],
         spectrum: Quantity[u.Hz] | Quantity[u.m],
         emissivities: dict[CompLabel, tuple[float, ...]],
         albedos: dict[CompLabel, tuple[float, ...]] | None = None,
@@ -97,9 +90,8 @@ class ModelRegistry:
         name
             String representing the name of the model. This is the name that is
             used for the 'model' argument when initializing `Zodipy`.
-        component_parameters
-            Dictionary mapping the geometrical model parameters to the
-            respective IPD components. The keys must be CompLabel enums.
+        components
+            Dict mapping `CompLabel`s to `Component` classes.
         spectrum
             The spectrum (frequency or length units) corresponding to the
             frequencies used to estimate the spectral parameters.
@@ -125,7 +117,7 @@ class ModelRegistry:
 
         self._registry[name] = Model(
             name=name,
-            component_parameters=component_parameters,
+            components=components,
             spectrum=spectrum,
             emissivities=emissivities,
             T_0=T_0,

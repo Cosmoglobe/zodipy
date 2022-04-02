@@ -4,7 +4,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._labels import CompLabel
+from zodipy._component_label import CompLabel
 
 
 R_JUPITER = 5.2  # AU

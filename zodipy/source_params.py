@@ -1,7 +1,7 @@
 import astropy.units as u
 from astropy.units import Quantity
 
-from zodipy._labels import CompLabel
+from zodipy._component_label import CompLabel
 
 
 T_0_DIRBE = 286  # K
