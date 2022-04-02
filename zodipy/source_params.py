@@ -1,12 +1,14 @@
 import astropy.units as u
+from astropy.units import Quantity
 
 from zodipy._labels import CompLabel
 
-T_0_K98 = 286 # Kelvin
-delta_K98 = 0.46686259861486573
 
-SPECTRUM_PLANCK = (100.0, 143.0, 217.0, 353.0, 545.0, 857.0) * u.GHz
-SPECTRUM_DIRBE = (1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240) * u.micron
+T_0_DIRBE = 286  # K
+delta_DIRBE = 0.46686259861486573
+
+SPECTRUM_PLANCK = Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
+SPECTRUM_DIRBE = Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
 
 EMISSIVITY_PLANCK_13 = {
     CompLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),
@@ -190,8 +192,8 @@ ALBEDO_DIRBE = {
     ),
 }
 
-PHASE_FUNC_DIRBE = {
-    "C0": (-0.942, -0.527, -0.431, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) / u.sr,
-    "C1": (0.121, 0.187, 0.172, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) / (u.rad / u.sr),
-    "C2": (-0.165, -0.598, -0.633, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) / u.sr,
-}
+PHASE_FUNCTION_DIRBE = [
+    (-0.942, -0.527, -0.431, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+    (0.121, 0.187, 0.172, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+    (-0.165, -0.598, -0.633, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+]

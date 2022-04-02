@@ -20,8 +20,10 @@ test2.py
 test3.py
 _utils.py
 _contour.py
+_interp.py
 _tabulate.py
 fitting
+
 # _bandpass.py
 _fitting_brightness_integral.py
 _fitting_simulation.py

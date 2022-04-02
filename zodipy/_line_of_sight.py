@@ -8,16 +8,16 @@ from zodipy._labels import CompLabel
 
 
 R_JUPITER = 5.2  # AU
-
+EPS = np.finfo(float).eps
 
 # Line of sight steps
 line_of_sight_steps: dict[CompLabel, int] = {
-    CompLabel.CLOUD: 500,
-    CompLabel.BAND1: 500,
-    CompLabel.BAND2: 500,
-    CompLabel.BAND3: 500,
-    CompLabel.RING: 500,
-    CompLabel.FEATURE: 500,
+    CompLabel.CLOUD: 200,
+    CompLabel.BAND1: 50,
+    CompLabel.BAND2: 50,
+    CompLabel.BAND3: 50,
+    CompLabel.RING: 50,
+    CompLabel.FEATURE: 50,
 }
 
 # Line of sight steps
@@ -34,14 +34,13 @@ line_of_sight_cutoffs: dict[CompLabel, float] = {
 class LineOfSight(NamedTuple):
     """Line of sight info."""
 
-    n_steps: int
+    r_min: float
     r_max: NDArray[np.floating]
-    r_min: float = np.finfo(float).eps
+    n_steps: int
 
     @property
     def dr(self) -> NDArray[np.floating]:
         return (self.r_max - self.r_min) / self.n_steps
-
 
     @classmethod
     def from_comp_label(
@@ -50,6 +49,17 @@ class LineOfSight(NamedTuple):
         obs_pos: tuple[float, float, float],
         unit_vectors: NDArray[np.floating],
     ) -> LineOfSight:
+        """Returns a LineOfSight object for a given component.
+        
+        Parameters
+        ----------
+        comp_label
+            Label refering to an IPD component.
+        obs_pos
+            Position of the Solar System observer.
+        unit_vectors
+            Unit vectors associated with the observers pointing.
+        """
 
         n_steps = line_of_sight_steps[comp_label]
         cut_off = line_of_sight_cutoffs[comp_label]
@@ -60,7 +70,7 @@ class LineOfSight(NamedTuple):
             unit_vectors=unit_vectors,
         )
 
-        return LineOfSight(n_steps, r_max)
+        return cls(r_min=EPS, r_max=r_max, n_steps=n_steps)
 
 
 def get_line_of_sight_range(
@@ -94,6 +104,4 @@ def get_line_of_sight_range(
     c = r ** 2 - r_cutoff ** 2
     q = -0.5 * b * (1 + np.sqrt(b ** 2 - 4 * c) / np.abs(b))
 
-    r_los = np.maximum(q, c / q)
-
-    return r_los
+    return np.maximum(q, c / q)

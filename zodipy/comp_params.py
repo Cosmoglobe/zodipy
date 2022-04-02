@@ -1,6 +1,6 @@
 from zodipy._labels import CompLabel
 
-K98 = {
+DIRBE = {
     CompLabel.CLOUD: dict(
         x_0=0.011887800744346281,
         y_0=0.0054765064662263777,
@@ -75,6 +75,6 @@ K98 = {
     ),
 }
 
-PLANCK = K98.copy()
+PLANCK = DIRBE.copy()
 PLANCK.pop(CompLabel.RING)
 PLANCK.pop(CompLabel.FEATURE)

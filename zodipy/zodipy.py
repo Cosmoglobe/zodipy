@@ -239,7 +239,7 @@ class Zodipy:
                     obs_pos=tuple(obs_pos.squeeze().value),
                     unit_vectors=unit_vectors,
                 )
-                get_step_emission_func = partial(
+                get_comp_step_emission = partial(
                     _get_step_emission,
                     freq=freq.value,
                     observer_pos=obs_pos.value,
@@ -254,8 +254,7 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
                 emission[idx, unique_pixels] = trapezoidal(
-                    step_emission_func=get_step_emission_func,
-                    line_of_sight=line_of_sight,
+                    get_comp_step_emission, line_of_sight
                 )
 
             emission[:, unique_pixels] *= counts
@@ -290,7 +289,7 @@ class Zodipy:
                     obs_pos=tuple(obs_pos.squeeze().value),
                     unit_vectors=unit_vectors,
                 )
-                get_step_emission_func = partial(
+                get_comp_step_emission = partial(
                     _get_step_emission,
                     freq=freq.value,
                     observer_pos=obs_pos.value,
@@ -305,8 +304,7 @@ class Zodipy:
                     colorcorr_table=colorcorr_table,
                 )
                 integrated_comp_emission = trapezoidal(
-                    step_emission_func=get_step_emission_func,
-                    line_of_sight=line_of_sight,
+                    get_comp_step_emission, line_of_sight
                 )
 
                 emission[idx] = integrated_comp_emission[indicies]
@@ -378,7 +376,7 @@ def _get_step_emission(
     delta: float,
     emissivity: float,
     albedo: Optional[float],
-    phase_coefficients: Optional[Sequence[float]],
+    phase_coefficients: Optional[Tuple[float, float, float]],
     colorcorr_table: Optional[NDArray[np.floating]],
 ) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along the line-of-sight.
@@ -430,7 +428,7 @@ def _get_step_emission(
 
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = get_solar_flux(R_helio, freq)
-        phase_function = get_phase_function(scattering_angle, *phase_coefficients)
+        phase_function = get_phase_function(scattering_angle, phase_coefficients)
         emission += albedo * solar_flux * phase_function
 
     else:

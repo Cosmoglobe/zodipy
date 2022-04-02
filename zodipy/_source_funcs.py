@@ -12,7 +12,6 @@ c = const.c.value
 k_B = const.k_B.value
 R_sun = const.R_sun.to(u.AU).value
 T_sun = 5778
-π = np.pi
 
 
 def get_blackbody_emission_nu(
@@ -32,7 +31,7 @@ def get_blackbody_emission_nu(
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
-    
+
     freq *= 1e9
     term1 = (2 * h * freq ** 3) / c ** 2
     term2 = np.expm1(((h * freq) / (k_B * T)))
@@ -83,19 +82,20 @@ def get_interplanetary_temperature(
 
 
 @lru_cache
-def get_phase_normalization(C0: float, C1: float, C2: float) -> float:
+def get_phase_normalization(c_0: float, c_1: float, c_2: float) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
 
-    int_term1 = 2 * π
-    int_term2 = 2 * C0
-    int_term3 = π * C1
-    int_term4 = (np.exp(C2 * π) + 1) / (C2 ** 2 + 1)
+    pi = np.pi
+    int_term1 = 2 * pi
+    int_term2 = 2 * c_0
+    int_term3 = pi * c_1
+    int_term4 = (np.exp(c_2 * pi) + 1) / (c_2 ** 2 + 1)
 
     return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
 
 
 def get_phase_function(
-    Theta: NDArray[np.floating], C0: float, C1: float, C2: float
+    Theta: NDArray[np.floating], phase_coefficients: tuple[float, float, float]
 ) -> NDArray[np.floating]:
     """Returns the phase function.
 
@@ -111,6 +111,7 @@ def get_phase_function(
         The Phase funciton.
     """
 
-    N = get_phase_normalization(C0=C0, C1=C1, C2=C2)
+    c_0, c_1, c_2 = phase_coefficients
+    phase_normalization = get_phase_normalization(c_0, c_1, c_2)
 
-    return N * (C0 + C1 * Theta + np.exp(C2 * Theta))
+    return phase_normalization * (c_0 + c_1 * Theta + np.exp(c_2 * Theta))
