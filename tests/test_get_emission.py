@@ -271,7 +271,7 @@ def test_return_comps(DIRBE):
     )
 
     assert no_comps.shape[0] == 1
-    assert comps.shape[0] == DIRBE.model.ncomps
+    assert comps.shape[0] == DIRBE.model.n_components
 
     assert np.isclose(comps.sum(axis=0), no_comps)
 

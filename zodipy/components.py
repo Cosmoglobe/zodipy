@@ -1,10 +1,10 @@
 from __future__ import annotations
-from zodipy._component_label import CompLabel
+from zodipy._component_label import ComponentLabel
 from zodipy._component import Component, Cloud, Band, Ring, Feature
 
 
-DIRBE: dict[CompLabel, Component] = {
-    CompLabel.CLOUD: Cloud(
+DIRBE: dict[ComponentLabel, Component] = {
+    ComponentLabel.CLOUD: Cloud(
         x_0=0.011887800744346281,
         y_0=0.0054765064662263777,
         z_0=-0.0021530908020710744,
@@ -16,7 +16,7 @@ DIRBE: dict[CompLabel, Component] = {
         gamma=0.94206179393358036,
         mu=0.18873176489090190,
     ),
-    CompLabel.BAND1: Band(
+    ComponentLabel.BAND1: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -28,7 +28,7 @@ DIRBE: dict[CompLabel, Component] = {
         p=4.0,
         delta_r=1.5,
     ),
-    CompLabel.BAND2: Band(
+    ComponentLabel.BAND2: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -40,7 +40,7 @@ DIRBE: dict[CompLabel, Component] = {
         p=4.0,
         delta_r=0.94121881201651147,
     ),
-    CompLabel.BAND3: Band(
+    ComponentLabel.BAND3: Band(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -52,7 +52,7 @@ DIRBE: dict[CompLabel, Component] = {
         p=4.0,
         delta_r=1.5,
     ),
-    CompLabel.RING: Ring(
+    ComponentLabel.RING: Ring(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -63,7 +63,7 @@ DIRBE: dict[CompLabel, Component] = {
         sigma_r=0.025000000372529030,
         sigma_z=0.054068037356978099,
     ),
-    CompLabel.FEATURE: Feature(
+    ComponentLabel.FEATURE: Feature(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
@@ -79,5 +79,5 @@ DIRBE: dict[CompLabel, Component] = {
 }
 
 PLANCK = DIRBE.copy()
-PLANCK.pop(CompLabel.RING)
-PLANCK.pop(CompLabel.FEATURE)
+PLANCK.pop(ComponentLabel.RING)
+PLANCK.pop(ComponentLabel.FEATURE)

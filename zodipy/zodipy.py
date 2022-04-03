@@ -1,11 +1,7 @@
 from functools import partial
-from typing import List, Literal, Optional, Sequence, Tuple, Union
+from typing import List, Literal, Optional, Sequence, Union
 
-from astropy.coordinates import (
-    get_body,
-    HeliocentricMeanEcliptic,
-    solar_system_ephemeris,
-)
+from astropy.coordinates import solar_system_ephemeris
 import astropy.units as u
 from astropy.units import Quantity, quantity_input
 from astropy.time import Time
@@ -13,23 +9,18 @@ import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._component import Component
+from zodipy._emission import get_step_emission
+from zodipy._ephemeris import get_earth_position, get_observer_position
 from zodipy._integral import trapezoidal
-from zodipy._source import (
-    get_phase_function,
-    get_interplanetary_temperature,
-    get_solar_flux,
-    get_blackbody_emission_nu,
-)
 from zodipy._line_of_sight import LineOfSight
+from zodipy._unit_vectors import (
+    get_unit_vector_from_angles,
+    get_unit_vector_from_pixels,
+)
 from zodipy.models import model_registry
 
 
 __all__ = ("Zodipy",)
-
-# L2 not included in the astropy api so we manually include support for it.
-ADDITIONAL_SUPPORTED_OBS = ["semb-l2"]
-DISTANCE_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 
 
 class Zodipy:
@@ -58,10 +49,10 @@ class Zodipy:
         solar_system_ephemeris.set(ephemeris)
 
     @property
-    def observers(self) -> List[str]:
+    def supported_observers(self) -> List[str]:
         """Returns all observers suported by the ephemeridis."""
 
-        return list(solar_system_ephemeris.bodies) + ADDITIONAL_SUPPORTED_OBS
+        return list(solar_system_ephemeris.bodies) + ["l2"]
 
     @quantity_input
     def get_emission(
@@ -147,7 +138,7 @@ class Zodipy:
             Zodiacal Emission timestream.
         """
 
-        if obs.lower() not in self.observers:
+        if obs.lower() not in self.supported_observers:
             raise ValueError(
                 f"observer {obs!r} not supported by ephemeridis "
                 f"{solar_system_ephemeris._value!r} or 'Zodipy'"
@@ -203,18 +194,18 @@ class Zodipy:
         if not isinstance(obs_time, Time):
             raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
-        obs_pos, earth_pos = _get_solar_system_bodies(obs, obs_time, obs_pos)
+        earth_position = get_earth_position(obs_time)
+        observer_position = get_observer_position(obs, obs_time, earth_position)
 
-        freq = freq.to("GHz", equivalencies=u.spectral())
+        frequency = freq.to("GHz", equivalencies=u.spectral())
         # If the specific value of freq is not covered by the fitted spectral
         # parameters in the model we interpolate/extrapolate to find a new
         # emissivity, albedo and scattering phase coefficients.
-        extrapolated_parameters = self.model.get_extrapolated_parameters(freq)
 
         if binned:
             if pixels is not None:
                 unique_pixels, counts = np.unique(pixels, return_counts=True)
-                unit_vectors = _get_ecliptic_unit_vectors(
+                unit_vectors = get_unit_vector_from_pixels(
                     coord_in=coord_in,
                     pixels=unique_pixels,
                     nside=nside,
@@ -224,28 +215,31 @@ class Zodipy:
                     np.asarray([theta, phi]), return_counts=True, axis=1
                 )
                 unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
-                unit_vectors = _get_ecliptic_unit_vectors(
+                unit_vectors = get_unit_vector_from_angles(
                     coord_in=coord_in,
                     theta=unique_angles[0],
                     phi=unique_angles[1],
                     lonlat=lonlat,
                 )
 
-            emission = np.zeros((self.model.ncomps, hp.nside2npix(nside)))
+            emission = np.zeros((self.model.n_components, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(self.model.components.items()):
-                emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                extrapolated_parameters = (
+                    self.model.get_extrapolated_component_parameters(label, frequency)
+                )
+                emissivity, albedo, phase_coefficients = extrapolated_parameters
                 line_of_sight = LineOfSight.from_comp_label(
                     comp_label=label,
-                    obs_pos=tuple(obs_pos.value.squeeze()),
+                    obs_pos=observer_position.value,
                     unit_vectors=unit_vectors,
                 )
                 get_comp_step_emission = partial(
-                    _get_step_emission,
-                    freq=freq.value,
-                    observer_pos=obs_pos.value,
-                    earth_pos=earth_pos.value,
+                    get_step_emission,
+                    frequency=frequency.value,
+                    observer_position=observer_position.value,
+                    earth_position=earth_position.value,
                     unit_vectors=unit_vectors,
-                    comp=component,
+                    component=component,
                     T_0=self.model.T_0,
                     delta=self.model.delta,
                     emissivity=emissivity,
@@ -262,40 +256,43 @@ class Zodipy:
         else:
             if pixels is not None:
                 unique_pixels, indicies = np.unique(pixels, return_inverse=True)
-                unit_vectors = _get_ecliptic_unit_vectors(
+                unit_vectors = get_unit_vector_from_pixels(
                     coord_in=coord_in,
                     pixels=unique_pixels,
                     nside=nside,
                 )
-                emission = np.zeros((self.model.ncomps, len(pixels)))
+                emission = np.zeros((self.model.n_components, len(pixels)))
 
             else:
                 unique_angles, indicies = np.unique(
                     np.asarray([theta, phi]), return_inverse=True, axis=1
                 )
-                unit_vectors = _get_ecliptic_unit_vectors(
+                unit_vectors = get_unit_vector_from_angles(
                     coord_in=coord_in,
                     theta=unique_angles[0],
                     phi=unique_angles[1],
                     lonlat=lonlat,
                 )
 
-                emission = np.zeros((self.model.ncomps, len(theta)))
+                emission = np.zeros((self.model.n_components, len(theta)))
 
             for idx, (label, component) in enumerate(self.model.components.items()):
-                emissivity, albedo, phase_coefficients = extrapolated_parameters[label]
+                extrapolated_parameters = (
+                    self.model.get_extrapolated_component_parameters(label, frequency)
+                )
+                emissivity, albedo, phase_coefficients = extrapolated_parameters
                 line_of_sight = LineOfSight.from_comp_label(
                     comp_label=label,
-                    obs_pos=tuple(obs_pos.value.squeeze()),
+                    obs_pos=observer_position.value,
                     unit_vectors=unit_vectors,
                 )
                 get_comp_step_emission = partial(
-                    _get_step_emission,
-                    freq=freq.value,
-                    observer_pos=obs_pos.value,
-                    earth_pos=earth_pos.value,
+                    get_step_emission,
+                    frequency=frequency.value,
+                    observer_position=observer_position.value,
+                    earth_position=earth_position.value,
                     unit_vectors=unit_vectors,
-                    comp=component,
+                    component=component,
                     T_0=self.model.T_0,
                     delta=self.model.delta,
                     emissivity=emissivity,
@@ -313,128 +310,3 @@ class Zodipy:
         emission = (emission << (u.W / u.Hz / u.m ** 2 / u.sr)).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
-
-
-def _get_solar_system_bodies(
-    obs: str, obs_time: Time, obs_pos: Optional[Quantity]
-) -> Tuple[Quantity[u.AU], Quantity[u.AU]]:
-    """Returns the observer and Earth's position."""
-
-    earth_skycoord = get_body("Earth", time=obs_time)
-    earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
-    earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
-
-    if obs_pos is None:
-        if obs.lower() == "semb-l2":
-            # We assume that L2 is located at a constant distance from the
-            # Earth along Earths unit vector in heliocentric coordinates.
-            earth_length = np.linalg.norm(earth_pos)
-            earth_unit_vec = earth_pos / earth_length
-            semb_l2_length = earth_length + DISTANCE_EARTH_TO_L2
-            obs_pos_ = earth_unit_vec * semb_l2_length
-        else:
-            obs_skycoord = get_body(obs, time=obs_time)
-            obs_skycoord = obs_skycoord.transform_to(HeliocentricMeanEcliptic)
-            obs_pos_ = obs_skycoord.represent_as("cartesian").xyz.to(u.AU)
-    else:
-        obs_pos_ = obs_pos
-
-    return obs_pos_.reshape(3, 1), earth_pos.reshape(3, 1)
-
-
-def _get_ecliptic_unit_vectors(
-    coord_in: str,
-    pixels: Optional[Union[Sequence[int], NDArray[np.integer]]] = None,
-    nside: Optional[int] = None,
-    phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
-    theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
-    lonlat: bool = False,
-) -> NDArray[np.floating]:
-    """
-    Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,
-    we need to rotate any unit vectors (obtained from the pointing) defined in
-    another coordinate frame to ecliptic before evaluating the model.
-    """
-
-    if pixels is None:
-        unit_vectors = np.asarray(hp.ang2vec(theta, phi, lonlat=lonlat)).transpose()
-    else:
-        unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
-
-    return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))
-
-
-def _get_step_emission(
-    r: Union[float, NDArray[np.floating]],
-    *,
-    freq: float,
-    observer_pos: NDArray[np.floating],
-    earth_pos: NDArray[np.floating],
-    unit_vectors: NDArray[np.floating],
-    comp: Component,
-    T_0: float,
-    delta: float,
-    emissivity: float,
-    albedo: Optional[float],
-    phase_coefficients: Optional[Tuple[float, float, float]],
-    colorcorr_table: Optional[NDArray[np.floating]],
-) -> NDArray[np.floating]:
-    """Returns the Zodiacal emission at a step along the line-of-sight.
-
-    This function computes equation (1) in K98 along a step in ds.
-
-    Parameters
-    ----------
-    r
-        Radial distance along the line-of-sight [AU / 1 AU].
-    freq
-        Frequency at which to evaluate the brightness integral [GHz].
-    observer_pos
-        The heliocentric ecliptic cartesian position of the observer [AU / 1 AU].
-    earth_pos
-        The heliocentric ecliptic cartesian position of the Earth [AU / 1 AU].
-    unit_vectors
-        Heliocentric ecliptic cartesian unit vectors pointing to each
-        position in space we that we consider [AU / 1 AU].
-    comp
-        Zodiacal component class.
-    cloud_offset
-        Heliocentric ecliptic offset for the Zodiacal Cloud component in the
-        model.
-    source_params
-        Dictionary containing various model and interpolated spectral
-        parameters required for the evaluation of the brightness integral.
-
-    Returns
-    -------
-    emission
-        The Zodiacal emission at a step along the line-of-sight
-        [W / Hz / m^2 / sr].
-    """
-
-    r_vec = r * unit_vectors
-    X_helio = r_vec + observer_pos
-    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
-
-    density = comp.compute_density(X_helio=X_helio, X_earth=earth_pos)
-    interplanetary_temperature = get_interplanetary_temperature(R_helio, T_0, delta)
-    blackbody_emission = get_blackbody_emission_nu(freq, interplanetary_temperature)
-
-    if albedo is not None and phase_coefficients is not None and albedo > 0:
-        emission = (1 - albedo) * (emissivity * blackbody_emission)
-
-        if colorcorr_table is not None:
-            emission *= np.interp(interplanetary_temperature, *colorcorr_table)
-
-        scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = get_solar_flux(R_helio, freq)
-        phase_function = get_phase_function(scattering_angle, phase_coefficients)
-        emission += albedo * solar_flux * phase_function
-
-    else:
-        emission = emissivity * blackbody_emission
-
-        if colorcorr_table is not None:
-            emission *= np.interp(interplanetary_temperature, *colorcorr_table)
-
-    return emission * density

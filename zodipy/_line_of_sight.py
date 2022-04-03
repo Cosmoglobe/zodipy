@@ -4,30 +4,30 @@ from typing import NamedTuple
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._component_label import CompLabel
+from zodipy._component_label import ComponentLabel
 
 
 R_JUPITER = 5.2  # AU
 EPS = np.finfo(float).eps
 
 # Line of sight steps
-line_of_sight_steps: dict[CompLabel, int] = {
-    CompLabel.CLOUD: 200,
-    CompLabel.BAND1: 50,
-    CompLabel.BAND2: 50,
-    CompLabel.BAND3: 50,
-    CompLabel.RING: 50,
-    CompLabel.FEATURE: 50,
+line_of_sight_steps: dict[ComponentLabel, int] = {
+    ComponentLabel.CLOUD: 500,
+    ComponentLabel.BAND1: 500,
+    ComponentLabel.BAND2: 500,
+    ComponentLabel.BAND3: 500,
+    ComponentLabel.RING: 500,
+    ComponentLabel.FEATURE: 500,
 }
 
 # Line of sight steps
-line_of_sight_cutoffs: dict[CompLabel, float] = {
-    CompLabel.CLOUD: R_JUPITER,
-    CompLabel.BAND1: R_JUPITER,
-    CompLabel.BAND2: R_JUPITER,
-    CompLabel.BAND3: R_JUPITER,
-    CompLabel.RING: 3,
-    CompLabel.FEATURE: 2,
+line_of_sight_cutoffs: dict[ComponentLabel, float] = {
+    ComponentLabel.CLOUD: R_JUPITER,
+    ComponentLabel.BAND1: R_JUPITER,
+    ComponentLabel.BAND2: R_JUPITER,
+    ComponentLabel.BAND3: R_JUPITER,
+    ComponentLabel.RING: 3,
+    ComponentLabel.FEATURE: 2,
 }
 
 
@@ -45,8 +45,8 @@ class LineOfSight(NamedTuple):
     @classmethod
     def from_comp_label(
         cls,
-        comp_label: CompLabel,
-        obs_pos: tuple[float, float, float],
+        comp_label: ComponentLabel,
+        obs_pos: NDArray[np.floating],
         unit_vectors: NDArray[np.floating],
     ) -> LineOfSight:
         """Returns a LineOfSight object for a given component.
@@ -75,7 +75,7 @@ class LineOfSight(NamedTuple):
 
 def get_line_of_sight_range(
     r_cutoff: float,
-    obs_pos: tuple[float, float, float],
+    obs_pos: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
 ) -> NDArray[np.floating]:
     """
@@ -83,7 +83,8 @@ def get_line_of_sight_range(
     sight which intersects the the sphere of length r_max around the Sun.
     """
 
-    x, y, z = obs_pos
+    x, y, z = obs_pos.flatten()
+
     r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
     theta = np.arctan2(y, x)
     cos_theta = np.cos(theta)

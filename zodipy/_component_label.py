@@ -1,6 +1,6 @@
 from enum import Enum
 
-class CompLabel(Enum):
+class ComponentLabel(Enum):
     """Labels representing the six Zodiacal components in the K98 model."""
 
     CLOUD = "cloud"

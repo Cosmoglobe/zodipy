@@ -7,54 +7,51 @@ import astropy.units as u
 import numpy as np
 
 from zodipy._component import Component
-from zodipy._component_label import CompLabel
-from zodipy.source_params import T_0_DIRBE, delta_DIRBE
+from zodipy._component_label import ComponentLabel
+from zodipy.source_params import T_0_DIRBE, DELTA_DIRBE
 
 
 @dataclass
 class Model:
     name: str
-    components: dict[CompLabel, Component]
+    components: dict[ComponentLabel, Component]
     spectrum: Quantity[u.Hz] | Quantity[u.m]
-    emissivities: dict[CompLabel, tuple[float, ...]]
-    albedos: dict[CompLabel, tuple[float, ...]] | None = None
+    emissivities: dict[ComponentLabel, tuple[float, ...]]
+    albedos: dict[ComponentLabel, tuple[float, ...]] | None = None
     phase_coefficients: list[tuple[float, ...]] | None = None
     T_0: float = T_0_DIRBE
-    delta: float = delta_DIRBE
+    delta: float = DELTA_DIRBE
 
     @property
-    def ncomps(self) -> int:
+    def n_components(self) -> int:
         return len(self.components)
 
-    def get_extrapolated_parameters(
-        self, freq: Quantity[u.GHz] | Quantity[u.m]
-    ) -> dict[CompLabel, tuple[float, Optional[float], Optional[tuple[float, ...]]]]:
+    def get_extrapolated_component_parameters(
+        self,
+        component_label: ComponentLabel,
+        frequency: Quantity[u.GHz] | Quantity[u.m],
+    ) -> tuple[float, float, tuple[float, float, float]]:
         """Returns interpolated/extrapolated spectral parameters given a frequency."""
 
-        extrapolated_parameters: dict[
-            CompLabel, tuple[float, Optional[float], Optional[tuple[float, ...]]]
-        ] = {}
-        freq = freq.to(self.spectrum.unit, equivalencies=u.spectral())
+        frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
 
-        for component in self.components:
-            emissivity = np.interp(freq, self.spectrum, self.emissivities[component])
-            if self.albedos is not None:
-                albedo = np.interp(freq, self.spectrum, self.albedos[component])
-            else:
-                albedo = None
-            if self.phase_coefficients:
-                phase_coefficient = tuple(
-                    [
-                        np.interp(freq, self.spectrum, coeff)
-                        for coeff in self.phase_coefficients
-                    ]
-                )
-            else:
-                phase_coefficient = None
+        emissivity = np.interp(
+            frequency, self.spectrum, self.emissivities[component_label]
+        )
+        if self.albedos is not None:
+            albedo = np.interp(frequency, self.spectrum, self.albedos[component_label])
+        else:
+            albedo = 0.0
 
-            extrapolated_parameters[component] = emissivity, albedo, phase_coefficient
+        if self.phase_coefficients is not None:
+            phase_coefficient = [
+                np.interp(frequency, self.spectrum, coeff)
+                for coeff in self.phase_coefficients
+            ]
+        else:
+            phase_coefficient = [0.0 for _ in range(3)]
 
-        return extrapolated_parameters
+        return emissivity, albedo, tuple(phase_coefficient)
 
 
 @dataclass
@@ -72,13 +69,13 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        components: dict[CompLabel, Component],
+        components: dict[ComponentLabel, Component],
         spectrum: Quantity[u.Hz] | Quantity[u.m],
-        emissivities: dict[CompLabel, tuple[float, ...]],
-        albedos: dict[CompLabel, tuple[float, ...]] | None = None,
+        emissivities: dict[ComponentLabel, tuple[float, ...]],
+        albedos: dict[ComponentLabel, tuple[float, ...]] | None = None,
         phase_coefficients: list[tuple[float, ...]] | None = None,
         T_0: float = T_0_DIRBE,
-        delta: float = delta_DIRBE,
+        delta: float = DELTA_DIRBE,
     ) -> None:
         """Registers a new model.
 

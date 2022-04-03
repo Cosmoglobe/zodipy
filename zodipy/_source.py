@@ -81,19 +81,6 @@ def get_interplanetary_temperature(
     return T_0 * R ** -delta
 
 
-@lru_cache
-def get_phase_normalization(c_0: float, c_1: float, c_2: float) -> float:
-    """Returns the analyitcal integral for the phase normalization factor N."""
-
-    pi = np.pi
-    int_term1 = 2 * pi
-    int_term2 = 2 * c_0
-    int_term3 = pi * c_1
-    int_term4 = (np.exp(c_2 * pi) + 1) / (c_2 ** 2 + 1)
-
-    return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
-
-
 def get_phase_function(
     Theta: NDArray[np.floating], phase_coefficients: tuple[float, float, float]
 ) -> NDArray[np.floating]:
@@ -112,6 +99,19 @@ def get_phase_function(
     """
 
     c_0, c_1, c_2 = phase_coefficients
-    phase_normalization = get_phase_normalization(c_0, c_1, c_2)
+    phase_normalization = _get_phase_normalization(c_0, c_1, c_2)
 
     return phase_normalization * (c_0 + c_1 * Theta + np.exp(c_2 * Theta))
+
+
+@lru_cache
+def _get_phase_normalization(c_0: float, c_1: float, c_2: float) -> float:
+    """Returns the analyitcal integral for the phase normalization factor N."""
+
+    pi = np.pi
+    int_term1 = 2 * pi
+    int_term2 = 2 * c_0
+    int_term3 = pi * c_1
+    int_term4 = (np.exp(c_2 * pi) + 1) / (c_2 ** 2 + 1)
+
+    return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
