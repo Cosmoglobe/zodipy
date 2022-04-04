@@ -107,8 +107,8 @@ class ModelRegistry:
             interplanetary temperature falls with radial distance from the Sun.
             Defaults to the DIRBE model value.
         """
-
-        if name in self._registry:
+        
+        if (name := name.lower()) in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 
         self._registry[name] = Model(
@@ -125,9 +125,9 @@ class ModelRegistry:
     def get_model(self, name: str) -> Model:
         """Returns a registered model given a name."""
 
-        if name not in self._registry:
+        if (name := name.lower()) not in self._registry:
             raise ModuleNotFoundError(
-                f"{name} is not a model in the registry. Avaliable models are "
+                f"{name} is not a model in the registry. Avaliable models are: "
                 f"{', '.join(self._registry)}"
             )
 

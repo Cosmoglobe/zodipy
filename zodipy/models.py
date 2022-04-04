@@ -4,7 +4,7 @@ from zodipy import source_params
 
 
 model_registry.register_model(
-    name="DIRBE",
+    name="dirbe",
     components=components.DIRBE,
     spectrum=source_params.SPECTRUM_DIRBE,
     emissivities=source_params.EMISSIVITY_DIRBE,
@@ -14,7 +14,7 @@ model_registry.register_model(
 
 
 model_registry.register_model(
-    name="Planck13",
+    name="planck13",
     components=components.DIRBE,
     spectrum=source_params.SPECTRUM_PLANCK,
     emissivities=source_params.EMISSIVITY_PLANCK_13,
@@ -22,7 +22,7 @@ model_registry.register_model(
 
 
 model_registry.register_model(
-    name="Planck15",
+    name="planck15",
     components=components.PLANCK,
     spectrum=source_params.SPECTRUM_PLANCK,
     emissivities=source_params.EMISSIVITY_PLANCK_15,
@@ -30,14 +30,14 @@ model_registry.register_model(
 
 
 model_registry.register_model(
-    name="Planck18",
+    name="planck18",
     components=components.PLANCK,
     spectrum=source_params.SPECTRUM_PLANCK,
     emissivities=source_params.EMISSIVITY_PLANCK_18,
 )
 
 model_registry.register_model(
-    name="Odegard",
+    name="odegard",
     components=components.PLANCK,
     spectrum=source_params.SPECTRUM_PLANCK,
     emissivities=source_params.EMISSIVITY_ODEGARD,
