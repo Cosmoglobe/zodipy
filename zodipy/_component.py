@@ -1,7 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -51,7 +50,7 @@ class Component(ABC):
         self,
         X_helio: NDArray[np.floating],
         *,
-        X_earth: Optional[NDArray[np.floating]] = None,
+        X_earth: NDArray[np.floating] | None = None,
     ) -> NDArray[np.floating]:
         """Returns the dust density of a component at points in the Solar System
         given by 'X_helio'.

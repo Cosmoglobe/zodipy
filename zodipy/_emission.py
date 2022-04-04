@@ -23,8 +23,8 @@ def get_emission_step(
     T_0: float,
     delta: float,
     emissivity: float,
-    albedo: float | None,
-    phase_coefficients: tuple[float, float, float] | None,
+    albedo: float,
+    phase_coefficients: tuple[float, float, float],
 ) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along a line of sight.
 
@@ -74,7 +74,7 @@ def get_emission_step(
         frequency, interplanetary_temperature
     )
 
-    if albedo is not None and phase_coefficients is not None and albedo > 0:
+    if albedo > 0:
         emission = (1 - albedo) * (emissivity * blackbody_emission)
         scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
         solar_flux = get_solar_flux(R_helio, frequency)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Sequence
+from typing import Sequence
 
 from astropy.units import Quantity
 import astropy.units as u
@@ -9,9 +9,7 @@ from numpy.typing import NDArray
 
 
 def get_unit_vector_from_pixels(
-    coord_in: str,
-    pixels: Optional[Sequence[int] | NDArray[np.integer]] = None,
-    nside: Optional[int] = None,
+    coord_in: str, pixels: Sequence[int] | NDArray[np.integer], nside: int
 ) -> NDArray[np.floating]:
     """Returns ecliptic unit vectors from HEALPix pixels representing some pointing."""
 
@@ -22,8 +20,8 @@ def get_unit_vector_from_pixels(
 
 def get_unit_vector_from_angles(
     coord_in: str,
-    phi: Optional[Quantity[u.rad] | Quantity[u.deg]] = None,
-    theta: Optional[Quantity[u.rad] | Quantity[u.deg]] = None,
+    phi: Quantity[u.rad] | Quantity[u.deg],
+    theta: Quantity[u.rad] | Quantity[u.deg],
     lonlat: bool = False,
 ) -> NDArray[np.floating]:
     """Returns ecliptic unit vectors from sky angles representing some pointing."""
