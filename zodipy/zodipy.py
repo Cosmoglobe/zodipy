@@ -9,11 +9,11 @@ import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._emission import get_step_emission
+from zodipy._emission import get_emission_step
 from zodipy._ephemeris import get_earth_position, get_observer_position
-from zodipy._integral import trapezoidal
-from zodipy._line_of_sight import LineOfSight
-from zodipy._unit_vectors import (
+from zodipy._integral import trapezoidal_regular_grid
+from zodipy._line_of_sight import get_line_of_sight
+from zodipy._unit_vector import (
     get_unit_vector_from_angles,
     get_unit_vector_from_pixels,
 )
@@ -52,7 +52,7 @@ class Zodipy:
     def supported_observers(self) -> List[str]:
         """Returns all observers suported by the ephemeridis."""
 
-        return list(solar_system_ephemeris.bodies) + ["l2"]
+        return list(solar_system_ephemeris.bodies) + ["l2 or semb-l2"]
 
     @quantity_input
     def get_emission(
@@ -195,12 +195,12 @@ class Zodipy:
             raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
         earth_position = get_earth_position(obs_time)
-        observer_position = get_observer_position(obs, obs_time, earth_position)
+        if obs_pos is None:
+            observer_position = get_observer_position(obs, obs_time, earth_position)
+        else:
+            observer_position = obs_pos.reshape(3,1)
 
         frequency = freq.to("GHz", equivalencies=u.spectral())
-        # If the specific value of freq is not covered by the fitted spectral
-        # parameters in the model we interpolate/extrapolate to find a new
-        # emissivity, albedo and scattering phase coefficients.
 
         if binned:
             if pixels is not None:
@@ -228,13 +228,11 @@ class Zodipy:
                     self.model.get_extrapolated_component_parameters(label, frequency)
                 )
                 emissivity, albedo, phase_coefficients = extrapolated_parameters
-                line_of_sight = LineOfSight.from_comp_label(
-                    comp_label=label,
-                    obs_pos=observer_position.value,
-                    unit_vectors=unit_vectors,
-                )
-                get_comp_step_emission = partial(
-                    get_step_emission,
+
+                # Create new callable with single argument as the distance along
+                # the line of sight (R)
+                emission_step_function = partial(
+                    get_emission_step,
                     frequency=frequency.value,
                     observer_position=observer_position.value,
                     earth_position=earth_position.value,
@@ -247,8 +245,16 @@ class Zodipy:
                     phase_coefficients=phase_coefficients,
                     colorcorr_table=colorcorr_table,
                 )
-                emission[idx, unique_pixels] = trapezoidal(
-                    get_comp_step_emission, line_of_sight
+                start, stop, n_steps = get_line_of_sight(
+                    component_label=label,
+                    observer_position=observer_position.value,
+                    unit_vectors=unit_vectors,
+                )
+                emission[idx, unique_pixels] = trapezoidal_regular_grid(
+                    get_emission_step=emission_step_function,
+                    start=start,
+                    stop=stop,
+                    n_steps=n_steps,
                 )
 
             emission[:, unique_pixels] *= counts
@@ -281,13 +287,11 @@ class Zodipy:
                     self.model.get_extrapolated_component_parameters(label, frequency)
                 )
                 emissivity, albedo, phase_coefficients = extrapolated_parameters
-                line_of_sight = LineOfSight.from_comp_label(
-                    comp_label=label,
-                    obs_pos=observer_position.value,
-                    unit_vectors=unit_vectors,
-                )
-                get_comp_step_emission = partial(
-                    get_step_emission,
+
+                # Create new callable with single argument as the distance along
+                # the line of sight (R)
+                emission_step_function = partial(
+                    get_emission_step,
                     frequency=frequency.value,
                     observer_position=observer_position.value,
                     earth_position=earth_position.value,
@@ -300,8 +304,16 @@ class Zodipy:
                     phase_coefficients=phase_coefficients,
                     colorcorr_table=colorcorr_table,
                 )
-                integrated_comp_emission = trapezoidal(
-                    get_comp_step_emission, line_of_sight
+                start, stop, n_steps = get_line_of_sight(
+                    component_label=label,
+                    observer_position=observer_position.value,
+                    unit_vectors=unit_vectors,
+                )
+                integrated_comp_emission = trapezoidal_regular_grid(
+                    get_emission_step=emission_step_function,
+                    start=start,
+                    stop=stop,
+                    n_steps=n_steps,
                 )
 
                 emission[idx] = integrated_comp_emission[indicies]

@@ -4,40 +4,42 @@ from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._line_of_sight import LineOfSight
 
-
-def trapezoidal(
+def trapezoidal_regular_grid(
     get_emission_step: Callable[[float | NDArray[np.floating]], NDArray[np.floating]],
-    line_of_sight: LineOfSight,
+    start: float,
+    stop: float | NDArray[np.floating],
+    n_steps: int,
 ) -> NDArray[np.floating]:
-    """Returns the integrated Zodiacal emission for an IPDcomponent
-
-    This function implements the trapezoidal rule for a regular grid.
+    """
+    Integrates and returns the Zodiacal Emission of a Interplanetary Dust component
+    over a regular grid.
 
     Parameters
     ----------
     get_emission_step
         Function that computes the Zodiacal emission at a step along the line
-        of sight for an IPD component.
-    line_of_sight
-       Representation of discrete points along a line of sight.
+        of sight for an Interplanetary Dust component.
+    start
+        Lower integration limit (At the face of the observer).
+    stop
+        Upper integration limit (At a distance along the line of sight which
+        corresponds to a heliocentric distance of 5.2 AU)
+    step
+        Number of steps along the line of sight to integrate.
 
     Returns
     -------
     integrated_emission
-        The line-of-sight integrated copmonent emission [W / Hz / m^2 / sr].
+        Integrated Zodiacal emission for an Interplanetary Dust component over
+        line of sights in units of W / Hz / m^2 / sr.
     """
+    
+    ds = (stop - start) / n_steps
 
-    r_min = line_of_sight.r_min
-    r_max = line_of_sight.r_max
-    n_steps = line_of_sight.n_steps
-    dr = line_of_sight.dr
-
-    integrated_emission = get_emission_step(r_min)
-    integrated_emission += get_emission_step(r_max)
+    integrated_emission = get_emission_step(start) + get_emission_step(stop)
     integrated_emission += 2 * sum(
-        get_emission_step(r_min + dr * step) for step in range(1, n_steps)
+        get_emission_step(start + ds * step) for step in range(1, n_steps)
     )
 
-    return integrated_emission * (dr / 2)
+    return integrated_emission * (ds / 2)

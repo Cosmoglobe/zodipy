@@ -12,7 +12,7 @@ from zodipy._source import (
 )
 
 
-def get_step_emission(
+def get_emission_step(
     r: float | NDArray[np.floating],
     *,
     frequency: float,
@@ -27,37 +27,42 @@ def get_step_emission(
     phase_coefficients: tuple[float, float, float] | None,
     colorcorr_table: NDArray[np.floating] | None,
 ) -> NDArray[np.floating]:
-    """Returns the Zodiacal emission at a step along the line-of-sight.
+    """Returns the Zodiacal emission at a step along a line of sight.
 
-    This function computes equation (1) in K98 along a step in ds.
+    This function computes equation (1) in Kelsall et al. (1998) along a step in ds.
 
     Parameters
     ----------
     r
         Radial distance along the line-of-sight [AU / 1 AU].
-    freq
+    frequency
         Frequency at which to evaluate the brightness integral [GHz].
-    observer_pos
+    observer_position
         The heliocentric ecliptic cartesian position of the observer [AU / 1 AU].
-    earth_pos
+    earth_position
         The heliocentric ecliptic cartesian position of the Earth [AU / 1 AU].
     unit_vectors
-        Heliocentric ecliptic cartesian unit vectors pointing to each
-        position in space we that we consider [AU / 1 AU].
-    comp
-        Zodiacal component class.
-    cloud_offset
-        Heliocentric ecliptic offset for the Zodiacal Cloud component in the
-        model.
-    source_params
-        Dictionary containing various model and interpolated spectral
-        parameters required for the evaluation of the brightness integral.
+        Heliocentric ecliptic cartesian unit vectors for each pointing [AU / 1 AU].
+    component
+        Interplanetary Dust component.
+    T_0
+        Interplanetary temperature at 1 AU.
+    delta
+        Interplanetary temperature power law parameter.
+    emissivity
+        Frequency and component dependant emissivity factor representing the 
+        deviation of the emisstion from a black body.
+    albedo
+        Frequency and component dependant albedo factor representing the
+        probability of scatterin.
+    phase_coefficient
+        Frequency dependant parameters representing the distribution of scattered
+        emission.
 
     Returns
     -------
-    emission
-        The Zodiacal emission at a step along the line-of-sight
-        [W / Hz / m^2 / sr].
+        The Zodiacal emission from an Interplanetary Dust component at a step 
+        along line of sights in units of W / Hz / m^2 / sr.
     """
 
     r_vec = r * unit_vectors
