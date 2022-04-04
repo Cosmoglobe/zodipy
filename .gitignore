@@ -21,6 +21,7 @@ test3.py
 _utils.py
 _contour.py
 _interp.py
+_color.py
 _tabulate.py
 fitting
 

@@ -70,7 +70,6 @@ class Zodipy:
         binned: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-        colorcorr_table: Optional[NDArray[np.floating]] = None,
     ) -> Quantity[u.MJy / u.sr]:
         """Returns simulated Zodiacal Emission.
 
@@ -123,11 +122,6 @@ class Zodipy:
         coord_in
             Coordinates frame of the pointing. Assumes 'E' (ecliptic coordinates)
             by default.
-        colorcorr_table
-            An array of shape (2, n) where the first column is temperatures
-            in K, and the second column the corresponding color corrections.
-            The color corrections should be for B(lambda, T) and is only applied
-            to the thermal contribution of the emission.
 
         Returns
         -------
@@ -243,7 +237,6 @@ class Zodipy:
                     emissivity=emissivity,
                     albedo=albedo,
                     phase_coefficients=phase_coefficients,
-                    colorcorr_table=colorcorr_table,
                 )
                 start, stop, n_steps = get_line_of_sight(
                     component_label=label,
@@ -302,7 +295,6 @@ class Zodipy:
                     emissivity=emissivity,
                     albedo=albedo,
                     phase_coefficients=phase_coefficients,
-                    colorcorr_table=colorcorr_table,
                 )
                 start, stop, n_steps = get_line_of_sight(
                     component_label=label,
