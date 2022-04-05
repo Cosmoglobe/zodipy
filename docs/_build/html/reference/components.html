@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="zodipy._model" href="models.html" /><link rel="prev" title="zodipy.Zodipy" href="zodipy.html" />
 
-    <meta name="generator" content="sphinx-4.4.0, furo 2022.03.04"/>
-        <title>zodipy._components - Zodipy 0.5.0 documentation</title>
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
+        <title>zodipy._component - Zodipy 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
@@ -159,7 +159,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../reference.html">Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="zodipy.html"><code class="docutils literal notranslate"><span class="pre">zodipy.Zodipy</span></code></a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code></a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">zodipy._component</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="models.html"><code class="docutils literal notranslate"><span class="pre">zodipy._model</span></code></a></li>
 </ul>
 </li>
@@ -195,26 +195,26 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-zodipy._components">
-<span id="zodipy-components"></span><span id="components-overview"></span><h1><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code><a class="headerlink" href="#module-zodipy._components" title="Permalink to this headline">#</a></h1>
+          <section id="module-zodipy._component">
+<span id="zodipy-component"></span><span id="component-overview"></span><h1><code class="docutils literal notranslate"><span class="pre">zodipy._component</span></code><a class="headerlink" href="#module-zodipy._component" title="Permalink to this headline">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._components.Band">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._components.</span></span><span class="sig-name descname"><span class="pre">Band</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_zeta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Band"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Band" title="Permalink to this definition">#</a></dt>
-<dd><p>The Zodiacal Astroidal Band component.</p>
+<dt class="sig sig-object py" id="zodipy._component.Band">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._component.</span></span><span class="sig-name descname"><span class="pre">Band</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_zeta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Band"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Band" title="Permalink to this definition">#</a></dt>
+<dd><p>Dust Band component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_0</strong> (<em>Quantity</em><em>[</em><em>u.AU ** -1</em><em>]</em>) – Density at 3 AU.</p></li>
-<li><p><strong>delta_zeta</strong> (<em>Quantity</em><em>[</em><em>u.deg</em><em>] </em><em>| </em><em>Quantity</em><em>[</em><em>u.rad</em><em>]</em>) – Shape parameter [deg].</p></li>
+<li><p><strong>n_0</strong> (<em>float</em>) – Density at 3 AU.</p></li>
+<li><p><strong>delta_zeta</strong> (<em>float</em>) – Shape parameter [deg].</p></li>
 <li><p><strong>v</strong> (<em>float</em>) – Shape parameter.</p></li>
 <li><p><strong>p</strong> (<em>float</em>) – Shape parameter.</p></li>
-<li><p><strong>delta_r</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Inner radial cutoff.</p></li>
+<li><p><strong>delta_r</strong> (<em>float</em>) – Inner radial cutoff.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="zodipy._components.Band.compute_density">
-<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_0_cloud</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Band.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Band.compute_density" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="zodipy._component.Band.compute_density">
+<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Band.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Band.compute_density" title="Permalink to this definition">#</a></dt>
 <dd><p>See base class for documentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
@@ -224,13 +224,13 @@
 </dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._components.Cloud">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._components.</span></span><span class="sig-name descname"><span class="pre">Cloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Cloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Cloud" title="Permalink to this definition">#</a></dt>
-<dd><p>The Zodiacal Diffuse Cloud component.</p>
+<dt class="sig sig-object py" id="zodipy._component.Cloud">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._component.</span></span><span class="sig-name descname"><span class="pre">Cloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Cloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Cloud" title="Permalink to this definition">#</a></dt>
+<dd><p>Diffuse Cloud component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_0</strong> (<em>Quantity</em><em>[</em><em>u.AU ** -1</em><em>]</em>) – Density at 1 AU.</p></li>
+<li><p><strong>n_0</strong> (<em>float</em>) – Density at 1 AU.</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – Radial power-law exponent.</p></li>
 <li><p><strong>beta</strong> (<em>float</em>) – Vertical shape parameter.</p></li>
 <li><p><strong>gamma</strong> (<em>float</em>) – Vertical power-law exponent.</p></li>
@@ -239,8 +239,8 @@
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="zodipy._components.Cloud.compute_density">
-<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Cloud.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Cloud.compute_density" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="zodipy._component.Cloud.compute_density">
+<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Cloud.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Cloud.compute_density" title="Permalink to this definition">#</a></dt>
 <dd><p>See base class for documentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
@@ -250,63 +250,62 @@
 </dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._components.Component">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._components.</span></span><span class="sig-name descname"><span class="pre">Component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Component"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Component" title="Permalink to this definition">#</a></dt>
-<dd><p>Base class for an Interplanetary Dust Component.</p>
-<p>Any component that inherits from this class needs to implement the two
-abstract methods <cite>get_compcentric_coordinates</cite> and <cite>compute_density</cite>.</p>
+<dt class="sig sig-object py" id="zodipy._component.Component">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._component.</span></span><span class="sig-name descname"><span class="pre">Component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Component"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Component" title="Permalink to this definition">#</a></dt>
+<dd><p>Base class for a DIRBE Interplanetary Dust Component.</p>
+<p>Any component that inherits from this class needs to implement the
+<cite>compute_density</cite> method which takes in the heliocentric ecliptic cartesian
+coordinates of the line of sight, and optionally Earth’s position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x_0</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – x-offset from the Sun in heliocentric ecliptic coordinates in AU.</p></li>
-<li><p><strong>y_0</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – y-offset from the Sun in heliocentric ecliptic coordinates in AU.</p></li>
-<li><p><strong>z_0</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – z-offset from the Sun in heliocentric ecliptic coordinates in AU.</p></li>
-<li><p><strong>i</strong> (<em>Quantity</em><em>[</em><em>u.deg</em><em>] </em><em>| </em><em>Quantity</em><em>[</em><em>u.rad</em><em>]</em>) – Inclination with respect to the ecliptic planein deg.</p></li>
-<li><p><strong>Omega</strong> (<em>Quantity</em><em>[</em><em>u.deg</em><em>] </em><em>| </em><em>Quantity</em><em>[</em><em>u.rad</em><em>]</em>) – Ascending node in deg.</p></li>
+<li><p><strong>x_0</strong> (<em>float</em>) – x-offset from the Sun in heliocentric ecliptic coordinates [AU].</p></li>
+<li><p><strong>y_0</strong> (<em>float</em>) – y-offset from the Sun in heliocentric ecliptic coordinates [AU].</p></li>
+<li><p><strong>z_0</strong> (<em>float</em>) – z-offset from the Sun in heliocentric ecliptic coordinates [AU].</p></li>
+<li><p><strong>i</strong> (<em>float</em>) – Inclination with respect to the ecliptic plane [deg].</p></li>
+<li><p><strong>Omega</strong> (<em>float</em>) – Ascending node [deg].</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="zodipy._components.Component.compute_density">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_earth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_0_cloud</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Component.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Component.compute_density" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="zodipy._component.Component.compute_density">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_earth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Component.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Component.compute_density" title="Permalink to this definition">#</a></dt>
 <dd><p>Returns the dust density of a component at points in the Solar System
 given by ‘X_helio’.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X_helio</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">floating</span></code>]]) – Heliocentric ecliptic coordinates (x, y, z) of points in the Solar
-System.</p></li>
-<li><p><strong>X_earth</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">floating</span></code>]]]) – Heliocentric ecliptic coordinates of the Earth. Required for the
-Earth-trailing Feature-</p></li>
-<li><p><strong>X_0_cloud</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">floating</span></code>]]]) – Heliocentric ecliptic coordinates of the Diffuse Clouds offset.
-Required for the Dust Bands.</p></li>
+<li><p><strong>X_helio</strong> (<em>NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Heliocentric ecliptic coordinates (x, y, z) of points in the Solar
+System [AU].</p></li>
+<li><p><strong>X_earth</strong> (<em>NDArray</em><em>[</em><em>np.floating</em><em>] </em><em>| </em><em>None</em>) – Heliocentric ecliptic coordinates of the Earth. Required for the
+Earth-trailing Feature [AU].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Density of the component at points in the Solar System.</p>
+<dd class="field-even"><p>Density of the component at the points given by ‘X_helio’ [1/AU].</p>
 </dd>
 </dl>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._components.Feature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._components.</span></span><span class="sig-name descname"><span class="pre">Feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Feature" title="Permalink to this definition">#</a></dt>
-<dd><p>The Zodiacal Earth-trailing Feature component.</p>
+<dt class="sig sig-object py" id="zodipy._component.Feature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._component.</span></span><span class="sig-name descname"><span class="pre">Feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Feature" title="Permalink to this definition">#</a></dt>
+<dd><p>Earth-trailing Feature component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_0</strong> (<em>Quantity</em><em>[</em><em>u.AU ** -1</em><em>]</em>) – Density at 1 AU.</p></li>
-<li><p><strong>R</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Radius of the peak density.</p></li>
-<li><p><strong>sigma_r</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Radial dispersion.</p></li>
-<li><p><strong>sigma_z</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Vertical dispersion.</p></li>
-<li><p><strong>θ</strong> – Longitude with respect to Earth.</p></li>
-<li><p><strong>sigma_θ</strong> – Longitude dispersion.</p></li>
+<li><p><strong>n_0</strong> (<em>float</em>) – Density at 1 AU.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – Radius of the peak density.</p></li>
+<li><p><strong>sigma_r</strong> (<em>float</em>) – Radial dispersion.</p></li>
+<li><p><strong>sigma_z</strong> (<em>float</em>) – Vertical dispersion.</p></li>
+<li><p><strong>theta</strong> (<em>float</em>) – Longitude with respect to Earth [deg].</p></li>
+<li><p><strong>sigma_theta</strong> (<em>float</em>) – Longitude dispersion [deg].</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="zodipy._components.Feature.compute_density">
-<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_earth</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Feature.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Feature.compute_density" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="zodipy._component.Feature.compute_density">
+<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_earth</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Feature.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Feature.compute_density" title="Permalink to this definition">#</a></dt>
 <dd><p>See base class for documentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
@@ -316,22 +315,22 @@ Required for the Dust Bands.</p></li>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._components.Ring">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._components.</span></span><span class="sig-name descname"><span class="pre">Ring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Ring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Ring" title="Permalink to this definition">#</a></dt>
-<dd><p>The Zodiacal Circum-solar Ring component.</p>
+<dt class="sig sig-object py" id="zodipy._component.Ring">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._component.</span></span><span class="sig-name descname"><span class="pre">Ring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Ring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Ring" title="Permalink to this definition">#</a></dt>
+<dd><p>Circum-solar Ring component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_0</strong> (<em>Quantity</em><em>[</em><em>u.AU ** -1</em><em>]</em>) – Density at 1 AU.</p></li>
-<li><p><strong>R</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Radius of the peak density.</p></li>
-<li><p><strong>sigma_r</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Radial dispersion.</p></li>
-<li><p><strong>sigma_z</strong> (<em>Quantity</em><em>[</em><em>u.AU</em><em>]</em>) – Vertical dispersion.</p></li>
+<li><p><strong>n_0</strong> (<em>float</em>) – Density at 1 AU.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – Radius of the peak density.</p></li>
+<li><p><strong>sigma_r</strong> (<em>float</em>) – Radial dispersion.</p></li>
+<li><p><strong>sigma_z</strong> (<em>float</em>) – Vertical dispersion.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="zodipy._components.Ring.compute_density">
-<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_components.html#Ring.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._components.Ring.compute_density" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="zodipy._component.Ring.compute_density">
+<span class="sig-name descname"><span class="pre">compute_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_helio</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_component.html#Ring.compute_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._component.Ring.compute_density" title="Permalink to this definition">#</a></dt>
 <dd><p>See base class for documentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>

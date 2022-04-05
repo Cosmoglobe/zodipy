@@ -19,11 +19,11 @@ Requirements
 
 Zodipy requires Python 3.8 or higher and depends on the following packages and version:
 
-- astropy >= 5.0.1
-- numpy >= 1.21
+- numpy
 - healpy
-- scipy
+- astropy >= 5.0.1
 - jplephem
+- typing-extensions
   
 Installation
 ------------

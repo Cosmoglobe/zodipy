@@ -1,7 +1,7 @@
-.. _components overview:
+.. _component overview:
 
-``zodipy._components``
+``zodipy._component``
 ======================
 
-.. automodule:: zodipy._components
+.. automodule:: zodipy._component
     :members: 

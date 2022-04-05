@@ -3,9 +3,9 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="zodipy._components" href="components.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="zodipy._component" href="components.html" />
 
-    <meta name="generator" content="sphinx-4.4.0, furo 2022.03.04"/>
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
         <title>zodipy._model - Zodipy 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
@@ -159,7 +159,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../reference.html">Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="zodipy.html"><code class="docutils literal notranslate"><span class="pre">zodipy.Zodipy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="components.html"><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html"><code class="docutils literal notranslate"><span class="pre">zodipy._component</span></code></a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">zodipy._model</span></code></a></li>
 </ul>
 </li>
@@ -198,9 +198,19 @@
           <section id="zodipy-model">
 <span id="model-overview"></span><h1><code class="docutils literal notranslate"><span class="pre">zodipy._model</span></code><a class="headerlink" href="#zodipy-model" title="Permalink to this headline">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="zodipy._model.InterplanetaryDustModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._model.</span></span><span class="sig-name descname"><span class="pre">InterplanetaryDustModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comp_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissivities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissivity_spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">albedos=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">albedo_spectrum=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_coeffs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_coeffs_spectrum=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_model.html#InterplanetaryDustModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._model.InterplanetaryDustModel" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="zodipy._model.Model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zodipy._model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">components</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">emissivities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">albedos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">286</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.46686259861486573</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_model.html#Model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._model.Model" title="Permalink to this definition">#</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="zodipy._model.Model.get_extrapolated_component_parameters">
+<span class="sig-name descname"><span class="pre">get_extrapolated_component_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/zodipy/_model.html#Model.get_extrapolated_component_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#zodipy._model.Model.get_extrapolated_component_parameters" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns interpolated/extrapolated spectral parameters given a frequency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple[float, float, tuple[float, float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 
         </article>
@@ -216,7 +226,7 @@
                   <span>Previous</span>
                 </div>
                 
-                <div class="title"><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code></div>
+                <div class="title"><code class="docutils literal notranslate"><span class="pre">zodipy._component</span></code></div>
                 
               </div>
             </a>

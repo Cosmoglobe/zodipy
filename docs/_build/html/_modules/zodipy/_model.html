@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-4.4.0, furo 2022.03.04"/>
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
         <title>zodipy._model - Zodipy 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
@@ -197,109 +197,138 @@
           <h1>Source code for zodipy._model</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span> <span class="nn">astropy.units</span> <span class="kn">import</span> <span class="n">Quantity</span>
 <span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span>
 
-<span class="kn">from</span> <span class="nn">zodipy._components</span> <span class="kn">import</span> <span class="n">Component</span>
-<span class="kn">from</span> <span class="nn">zodipy._labels</span> <span class="kn">import</span> <span class="n">CompLabel</span><span class="p">,</span> <span class="n">LABEL_TO_CLASS</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"InterplanetaryDustModel"</span><span class="p">,</span> <span class="s2">"ModelRegistry"</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">zodipy._component</span> <span class="kn">import</span> <span class="n">Component</span>
+<span class="kn">from</span> <span class="nn">zodipy._component_label</span> <span class="kn">import</span> <span class="n">ComponentLabel</span>
+<span class="kn">from</span> <span class="nn">zodipy.source_params</span> <span class="kn">import</span> <span class="n">T_0_DIRBE</span><span class="p">,</span> <span class="n">DELTA_DIRBE</span>
 
 
-<span class="k">class</span> <span class="nc">CloudComponentMissingError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="sd">"""Raised if an `InterplanetaryDustModel` model is missing the Diffuse Cloud."""</span>
-
-<div class="viewcode-block" id="InterplanetaryDustModel"><a class="viewcode-back" href="../../reference/models.html#zodipy._model.InterplanetaryDustModel">[docs]</a><span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">InterplanetaryDustModel</span><span class="p">:</span>
+<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../reference/models.html#zodipy._model.Model">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Model</span><span class="p">:</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">comp_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
-    <span class="n">emissivities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
-    <span class="n">emissivity_spectrum</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]</span>
-    <span class="n">T_0</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">K</span><span class="p">]</span>
-    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">albedos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">albedo_spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">phase_coeffs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Quantity</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">phase_coeffs_spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-    <span class="n">comps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Component</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">CompLabel</span><span class="o">.</span><span class="n">CLOUD</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_params</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">CloudComponentMissingError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"""InterplanetaryDustModel </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is missing the "</span>
-<span class="s2">                "Diffuse Cloud component."""</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Component</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">comp</span><span class="p">:</span> <span class="n">LABEL_TO_CLASS</span><span class="p">[</span><span class="n">comp</span><span class="p">](</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">comp</span><span class="p">,</span> <span class="n">params</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+    <span class="n">components</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="n">Component</span><span class="p">]</span>
+    <span class="n">spectrum</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]</span>
+    <span class="n">emissivities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
+    <span class="n">albedos</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">phase_coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">T_0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">T_0_DIRBE</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DELTA_DIRBE</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ncomps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_params</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">n_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">cloud_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comps</span><span class="p">[</span><span class="n">CompLabel</span><span class="o">.</span><span class="n">CLOUD</span><span class="p">]</span><span class="o">.</span><span class="n">X_0</span></div>
+<div class="viewcode-block" id="Model.get_extrapolated_component_parameters"><a class="viewcode-back" href="../../reference/models.html#zodipy._model.Model.get_extrapolated_component_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">get_extrapolated_component_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">component_label</span><span class="p">:</span> <span class="n">ComponentLabel</span><span class="p">,</span>
+        <span class="n">frequency</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">GHz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">"""Returns interpolated/extrapolated spectral parameters given a frequency."""</span>
+
+        <span class="n">frequency</span> <span class="o">=</span> <span class="n">frequency</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spectrum</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">equivalencies</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">spectral</span><span class="p">())</span>
+
+        <span class="n">emissivity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
+            <span class="n">frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectrum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emissivities</span><span class="p">[</span><span class="n">component_label</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">albedos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">albedo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectrum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">albedos</span><span class="p">[</span><span class="n">component_label</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">albedo</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_coefficients</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">phase_coefficient</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">coeff</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_coefficients</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">phase_coefficient</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">emissivity</span><span class="p">,</span> <span class="n">albedo</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">phase_coefficient</span><span class="p">)</span></div></div>
 
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">ModelRegistry</span><span class="p">:</span>
-    <span class="sd">"""Container for registered InterplanetaryDustModel's."""</span>
+    <span class="sd">"""Container for registered models."""</span>
 
-    <span class="n">_registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InterplanetaryDustModel</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">_registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">"""Returns a list of registered model names."""</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
     <span class="k">def</span> <span class="nf">register_model</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">comp_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
-        <span class="n">emissivities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
-        <span class="n">emissivity_spectrum</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">],</span>
-        <span class="n">T_0</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">K</span><span class="p">],</span>
-        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">albedos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">CompLabel</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">albedo_spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">phase_coeffs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Quantity</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">phase_coeffs_spectrum</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">meta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">components</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="n">Component</span><span class="p">],</span>
+        <span class="n">spectrum</span><span class="p">:</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">]</span> <span class="o">|</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">],</span>
+        <span class="n">emissivities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">albedos</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ComponentLabel</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">phase_coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">T_0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">T_0_DIRBE</span><span class="p">,</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DELTA_DIRBE</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""Registers a new model.</span>
 
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
+<span class="sd">        For an example of how to register a custom model, see the documentation</span>
+<span class="sd">        on https://zodipy.readthedocs.io/en/latest/ (coming soon).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name</span>
+<span class="sd">            String representing the name of the model. This is the name that is</span>
+<span class="sd">            used for the 'model' argument when initializing `Zodipy`.</span>
+<span class="sd">        components</span>
+<span class="sd">            Dict mapping `CompLabel`s to `Component` classes.</span>
+<span class="sd">        spectrum</span>
+<span class="sd">            The spectrum (frequency or length units) corresponding to the</span>
+<span class="sd">            frequencies used to estimate the spectral parameters.</span>
+<span class="sd">        emissivities</span>
+<span class="sd">            Emissivity factor fits for each IPD component at the frequencies</span>
+<span class="sd">            corresponding to 'spectrum'.</span>
+<span class="sd">        albedos</span>
+<span class="sd">            Albedo factor fits for each IPD component at the frequencies</span>
+<span class="sd">            corresponding to 'spectrum'.</span>
+<span class="sd">        phase_coefficients</span>
+<span class="sd">            Coefficient fits for the phase function at the frequencies</span>
+<span class="sd">            corresponding to 'spectrum'.</span>
+<span class="sd">        T_0</span>
+<span class="sd">            Interplanetary temperature at 1 AU. Defaults to the DIRBE model value.</span>
+<span class="sd">        delta</span>
+<span class="sd">            Interplanetary temperatue powerlaw parameter describing how the</span>
+<span class="sd">            interplanetary temperature falls with radial distance from the Sun.</span>
+<span class="sd">            Defaults to the DIRBE model value.</span>
+<span class="sd">        """</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">:=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a model by the name </span><span class="si">{</span><span class="n">name</span><span class="si">!s}</span><span class="s2"> is already registered."</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">meta</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">InterplanetaryDustModel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">comp_params</span><span class="o">=</span><span class="n">comp_params</span><span class="p">,</span>
-            <span class="n">albedos</span><span class="o">=</span><span class="n">albedos</span><span class="p">,</span>
-            <span class="n">albedo_spectrum</span><span class="o">=</span><span class="n">albedo_spectrum</span><span class="p">,</span>
+            <span class="n">components</span><span class="o">=</span><span class="n">components</span><span class="p">,</span>
+            <span class="n">spectrum</span><span class="o">=</span><span class="n">spectrum</span><span class="p">,</span>
             <span class="n">emissivities</span><span class="o">=</span><span class="n">emissivities</span><span class="p">,</span>
-            <span class="n">emissivity_spectrum</span><span class="o">=</span><span class="n">emissivity_spectrum</span><span class="p">,</span>
-            <span class="n">phase_coeffs</span><span class="o">=</span><span class="n">phase_coeffs</span><span class="p">,</span>
-            <span class="n">phase_coeffs_spectrum</span><span class="o">=</span><span class="n">phase_coeffs_spectrum</span><span class="p">,</span>
             <span class="n">T_0</span><span class="o">=</span><span class="n">T_0</span><span class="p">,</span>
             <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span>
-            <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
+            <span class="n">albedos</span><span class="o">=</span><span class="n">albedos</span><span class="p">,</span>
+            <span class="n">phase_coefficients</span><span class="o">=</span><span class="n">phase_coefficients</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InterplanetaryDustModel</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+        <span class="sd">"""Returns a registered model given a name."""</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">:=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not a model in the registry. Avaliable models are "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not a model in the registry. Avaliable models are: "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">get_registered_model_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
 
 <span class="n">model_registry</span> <span class="o">=</span> <span class="n">ModelRegistry</span><span class="p">()</span>

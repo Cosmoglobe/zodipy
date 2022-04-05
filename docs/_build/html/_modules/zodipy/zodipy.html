@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-4.4.0, furo 2022.03.04"/>
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
         <title>zodipy.zodipy - Zodipy 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
@@ -195,13 +195,10 @@
         </div>
         <article role="main">
           <h1>Source code for zodipy.zodipy</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">astropy.coordinates</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_body</span><span class="p">,</span>
-    <span class="n">HeliocentricMeanEcliptic</span><span class="p">,</span>
-    <span class="n">solar_system_ephemeris</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">astropy.coordinates</span> <span class="kn">import</span> <span class="n">solar_system_ephemeris</span>
 <span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">from</span> <span class="nn">astropy.units</span> <span class="kn">import</span> <span class="n">Quantity</span><span class="p">,</span> <span class="n">quantity_input</span>
 <span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
@@ -209,25 +206,25 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span>
 
-<span class="kn">from</span> <span class="nn">zodipy._integral</span> <span class="kn">import</span> <span class="n">trapezoidal</span>
-<span class="kn">from</span> <span class="nn">zodipy._interp</span> <span class="kn">import</span> <span class="n">interp_phase_coeffs</span><span class="p">,</span> <span class="n">interp_comp_spectral_params</span>
-<span class="kn">from</span> <span class="nn">zodipy._los_config</span> <span class="kn">import</span> <span class="n">integration_config_registry</span>
-<span class="kn">from</span> <span class="nn">zodipy._model</span> <span class="kn">import</span> <span class="n">InterplanetaryDustModel</span>
+<span class="kn">from</span> <span class="nn">zodipy._emission</span> <span class="kn">import</span> <span class="n">get_emission_step</span>
+<span class="kn">from</span> <span class="nn">zodipy._ephemeris</span> <span class="kn">import</span> <span class="n">get_earth_position</span><span class="p">,</span> <span class="n">get_observer_position</span>
+<span class="kn">from</span> <span class="nn">zodipy._integral</span> <span class="kn">import</span> <span class="n">trapezoidal_regular_grid</span>
+<span class="kn">from</span> <span class="nn">zodipy._line_of_sight</span> <span class="kn">import</span> <span class="n">get_line_of_sight</span>
+<span class="kn">from</span> <span class="nn">zodipy._unit_vector</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_unit_vector_from_angles</span><span class="p">,</span>
+    <span class="n">get_unit_vector_from_pixels</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">zodipy.models</span> <span class="kn">import</span> <span class="n">model_registry</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"Zodipy"</span><span class="p">,)</span>
-
-<span class="c1"># L2 not included in the astropy api so we manually include support for it.</span>
-<span class="n">ADDITIONAL_SUPPORTED_OBS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"semb-l2"</span><span class="p">]</span>
-<span class="n">DISTANCE_EARTH_TO_L2</span> <span class="o">=</span> <span class="mf">0.009896235034000056</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">AU</span>
 
 
 <div class="viewcode-block" id="Zodipy"><a class="viewcode-back" href="../../reference/zodipy.html#zodipy.Zodipy">[docs]</a><span class="k">class</span> <span class="nc">Zodipy</span><span class="p">:</span>
     <span class="sd">"""The Zodipy interface.</span>
 
 <span class="sd">    Zodipy simulates the Zodiacal emission that a Solar System observer is</span>
-<span class="sd">    predicted to see given the Kelsall et al. (1998) interplanetary dust model. </span>
+<span class="sd">    predicted to see given the Kelsall et al. (1998) interplanetary dust model.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="Zodipy.__init__"><a class="viewcode-back" href="../../reference/zodipy.html#zodipy.Zodipy.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"DIRBE"</span><span class="p">,</span> <span class="n">ephemeris</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"de432s"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -240,38 +237,27 @@
 <span class="sd">            available models with `zodipy.MODELS`.</span>
 <span class="sd">        ephemeris</span>
 <span class="sd">            Ephemeris used to compute the positions of the observer and Earth.</span>
-<span class="sd">            Defaults to 'de432s' which requires downloading (and caching) a 10 </span>
+<span class="sd">            Defaults to 'de432s' which requires downloading (and caching) a 10</span>
 <span class="sd">            MB file. For more information on available ephemeridis, please visit</span>
 <span class="sd">            https://docs.astropy.org/en/stable/coordinates/solarsystem.html</span>
 <span class="sd">        """</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_registry</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_line_of_sights</span> <span class="o">=</span> <span class="n">integration_config_registry</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model_registry</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="n">solar_system_ephemeris</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ephemeris</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InterplanetaryDustModel</span><span class="p">:</span>
-        <span class="sd">"""Returns the IPD model."""</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"info"</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">observers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">supported_observers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">"""Returns all observers suported by the ephemeridis."""</span>
 
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">solar_system_ephemeris</span><span class="o">.</span><span class="n">bodies</span><span class="p">)</span> <span class="o">+</span> <span class="n">ADDITIONAL_SUPPORTED_OBS</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">solar_system_ephemeris</span><span class="o">.</span><span class="n">bodies</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"l2 or semb-l2"</span><span class="p">]</span>
 
 <div class="viewcode-block" id="Zodipy.get_emission"><a class="viewcode-back" href="../../reference/zodipy.html#zodipy.Zodipy.get_emission">[docs]</a>    <span class="nd">@quantity_input</span>
     <span class="k">def</span> <span class="nf">get_emission</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">freq</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">],</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">m</span><span class="p">]],</span>
-        <span class="n">obs_time</span><span class="p">:</span> <span class="n">Time</span><span class="p">,</span>
-        <span class="n">obs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"earth"</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">obs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"earth"</span><span class="p">,</span>
+        <span class="n">obs_time</span><span class="p">:</span> <span class="n">Time</span> <span class="o">=</span> <span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
         <span class="n">obs_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pixels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">rad</span><span class="p">],</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -281,17 +267,16 @@
         <span class="n">binned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">return_comps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">coord_in</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"E"</span><span class="p">,</span> <span class="s2">"G"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"E"</span><span class="p">,</span>
-        <span class="n">colorcorr_table</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">]:</span>
         <span class="sd">"""Returns simulated Zodiacal Emission.</span>
 
 <span class="sd">        This function takes as arguments a frequency or wavelength (`freq`),</span>
 <span class="sd">        time of observation (`obs_time`), an a Solar System observer (`obs`).</span>
-<span class="sd">        The position of the observer is computed using the pehemeris specified </span>
-<span class="sd">        in the initialization of `Zodipy`. Optionally, the observer position </span>
-<span class="sd">        can be explicitly specified with the `obs_pos` argument, which </span>
-<span class="sd">        overrides`obs`. The pointing, for which to compute the emission, is </span>
-<span class="sd">        specified either in the form of angles on the sky (`theta`, `phi`), or </span>
+<span class="sd">        The position of the observer is computed using the pehemeris specified</span>
+<span class="sd">        in the initialization of `Zodipy`. Optionally, the observer position</span>
+<span class="sd">        can be explicitly specified with the `obs_pos` argument, which</span>
+<span class="sd">        overrides`obs`. The pointing, for which to compute the emission, is</span>
+<span class="sd">        specified either in the form of angles on the sky (`theta`, `phi`), or</span>
 <span class="sd">        as HEALPIX pixels at some resolution (`pixels`, `nside`).</span>
 
 <span class="sd">        Parameters</span>
@@ -299,12 +284,13 @@
 <span class="sd">        freq</span>
 <span class="sd">            Frequency or wavelength at which to evaluate the Zodiacal emission.</span>
 <span class="sd">            Must have units compatible with Hz or m.</span>
-<span class="sd">        obs_time</span>
-<span class="sd">            Time of observation (`astropy.time.Time` object).</span>
 <span class="sd">        obs</span>
 <span class="sd">            The solar system observer. A list of all support observers (for a</span>
 <span class="sd">            given ephemeridis) is specified in `observers` attribute of the</span>
 <span class="sd">            `zodipy.Zodipy` instance. Defaults to 'earth'.</span>
+<span class="sd">        obs_time</span>
+<span class="sd">            Time of observation (`astropy.time.Time` object). Defaults to</span>
+<span class="sd">            current time.</span>
 <span class="sd">        obs_pos</span>
 <span class="sd">            The heliocentric ecliptic cartesian position of the observer in AU.</span>
 <span class="sd">            Overrides the `obs` argument. Default is None.</span>
@@ -333,11 +319,6 @@
 <span class="sd">        coord_in</span>
 <span class="sd">            Coordinates frame of the pointing. Assumes 'E' (ecliptic coordinates)</span>
 <span class="sd">            by default.</span>
-<span class="sd">        colorcorr_table</span>
-<span class="sd">            An array of shape (2, n) where the first column is temperatures</span>
-<span class="sd">            in K, and the second column the corresponding color corrections.</span>
-<span class="sd">            The color corrections should be for B(lambda, T) and is only applied</span>
-<span class="sd">            to the thermal contribution of the emission.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -348,7 +329,7 @@
 <span class="sd">            Zodiacal Emission timestream.</span>
 <span class="sd">        """</span>
 
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">observers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_observers</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"observer </span><span class="si">{</span><span class="n">obs</span><span class="si">!r}</span><span class="s2"> not supported by ephemeridis "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">solar_system_ephemeris</span><span class="o">.</span><span class="n">_value</span><span class="si">!r}</span><span class="s2"> or 'Zodipy'"</span>
@@ -404,30 +385,18 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obs_time</span><span class="p">,</span> <span class="n">Time</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"argument 'obs_time' must be of type 'astropy.time.Time'"</span><span class="p">)</span>
 
-        <span class="n">obs_pos</span><span class="p">,</span> <span class="n">earth_pos</span> <span class="o">=</span> <span class="n">_get_solar_system_bodies</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">obs_pos</span><span class="p">)</span>
+        <span class="n">earth_position</span> <span class="o">=</span> <span class="n">get_earth_position</span><span class="p">(</span><span class="n">obs_time</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obs_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">observer_position</span> <span class="o">=</span> <span class="n">get_observer_position</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">earth_position</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">observer_position</span> <span class="o">=</span> <span class="n">obs_pos</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># If the specific value of freq is not covered by the fitted spectral</span>
-        <span class="c1"># parameters in the model we interpolate/extrapolate to find a new</span>
-        <span class="c1"># emissivity, albedo and scattering phase coefficients.</span>
-        <span class="n">freq</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"GHz"</span><span class="p">,</span> <span class="n">equivalencies</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">spectral</span><span class="p">())</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
-        <span class="n">phase_coeffs</span> <span class="o">=</span> <span class="n">interp_phase_coeffs</span><span class="p">(</span>
-            <span class="n">freq</span><span class="p">,</span>
-            <span class="n">phase_coeffs</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">phase_coeffs</span><span class="p">,</span>
-            <span class="n">phase_coeffs_spectrum</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">phase_coeffs_spectrum</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">spectral_comp_parameters</span> <span class="o">=</span> <span class="n">interp_comp_spectral_params</span><span class="p">(</span>
-            <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span>
-            <span class="n">emissivities</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">emissivities</span><span class="p">,</span>
-            <span class="n">emissivity_spectrum</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">emissivity_spectrum</span><span class="p">,</span>
-            <span class="n">albedos</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">albedos</span><span class="p">,</span>
-            <span class="n">albedo_spectrum</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">albedo_spectrum</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">frequency</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"GHz"</span><span class="p">,</span> <span class="n">equivalencies</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">spectral</span><span class="p">())</span>
 
         <span class="k">if</span> <span class="n">binned</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pixels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">unique_pixels</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">pixels</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">_get_ecliptic_unit_vectors</span><span class="p">(</span>
+                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">get_unit_vector_from_pixels</span><span class="p">(</span>
                     <span class="n">coord_in</span><span class="o">=</span><span class="n">coord_in</span><span class="p">,</span>
                     <span class="n">pixels</span><span class="o">=</span><span class="n">unique_pixels</span><span class="p">,</span>
                     <span class="n">nside</span><span class="o">=</span><span class="n">nside</span><span class="p">,</span>
@@ -437,29 +406,45 @@
                     <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">]),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
                 <span class="p">)</span>
                 <span class="n">unique_pixels</span> <span class="o">=</span> <span class="n">hp</span><span class="o">.</span><span class="n">ang2pix</span><span class="p">(</span><span class="n">nside</span><span class="p">,</span> <span class="o">*</span><span class="n">unique_angles</span><span class="p">,</span> <span class="n">lonlat</span><span class="o">=</span><span class="n">lonlat</span><span class="p">)</span>
-                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">_get_ecliptic_unit_vectors</span><span class="p">(</span>
+                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">get_unit_vector_from_angles</span><span class="p">(</span>
                     <span class="n">coord_in</span><span class="o">=</span><span class="n">coord_in</span><span class="p">,</span>
                     <span class="n">theta</span><span class="o">=</span><span class="n">unique_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                     <span class="n">phi</span><span class="o">=</span><span class="n">unique_angles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                     <span class="n">lonlat</span><span class="o">=</span><span class="n">lonlat</span><span class="p">,</span>
                 <span class="p">)</span>
 
-            <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">ncomps</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)))</span>
-            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">component</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">comps</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-                <span class="n">emission</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">unique_pixels</span><span class="p">]</span> <span class="o">=</span> <span class="n">trapezoidal</span><span class="p">(</span>
-                    <span class="n">comp</span><span class="o">=</span><span class="n">component</span><span class="p">,</span>
-                    <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">line_of_sight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_line_of_sights</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">observer_pos</span><span class="o">=</span><span class="n">obs_pos</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">earth_pos</span><span class="o">=</span><span class="n">earth_pos</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_components</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)))</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">component</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">extrapolated_parameters</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_extrapolated_component_parameters</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">frequency</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">emissivity</span><span class="p">,</span> <span class="n">albedo</span><span class="p">,</span> <span class="n">phase_coefficients</span> <span class="o">=</span> <span class="n">extrapolated_parameters</span>
+
+                <span class="c1"># Create new callable with single argument as the distance along</span>
+                <span class="c1"># the line of sight (R)</span>
+                <span class="n">emission_step_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                    <span class="n">get_emission_step</span><span class="p">,</span>
+                    <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">observer_position</span><span class="o">=</span><span class="n">observer_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">earth_position</span><span class="o">=</span><span class="n">earth_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">unit_vectors</span><span class="o">=</span><span class="n">unit_vectors</span><span class="p">,</span>
-                    <span class="n">cloud_offset</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">cloud_offset</span><span class="p">,</span>
-                    <span class="n">T_0</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">T_0</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">delta</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
-                    <span class="n">emissivity</span><span class="o">=</span><span class="n">spectral_comp_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"emissivity"</span><span class="p">],</span>
-                    <span class="n">albedo</span><span class="o">=</span><span class="n">spectral_comp_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"albedo"</span><span class="p">],</span>
-                    <span class="n">phase_coeffs</span><span class="o">=</span><span class="n">phase_coeffs</span><span class="p">,</span>
-                    <span class="n">colorcorr_table</span><span class="o">=</span><span class="n">colorcorr_table</span><span class="p">,</span>
+                    <span class="n">component</span><span class="o">=</span><span class="n">component</span><span class="p">,</span>
+                    <span class="n">T_0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">T_0</span><span class="p">,</span>
+                    <span class="n">delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+                    <span class="n">emissivity</span><span class="o">=</span><span class="n">emissivity</span><span class="p">,</span>
+                    <span class="n">albedo</span><span class="o">=</span><span class="n">albedo</span><span class="p">,</span>
+                    <span class="n">phase_coefficients</span><span class="o">=</span><span class="n">phase_coefficients</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">n_steps</span> <span class="o">=</span> <span class="n">get_line_of_sight</span><span class="p">(</span>
+                    <span class="n">component_label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                    <span class="n">observer_position</span><span class="o">=</span><span class="n">observer_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">unit_vectors</span><span class="o">=</span><span class="n">unit_vectors</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">emission</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">unique_pixels</span><span class="p">]</span> <span class="o">=</span> <span class="n">trapezoidal_regular_grid</span><span class="p">(</span>
+                    <span class="n">get_emission_step</span><span class="o">=</span><span class="n">emission_step_function</span><span class="p">,</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                    <span class="n">n_steps</span><span class="o">=</span><span class="n">n_steps</span><span class="p">,</span>
                 <span class="p">)</span>
 
             <span class="n">emission</span><span class="p">[:,</span> <span class="n">unique_pixels</span><span class="p">]</span> <span class="o">*=</span> <span class="n">counts</span>
@@ -467,40 +452,57 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pixels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">unique_pixels</span><span class="p">,</span> <span class="n">indicies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">pixels</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">_get_ecliptic_unit_vectors</span><span class="p">(</span>
+                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">get_unit_vector_from_pixels</span><span class="p">(</span>
                     <span class="n">coord_in</span><span class="o">=</span><span class="n">coord_in</span><span class="p">,</span>
                     <span class="n">pixels</span><span class="o">=</span><span class="n">unique_pixels</span><span class="p">,</span>
                     <span class="n">nside</span><span class="o">=</span><span class="n">nside</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">ncomps</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pixels</span><span class="p">)))</span>
+                <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_components</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pixels</span><span class="p">)))</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">unique_angles</span><span class="p">,</span> <span class="n">indicies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
                     <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">]),</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
                 <span class="p">)</span>
-                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">_get_ecliptic_unit_vectors</span><span class="p">(</span>
+                <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">get_unit_vector_from_angles</span><span class="p">(</span>
                     <span class="n">coord_in</span><span class="o">=</span><span class="n">coord_in</span><span class="p">,</span>
                     <span class="n">theta</span><span class="o">=</span><span class="n">unique_angles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                     <span class="n">phi</span><span class="o">=</span><span class="n">unique_angles</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                     <span class="n">lonlat</span><span class="o">=</span><span class="n">lonlat</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">ncomps</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)))</span>
 
-            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">component</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">comps</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-                <span class="n">integrated_comp_emission</span> <span class="o">=</span> <span class="n">trapezoidal</span><span class="p">(</span>
-                    <span class="n">comp</span><span class="o">=</span><span class="n">component</span><span class="p">,</span>
-                    <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">line_of_sight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_line_of_sights</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">observer_pos</span><span class="o">=</span><span class="n">obs_pos</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">earth_pos</span><span class="o">=</span><span class="n">earth_pos</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">emission</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_components</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)))</span>
+
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">component</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">extrapolated_parameters</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_extrapolated_component_parameters</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">frequency</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">emissivity</span><span class="p">,</span> <span class="n">albedo</span><span class="p">,</span> <span class="n">phase_coefficients</span> <span class="o">=</span> <span class="n">extrapolated_parameters</span>
+
+                <span class="c1"># Create new callable with single argument as the distance along</span>
+                <span class="c1"># the line of sight (R)</span>
+                <span class="n">emission_step_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                    <span class="n">get_emission_step</span><span class="p">,</span>
+                    <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">observer_position</span><span class="o">=</span><span class="n">observer_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">earth_position</span><span class="o">=</span><span class="n">earth_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">unit_vectors</span><span class="o">=</span><span class="n">unit_vectors</span><span class="p">,</span>
-                    <span class="n">cloud_offset</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">cloud_offset</span><span class="p">,</span>
-                    <span class="n">T_0</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">T_0</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">delta</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
-                    <span class="n">emissivity</span><span class="o">=</span><span class="n">spectral_comp_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"emissivity"</span><span class="p">],</span>
-                    <span class="n">albedo</span><span class="o">=</span><span class="n">spectral_comp_parameters</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="s2">"albedo"</span><span class="p">],</span>
-                    <span class="n">phase_coeffs</span><span class="o">=</span><span class="n">phase_coeffs</span><span class="p">,</span>
-                    <span class="n">colorcorr_table</span><span class="o">=</span><span class="n">colorcorr_table</span><span class="p">,</span>
+                    <span class="n">component</span><span class="o">=</span><span class="n">component</span><span class="p">,</span>
+                    <span class="n">T_0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">T_0</span><span class="p">,</span>
+                    <span class="n">delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+                    <span class="n">emissivity</span><span class="o">=</span><span class="n">emissivity</span><span class="p">,</span>
+                    <span class="n">albedo</span><span class="o">=</span><span class="n">albedo</span><span class="p">,</span>
+                    <span class="n">phase_coefficients</span><span class="o">=</span><span class="n">phase_coefficients</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">n_steps</span> <span class="o">=</span> <span class="n">get_line_of_sight</span><span class="p">(</span>
+                    <span class="n">component_label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                    <span class="n">observer_position</span><span class="o">=</span><span class="n">observer_position</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">unit_vectors</span><span class="o">=</span><span class="n">unit_vectors</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">integrated_comp_emission</span> <span class="o">=</span> <span class="n">trapezoidal_regular_grid</span><span class="p">(</span>
+                    <span class="n">get_emission_step</span><span class="o">=</span><span class="n">emission_step_function</span><span class="p">,</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                    <span class="n">n_steps</span><span class="o">=</span><span class="n">n_steps</span><span class="p">,</span>
                 <span class="p">)</span>
 
                 <span class="n">emission</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">integrated_comp_emission</span><span class="p">[</span><span class="n">indicies</span><span class="p">]</span>
@@ -509,55 +511,6 @@
         <span class="n">emission</span> <span class="o">=</span> <span class="p">(</span><span class="n">emission</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">W</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">Hz</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">m</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">emission</span> <span class="k">if</span> <span class="n">return_comps</span> <span class="k">else</span> <span class="n">emission</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div></div>
-
-
-<span class="k">def</span> <span class="nf">_get_solar_system_bodies</span><span class="p">(</span>
-    <span class="n">obs</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">:</span> <span class="n">Time</span><span class="p">,</span> <span class="n">obs_pos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Quantity</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">],</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">]]:</span>
-    <span class="sd">"""Returns the observer and Earth's position."""</span>
-
-    <span class="n">earth_skycoord</span> <span class="o">=</span> <span class="n">get_body</span><span class="p">(</span><span class="s2">"Earth"</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">)</span>
-    <span class="n">earth_skycoord</span> <span class="o">=</span> <span class="n">earth_skycoord</span><span class="o">.</span><span class="n">transform_to</span><span class="p">(</span><span class="n">HeliocentricMeanEcliptic</span><span class="p">)</span>
-    <span class="n">earth_pos</span> <span class="o">=</span> <span class="n">earth_skycoord</span><span class="o">.</span><span class="n">represent_as</span><span class="p">(</span><span class="s2">"cartesian"</span><span class="p">)</span><span class="o">.</span><span class="n">xyz</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">obs_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"semb-l2"</span><span class="p">:</span>
-            <span class="c1"># We assume that L2 is located at a constant distance from the</span>
-            <span class="c1"># Earth along Earths unit vector in heliocentric coordinates.</span>
-            <span class="n">earth_length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">earth_pos</span><span class="p">)</span>
-            <span class="n">earth_unit_vec</span> <span class="o">=</span> <span class="n">earth_pos</span> <span class="o">/</span> <span class="n">earth_length</span>
-            <span class="n">semb_l2_length</span> <span class="o">=</span> <span class="n">earth_length</span> <span class="o">+</span> <span class="n">DISTANCE_EARTH_TO_L2</span>
-            <span class="n">obs_pos_</span> <span class="o">=</span> <span class="n">earth_unit_vec</span> <span class="o">*</span> <span class="n">semb_l2_length</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">obs_skycoord</span> <span class="o">=</span> <span class="n">get_body</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">)</span>
-            <span class="n">obs_skycoord</span> <span class="o">=</span> <span class="n">obs_skycoord</span><span class="o">.</span><span class="n">transform_to</span><span class="p">(</span><span class="n">HeliocentricMeanEcliptic</span><span class="p">)</span>
-            <span class="n">obs_pos_</span> <span class="o">=</span> <span class="n">obs_skycoord</span><span class="o">.</span><span class="n">represent_as</span><span class="p">(</span><span class="s2">"cartesian"</span><span class="p">)</span><span class="o">.</span><span class="n">xyz</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">obs_pos_</span> <span class="o">=</span> <span class="n">obs_pos</span>
-
-    <span class="k">return</span> <span class="n">obs_pos_</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">earth_pos</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_get_ecliptic_unit_vectors</span><span class="p">(</span>
-    <span class="n">coord_in</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">pixels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">nside</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">phi</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">rad</span><span class="p">],</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">theta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">rad</span><span class="p">],</span> <span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">lonlat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
-    <span class="sd">"""</span>
-<span class="sd">    Since the Interplanetary Dust Model is evaluated in Ecliptic coordinates,</span>
-<span class="sd">    we need to rotate any unit vectors (obtained from the pointing) defined in</span>
-<span class="sd">    another coordinate frame to ecliptic before evaluating the model.</span>
-<span class="sd">    """</span>
-
-    <span class="k">if</span> <span class="n">pixels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">ang2vec</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">lonlat</span><span class="o">=</span><span class="n">lonlat</span><span class="p">))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">pix2vec</span><span class="p">(</span><span class="n">nside</span><span class="p">,</span> <span class="n">pixels</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">Rotator</span><span class="p">(</span><span class="n">coord</span><span class="o">=</span><span class="p">[</span><span class="n">coord_in</span><span class="p">,</span> <span class="s2">"E"</span><span class="p">])(</span><span class="n">unit_vectors</span><span class="p">))</span>
 </pre></div>
         </article>
       </div>
