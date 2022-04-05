@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.5.1"
+version = "0.5.2"
 description = "Zodipy is a python tool that simulates the Zodiacal emission."
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -14,6 +14,7 @@ numpy = "^1.22.3"
 healpy = "^1.15.0"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
+typing-extensions = "^4.1.1"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 matplotlib = "^3.4.3"
