@@ -10,6 +10,17 @@ pointing of the observer, either in form of angular coordinates ``theta`` and
 
 The software is described in further detail in *San et al. 2022* (in preperation).
 
+--------------------------
+Interplanetary Dust models
+--------------------------
+The default Interplanetary Dust model used in Zodipy is the `DIRBE model <https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K>`_. 
+Other built in models are:
+
+   - planck13 (`Planck Collaboration et al. 2014 <https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>`_)
+   - planck15 (`Planck Collaboration et al. 2016 <https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P>`_)
+   - planck18 (`Planck Collaboration et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P>`_)
+   - odegard (`Odegard et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract>`_)
+
 --------------
 User Interface
 --------------
@@ -19,22 +30,7 @@ The :ref:`Zodipy overview` class represents the Zodipy interface. It is intializ
 
    from zodipy import Zodipy
 
-   model = Zodipy()
-
---------------------------
-Interplanetary Dust models
---------------------------
-The default Interplanetary Dust model used in Zodipy is the `DIRBE model <https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K>`_. 
-Other built in models are:
-
-   - Planck13 (`Planck Collaboration et al. 2014 <https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>`_)
-   - Planck15 (`Planck Collaboration et al. 2016 <https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P>`_)
-   - Planck18 (`Planck Collaboration et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P>`_)
-   - Odegard (`Odegard et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract>`_)
-
-.. code-block:: python
-
-   model = Zodipy(model="Planck15")
+   model = Zodipy("planck18")
 
 ----------------------------
 Simulating Zodiacal emission

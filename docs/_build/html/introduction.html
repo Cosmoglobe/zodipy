@@ -159,7 +159,7 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Introduction</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="reference.html">Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference/zodipy.html"><code class="docutils literal notranslate"><span class="pre">zodipy.Zodipy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/components.html"><code class="docutils literal notranslate"><span class="pre">zodipy._components</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/components.html"><code class="docutils literal notranslate"><span class="pre">zodipy._component</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference/models.html"><code class="docutils literal notranslate"><span class="pre">zodipy._model</span></code></a></li>
 </ul>
 </li>
@@ -204,28 +204,25 @@ position of the observer explicitly. Additionally, the user must specify the
 pointing of the observer, either in form of angular coordinates <code class="docutils literal notranslate"><span class="pre">theta</span></code> and
 <code class="docutils literal notranslate"><span class="pre">phi</span></code>, or though pixel numbers refering to the pixels on a HEALPix grid.</p>
 <p>The software is described in further detail in <em>San et al. 2022</em> (in preperation).</p>
-<section id="user-interface">
-<h2>User Interface<a class="headerlink" href="#user-interface" title="Permalink to this headline">#</a></h2>
-<p>The <a class="reference internal" href="reference/zodipy.html#zodipy-overview"><span class="std std-ref">zodipy.Zodipy</span></a> class represents the Zodipy interface. It is intialized as following:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
 <section id="interplanetary-dust-models">
 <h2>Interplanetary Dust models<a class="headerlink" href="#interplanetary-dust-models" title="Permalink to this headline">#</a></h2>
 <p>The default Interplanetary Dust model used in Zodipy is the <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K">DIRBE model</a>.
 Other built in models are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Planck13 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract">Planck Collaboration et al. 2014</a>)</p></li>
-<li><p>Planck15 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P">Planck Collaboration et al. 2016</a>)</p></li>
-<li><p>Planck18 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P">Planck Collaboration et al. 2020</a>)</p></li>
-<li><p>Odegard (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract">Odegard et al. 2019</a>)</p></li>
+<li><p>planck13 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract">Planck Collaboration et al. 2014</a>)</p></li>
+<li><p>planck15 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P">Planck Collaboration et al. 2016</a>)</p></li>
+<li><p>planck18 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P">Planck Collaboration et al. 2020</a>)</p></li>
+<li><p>odegard (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract">Odegard et al. 2019</a>)</p></li>
 </ul>
 </div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"Planck15"</span><span class="p">)</span>
+</section>
+<section id="user-interface">
+<h2>User Interface<a class="headerlink" href="#user-interface" title="Permalink to this headline">#</a></h2>
+<p>The <a class="reference internal" href="reference/zodipy.html#zodipy-overview"><span class="std std-ref">zodipy.Zodipy</span></a> class represents the Zodipy interface. It is intialized as following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">"planck18"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -332,8 +329,8 @@ future.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
-<li><a class="reference internal" href="#user-interface">User Interface</a></li>
 <li><a class="reference internal" href="#interplanetary-dust-models">Interplanetary Dust models</a></li>
+<li><a class="reference internal" href="#user-interface">User Interface</a></li>
 <li><a class="reference internal" href="#simulating-zodiacal-emission">Simulating Zodiacal emission</a></li>
 </ul>
 </li>

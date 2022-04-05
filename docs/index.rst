@@ -7,7 +7,7 @@ Zodipy Documentation
 ====================
 
 Zodipy is a Python tool for simulating the Interplanetary Dust Emission that a
-Solar System observer sees, either in the form of timestreams or binned HEALPIX
+Solar System observer sees, either in the form of timestreams or binned HEALPix
 maps.
 
 .. image:: ../imgs/zodipy_map.png
@@ -17,13 +17,13 @@ maps.
 Requirements
 ------------
 
-Zodipy requires Python 3.8 or higher and depends on the following packages and version:
+Zodipy has the following strict requirements:
 
-- numpy
-- healpy
-- astropy >= 5.0.1
-- jplephem
-- typing-extensions
+- `numpy <https://numpy.org>`_
+- `healpy <https://healpy.readthedocs.io/en/latest/>`_
+- `astropy <https://www.astropy.org>`_ >= 5.0.1
+- `jplephem <https://pypi.org/project/jplephem/>`_ (astropy optional dependency)
+- `typing-extensions <https://pypi.org/project/typing-extensions/>`_ (astropy optional dependency)
   
 Installation
 ------------
