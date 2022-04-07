@@ -41,5 +41,5 @@ def trapezoidal_regular_grid(
     integrated_emission += 2 * sum(
         get_emission_step(start + ds * step) for step in range(1, n_steps)
     )
-
+    
     return integrated_emission * (ds / 2)

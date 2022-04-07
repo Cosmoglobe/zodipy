@@ -9,17 +9,18 @@ from zodipy._source import (
     get_interplanetary_temperature,
     get_phase_function,
     get_solar_flux,
+    get_scattering_angle,
 )
 
 
 def get_emission_step(
-    r: float | NDArray[np.floating],
+    R_los: float | NDArray[np.floating],
     *,
-    frequency: float,
-    observer_position: NDArray[np.floating],
-    earth_position: NDArray[np.floating],
-    unit_vectors: NDArray[np.floating],
+    X_obs: NDArray[np.floating],
+    X_earth: NDArray[np.floating],
+    u_los: NDArray[np.floating],
     component: Component,
+    frequency: float,
     T_0: float,
     delta: float,
     emissivity: float,
@@ -32,18 +33,18 @@ def get_emission_step(
 
     Parameters
     ----------
-    r
-        Radial distance along the line-of-sight [AU / 1 AU].
-    frequency
-        Frequency at which to evaluate the brightness integral [GHz].
-    observer_position
-        The heliocentric ecliptic cartesian position of the observer [AU / 1 AU].
-    earth_position
-        The heliocentric ecliptic cartesian position of the Earth [AU / 1 AU].
-    unit_vectors
-        Heliocentric ecliptic cartesian unit vectors for each pointing [AU / 1 AU].
+    R_los
+        Radial distance along the line-of-sight [AU].
+    X_obs
+        The heliocentric ecliptic cartesian position of the observer [AU].
+    X_earth
+        The heliocentric ecliptic cartesian position of the Earth [AU ].
+    u_los
+        Heliocentric ecliptic cartesian unit vectors for each pointing [AU].
     component
         Interplanetary Dust component.
+    frequency
+        Frequency at which to evaluate the brightness integral [GHz].
     T_0
         Interplanetary temperature at 1 AU.
     delta
@@ -64,24 +65,23 @@ def get_emission_step(
         along line of sights in units of W / Hz / m^2 / sr.
     """
 
-    r_vec = r * unit_vectors
-    X_helio = r_vec + observer_position
-    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
+    X_los = R_los * u_los
+    X_helio = X_los + X_obs
+    R_helio = np.sqrt(X_helio[0]**2 + X_helio[1]**2 + X_helio[2]**2)
 
-    density = component.compute_density(X_helio=X_helio, X_earth=earth_position)
+    density = component.compute_density(X_helio=X_helio, X_earth=X_earth)
     interplanetary_temperature = get_interplanetary_temperature(R_helio, T_0, delta)
     blackbody_emission = get_blackbody_emission_nu(
         frequency, interplanetary_temperature
     )
 
-    if albedo > 0:
-        emission = (1 - albedo) * (emissivity * blackbody_emission)
-        scattering_angle = np.arccos(np.sum(r_vec * X_helio, axis=0) / (r * R_helio))
-        solar_flux = get_solar_flux(R_helio, frequency)
-        phase_function = get_phase_function(scattering_angle, phase_coefficients)
-        emission += albedo * solar_flux * phase_function
+    emission = (1 - albedo) * (emissivity * blackbody_emission)
 
-    else:
-        emission = emissivity * blackbody_emission
+    if albedo > 0:
+        solar_flux = get_solar_flux(R_helio, frequency)
+        scattering_angle = get_scattering_angle(R_los, R_helio, X_los, X_helio)
+        phase_function = get_phase_function(scattering_angle, phase_coefficients)
+
+        emission += albedo * solar_flux * phase_function
 
     return emission * density

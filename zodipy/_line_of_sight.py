@@ -6,16 +6,16 @@ from numpy.typing import NDArray
 from zodipy._component_label import ComponentLabel
 
 DISTANCE_TO_JUPITER = 5.2 # AU
-EPS = np.finfo(float).eps
+EPS = float(np.finfo(float).eps)
 
 # Line of sight steps
 line_of_sight_steps: dict[ComponentLabel, int] = {
-    ComponentLabel.CLOUD: 200,
-    ComponentLabel.BAND1: 200,
-    ComponentLabel.BAND2: 250,
-    ComponentLabel.BAND3: 200,
-    ComponentLabel.RING: 125,
-    ComponentLabel.FEATURE: 125,
+    ComponentLabel.CLOUD: 50,
+    ComponentLabel.BAND1: 50,
+    ComponentLabel.BAND2: 50,
+    ComponentLabel.BAND3: 50,
+    ComponentLabel.RING: 50,
+    ComponentLabel.FEATURE: 50,
 }
 
 # Line of sight steps

@@ -11,13 +11,13 @@ h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
 R_sun = const.R_sun.to(u.AU).value
-T_sun = 5778
+T_sun = 5778 # K
 
 
 def get_blackbody_emission_nu(
     freq: float | NDArray[np.floating],
     T: float | NDArray[np.floating],
-) -> NDArray[np.floating]:
+) -> float | NDArray[np.floating]:
     """Returns the blackbody emission.
 
     Parameters
@@ -25,7 +25,7 @@ def get_blackbody_emission_nu(
     T
         Temperature of the blackbody [K].
     freq
-        Frequency [GHz] .
+        Frequency [GHz].
 
     Returns
     -------
@@ -40,28 +40,39 @@ def get_blackbody_emission_nu(
 
 
 def get_solar_flux(
-    R: NDArray[np.floating], freq: float, T: float = T_sun
-) -> NDArray[np.floating]:
+    R: float | NDArray[np.floating], freq: float
+) -> float | NDArray[np.floating]:
     """Returns the solar flux observed at some distance R from the Sun in AU.
 
     Parameteers
     -----------
+    R
+        Heliocentric distance from the Sun [AU].
     freq
         Frequency [GHz].
-    T
-        Temperature [K].
 
     Returns
     -------
         Solar flux at some distance R from the Sun in AU.
     """
 
-    return np.pi * get_blackbody_emission_nu(T=T, freq=freq) * (R_sun / R) ** 2
+    blackbody_emission_sun = _get_blackbody_emission_sun(freq)
+
+    # return (2.3405606e+08 * u.Unit("MJy/sr")).to("W / (m^2 Hz sr)").value/ R**2
+
+    return np.pi * blackbody_emission_sun * (R_sun / R) ** 2
+
+
+@lru_cache
+def _get_blackbody_emission_sun(freq: float | NDArray[np.floating]) -> float | NDArray[np.floating]:
+    """Returns the blackbody emission from the Sun.""" 
+
+    return get_blackbody_emission_nu(freq, T_sun)
 
 
 def get_interplanetary_temperature(
-    R: NDArray[np.floating], T_0: float, delta: float
-) -> NDArray[np.floating]:
+    R: float | NDArray[np.floating], T_0: float, delta: float
+) -> float | NDArray[np.floating]:
     """Returns the Interplanetary Temperature given a radial distance from the Sun.
 
     Parameters
@@ -79,6 +90,37 @@ def get_interplanetary_temperature(
     """
 
     return T_0 * R ** -delta
+
+
+def get_scattering_angle(
+    R_los: float | NDArray[np.floating],
+    R_helio: NDArray[np.floating],
+    X_los: NDArray[np.floating],
+    X_helio: NDArray[np.floating],
+) -> NDArray[np.floating]:
+    """
+    Returns the scattering angle between the Sun and a point along the 
+    line of sight.
+    
+    Parameters
+    ----------
+    R_los
+        Distance from observer to a point along the line of sight.
+    R_helio
+        Distance from the Sun to a point along the line of sight.
+    X_los
+        vector pointing from the observer to a point along the line of sight.
+    X_helio
+        Heliocentric position of point along the line of sight.
+
+    Returns
+    -------
+        Scattering angle.
+    """
+
+    cos_theta = np.sum(X_los * X_helio, axis=0) / (R_los * R_helio)
+
+    return np.arccos(-cos_theta)
 
 
 def get_phase_function(
