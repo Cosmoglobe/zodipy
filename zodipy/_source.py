@@ -1,4 +1,12 @@
+"""
+
+Functions that compute Zodiacal emission source quantities used in the 
+evaluation of the brightness integral.
+
+"""
+
 from __future__ import annotations
+
 from functools import lru_cache
 
 import astropy.constants as const
@@ -11,11 +19,11 @@ h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
 R_sun = const.R_sun.to(u.AU).value
-T_sun = 5778 # K
+T_sun = 5778  # K
 
 
 def get_blackbody_emission_nu(
-    freq: float | NDArray[np.floating],
+    nu: float | NDArray[np.floating],
     T: float | NDArray[np.floating],
 ) -> float | NDArray[np.floating]:
     """Returns the blackbody emission.
@@ -24,7 +32,7 @@ def get_blackbody_emission_nu(
     ----------
     T
         Temperature of the blackbody [K].
-    freq
+    nu
         Frequency [GHz].
 
     Returns
@@ -32,15 +40,15 @@ def get_blackbody_emission_nu(
         Blackbody emission [W / m^2 Hz sr].
     """
 
-    freq *= 1e9
-    term1 = (2 * h * freq ** 3) / c ** 2
-    term2 = np.expm1(((h * freq) / (k_B * T)))
+    nu *= 1e9
+    term1 = (2 * h * nu**3) / c**2
+    term2 = np.expm1(((h * nu) / (k_B * T)))
 
     return term1 / term2
 
 
 def get_solar_flux(
-    R: float | NDArray[np.floating], freq: float
+    R: float | NDArray[np.floating], nu: float
 ) -> float | NDArray[np.floating]:
     """Returns the solar flux observed at some distance R from the Sun in AU.
 
@@ -48,7 +56,7 @@ def get_solar_flux(
     -----------
     R
         Heliocentric distance from the Sun [AU].
-    freq
+    nu
         Frequency [GHz].
 
     Returns
@@ -56,18 +64,18 @@ def get_solar_flux(
         Solar flux at some distance R from the Sun in AU.
     """
 
-    blackbody_emission_sun = _get_blackbody_emission_sun(freq)
-
-    # return (2.3405606e+08 * u.Unit("MJy/sr")).to("W / (m^2 Hz sr)").value/ R**2
+    blackbody_emission_sun = _get_blackbody_emission_sun(nu)
 
     return np.pi * blackbody_emission_sun * (R_sun / R) ** 2
 
 
 @lru_cache
-def _get_blackbody_emission_sun(freq: float | NDArray[np.floating]) -> float | NDArray[np.floating]:
-    """Returns the blackbody emission from the Sun.""" 
+def _get_blackbody_emission_sun(
+    nu: float | NDArray[np.floating],
+) -> float | NDArray[np.floating]:
+    """Returns the blackbody emission from the Sun."""
 
-    return get_blackbody_emission_nu(freq, T_sun)
+    return get_blackbody_emission_nu(nu, T_sun)
 
 
 def get_interplanetary_temperature(
@@ -89,7 +97,7 @@ def get_interplanetary_temperature(
         Interplanetary temperature [K].
     """
 
-    return T_0 * R ** -delta
+    return T_0 * R**-delta
 
 
 def get_scattering_angle(
@@ -99,9 +107,9 @@ def get_scattering_angle(
     X_helio: NDArray[np.floating],
 ) -> NDArray[np.floating]:
     """
-    Returns the scattering angle between the Sun and a point along the 
+    Returns the scattering angle between the Sun and a point along the
     line of sight.
-    
+
     Parameters
     ----------
     R_los
@@ -118,13 +126,13 @@ def get_scattering_angle(
         Scattering angle.
     """
 
-    cos_theta = np.sum(X_los * X_helio, axis=0) / (R_los * R_helio)
+    cos_theta = (X_los * X_helio).sum(axis=0) / (R_los * R_helio)
 
     return np.arccos(-cos_theta)
 
 
 def get_phase_function(
-    Theta: NDArray[np.floating], phase_coefficients: tuple[float, float, float]
+    Theta: NDArray[np.floating], C: tuple[float, float, float]
 ) -> NDArray[np.floating]:
     """Returns the phase function.
 
@@ -140,20 +148,18 @@ def get_phase_function(
         The Phase funciton.
     """
 
-    c_0, c_1, c_2 = phase_coefficients
-    phase_normalization = _get_phase_normalization(c_0, c_1, c_2)
+    phase_normalization = _get_phase_normalization(C)
 
-    return phase_normalization * (c_0 + c_1 * Theta + np.exp(c_2 * Theta))
+    return phase_normalization * (C[0] + C[1] * Theta + np.exp(C[2] * Theta))
 
 
 @lru_cache
-def _get_phase_normalization(c_0: float, c_1: float, c_2: float) -> float:
+def _get_phase_normalization(C: tuple[float, float, float]) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
 
-    pi = np.pi
-    int_term1 = 2 * pi
-    int_term2 = 2 * c_0
-    int_term3 = pi * c_1
-    int_term4 = (np.exp(c_2 * pi) + 1) / (c_2 ** 2 + 1)
+    int_term1 = 2 * np.pi
+    int_term2 = 2 * C[0]
+    int_term3 = np.pi * C[1]
+    int_term4 = (np.exp(C[2] * np.pi) + 1) / (C[2] ** 2 + 1)
 
     return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))

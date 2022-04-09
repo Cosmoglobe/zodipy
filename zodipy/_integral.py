@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Callable
 
 import numpy as np
@@ -13,7 +14,7 @@ def trapezoidal_regular_grid(
 ) -> NDArray[np.floating]:
     """
     Integrates and returns the Zodiacal Emission of a Interplanetary Dust component
-    over a regular grid.
+    using the trapezoidal method over a regular grid.
 
     Parameters
     ----------
@@ -34,12 +35,12 @@ def trapezoidal_regular_grid(
         Integrated Zodiacal emission for an Interplanetary Dust component over
         line of sights in units of W / Hz / m^2 / sr.
     """
-    
+
     ds = (stop - start) / n_steps
 
     integrated_emission = get_emission_step(start) + get_emission_step(stop)
     integrated_emission += 2 * sum(
         get_emission_step(start + ds * step) for step in range(1, n_steps)
     )
-    
+
     return integrated_emission * (ds / 2)

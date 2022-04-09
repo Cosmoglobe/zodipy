@@ -1,7 +1,7 @@
 import astropy.units as u
 from astropy.units import Quantity
 
-from zodipy._component_label import ComponentLabel
+from ._component_label import ComponentLabel
 
 
 T_0_DIRBE = 286  # K
@@ -40,7 +40,6 @@ EMISSIVITY_ODEGARD = {
     ComponentLabel.BAND2: (0.15, 0.22, 0.40, 0.80, 1.11, 1.58),
     ComponentLabel.BAND3: (0.50, 0.89, 1.22, 1.96, 2.81, 3.60),
 }
-
 
 EMISSIVITY_DIRBE = {
     ComponentLabel.CLOUD: (

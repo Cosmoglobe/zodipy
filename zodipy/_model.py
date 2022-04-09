@@ -1,17 +1,26 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 
 from astropy.units import Quantity
 import astropy.units as u
 import numpy as np
+from scipy.interpolate import interp1d
 
-from zodipy._component import Component
-from zodipy._component_label import ComponentLabel
-from zodipy.source_params import T_0_DIRBE, DELTA_DIRBE
+from ._component import Component
+from ._component_label import ComponentLabel
+from .source_params import T_0_DIRBE, DELTA_DIRBE
 
 
 @dataclass
 class Model:
+    """Interplanetary Dust model.
+
+    This dataclass acts as a container for the various parameters in a
+    Interplanetary Dust model and provides a method to interpolate / extrapolate
+    the spectral model parameters to other frequencies or wavelengths.
+    """
+
     name: str
     components: dict[ComponentLabel, Component]
     spectrum: Quantity[u.Hz] | Quantity[u.m]
@@ -25,28 +34,54 @@ class Model:
     def n_components(self) -> int:
         return len(self.components)
 
-    def get_extrapolated_component_parameters(
+    def validate_frequency(self, frequency: Quantity[u.GHz] | Quantity[u.m]) -> None:
+        """
+        Raises ValueError if the requested frequency is out of range the range
+        covered by the model.
+        """
+
+        spectrum_min, spectrum_max = self.spectrum.min(), self.spectrum.max()
+        if not (spectrum_min <= frequency <= spectrum_max):
+            raise ValueError(
+                f"model {self.name!r} is only valid in the [{spectrum_min.value},"
+                f" {spectrum_max.value}] {self.spectrum.unit} range."
+            )
+
+    def get_source_parameters(
         self,
         component_label: ComponentLabel,
         frequency: Quantity[u.GHz] | Quantity[u.m],
     ) -> tuple[float, float, tuple[float, float, float]]:
-        """Returns interpolated/extrapolated spectral parameters given a frequency."""
+        """
+        Returns interpolated/extrapolated source parameters for a component
+        given a frequency.
+        """
 
         frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
-
-        emissivity = np.interp(
-            frequency, self.spectrum, self.emissivities[component_label]
+        emissivity_interpolator = interp1d(
+            x=self.spectrum,
+            y=self.emissivities[component_label],
+            fill_value="extrapolate",
         )
+        emissivity = emissivity_interpolator(frequency)
+
         if self.albedos is not None:
-            albedo = np.interp(frequency, self.spectrum, self.albedos[component_label])
+            albedo_interpolator = interp1d(
+                x=self.spectrum,
+                y=self.albedos[component_label],
+                fill_value="extrapolate",
+            )
+            albedo = albedo_interpolator(frequency)
         else:
             albedo = 0.0
 
         if self.phase_coefficients is not None:
-            phase_coefficient = [
-                np.interp(frequency, self.spectrum, coeff)
-                for coeff in self.phase_coefficients
-            ]
+            phase_coefficient_interpolator = interp1d(
+                x=self.spectrum,
+                y=np.asarray(self.phase_coefficients),
+                fill_value="extrapolate",
+            )
+            phase_coefficient = phase_coefficient_interpolator(frequency)
         else:
             phase_coefficient = [0.0 for _ in range(3)]
 
@@ -107,7 +142,7 @@ class ModelRegistry:
             interplanetary temperature falls with radial distance from the Sun.
             Defaults to the DIRBE model value.
         """
-        
+
         if (name := name.lower()) in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 

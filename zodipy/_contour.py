@@ -3,17 +3,17 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._model import Model
-from zodipy.models import model_registry
+from ._model import Model
+from .models import model_registry
 
 
-DEFAULT_EARTH_POS = np.array([1.0, 0.0, 0.0])
+DEFAULT_EARTH_POS = (1, 0, 0)
 
 
 def tabulate_density(
     grid: NDArray[np.floating] | list[NDArray[np.floating]],
     model: str | Model = "DIRBE",
-    earth_position: NDArray[np.floating] = DEFAULT_EARTH_POS,
+    earth_position: tuple[float, float, float] | NDArray[np.floating] = DEFAULT_EARTH_POS,
 ) -> NDArray[np.floating]:
     """Returns the tabulated densities of the Interplanetary Dust components.
 

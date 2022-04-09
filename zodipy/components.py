@@ -1,6 +1,7 @@
 from __future__ import annotations
-from zodipy._component_label import ComponentLabel
-from zodipy._component import Component, Cloud, Band, Ring, Feature
+
+from ._component_label import ComponentLabel
+from ._component import Component, Cloud, Band, Ring, Feature
 
 
 DIRBE: dict[ComponentLabel, Component] = {

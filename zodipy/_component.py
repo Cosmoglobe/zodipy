@@ -1,4 +1,14 @@
+"""
+
+Implementation of the Interplanetary Dust components in the DIRBE model.
+
+Custom Interplanetary Dust components may be implemented. They would need
+to inherit from `Component` and implement the `compute_density` method.
+
+"""
+
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -10,11 +20,7 @@ from numpy.typing import NDArray
 
 @dataclass
 class Component(ABC):
-    """Base class for a DIRBE Interplanetary Dust Component.
-
-    Any component that inherits from this class needs to implement the
-    `compute_density` method which takes in the heliocentric ecliptic cartesian
-    coordinates of the line of sight, and optionally Earth's position.
+    """Base class for an Interplanetary Dust Component.
 
     Parameters
     ----------
@@ -73,7 +79,7 @@ class Component(ABC):
 
 @dataclass
 class Cloud(Component):
-    """Diffuse Cloud component.
+    """DIRBE Diffuse Cloud.
 
     Parameters
     ----------
@@ -122,7 +128,7 @@ class Cloud(Component):
 
 @dataclass
 class Band(Component):
-    """Dust Band component.
+    """DIRBe Dust Band.
 
     Parameters
     ----------
@@ -178,7 +184,7 @@ class Band(Component):
 
 @dataclass
 class Ring(Component):
-    """Circum-solar Ring component.
+    """DIRBE Circum-solar Ring (excluding the Earth-trailing Feature).
 
     Parameters
     ----------
@@ -220,7 +226,7 @@ class Ring(Component):
 
 @dataclass
 class Feature(Component):
-    """Earth-trailing Feature component.
+    """DIRBE Earth-trailing Feature.
 
     Parameters
     ----------

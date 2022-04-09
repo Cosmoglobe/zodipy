@@ -1,6 +1,6 @@
-from zodipy._model import model_registry
-from zodipy import components
-from zodipy import source_params
+from ._model import model_registry
+from . import components
+from . import source_params
 
 
 model_registry.register_model(

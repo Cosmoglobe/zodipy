@@ -3,9 +3,10 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._component_label import ComponentLabel
+from ._component_label import ComponentLabel
 
-DISTANCE_TO_JUPITER = 5.2 # AU
+
+DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
 
 # Line of sight steps
@@ -27,6 +28,7 @@ line_of_sight_cutoffs: dict[ComponentLabel, float] = {
     ComponentLabel.RING: 3,
     ComponentLabel.FEATURE: 2,
 }
+
 
 def get_line_of_sight(
     component_label: ComponentLabel,
@@ -58,7 +60,7 @@ def _get_line_of_sight_endpoints(
 
     x, y, z = observer_position.flatten()
 
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    r = np.sqrt(x**2 + y**2 + z**2)
     theta = np.arctan2(y, x)
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
@@ -75,7 +77,7 @@ def _get_line_of_sight_endpoints(
     cos_lat = np.cos(lat)
 
     b = 2 * (x_0 * cos_lat * cos_lon + y_0 * cos_lat * sin_lon)
-    c = r ** 2 - r_cutoff ** 2
-    q = -0.5 * b * (1 + np.sqrt(b ** 2 - 4 * c) / np.abs(b))
+    c = r**2 - r_cutoff**2
+    q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
 
     return np.maximum(q, c / q)

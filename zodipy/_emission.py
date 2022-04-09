@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from zodipy._component import Component
-from zodipy._source import (
+from ._component import Component
+from ._source import (
     get_blackbody_emission_nu,
     get_interplanetary_temperature,
     get_phase_function,
@@ -50,7 +50,7 @@ def get_emission_step(
     delta
         Interplanetary temperature power law parameter.
     emissivity
-        Frequency and component dependant emissivity factor representing the 
+        Frequency and component dependant emissivity factor representing the
         deviation of the emisstion from a black body.
     albedo
         Frequency and component dependant albedo factor representing the
@@ -61,13 +61,13 @@ def get_emission_step(
 
     Returns
     -------
-        The Zodiacal emission from an Interplanetary Dust component at a step 
+        The Zodiacal emission from an Interplanetary Dust component at a step
         along line of sights in units of W / Hz / m^2 / sr.
     """
 
     X_los = R_los * u_los
     X_helio = X_los + X_obs
-    R_helio = np.sqrt(X_helio[0]**2 + X_helio[1]**2 + X_helio[2]**2)
+    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
     density = component.compute_density(X_helio=X_helio, X_earth=X_earth)
     interplanetary_temperature = get_interplanetary_temperature(R_helio, T_0, delta)
