@@ -12,7 +12,7 @@ from ._component_label import ComponentLabel
 from .source_params import T_0_DIRBE, DELTA_DIRBE
 
 
-@dataclass
+@dataclass(frozen=True)
 class Model:
     """Interplanetary Dust model.
 
@@ -86,6 +86,20 @@ class Model:
             phase_coefficient = [0.0 for _ in range(3)]
 
         return emissivity, albedo, tuple(phase_coefficient)
+
+    def __repr__(self) -> str:
+        component_names = [component_label.value for component_label in self.components]
+        repr = "Model( \n"
+        repr += f"   name: {self.name!r},\n"
+        repr += "   components: (\n"
+        for name in component_names:
+            repr += f"      {name!r},\n"
+        repr += "   ),\n"
+        repr += "   thermal: True,\n"
+        repr += f"   scattering: {self.albedos is not None},\n"
+        repr += ")"
+
+        return repr
 
 
 @dataclass

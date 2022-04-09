@@ -15,8 +15,8 @@ from ._integral import trapezoidal_regular_grid
 from ._line_of_sight import get_line_of_sight
 from .models import model_registry
 from ._unit_vector import (
-    get_unit_vector_from_angles,
-    get_unit_vector_from_pixels,
+    get_unit_vectors_from_angles,
+    get_unit_vectors_from_pixels,
 )
 
 
@@ -117,8 +117,8 @@ class Zodipy:
             Must have units compatible with Hz or m.
         obs
             The solar system observer. A list of all support observers (for a
-            given ephemeridis) is specified in `observers` attribute of the
-            `zodipy.Zodipy` instance. Defaults to 'earth'.
+            given ephemeridis) is specified in `supported_observers` attribute
+            of the `zodipy.Zodipy` instance. Defaults to 'earth'.
         obs_time
             Time of observation (`astropy.time.Time` object). Defaults to
             current time.
@@ -229,7 +229,7 @@ class Zodipy:
         if binned:
             if pixels is not None:
                 unique_pixels, counts = np.unique(pixels, return_counts=True)
-                unit_vectors = get_unit_vector_from_pixels(
+                unit_vectors = get_unit_vectors_from_pixels(
                     coord_in=coord_in,
                     pixels=unique_pixels,
                     nside=nside,
@@ -239,7 +239,7 @@ class Zodipy:
                     np.asarray([theta, phi]), return_counts=True, axis=1
                 )
                 unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
-                unit_vectors = get_unit_vector_from_angles(
+                unit_vectors = get_unit_vectors_from_angles(
                     coord_in=coord_in,
                     theta=unique_angles[0],
                     phi=unique_angles[1],
@@ -283,7 +283,7 @@ class Zodipy:
         else:
             if pixels is not None:
                 unique_pixels, indicies = np.unique(pixels, return_inverse=True)
-                unit_vectors = get_unit_vector_from_pixels(
+                unit_vectors = get_unit_vectors_from_pixels(
                     coord_in=coord_in,
                     pixels=unique_pixels,
                     nside=nside,
@@ -294,7 +294,7 @@ class Zodipy:
                 unique_angles, indicies = np.unique(
                     np.asarray([theta, phi]), return_inverse=True, axis=1
                 )
-                unit_vectors = get_unit_vector_from_angles(
+                unit_vectors = get_unit_vectors_from_angles(
                     coord_in=coord_in,
                     theta=unique_angles[0],
                     phi=unique_angles[1],
@@ -339,6 +339,11 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
     def __repr__(self) -> str:
-        cls_name = self.__class__.__name__
+        return (
+            f"{self.__class__.__name__}(model={self.model.name!r}, "
+            f"ephemeris={self.ephemeris!r}, "
+            f"extrapolate={self.extrapolate!r})"
+        )
 
-        return f"{cls_name}(model={self.model.name!r}, ephemeris={self.ephemeris!r})"
+    def __str__(self) -> str:
+        return repr(self.model)

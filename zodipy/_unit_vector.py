@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def get_unit_vector_from_pixels(
+def get_unit_vectors_from_pixels(
     coord_in: str, pixels: Sequence[int] | NDArray[np.integer], nside: int
 ) -> NDArray[np.floating]:
     """Returns ecliptic unit vectors from HEALPix pixels representing some pointing."""
@@ -18,7 +18,7 @@ def get_unit_vector_from_pixels(
     return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))
 
 
-def get_unit_vector_from_angles(
+def get_unit_vectors_from_angles(
     coord_in: str,
     phi: Quantity[u.rad] | Quantity[u.deg],
     theta: Quantity[u.rad] | Quantity[u.deg],
