@@ -99,71 +99,75 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> Quantity[u.MJy / u.sr]:
-        """Returns simulated Zodiacal Emission.
+        """Returns the simulated Zodiacal Emission.
 
         This function takes as arguments a frequency or wavelength (`freq`),
-        time of observation (`obs_time`), an a Solar System observer (`obs`).
-        The position of the observer is computed using the pehemeris specified
+        time of observation (`obs_time`), and a Solar System observer (`obs`).
+        The position of the observer is computed using the ephemeris specified
         in the initialization of `Zodipy`. Optionally, the observer position
         can be explicitly specified with the `obs_pos` argument, which
-        overrides`obs`. The pointing, for which to compute the emission, is
+        overrides `obs`. The pointing, for which to compute the emission, is
         specified either in the form of angles on the sky (`theta`, `phi`), or
-        as HEALPIX pixels at some resolution (`pixels`, `nside`).
+        as HEALPix pixels (`pixels`) for a given resolution (`nside`).
 
         Parameters
         ----------
         freq
             Frequency or wavelength at which to evaluate the Zodiacal emission.
-            Must have units compatible with Hz or m.
+            Must have units compatible with Hz or length.
         obs
-            The solar system observer. A list of all support observers (for a
+            The Solar System observer. A list of all support observers (for a
             given ephemeridis) is specified in `supported_observers` attribute
-            of the `zodipy.Zodipy` instance. Defaults to 'earth'.
+            of the `Zodipy` instance. Defaults to 'earth'.
         obs_time
-            Time of observation (`astropy.time.Time` object). Defaults to
-            current time.
+            Time of observation (`astropy.time.Time`). Defaults to the current
+            time.
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
             Overrides the `obs` argument. Default is None.
         pixels
-            A single, or a sequence of HEALPIX pixels representing points on
-            the sky. The `nside` parameter, which specifies the resolution of
-            these pixels, must also be provided along with this argument.
-        theta, phi
-            Angular coordinates (co-latitude, longitude ) of a point, or a
-            sequence of points, on the sphere. Units must be radians or degrees.
-            co-latitude must be in [0, pi] rad, and longitude in [0, 2*pi] rad.
+            A single, or a sequence of HEALPix pixel indicies representing points
+            on the celestial sphere. If pixels is given, the `nside` parameter
+            specifying the resolution of these pixels must also be provided.
+        theta
+            Angular co-latitude coordinate of a point, or a sequence of points,
+            on the celestial sphere. Must be in the range [0, π] rad. Units
+            must be either radians or degrees.
+        phi
+            Angular longitude coordinate of a point, or a sequence of points, on
+            the celestial sphere. Must be in the range [0, 2π] rad. Units must
+            be either radians or degrees.
         nside
-            HEALPIX map resolution parameter of the pixels (and optionally the
-            binned output map). Must be specified if `pixels` is provided or if
-            `binned` is set to True.
+            HEALPix resolution parameter of the pixels (and optionally the binned
+            output map). Must be given if `pixels` is provided or if `binned` is
+            set to True.
         lonlat
             If True, input angles (`theta`, `phi`) are assumed to be longitude
             and latitude, otherwise, they are co-latitude and longitude.
-            Seeting lonlat to True corresponds to theta=RA, phi=DEC
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
         binned
-            If True, the emission is binned into a HEALPIX map with resolution
+            If True, the emission is binned into a HEALPix map with resolution
             given by the `nside` argument in the coordinate frame corresponding to
             `coord_in`. Defaults to False.
         coord_in
-            Coordinates frame of the pointing. Assumes 'E' (ecliptic coordinates)
-            by default.
+            Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+            coordinates) by default.
 
         Returns
         -------
         emission
             Sequence of simulated Zodiacal emission in units of 'MJy/sr' for
-            each pointing. If the pointing is provided in a time-ordered manner,
-            then the output of this function can be interpreted as the observered
-            Zodiacal Emission timestream.
+            each input pointing. The output may be interpreted as a timestream
+            of Zodiacal emission observed by the Solar System observer if the
+            pointing is provided in a time-ordered manner. If `binned` is set to
+            True, the output will be a binned HEALPix Zodiacal emission map.
         """
 
         if obs.lower() not in self.supported_observers:
             raise ValueError(
                 f"observer {obs!r} not supported by ephemeridis "
-                f"{solar_system_ephemeris._value!r} or 'Zodipy'"
+                f"{solar_system_ephemeris._value!r}"
             )
 
         if pixels is not None:
@@ -214,6 +218,7 @@ class Zodipy:
         if not isinstance(obs_time, Time):
             raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
 
+        # Get position of Solar System bodies
         earth_position = get_earth_position(obs_time)
         if obs_pos is None:
             observer_position = get_observer_position(obs, obs_time, earth_position)
@@ -223,10 +228,13 @@ class Zodipy:
         if not self.extrapolate:
             self.model.validate_frequency(freq)
 
-        # Internal computations are done in frequency convention.
+        # Convert to frequency convention (internal computations are done in
+        # frequency)
         frequency = freq.to("GHz", equivalencies=u.spectral())
 
+        # Compute binned HEALPix map
         if binned:
+            # Input pointing is pixel indicies
             if pixels is not None:
                 unique_pixels, counts = np.unique(pixels, return_counts=True)
                 unit_vectors = get_unit_vectors_from_pixels(
@@ -234,6 +242,7 @@ class Zodipy:
                     pixels=unique_pixels,
                     nside=nside,
                 )
+            # Input pointing is angles
             else:
                 unique_angles, counts = np.unique(
                     np.asarray([theta, phi]), return_counts=True, axis=1
@@ -247,12 +256,11 @@ class Zodipy:
                 )
 
             emission = np.zeros((self.model.n_components, hp.nside2npix(nside)))
+            # Compute the integrated emission for each component in the model
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
 
-                # Create new callable with single argument as the distance along
-                # the line of sight (R)
                 emission_step_function = partial(
                     get_emission_step,
                     X_obs=observer_position,
@@ -280,7 +288,9 @@ class Zodipy:
 
             emission[:, unique_pixels] *= counts
 
+        # Compute emission for each pointing
         else:
+            # Input pointing is pixel indicies
             if pixels is not None:
                 unique_pixels, indicies = np.unique(pixels, return_inverse=True)
                 unit_vectors = get_unit_vectors_from_pixels(
@@ -289,7 +299,7 @@ class Zodipy:
                     nside=nside,
                 )
                 emission = np.zeros((self.model.n_components, len(pixels)))
-
+            # Input pointing is angles
             else:
                 unique_angles, indicies = np.unique(
                     np.asarray([theta, phi]), return_inverse=True, axis=1
@@ -303,6 +313,7 @@ class Zodipy:
 
                 emission = np.zeros((self.model.n_components, len(theta)))
 
+            # Compute the integrated emission for each component in the model
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
@@ -333,7 +344,7 @@ class Zodipy:
 
                 emission[idx] = integrated_comp_emission[indicies]
 
-        # The output unit is W/Hz/m^2/sr which we convert to MJy/sr
+        # Convert from specific intensity units (W Hz^-1 m^-2 sr^-1) to MJy/sr
         emission = (emission << (u.W / u.Hz / u.m**2 / u.sr)).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
