@@ -47,37 +47,6 @@ def get_blackbody_emission_nu(
     return term1 / term2
 
 
-def get_solar_flux(
-    R: float | NDArray[np.floating], nu: float
-) -> float | NDArray[np.floating]:
-    """Returns the solar flux observed at some distance R from the Sun in AU.
-
-    Parameteers
-    -----------
-    R
-        Heliocentric distance from the Sun [AU].
-    nu
-        Frequency [GHz].
-
-    Returns
-    -------
-        Solar flux at some distance R from the Sun in AU.
-    """
-
-    blackbody_emission_sun = _get_blackbody_emission_sun(nu)
-
-    return np.pi * blackbody_emission_sun * (R_sun / R) ** 2
-
-
-@lru_cache
-def _get_blackbody_emission_sun(
-    nu: float | NDArray[np.floating],
-) -> float | NDArray[np.floating]:
-    """Returns the blackbody emission from the Sun."""
-
-    return get_blackbody_emission_nu(nu, T_sun)
-
-
 def get_interplanetary_temperature(
     R: float | NDArray[np.floating], T_0: float, delta: float
 ) -> float | NDArray[np.floating]:

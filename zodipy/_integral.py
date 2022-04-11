@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 
 
 def trapezoidal_regular_grid(
-    get_emission_step: Callable[[float | NDArray[np.floating]], NDArray[np.floating]],
+    emission_step_function: Callable[[float | NDArray[np.floating]], NDArray[np.floating]],
     start: float,
     stop: float | NDArray[np.floating],
     n_steps: int,
@@ -18,7 +18,7 @@ def trapezoidal_regular_grid(
 
     Parameters
     ----------
-    get_emission_step
+    emission_step_function
         Function that computes the Zodiacal emission at a step along the line
         of sight for an Interplanetary Dust component.
     start
@@ -38,9 +38,9 @@ def trapezoidal_regular_grid(
 
     ds = (stop - start) / n_steps
 
-    integrated_emission = get_emission_step(start) + get_emission_step(stop)
+    integrated_emission = emission_step_function(start) + emission_step_function(stop)
     integrated_emission += 2 * sum(
-        get_emission_step(start + ds * step) for step in range(1, n_steps)
+        emission_step_function(start + ds * step) for step in range(1, n_steps)
     )
 
     return integrated_emission * (ds / 2)

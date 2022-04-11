@@ -34,12 +34,18 @@ class Model:
     def n_components(self) -> int:
         return len(self.components)
 
-    def validate_frequency(self, frequency: Quantity[u.GHz] | Quantity[u.m]) -> None:
+    def validate_frequency(
+        self, frequency: Quantity[u.GHz] | Quantity[u.m], extrapolate: bool
+    ) -> None:
         """
         Raises ValueError if the requested frequency is out of range the range
         covered by the model.
         """
 
+        if extrapolate:
+            return
+
+        frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
         spectrum_min, spectrum_max = self.spectrum.min(), self.spectrum.max()
         if not (spectrum_min <= frequency <= spectrum_max):
             raise ValueError(
@@ -89,7 +95,7 @@ class Model:
 
     def __repr__(self) -> str:
         component_names = [component_label.value for component_label in self.components]
-        repr = "Model( \n"
+        repr = f"{type(self).__name__}( \n"
         repr += f"   name: {self.name!r},\n"
         repr += "   components: (\n"
         for name in component_names:
@@ -175,9 +181,9 @@ class ModelRegistry:
         """Returns a registered model given a name."""
 
         if (name := name.lower()) not in self._registry:
-            raise ModuleNotFoundError(
-                f"{name} is not a model in the registry. Avaliable models are: "
-                f"{', '.join(self._registry)}"
+            raise ValueError(
+                f"{name!r} is not a registered Interplanetary Dust model. "
+                f"Avaliable models are: {', '.join(self._registry)}."
             )
 
         return self._registry[name]

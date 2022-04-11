@@ -11,12 +11,12 @@ EPS = float(np.finfo(float).eps)
 
 # Line of sight steps
 line_of_sight_steps: dict[ComponentLabel, int] = {
-    ComponentLabel.CLOUD: 50,
-    ComponentLabel.BAND1: 50,
-    ComponentLabel.BAND2: 50,
-    ComponentLabel.BAND3: 50,
-    ComponentLabel.RING: 50,
-    ComponentLabel.FEATURE: 50,
+    ComponentLabel.CLOUD: 500,
+    ComponentLabel.BAND1: 500,
+    ComponentLabel.BAND2: 500,
+    ComponentLabel.BAND3: 500,
+    ComponentLabel.RING: 500,
+    ComponentLabel.FEATURE: 500,
 }
 
 # Line of sight steps

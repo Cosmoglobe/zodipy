@@ -8,7 +8,6 @@ from ._source import (
     get_blackbody_emission_nu,
     get_interplanetary_temperature,
     get_phase_function,
-    get_solar_flux,
     get_scattering_angle,
 )
 
@@ -26,6 +25,7 @@ def get_emission_step(
     emissivity: float,
     albedo: float,
     phase_coefficients: tuple[float, float, float],
+    solar_irradiance: float,
 ) -> NDArray[np.floating]:
     """Returns the Zodiacal emission at a step along a line of sight.
 
@@ -58,7 +58,9 @@ def get_emission_step(
     phase_coefficient
         Frequency dependant parameters representing the distribution of scattered
         emission.
-
+    solar_irradiance
+        Solar irradiance (at 1 AU) at the frequency specified by 'frequency', given some
+        Solar irradiance model [W / Hz / m^2 / sr].
     Returns
     -------
         The Zodiacal emission from an Interplanetary Dust component at a step
@@ -78,7 +80,7 @@ def get_emission_step(
     emission = (1 - albedo) * (emissivity * blackbody_emission)
 
     if albedo > 0:
-        solar_flux = get_solar_flux(R_helio, frequency)
+        solar_flux = solar_irradiance / R_helio**2
         scattering_angle = get_scattering_angle(R_los, R_helio, X_los, X_helio)
         phase_function = get_phase_function(scattering_angle, phase_coefficients)
 

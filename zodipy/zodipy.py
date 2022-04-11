@@ -14,6 +14,7 @@ from ._ephemeris import get_earth_position, get_observer_position
 from ._integral import trapezoidal_regular_grid
 from ._line_of_sight import get_line_of_sight
 from .models import model_registry
+from ._solar_flux import get_solar_irradiance_model
 from ._unit_vector import (
     get_unit_vectors_from_angles,
     get_unit_vectors_from_pixels,
@@ -34,8 +35,9 @@ class Zodipy:
 
     def __init__(
         self,
-        model: str = "DIRBE",
+        model: str = "dirbe",
         ephemeris: str = "de432s",
+        solar_irradiance_model: str = "dirbe",
         extrapolate: bool = False,
     ) -> None:
         """Initializes Zodipy for a given a model and emphemeris.
@@ -47,9 +49,14 @@ class Zodipy:
             available models with `zodipy.MODELS`.
         ephemeris
             Ephemeris used to compute the positions of the observer and Earth.
-            Defaults to 'de432s' which requires downloading (and caching) a 10
+            Defaults to 'de432s' which requires downloading (and caching) a ~10
             MB file. For more information on available ephemeridis, please visit
             https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+        solar_irradiance_model
+            Solar irradiance model to when computing the scattered emission. 
+            Only relevant at wavelenghts around 1 micron. Default is the tabulated
+            DIRBE Solar flux. Other models requires downloading (and caching) 
+            small (~1MB) files.
         extrapolate
             If True, then the spectral quantities in the model will be linearly
             extrapolated to the requested frequency if this is outside of the
@@ -59,6 +66,7 @@ class Zodipy:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
+        self.solar_irradiance_model = get_solar_irradiance_model(solar_irradiance_model)
         self.extrapolate = extrapolate
 
     @property
@@ -167,24 +175,24 @@ class Zodipy:
         if obs.lower() not in self.supported_observers:
             raise ValueError(
                 f"observer {obs!r} not supported by ephemeridis "
-                f"{solar_system_ephemeris._value!r}"
+                f"{solar_system_ephemeris._value!r}."
             )
 
         if pixels is not None:
             if phi is not None or theta is not None:
                 raise ValueError(
                     "get_time_ordered_emission() got an argument for both 'pixels'"
-                    "and 'theta' or 'phi' but can only use one of the two"
+                    "and 'theta' or 'phi' but can only use one of the two."
                 )
             if nside is None:
                 raise ValueError(
                     "get_time_ordered_emission() got an argument for 'pixels', "
-                    "but argument 'nside' is missing"
+                    "but argument 'nside' is missing."
                 )
             if lonlat:
                 raise ValueError(
                     "get_time_ordered_emission() has 'lonlat' set to True "
-                    "but 'theta' and 'phi' is not given"
+                    "but 'theta' and 'phi' is not given."
                 )
             if np.ndim(pixels) == 0:
                 pixels = np.expand_dims(pixels, axis=0)
@@ -192,20 +200,20 @@ class Zodipy:
         if binned and nside is None:
             raise ValueError(
                 "get_time_ordered_emission() has 'binned' set to True, but "
-                "argument 'nside' is missing"
+                "argument 'nside' is missing."
             )
 
         if (theta is not None and phi is None) or (phi is not None and theta is None):
             raise ValueError(
                 "get_time_ordered_emission() is missing an argument for either "
-                "'phi' or 'theta'"
+                "'phi' or 'theta'."
             )
 
         if (theta is not None) and (phi is not None):
             if theta.size != phi.size:
                 raise ValueError(
                     "get_time_ordered_emission() got arguments 'theta' and 'phi' "
-                    "with different size "
+                    "with different size."
                 )
             theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
             phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
@@ -216,7 +224,7 @@ class Zodipy:
                 phi = np.expand_dims(phi, axis=0)
 
         if not isinstance(obs_time, Time):
-            raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'")
+            raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'.")
 
         # Get position of Solar System bodies
         earth_position = get_earth_position(obs_time)
@@ -225,25 +233,27 @@ class Zodipy:
         else:
             observer_position = obs_pos.value.reshape(3, 1)
 
-        if not self.extrapolate:
-            self.model.validate_frequency(freq)
+        self.model.validate_frequency(freq, self.extrapolate)
+
+        solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
+            freq, self.extrapolate
+        )
 
         # Convert to frequency convention (internal computations are done in
         # frequency)
         frequency = freq.to("GHz", equivalencies=u.spectral())
 
-        # Compute binned HEALPix map
         if binned:
-            # Input pointing is pixel indicies
             if pixels is not None:
+                # Input pointing is pixel indicies
                 unique_pixels, counts = np.unique(pixels, return_counts=True)
                 unit_vectors = get_unit_vectors_from_pixels(
                     coord_in=coord_in,
                     pixels=unique_pixels,
                     nside=nside,
                 )
-            # Input pointing is angles
             else:
+                # Input pointing is angles
                 unique_angles, counts = np.unique(
                     np.asarray([theta, phi]), return_counts=True, axis=1
                 )
@@ -256,12 +266,13 @@ class Zodipy:
                 )
 
             emission = np.zeros((self.model.n_components, hp.nside2npix(nside)))
-            # Compute the integrated emission for each component in the model
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
 
-                emission_step_function = partial(
+                # Reduce the complexity of the `get_emission_step`` function
+                # signature since only the R_los changes between each call.
+                partial_get_emission_step_function = partial(
                     get_emission_step,
                     X_obs=observer_position,
                     X_earth=earth_position,
@@ -273,14 +284,17 @@ class Zodipy:
                     emissivity=emissivity,
                     albedo=albedo,
                     phase_coefficients=phase_coefficients,
+                    solar_irradiance=solar_irradiance,
                 )
+
                 start, stop, n_steps = get_line_of_sight(
                     component_label=label,
                     observer_position=observer_position,
                     unit_vectors=unit_vectors,
                 )
+
                 emission[idx, unique_pixels] = trapezoidal_regular_grid(
-                    get_emission_step=emission_step_function,
+                    emission_step_function=partial_get_emission_step_function,
                     start=start,
                     stop=stop,
                     n_steps=n_steps,
@@ -288,10 +302,9 @@ class Zodipy:
 
             emission[:, unique_pixels] *= counts
 
-        # Compute emission for each pointing
         else:
-            # Input pointing is pixel indicies
             if pixels is not None:
+                # Input pointing is pixel indicies
                 unique_pixels, indicies = np.unique(pixels, return_inverse=True)
                 unit_vectors = get_unit_vectors_from_pixels(
                     coord_in=coord_in,
@@ -299,8 +312,8 @@ class Zodipy:
                     nside=nside,
                 )
                 emission = np.zeros((self.model.n_components, len(pixels)))
-            # Input pointing is angles
             else:
+                # Input pointing is angles
                 unique_angles, indicies = np.unique(
                     np.asarray([theta, phi]), return_inverse=True, axis=1
                 )
@@ -310,14 +323,15 @@ class Zodipy:
                     phi=unique_angles[1],
                     lonlat=lonlat,
                 )
-
                 emission = np.zeros((self.model.n_components, len(theta)))
 
-            # Compute the integrated emission for each component in the model
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
-                emission_step_function = partial(
+
+                # Reduce the complexity of the `get_emission_step`` function
+                # signature since only the R_los changes between each call.
+                partial_get_emission_step_function = partial(
                     get_emission_step,
                     X_obs=observer_position,
                     X_earth=earth_position,
@@ -329,14 +343,17 @@ class Zodipy:
                     emissivity=emissivity,
                     albedo=albedo,
                     phase_coefficients=phase_coefficients,
+                    solar_irradiance=solar_irradiance,
                 )
+
                 start, stop, n_steps = get_line_of_sight(
                     component_label=label,
                     observer_position=observer_position,
                     unit_vectors=unit_vectors,
                 )
+
                 integrated_comp_emission = trapezoidal_regular_grid(
-                    get_emission_step=emission_step_function,
+                    emission_step_function=partial_get_emission_step_function,
                     start=start,
                     stop=stop,
                     n_steps=n_steps,
@@ -351,7 +368,7 @@ class Zodipy:
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}(model={self.model.name!r}, "
+            f"{type(self).__name__}(model={self.model.name!r}, "
             f"ephemeris={self.ephemeris!r}, "
             f"extrapolate={self.extrapolate!r})"
         )
