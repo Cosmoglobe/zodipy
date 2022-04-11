@@ -16,7 +16,7 @@ DOWNLOAD_URL = "http://tsih3.uio.no/www_cmb/metins/"
 
 # Tabulated values from the DIRBE IDL Zodiacal emission software. The IDL code
 # can be found here: https://lambda.gsfc.nasa.gov/product/cobe/dirbe_zodi_sw.html
-DIRBE_SOLAR_FLUX = [
+DIRBE_SOLAR_IRRADIANCE = [
     2.3405606e8,
     1.2309874e8,
     64292872,
@@ -65,7 +65,7 @@ class SolarIrradianceModel:
 
 
 def dirbe() -> SolarIrradianceModel:
-    return SolarIrradianceModel("dirbe", SPECTRUM_DIRBE, DIRBE_SOLAR_FLUX)
+    return SolarIrradianceModel("dirbe", SPECTRUM_DIRBE, DIRBE_SOLAR_IRRADIANCE)
 
 
 def thuillier2004() -> SolarIrradianceModel:

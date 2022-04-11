@@ -14,7 +14,7 @@ from ._ephemeris import get_earth_position, get_observer_position
 from ._integral import trapezoidal_regular_grid
 from ._line_of_sight import get_line_of_sight
 from .models import model_registry
-from ._solar_flux import get_solar_irradiance_model
+from ._solar_irradiance import get_solar_irradiance_model
 from ._unit_vector import (
     get_unit_vectors_from_angles,
     get_unit_vectors_from_pixels,
@@ -56,7 +56,8 @@ class Zodipy:
             Solar irradiance model to when computing the scattered emission. 
             Only relevant at wavelenghts around 1 micron. Default is the tabulated
             DIRBE Solar flux. Other models requires downloading (and caching) 
-            small (~1MB) files.
+            small (~1MB) files containing the tabulated model spectra and 
+            irradiance.
         extrapolate
             If True, then the spectral quantities in the model will be linearly
             extrapolated to the requested frequency if this is outside of the
