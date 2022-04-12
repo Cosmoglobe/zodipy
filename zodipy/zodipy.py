@@ -11,11 +11,11 @@ from numpy.typing import NDArray
 
 from ._emission import get_emission_step
 from ._ephemeris import get_earth_position, get_observer_position
-from ._integral import trapezoidal_regular_grid
+from ._integration import trapezoidal_regular_grid
 from ._line_of_sight import get_line_of_sight
 from .models import model_registry
-from ._solar_irradiance import get_solar_irradiance_model
-from ._unit_vector import (
+from .solar_irradiance_models import solar_irradiance_model_registry
+from ._unit_vectors import (
     get_unit_vectors_from_angles,
     get_unit_vectors_from_pixels,
 )
@@ -53,10 +53,10 @@ class Zodipy:
             MB file. For more information on available ephemeridis, please visit
             https://docs.astropy.org/en/stable/coordinates/solarsystem.html
         solar_irradiance_model
-            Solar irradiance model to when computing the scattered emission. 
+            Solar irradiance model to use when computing the scattered emission.
             Only relevant at wavelenghts around 1 micron. Default is the tabulated
-            DIRBE Solar flux. Other models requires downloading (and caching) 
-            small (~1MB) files containing the tabulated model spectra and 
+            DIRBE Solar flux. Other models requires downloading (and caching)
+            small (<1MB) files containing the tabulated model spectra and
             irradiance.
         extrapolate
             If True, then the spectral quantities in the model will be linearly
@@ -67,7 +67,9 @@ class Zodipy:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
-        self.solar_irradiance_model = get_solar_irradiance_model(solar_irradiance_model)
+        self.solar_irradiance_model = solar_irradiance_model_registry.get_model(
+            solar_irradiance_model
+        )
         self.extrapolate = extrapolate
 
     @property
