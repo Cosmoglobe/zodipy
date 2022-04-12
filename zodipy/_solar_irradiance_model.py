@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-SpecificIntensityUnits = u.W / u.Hz / u.m**2 / u.sr
+SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class SolarIrradianceModel:
 
     name: str
     spectrum: Quantity[u.Hz] | Quantity[u.m]
-    irradiance: Quantity[SpecificIntensityUnits] | Quantity[u.MJy / u.sr]
+    irradiance: Quantity[SPECIFIC_INTENSITY_UNITS] | Quantity[u.MJy / u.sr]
 
     @classmethod
     def from_url(
@@ -54,12 +54,12 @@ class SolarIrradianceModel:
         irradiance *= irradiance_unit
 
         try:
-            irradiance = irradiance.to(SpecificIntensityUnits)
+            irradiance = irradiance.to(SPECIFIC_INTENSITY_UNITS)
         except u.UnitConversionError:
             # The irradiance is stored in units of wavelength so we convert to
             # frequency by multiplying by lambda^2/c.
             irradiance = (spectrum**2 / const.c * irradiance).to(
-                SpecificIntensityUnits
+                SPECIFIC_INTENSITY_UNITS
             )
 
         return SolarIrradianceModel(name, spectrum, irradiance)
@@ -86,7 +86,7 @@ class SolarIrradianceModel:
 
         solar_flux *= self.irradiance.unit
         solar_flux_specific_intensity_units = solar_flux.to(
-            SpecificIntensityUnits, equivalencies=u.spectral()
+            SPECIFIC_INTENSITY_UNITS, equivalencies=u.spectral()
         )
 
         return solar_flux_specific_intensity_units.value
@@ -121,7 +121,7 @@ class SolarIrradianceModelRegistry:
         self,
         name: str,
         spectrum: Quantity[u.Hz] | Quantity[u.m],
-        irradiance: Quantity[SpecificIntensityUnits] | Quantity[u.MJy / u.sr],
+        irradiance: Quantity[SPECIFIC_INTENSITY_UNITS] | Quantity[u.MJy / u.sr],
     ) -> None:
         """Registers a model from a spectra."""
 

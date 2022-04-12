@@ -40,7 +40,7 @@ class Zodipy:
         solar_irradiance_model: str = "dirbe",
         extrapolate: bool = False,
     ) -> None:
-        """Initializes Zodipy for a given a model and emphemeris.
+        """Initializes the Zodipy interface.
 
         Parameters
         ----------

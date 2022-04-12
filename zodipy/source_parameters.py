@@ -3,8 +3,6 @@ from astropy.units import Quantity
 
 from ._component_label import ComponentLabel
 
-# Tabulated DIRBE values from the DIRBE IDL Zodiacal emission software. The IDL code
-# can be found here: https://lambda.gsfc.nasa.gov/product/cobe/dirbe_zodi_sw.html
 
 T_0_DIRBE = 286  # K
 DELTA_DIRBE = 0.46686259861486573

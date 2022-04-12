@@ -12,7 +12,6 @@ model_registry.register_model(
     phase_coefficients=source_parameters.PHASE_FUNCTION_DIRBE,
 )
 
-
 model_registry.register_model(
     name="planck13",
     components=components.DIRBE,
@@ -20,14 +19,12 @@ model_registry.register_model(
     emissivities=source_parameters.EMISSIVITY_PLANCK_13,
 )
 
-
 model_registry.register_model(
     name="planck15",
     components=components.PLANCK,
     spectrum=source_parameters.SPECTRUM_PLANCK,
     emissivities=source_parameters.EMISSIVITY_PLANCK_15,
 )
-
 
 model_registry.register_model(
     name="planck18",
