@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from ._component import Component
-from ._source import (
+from ._source_functions import (
     get_blackbody_emission_nu,
     get_interplanetary_temperature,
     get_phase_function,
