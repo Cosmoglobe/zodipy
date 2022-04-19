@@ -243,10 +243,12 @@ class Zodipy:
             observer_position = obs_pos.value.reshape(3, 1)
 
         self.model.validate_frequency(freq, self.extrapolate)
-
-        solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
-            freq, self.extrapolate
-        )
+        if self.model.albedos is not None:
+            solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
+                freq, self.extrapolate
+            )
+        else:
+            solar_irradiance = 0
 
         # Convert to frequency convention (internal computations are done in
         # frequency)

@@ -24,13 +24,30 @@ Other built in models are:
 --------------
 User Interface
 --------------
-The :ref:`Zodipy overview` class represents the Zodipy interface. It is intialized as following:
+The :ref:`Zodipy overview` class represents the Zodipy interface. It is initialized as following:
 
 .. code-block:: python
 
    from zodipy import Zodipy
 
    model = Zodipy("planck18")
+
+The interface also accepts the following optional arguments:
+
+.. code-block:: python
+
+   model = Zodipy(
+      model="planck18", 
+      ephemeris="builtin",                # Ephemeris used to compute position of 
+                                          # Solar System bodies. Default is "de432s".
+      solar_irradiance_model="gueymard",  # Solar flux model. Only relevant at 
+                                          # scattering dominated wavelengths around
+                                          # ~1 micron. Default is "dirbe".
+      extrapolate=True,                   # If True the model will linearly extrapolate 
+                                          # outside of the frequency/wavelength for 
+                                          # which it is valid. Default is False.
+      gauss_quad_order=125,               # Number of quadrature points. Default is 100.
+   )
 
 ----------------------------
 Simulating Zodiacal emission
@@ -60,15 +77,15 @@ located at the Sun-Earth-Moon-Barycenter Lagrange point 2, who observes a point 
    model = Zodipy(model="planck18")
 
    emission = model.get_emission(
-      100*u.micron,
-      obs="l2",
+      654*u.GHz,
+      obs="semb-l2",
       obs_time=Time("2022-06-14"),
       theta=23.4*u.deg,
       phi=-30*u.deg
    )
 
    >> print(emission)
-   <Quantity [0.73169181] MJy / sr>
+   [0.03166994] MJy / sr
 
 For other use-cases, see the `GitHub README
 <https://github.com/MetinSa/zodipy>`_. A Zodipy tutorial will be made in the

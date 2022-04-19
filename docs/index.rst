@@ -21,9 +21,10 @@ Zodipy has the following strict requirements:
 
 - `numpy <https://numpy.org>`_
 - `healpy <https://healpy.readthedocs.io/en/latest/>`_
+- `quadpy <https://pypi.org/project/quadpy/>`_
 - `astropy <https://www.astropy.org>`_ >= 5.0.1
-- `jplephem <https://pypi.org/project/jplephem/>`_ (astropy optional dependency)
-- `typing-extensions <https://pypi.org/project/typing-extensions/>`_ (astropy optional dependency)
+- `jplephem <https://pypi.org/project/jplephem/>`_ (dependency required by astropy)
+- `typing-extensions <https://pypi.org/project/typing-extensions/>`_ (dependency required by astropy)
   
 Installation
 ------------

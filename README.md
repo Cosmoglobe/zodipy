@@ -9,13 +9,13 @@
 ---
 
 
-*Zodipy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPIX maps.
+*Zodipy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
 
 ![plot](imgs/zodipy_map.png)
 
 
 # Usage
-A full introduction to *Zodipy* and its use-cases can be found in the [documentation](https://zodipy.readthedocs.io/en/latest/).
+See the [documentation](https://zodipy.readthedocs.io/en/latest/) for a broader introduction to using *Zodipy*.
 
 **Interplanetary Dust models:** select between built in models.
 ```python
@@ -94,7 +94,7 @@ A detailed introduction along with a tutorial of how to use *Zodipy* will shortl
 Zodipy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
 # Scientific paper
-- San et al. (2022). *Zodipy: software for simulating Interplanetary Dust Emission.* Manuscript in preparation.
+- San et al. (2022). *Zodipy: software for simulating Zodiacal Emission.* Manuscript in preparation.
 
 
 <!-- *Zodipy* defaults to using the interplanetary dust model developed by the DIRBE team, and the `de432s` JPL ephemeris (10 MB file downloaded and cached first time `Zodipy` is initialized). The ephemeris is used to compute the position of the relevant Solar System bodies through the `astropy.coordinates.solar_system_ephemeris` api.  -->
