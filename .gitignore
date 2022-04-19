@@ -17,7 +17,7 @@ UNKNOWN.egg-info
 context.py
 test.py
 fitting
-
+zodipy/_integration.py
 
 # data
 dirbe

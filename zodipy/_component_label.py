@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ComponentLabel(Enum):
     """Labels representing the components in the DIRBE model."""
 

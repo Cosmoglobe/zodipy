@@ -10,16 +10,6 @@ DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
 
 # Line of sight steps
-line_of_sight_steps: dict[ComponentLabel, int] = {
-    ComponentLabel.CLOUD: 500,
-    ComponentLabel.BAND1: 500,
-    ComponentLabel.BAND2: 500,
-    ComponentLabel.BAND3: 500,
-    ComponentLabel.RING: 500,
-    ComponentLabel.FEATURE: 500,
-}
-
-# Line of sight steps
 line_of_sight_cutoffs: dict[ComponentLabel, float] = {
     ComponentLabel.CLOUD: DISTANCE_TO_JUPITER,
     ComponentLabel.BAND1: DISTANCE_TO_JUPITER,
@@ -34,18 +24,17 @@ def get_line_of_sight(
     component_label: ComponentLabel,
     observer_position: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
-) -> tuple[float, NDArray[np.floating], int]:
+) -> tuple[float, NDArray[np.floating]]:
     """
-    Returns the start, stop and number of steps along the line of sights for an
+    Returns the start and stop positions along the line of sights for an
     Interplanetary Dust component given the observer position and unit vectors
     corresponding to the pointing.
     """
 
     cutoff = line_of_sight_cutoffs[component_label]
-    n_steps = line_of_sight_steps[component_label]
     stop = _get_line_of_sight_endpoints(cutoff, observer_position, unit_vectors)
 
-    return EPS, stop, n_steps
+    return EPS, stop
 
 
 def _get_line_of_sight_endpoints(

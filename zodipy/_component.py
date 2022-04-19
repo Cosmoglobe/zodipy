@@ -43,8 +43,8 @@ class Component(ABC):
     Omega: float
 
     def __post_init__(self) -> None:
-        # Offset vector
-        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=1)
+        # Offset vector with broadcastable shape (3, 1, 1)
+        self.X_0 = np.array([self.x_0, self.y_0, self.z_0]).reshape(3, 1, 1)
 
         # Frequently used quantities
         self.sin_i_rad = np.sin(np.radians(self.i))
@@ -123,7 +123,7 @@ class Cloud(Component):
         g[condition] = ζ[condition] ** 2 / (2 * μ)
         g[~condition] = ζ[~condition] - (μ / 2)
 
-        return self.n_0 * R_cloud ** -self.alpha * np.exp(-self.beta * g ** self.gamma)
+        return self.n_0 * R_cloud**-self.alpha * np.exp(-self.beta * g**self.gamma)
 
 
 @dataclass
@@ -171,11 +171,11 @@ class Band(Component):
         ζ = np.abs(Z_band / R_band)
         ζ_over_δ_ζ = ζ / self.delta_zeta_rad
         term1 = 3 * self.n_0 / R_band
-        term2 = np.exp(-(ζ_over_δ_ζ ** 6))
+        term2 = np.exp(-(ζ_over_δ_ζ**6))
 
         # Differs from eq 8 in K98 by a factor of 1/self.v. See Planck XIV
         # section 4.1.2.
-        term3 = 1 + (ζ_over_δ_ζ ** self.p) / self.v
+        term3 = 1 + (ζ_over_δ_ζ**self.p) / self.v
 
         term4 = 1 - np.exp(-((R_band / self.delta_r) ** 20))
 
@@ -218,7 +218,7 @@ class Ring(Component):
         )
         # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
         # term. See Planck 2013 XIV, section 4.1.3.
-        term1 = -((R_ring - self.R) ** 2) / self.sigma_r ** 2
+        term1 = -((R_ring - self.R) ** 2) / self.sigma_r**2
         term2 = np.abs(Z_ring) / self.sigma_z
 
         return self.n_0 * np.exp(term1 - term2)
@@ -286,8 +286,8 @@ class Feature(Component):
 
         # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
         # term. See Planck 2013 XIV, section 4.1.3.
-        exp_term = (R_feature - self.R) ** 2 / self.sigma_r ** 2
+        exp_term = (R_feature - self.R) ** 2 / self.sigma_r**2
         exp_term += np.abs(Z_feature) / self.sigma_z
-        exp_term += Δθ ** 2 / self.sigma_theta_rad ** 2
+        exp_term += Δθ**2 / self.sigma_theta_rad**2
 
         return self.n_0 * np.exp(-exp_term)

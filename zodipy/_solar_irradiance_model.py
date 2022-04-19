@@ -9,8 +9,7 @@ from astropy.utils.data import download_file
 import numpy as np
 from scipy.interpolate import interp1d
 
-
-SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
+from ._source_functions import SPECIFIC_INTENSITY_UNITS
 
 
 @dataclass(frozen=True)

@@ -2,23 +2,24 @@ from functools import partial
 from typing import List, Literal, Optional, Sequence, Union
 
 from astropy.coordinates import solar_system_ephemeris
+from astropy.time import Time
 import astropy.units as u
 from astropy.units import Quantity, quantity_input
-from astropy.time import Time
 import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
+import quadpy
 
-from ._emission import get_emission_step
+from ._emission import get_emission_at_step
 from ._ephemeris import get_earth_position, get_observer_position
-from ._integration import trapezoidal_regular_grid
 from ._line_of_sight import get_line_of_sight
-from .models import model_registry
-from .solar_irradiance_models import solar_irradiance_model_registry
+from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._unit_vectors import (
     get_unit_vectors_from_angles,
     get_unit_vectors_from_pixels,
 )
+from .models import model_registry
+from .solar_irradiance_models import solar_irradiance_model_registry
 
 
 __all__ = ("Zodipy",)
@@ -39,6 +40,7 @@ class Zodipy:
         ephemeris: str = "de432s",
         solar_irradiance_model: str = "dirbe",
         extrapolate: bool = False,
+        gauss_quad_order: int = 100,
     ) -> None:
         """Initializes the Zodipy interface.
 
@@ -63,6 +65,9 @@ class Zodipy:
             extrapolated to the requested frequency if this is outside of the
             range covered by the model. If False, an Exception will be raised.
             Default is False.
+        gauss_quad_order
+            Order of the Gaussian-Legendre quadrature used to evaluate the
+            brightness integral. Default is 50 points.
         """
 
         self.model = model_registry.get_model(model)
@@ -71,6 +76,7 @@ class Zodipy:
             solar_irradiance_model
         )
         self.extrapolate = extrapolate
+        self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
     def ephemeris(self) -> str:
@@ -273,13 +279,24 @@ class Zodipy:
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
 
-                # Reduce the complexity of the `get_emission_step`` function
-                # signature since only the R_los changes between each call.
-                partial_get_emission_step_function = partial(
-                    get_emission_step,
-                    X_obs=observer_position,
-                    X_earth=earth_position,
-                    u_los=unit_vectors,
+                start, stop = get_line_of_sight(
+                    component_label=label,
+                    observer_position=observer_position,
+                    unit_vectors=unit_vectors,
+                )
+
+                # Here we create a partial function that will be passed to the
+                # Gaussian quadrature integration. The arrays are reshaped to
+                # (d, n, p) where d is the geometrical dimensionality, n is
+                # the number of different pointings, and p is the number of
+                # integration points of the quadrature.
+                get_emission_step_function = partial(
+                    get_emission_at_step,
+                    start=start,
+                    stop=np.expand_dims(stop, axis=-1),
+                    X_obs=np.expand_dims(observer_position, axis=-1),
+                    X_earth=np.expand_dims(earth_position, axis=-1),
+                    u_los=np.expand_dims(unit_vectors, axis=-1),
                     component=component,
                     frequency=frequency.value,
                     T_0=self.model.T_0,
@@ -290,18 +307,10 @@ class Zodipy:
                     solar_irradiance=solar_irradiance,
                 )
 
-                start, stop, n_steps = get_line_of_sight(
-                    component_label=label,
-                    observer_position=observer_position,
-                    unit_vectors=unit_vectors,
+                integrated_comp_emission = self.integration_scheme.integrate(
+                    get_emission_step_function, [-1, 1]
                 )
-
-                emission[idx, unique_pixels] = trapezoidal_regular_grid(
-                    emission_step_function=partial_get_emission_step_function,
-                    start=start,
-                    stop=stop,
-                    n_steps=n_steps,
-                )
+                integrated_comp_emission *= 0.5 * (stop - start)
 
             emission[:, unique_pixels] *= counts
 
@@ -332,13 +341,24 @@ class Zodipy:
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
 
-                # Reduce the complexity of the `get_emission_step`` function
-                # signature since only the R_los changes between each call.
-                partial_get_emission_step_function = partial(
-                    get_emission_step,
-                    X_obs=observer_position,
-                    X_earth=earth_position,
-                    u_los=unit_vectors,
+                start, stop = get_line_of_sight(
+                    component_label=label,
+                    observer_position=observer_position,
+                    unit_vectors=unit_vectors,
+                )
+
+                # Here we create a partial function that will be passed to the
+                # Gaussian quadrature integration. The arrays are reshaped to
+                # (d, n, p) where d is the geometrical dimensionality, n is
+                # the number of different pointings, and p is the number of
+                # integration points of the quadrature.
+                get_emission_step_function = partial(
+                    get_emission_at_step,
+                    start=start,
+                    stop=np.expand_dims(stop, axis=-1),
+                    X_obs=np.expand_dims(observer_position, axis=-1),
+                    X_earth=np.expand_dims(earth_position, axis=-1),
+                    u_los=np.expand_dims(unit_vectors, axis=-1),
                     component=component,
                     frequency=frequency.value,
                     T_0=self.model.T_0,
@@ -349,23 +369,14 @@ class Zodipy:
                     solar_irradiance=solar_irradiance,
                 )
 
-                start, stop, n_steps = get_line_of_sight(
-                    component_label=label,
-                    observer_position=observer_position,
-                    unit_vectors=unit_vectors,
+                integrated_comp_emission = self.integration_scheme.integrate(
+                    get_emission_step_function, [-1, 1]
                 )
-
-                integrated_comp_emission = trapezoidal_regular_grid(
-                    emission_step_function=partial_get_emission_step_function,
-                    start=start,
-                    stop=stop,
-                    n_steps=n_steps,
-                )
+                integrated_comp_emission *= 0.5 * (stop - start)
 
                 emission[idx] = integrated_comp_emission[indicies]
 
-        # Convert from specific intensity units (W Hz^-1 m^-2 sr^-1) to MJy/sr
-        emission = (emission << (u.W / u.Hz / u.m**2 / u.sr)).to(u.MJy / u.sr)
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 

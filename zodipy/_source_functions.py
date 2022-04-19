@@ -1,10 +1,3 @@
-"""
-
-Functions that compute Zodiacal emission source quantities used in the 
-evaluation of the brightness integral.
-
-"""
-
 from __future__ import annotations
 
 from functools import lru_cache
@@ -20,6 +13,8 @@ c = const.c.value
 k_B = const.k_B.value
 R_sun = const.R_sun.to(u.AU).value
 T_sun = 5778  # K
+
+SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
 
 def get_blackbody_emission_nu(

@@ -13,7 +13,8 @@ DEFAULT_EARTH_POS = (1, 0, 0)
 def tabulate_density(
     grid: NDArray[np.floating] | list[NDArray[np.floating]],
     model: str | Model = "DIRBE",
-    earth_position: tuple[float, float, float] | NDArray[np.floating] = DEFAULT_EARTH_POS,
+    earth_position: tuple[float, float, float]
+    | NDArray[np.floating] = DEFAULT_EARTH_POS,
 ) -> NDArray[np.floating]:
     """Returns the tabulated densities of the Interplanetary Dust components.
 

@@ -12,9 +12,11 @@ from ._source_functions import (
 )
 
 
-def get_emission_step(
-    R_los: float | NDArray[np.floating],
+def get_emission_at_step(
+    r: float | NDArray[np.floating],
     *,
+    start: float,
+    stop: float | NDArray[np.floating],
     X_obs: NDArray[np.floating],
     X_earth: NDArray[np.floating],
     u_los: NDArray[np.floating],
@@ -33,8 +35,8 @@ def get_emission_step(
 
     Parameters
     ----------
-    R_los
-        Radial distance along the line-of-sight [AU].
+    r
+       Position along the normalized line of sight from [-1, 1] [AU].
     X_obs
         The heliocentric ecliptic cartesian position of the observer [AU].
     X_earth
@@ -66,6 +68,10 @@ def get_emission_step(
         The Zodiacal emission from an Interplanetary Dust component at a step
         along line of sights in units of W / Hz / m^2 / sr.
     """
+
+    # Compute the true position along the line of sight from the substituted
+    # limits of [-1, 1]
+    R_los = ((stop - start) / 2) * r + (stop + start) / 2
 
     X_los = R_los * u_los
     X_helio = X_los + X_obs
