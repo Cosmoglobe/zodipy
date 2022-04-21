@@ -309,10 +309,10 @@ class Zodipy:
                     solar_irradiance=solar_irradiance,
                 )
 
-                integrated_comp_emission = self.integration_scheme.integrate(
+                emission[idx, unique_pixels] = self.integration_scheme.integrate(
                     get_emission_step_function, [-1, 1]
                 )
-                integrated_comp_emission *= 0.5 * (stop - start)
+                emission[idx, unique_pixels] *= 0.5 * (stop - start)
 
             emission[:, unique_pixels] *= counts
 
@@ -370,7 +370,6 @@ class Zodipy:
                     phase_coefficients=phase_coefficients,
                     solar_irradiance=solar_irradiance,
                 )
-
                 integrated_comp_emission = self.integration_scheme.integrate(
                     get_emission_step_function, [-1, 1]
                 )

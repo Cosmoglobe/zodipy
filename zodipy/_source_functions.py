@@ -11,7 +11,6 @@ from numpy.typing import NDArray
 h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
-R_sun = const.R_sun.to(u.AU).value
 T_sun = 5778  # K
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
