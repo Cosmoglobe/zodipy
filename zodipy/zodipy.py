@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 from functools import partial
-from typing import List, Literal, Optional, Sequence, Union
+from typing import Literal, Sequence
 
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 import astropy.units as u
-from astropy.units import Quantity, quantity_input
+from astropy.units import Quantity
 import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 import quadpy
 
 from ._emission import get_emission_at_step
-from ._ephemeris import get_earth_position, get_observer_position
+from ._decorators import validate_frequency, validate_angles, validate_pixels
+from ._ephemeris import get_solar_system_positions
 from ._line_of_sight import get_line_of_sights, DISTANCE_TO_JUPITER
 from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._unit_vectors import (
@@ -99,44 +102,44 @@ class Zodipy:
         self._ephemeris = value
 
     @property
-    def supported_observers(self) -> List[str]:
+    def supported_observers(self) -> list[str]:
         """Returns all observers suported by the ephemeridis."""
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
-    @quantity_input
-    def get_emission(
+    @validate_frequency
+    @validate_angles
+    def get_emission_ang(
         self,
-        freq: Union[Quantity[u.Hz], Quantity[u.m]],
-        *,
+        freq: Quantity[u.Hz] | Quantity[u.m],
+        theta: Quantity[u.rad] | Quantity[u.deg],
+        phi: Quantity[u.rad] | Quantity[u.deg],
         obs: str = "earth",
         obs_time: Time = Time.now(),
-        obs_pos: Optional[Quantity[u.AU]] = None,
-        pixels: Optional[Union[int, Sequence[int], NDArray[np.integer]]] = None,
-        theta: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
-        phi: Optional[Union[Quantity[u.rad], Quantity[u.deg]]] = None,
-        nside: Optional[int] = None,
+        *,
+        obs_pos: Quantity[u.AU] | None = None,
         lonlat: bool = False,
-        binned: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> Quantity[u.MJy / u.sr]:
-        """Returns the simulated Zodiacal Emission.
+        """Returns the simulated Zodiacal Emission given angles on the sky.
 
-        This function takes as arguments a frequency or wavelength (`freq`),
-        time of observation (`obs_time`), and a Solar System observer (`obs`).
-        The position of the observer is computed using the ephemeris specified
-        in the initialization of `Zodipy`. Optionally, the observer position
-        can be explicitly specified with the `obs_pos` argument, which
-        overrides `obs`. The pointing, for which to compute the emission, is
-        specified either in the form of angles on the sky (`theta`, `phi`), or
-        as HEALPix pixels (`pixels`) for a given resolution (`nside`).
+        The pointing, for which to compute the emission, is specified either in
+        the form of angles on the sky (`theta`, `phi`)
 
         Parameters
         ----------
         freq
             Frequency or wavelength at which to evaluate the Zodiacal emission.
             Must have units compatible with Hz or length.
+        theta
+            Angular co-latitude coordinate of a point, or a sequence of points,
+            on the celestial sphere. Must be in the range [0, π] rad. Units
+            must be either radians or degrees.
+        phi
+            Angular longitude coordinate of a point, or a sequence of points, on
+            the celestial sphere. Must be in the range [0, 2π] rad. Units must
+            be either radians or degrees.
         obs
             The Solar System observer. A list of all support observers (for a
             given ephemeridis) is specified in `supported_observers` attribute
@@ -147,10 +150,144 @@ class Zodipy:
         obs_pos
             The heliocentric ecliptic cartesian position of the observer in AU.
             Overrides the `obs` argument. Default is None.
+        lonlat
+            If True, input angles (`theta`, `phi`) are assumed to be longitude
+            and latitude, otherwise, they are co-latitude and longitude.
+        return_comps
+            If True, the emission is returned component-wise. Defaults to False.
+        coord_in
+            Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+            coordinates) by default.
+
+        Returns
+        -------
+        emission
+            Simulated Zodiacal emission in units of 'MJy/sr'.
+        """
+
+        unique_angles, indicies = np.unique(
+            np.asarray([theta, phi]), return_inverse=True, axis=1
+        )
+        unit_vectors = get_unit_vectors_from_angles(
+            coord_in=coord_in,
+            theta=unique_angles[0],
+            phi=unique_angles[1],
+            lonlat=lonlat,
+        )
+
+        emission = self._get_emission(
+            frequency=freq,
+            obs=obs,
+            obs_time=obs_time,
+            obs_pos=obs_pos,
+            unit_vectors=unit_vectors,
+            indicies=indicies,
+        )
+
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
+
+        return emission if return_comps else emission.sum(axis=0)
+
+    @validate_frequency
+    @validate_pixels
+    def get_emission_pix(
+        self,
+        freq: Quantity[u.Hz] | Quantity[u.m],
+        pixels: int | Sequence[int] | NDArray[np.integer],
+        nside: int,
+        obs: str = "earth",
+        obs_time: Time = Time.now(),
+        *,
+        obs_pos: Quantity[u.AU] | None = None,
+        return_comps: bool = False,
+        coord_in: Literal["E", "G", "C"] = "E",
+    ) -> Quantity[u.MJy / u.sr]:
+        """Returns the simulated Zodiacal Emission given pixel numbers.
+
+        The pixel numbers represent the pixel indicies on a HEALPix grid with
+        resolution given by `nside`.
+
+        Parameters
+        ----------
+        freq
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
+            Must have units compatible with Hz or length.
         pixels
             A single, or a sequence of HEALPix pixel indicies representing points
-            on the celestial sphere. If pixels is given, the `nside` parameter
-            specifying the resolution of these pixels must also be provided.
+            on the celestial sphere.
+        nside
+            HEALPix resolution parameter of the pixels.
+        obs
+            The Solar System observer. A list of all support observers (for a
+            given ephemeridis) is specified in `supported_observers` attribute
+            of the `Zodipy` instance. Defaults to 'earth'.
+        obs_time
+            Time of observation (`astropy.time.Time`). Defaults to the current
+            time.
+        obs_pos
+            The heliocentric ecliptic cartesian position of the observer in AU.
+            Overrides the `obs` argument. Default is None.
+        return_comps
+            If True, the emission is returned component-wise. Defaults to False.
+        coord_in
+            Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+            coordinates) by default.
+
+        Returns
+        -------
+        emission
+            Simulated Zodiacal emission in units of 'MJy/sr'.
+        """
+
+        unique_pixels, indicies = np.unique(pixels, return_inverse=True)
+        unit_vectors = get_unit_vectors_from_pixels(
+            coord_in=coord_in,
+            pixels=unique_pixels,
+            nside=nside,
+        )
+
+        emission = self._get_emission(
+            frequency=freq,
+            obs=obs,
+            obs_time=obs_time,
+            obs_pos=obs_pos,
+            unit_vectors=unit_vectors,
+            indicies=indicies,
+            pixels=unique_pixels,
+            nside=nside,
+        )
+
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
+
+        return emission if return_comps else emission.sum(axis=0)
+
+    @validate_angles
+    @validate_frequency
+    def get_binned_emission_ang(
+        self,
+        freq: Quantity[u.Hz] | Quantity[u.m],
+        theta: Quantity[u.rad] | Quantity[u.deg],
+        phi: Quantity[u.rad] | Quantity[u.deg],
+        nside: int,
+        obs: str = "earth",
+        obs_time: Time = Time.now(),
+        *,
+        obs_pos: Quantity[u.AU] | None = None,
+        lonlat: bool = False,
+        return_comps: bool = False,
+        coord_in: Literal["E", "G", "C"] = "E",
+    ) -> Quantity[u.MJy / u.sr]:
+        """Returns the simulated binned Zodiacal Emission given angles on the sky.
+
+        The pointing, for which to compute the emission, is specified either in
+        the form of angles on the sky (`theta`, `phi`). The emission is binned
+        to a HEALPix grid of resolution given by `nside`
+
+        Parameters
+        ----------
+        freq
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
+            Must have units compatible with Hz or length.
         theta
             Angular co-latitude coordinate of a point, or a sequence of points,
             on the celestial sphere. Must be in the range [0, π] rad. Units
@@ -160,18 +297,22 @@ class Zodipy:
             the celestial sphere. Must be in the range [0, 2π] rad. Units must
             be either radians or degrees.
         nside
-            HEALPix resolution parameter of the pixels (and optionally the binned
-            output map). Must be given if `pixels` is provided or if `binned` is
-            set to True.
+            HEALPix resolution parameter of the pixels.
+        obs
+            The Solar System observer. A list of all support observers (for a
+            given ephemeridis) is specified in `supported_observers` attribute
+            of the `Zodipy` instance. Defaults to 'earth'.
+        obs_time
+            Time of observation (`astropy.time.Time`). Defaults to the current
+            time.
+        obs_pos
+            The heliocentric ecliptic cartesian position of the observer in AU.
+            Overrides the `obs` argument. Default is None.
         lonlat
             If True, input angles (`theta`, `phi`) are assumed to be longitude
             and latitude, otherwise, they are co-latitude and longitude.
         return_comps
             If True, the emission is returned component-wise. Defaults to False.
-        binned
-            If True, the emission is binned into a HEALPix map with resolution
-            given by the `nside` argument in the coordinate frame corresponding to
-            `coord_in`. Defaults to False.
         coord_in
             Coordinate frame of the input pointing. Assumes 'E' (ecliptic
             coordinates) by default.
@@ -179,207 +320,194 @@ class Zodipy:
         Returns
         -------
         emission
-            Sequence of simulated Zodiacal emission in units of 'MJy/sr' for
-            each input pointing. The output may be interpreted as a timestream
-            of Zodiacal emission observed by the Solar System observer if the
-            pointing is provided in a time-ordered manner. If `binned` is set to
-            True, the output will be a binned HEALPix Zodiacal emission map.
+            Simulated Zodiacal emission in units of 'MJy/sr'.
         """
 
-        if obs.lower() not in self.supported_observers:
-            raise ValueError(
-                f"observer {obs!r} not supported by ephemeridis "
-                f"{solar_system_ephemeris._value!r}."
-            )
+        unique_angles, counts = np.unique(
+            np.asarray([theta, phi]), return_counts=True, axis=1
+        )
+        unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
+        unit_vectors = get_unit_vectors_from_angles(
+            coord_in=coord_in,
+            theta=unique_angles[0],
+            phi=unique_angles[1],
+            lonlat=lonlat,
+        )
 
-        if pixels is not None:
-            if phi is not None or theta is not None:
-                raise ValueError(
-                    "get_emission() got an argument for both 'pixels'"
-                    "and 'theta' or 'phi' but can only use one of the two."
-                )
-            if nside is None:
-                raise ValueError(
-                    "get_emission() got an argument for 'pixels', "
-                    "but argument 'nside' is missing."
-                )
-            if lonlat:
-                raise ValueError(
-                    "get_emission() has 'lonlat' set to True "
-                    "but 'theta' and 'phi' is not given."
-                )
-            if np.ndim(pixels) == 0:
-                pixels = np.expand_dims(pixels, axis=0)
-
-        if binned and nside is None:
-            raise ValueError(
-                "get_emission() has 'binned' set to True, but "
-                "argument 'nside' is missing."
-            )
-
-        if (theta is not None and phi is None) or (phi is not None and theta is None):
-            raise ValueError(
-                "get_emission() is missing an argument for either " "'phi' or 'theta'."
-            )
-
-        if (theta is not None) and (phi is not None):
-            if theta.size != phi.size:
-                raise ValueError(
-                    "get_emission() got arguments 'theta' and 'phi' "
-                    "with different size."
-                )
-            theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
-            phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
-
-            if theta.ndim == 0:
-                theta = np.expand_dims(theta, axis=0)
-            if phi.ndim == 0:
-                phi = np.expand_dims(phi, axis=0)
-
-        # Get position of Solar System bodies
-        earth_position = get_earth_position(obs_time)
-        if obs_pos is None:
-            observer_position = get_observer_position(obs, obs_time, earth_position)
-        else:
-            observer_position = obs_pos.value.reshape(3, 1)
-
-        self.model.validate_frequency(freq, self.extrapolate)
-        if self.model.albedos is not None:
-            solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
-                freq, self.extrapolate
-            )
-        else:
-            solar_irradiance = 0
-
-        # Convert to frequency convention (internal computations are done in
-        # frequency)
-        frequency = freq.to("GHz", equivalencies=u.spectral())
-
-        if binned:
-            if pixels is not None:
-                # Input pointing is pixel indicies
-                unique_pixels, counts = np.unique(pixels, return_counts=True)
-                unit_vectors = get_unit_vectors_from_pixels(
-                    coord_in=coord_in,
-                    pixels=unique_pixels,
-                    nside=nside,
-                )
-            else:
-                # Input pointing is angles
-                unique_angles, counts = np.unique(
-                    np.asarray([theta, phi]), return_counts=True, axis=1
-                )
-                unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
-                unit_vectors = get_unit_vectors_from_angles(
-                    coord_in=coord_in,
-                    theta=unique_angles[0],
-                    phi=unique_angles[1],
-                    lonlat=lonlat,
-                )
-
-            start, stop = get_line_of_sights(
-                cutoff=self.cutoff,
-                observer_position=observer_position,
-                unit_vectors=unit_vectors,
-            )
-            emission = np.zeros((self.model.n_components, hp.nside2npix(nside)))
-            for idx, (label, component) in enumerate(self.model.components.items()):
-                source_parameters = self.model.get_source_parameters(label, frequency)
-                emissivity, albedo, phase_coefficients = source_parameters
-
-                # Here we create a partial function that will be passed to the
-                # Gaussian quadrature integration. The arrays are reshaped to
-                # (d, n, p) where d is the geometrical dimensionality, n is
-                # the number of different pointings, and p is the number of
-                # integration points of the quadrature.
-                get_emission_step_function = partial(
-                    get_emission_at_step,
-                    start=start,
-                    stop=np.expand_dims(stop, axis=-1),
-                    X_obs=np.expand_dims(observer_position, axis=-1),
-                    X_earth=np.expand_dims(earth_position, axis=-1),
-                    u_los=np.expand_dims(unit_vectors, axis=-1),
-                    component=component,
-                    frequency=frequency.value,
-                    T_0=self.model.T_0,
-                    delta=self.model.delta,
-                    emissivity=emissivity,
-                    albedo=albedo,
-                    phase_coefficients=phase_coefficients,
-                    solar_irradiance=solar_irradiance,
-                )
-
-                emission[idx, unique_pixels] = self.integration_scheme.integrate(
-                    get_emission_step_function, [-1, 1]
-                )
-                emission[idx, unique_pixels] *= 0.5 * (stop - start)
-
-            emission[:, unique_pixels] *= counts
-
-        else:
-            if pixels is not None:
-                # Input pointing is pixel indicies
-                unique_pixels, indicies = np.unique(pixels, return_inverse=True)
-                unit_vectors = get_unit_vectors_from_pixels(
-                    coord_in=coord_in,
-                    pixels=unique_pixels,
-                    nside=nside,
-                )
-                emission = np.zeros((self.model.n_components, len(pixels)))
-            else:
-                # Input pointing is angles
-                unique_angles, indicies = np.unique(
-                    np.asarray([theta, phi]), return_inverse=True, axis=1
-                )
-                unit_vectors = get_unit_vectors_from_angles(
-                    coord_in=coord_in,
-                    theta=unique_angles[0],
-                    phi=unique_angles[1],
-                    lonlat=lonlat,
-                )
-                emission = np.zeros((self.model.n_components, len(theta)))
-
-            start, stop = get_line_of_sights(
-                cutoff=self.cutoff,
-                observer_position=observer_position,
-                unit_vectors=unit_vectors,
-            )
-
-            for idx, (label, component) in enumerate(self.model.components.items()):
-                source_parameters = self.model.get_source_parameters(label, frequency)
-                emissivity, albedo, phase_coefficients = source_parameters
-
-                # Here we create a partial function that will be passed to the
-                # Gaussian quadrature integration. The arrays are reshaped to
-                # (d, n, p) where d is the geometrical dimensionality, n is
-                # the number of different pointings, and p is the number of
-                # integration points of the quadrature.
-                get_emission_step_function = partial(
-                    get_emission_at_step,
-                    start=start,
-                    stop=np.expand_dims(stop, axis=-1),
-                    X_obs=np.expand_dims(observer_position, axis=-1),
-                    X_earth=np.expand_dims(earth_position, axis=-1),
-                    u_los=np.expand_dims(unit_vectors, axis=-1),
-                    component=component,
-                    frequency=frequency.value,
-                    T_0=self.model.T_0,
-                    delta=self.model.delta,
-                    emissivity=emissivity,
-                    albedo=albedo,
-                    phase_coefficients=phase_coefficients,
-                    solar_irradiance=solar_irradiance,
-                )
-                integrated_comp_emission = self.integration_scheme.integrate(
-                    get_emission_step_function, [-1, 1]
-                )
-                integrated_comp_emission *= 0.5 * (stop - start)
-
-                emission[idx] = integrated_comp_emission[indicies]
+        emission = self._get_emission(
+            frequency=freq,
+            obs=obs,
+            obs_time=obs_time,
+            obs_pos=obs_pos,
+            unit_vectors=unit_vectors,
+            indicies=counts,
+            binned=True,
+            pixels=unique_pixels,
+            nside=nside,
+        )
 
         emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
 
         return emission if return_comps else emission.sum(axis=0)
+
+    @validate_frequency
+    @validate_pixels
+    def get_binned_emission_pix(
+        self,
+        freq: Quantity[u.Hz] | Quantity[u.m],
+        pixels: int | Sequence[int] | NDArray[np.integer],
+        nside: int,
+        obs: str = "earth",
+        obs_time: Time = Time.now(),
+        *,
+        obs_pos: Quantity[u.AU] | None = None,
+        return_comps: bool = False,
+        coord_in: Literal["E", "G", "C"] = "E",
+    ) -> Quantity[u.MJy / u.sr]:
+        """Returns the simulated binned Zodiacal Emission given pixel numbers.
+
+        The pixel numbers represent the pixel indicies on a HEALPix grid with
+        resolution given by `nside`. The emission is binned to a HEALPix grid
+        of resolution given by `nside`.
+
+        Parameters
+        ----------
+        freq
+            Frequency or wavelength at which to evaluate the Zodiacal emission.
+            Must have units compatible with Hz or length.
+        pixels
+            A single, or a sequence of HEALPix pixel indicies representing points
+            on the celestial sphere.
+        nside
+            HEALPix resolution parameter of the pixels.
+        obs
+            The Solar System observer. A list of all support observers (for a
+            given ephemeridis) is specified in `supported_observers` attribute
+            of the `Zodipy` instance. Defaults to 'earth'.
+        obs_time
+            Time of observation (`astropy.time.Time`). Defaults to the current
+            time.
+        obs_pos
+            The heliocentric ecliptic cartesian position of the observer in AU.
+            Overrides the `obs` argument. Default is None.
+        return_comps
+            If True, the emission is returned component-wise. Defaults to False.
+        coord_in
+            Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+            coordinates) by default.
+
+        Returns
+        -------
+        emission
+            Simulated Zodiacal emission in units of 'MJy/sr'.
+        """
+
+        unique_pixels, counts = np.unique(pixels, return_counts=True)
+        unit_vectors = get_unit_vectors_from_pixels(
+            coord_in=coord_in,
+            pixels=unique_pixels,
+            nside=nside,
+        )
+
+        emission = self._get_emission(
+            frequency=freq,
+            obs=obs,
+            obs_time=obs_time,
+            obs_pos=obs_pos,
+            unit_vectors=unit_vectors,
+            indicies=counts,
+            binned=True,
+            pixels=unique_pixels,
+            nside=nside,
+        )
+
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
+
+        return emission if return_comps else emission.sum(axis=0)
+
+    def _get_emission(
+        self,
+        frequency: Quantity[u.GHz],
+        obs: str,
+        obs_time: Time,
+        unit_vectors: NDArray[np.floating],
+        indicies: NDArray[np.floating],
+        binned: bool = False,
+        obs_pos: Quantity[u.AU] | None = None,
+        pixels: NDArray[np.floating] | None = None,
+        nside: int | None = None,
+    ) -> NDArray[np.floating]:
+        """Computes the component-wise Zodiacal emission."""
+
+        observer_position, earth_position = get_solar_system_positions(
+            observer=obs,
+            time_of_observation=obs_time,
+            observer_position=obs_pos,
+        )
+
+        # Model includes scattering so we compute the Solar irradiance.
+        if self.model.albedos is not None:
+            solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
+                frequency, self.extrapolate
+            )
+        else:
+            solar_irradiance = 0
+
+        start, stop = get_line_of_sights(
+            cutoff=self.cutoff,
+            observer_position=observer_position,
+            unit_vectors=unit_vectors,
+        )
+
+        output_shape = (
+            self.model.n_components,
+            hp.nside2npix(nside) if binned else len(indicies),
+        )
+        emission = np.zeros(output_shape)
+
+        for idx, (label, component) in enumerate(self.model.components.items()):
+            # We get the interpolated/extrapolated model parameters.
+            source_parameters = self.model.get_source_parameters(label, frequency)
+            emissivity, albedo, phase_coefficients = source_parameters
+
+            # Here we create a partial function that will be passed to the
+            # integration scheme. The arrays are reshaped to (d, n, p) where d
+            # is the geometrical dimensionality, n is the number of different
+            # pointings, and p is the number of integration points of the
+            # quadrature.
+            emission_integrand = partial(
+                get_emission_at_step,
+                start=start,
+                stop=np.expand_dims(stop, axis=-1),
+                X_obs=np.expand_dims(observer_position, axis=-1),
+                X_earth=np.expand_dims(earth_position, axis=-1),
+                u_los=np.expand_dims(unit_vectors, axis=-1),
+                component=component,
+                frequency=frequency.value,
+                T_0=self.model.T_0,
+                delta=self.model.delta,
+                emissivity=emissivity,
+                albedo=albedo,
+                phase_coefficients=phase_coefficients,
+                solar_irradiance=solar_irradiance,
+            )
+
+            integrated_comp_emission = self.integration_scheme.integrate(
+                emission_integrand, [-1, 1]
+            )
+            # We convert the integral from [-1, 1] back to [start, stop].
+            integrated_comp_emission *= 0.5 * (stop - start)
+
+            if binned:
+                emission[idx, pixels] = integrated_comp_emission
+            else:
+                emission[idx] = integrated_comp_emission[indicies]
+
+        if binned:
+            # We multiply the binned map by the number of hits.
+            emission[:, pixels] *= indicies
+
+        return emission
 
     def __repr__(self) -> str:
         return (

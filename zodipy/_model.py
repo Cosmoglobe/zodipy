@@ -34,25 +34,6 @@ class Model:
     def n_components(self) -> int:
         return len(self.components)
 
-    def validate_frequency(
-        self, frequency: Quantity[u.GHz] | Quantity[u.m], extrapolate: bool
-    ) -> None:
-        """
-        Raises ValueError if the requested frequency is out of range the range
-        covered by the model.
-        """
-
-        if extrapolate:
-            return
-
-        frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
-        spectrum_min, spectrum_max = self.spectrum.min(), self.spectrum.max()
-        if not (spectrum_min <= frequency <= spectrum_max):
-            raise ValueError(
-                f"model {self.name!r} is only valid in the [{spectrum_min.value},"
-                f" {spectrum_max.value}] {self.spectrum.unit} range."
-            )
-
     def get_source_parameters(
         self,
         component_label: ComponentLabel,
