@@ -12,7 +12,7 @@ import quadpy
 
 from ._emission import get_emission_at_step
 from ._ephemeris import get_earth_position, get_observer_position
-from ._line_of_sight import get_line_of_sight
+from ._line_of_sight import get_line_of_sights, DISTANCE_TO_JUPITER
 from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._unit_vectors import (
     get_unit_vectors_from_angles,
@@ -41,6 +41,7 @@ class Zodipy:
         solar_irradiance_model: str = "dirbe",
         extrapolate: bool = False,
         gauss_quad_order: int = 100,
+        cutoff: float = DISTANCE_TO_JUPITER,
     ) -> None:
         """Initializes the Zodipy interface.
 
@@ -68,6 +69,9 @@ class Zodipy:
         gauss_quad_order
             Order of the Gaussian-Legendre quadrature used to evaluate the
             brightness integral. Default is 50 points.
+        cutoff:
+            Radial distance from the Sun at which marks the end point of all
+            line of sights. Defaults to 5.2 AU which is the distance to Jupiter.
         """
 
         self.model = model_registry.get_model(model)
@@ -76,6 +80,7 @@ class Zodipy:
             solar_irradiance_model
         )
         self.extrapolate = extrapolate
+        self.cutoff = cutoff
         self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
@@ -190,17 +195,17 @@ class Zodipy:
         if pixels is not None:
             if phi is not None or theta is not None:
                 raise ValueError(
-                    "get_time_ordered_emission() got an argument for both 'pixels'"
+                    "get_emission() got an argument for both 'pixels'"
                     "and 'theta' or 'phi' but can only use one of the two."
                 )
             if nside is None:
                 raise ValueError(
-                    "get_time_ordered_emission() got an argument for 'pixels', "
+                    "get_emission() got an argument for 'pixels', "
                     "but argument 'nside' is missing."
                 )
             if lonlat:
                 raise ValueError(
-                    "get_time_ordered_emission() has 'lonlat' set to True "
+                    "get_emission() has 'lonlat' set to True "
                     "but 'theta' and 'phi' is not given."
                 )
             if np.ndim(pixels) == 0:
@@ -208,20 +213,19 @@ class Zodipy:
 
         if binned and nside is None:
             raise ValueError(
-                "get_time_ordered_emission() has 'binned' set to True, but "
+                "get_emission() has 'binned' set to True, but "
                 "argument 'nside' is missing."
             )
 
         if (theta is not None and phi is None) or (phi is not None and theta is None):
             raise ValueError(
-                "get_time_ordered_emission() is missing an argument for either "
-                "'phi' or 'theta'."
+                "get_emission() is missing an argument for either " "'phi' or 'theta'."
             )
 
         if (theta is not None) and (phi is not None):
             if theta.size != phi.size:
                 raise ValueError(
-                    "get_time_ordered_emission() got arguments 'theta' and 'phi' "
+                    "get_emission() got arguments 'theta' and 'phi' "
                     "with different size."
                 )
             theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
@@ -231,9 +235,6 @@ class Zodipy:
                 theta = np.expand_dims(theta, axis=0)
             if phi.ndim == 0:
                 phi = np.expand_dims(phi, axis=0)
-
-        if not isinstance(obs_time, Time):
-            raise TypeError("argument 'obs_time' must be of type 'astropy.time.Time'.")
 
         # Get position of Solar System bodies
         earth_position = get_earth_position(obs_time)
@@ -276,16 +277,15 @@ class Zodipy:
                     lonlat=lonlat,
                 )
 
+            start, stop = get_line_of_sights(
+                cutoff=self.cutoff,
+                observer_position=observer_position,
+                unit_vectors=unit_vectors,
+            )
             emission = np.zeros((self.model.n_components, hp.nside2npix(nside)))
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
-
-                start, stop = get_line_of_sight(
-                    component_label=label,
-                    observer_position=observer_position,
-                    unit_vectors=unit_vectors,
-                )
 
                 # Here we create a partial function that will be passed to the
                 # Gaussian quadrature integration. The arrays are reshaped to
@@ -339,15 +339,15 @@ class Zodipy:
                 )
                 emission = np.zeros((self.model.n_components, len(theta)))
 
+            start, stop = get_line_of_sights(
+                cutoff=self.cutoff,
+                observer_position=observer_position,
+                unit_vectors=unit_vectors,
+            )
+
             for idx, (label, component) in enumerate(self.model.components.items()):
                 source_parameters = self.model.get_source_parameters(label, frequency)
                 emissivity, albedo, phase_coefficients = source_parameters
-
-                start, stop = get_line_of_sight(
-                    component_label=label,
-                    observer_position=observer_position,
-                    unit_vectors=unit_vectors,
-                )
 
                 # Here we create a partial function that will be passed to the
                 # Gaussian quadrature integration. The arrays are reshaped to

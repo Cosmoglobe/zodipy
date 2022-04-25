@@ -3,25 +3,13 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from ._component_label import ComponentLabel
-
 
 DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
 
-# Line of sight steps
-line_of_sight_cutoffs: dict[ComponentLabel, float] = {
-    ComponentLabel.CLOUD: DISTANCE_TO_JUPITER,
-    ComponentLabel.BAND1: DISTANCE_TO_JUPITER,
-    ComponentLabel.BAND2: DISTANCE_TO_JUPITER,
-    ComponentLabel.BAND3: DISTANCE_TO_JUPITER,
-    ComponentLabel.RING: 3,
-    ComponentLabel.FEATURE: 2,
-}
 
-
-def get_line_of_sight(
-    component_label: ComponentLabel,
+def get_line_of_sights(
+    cutoff: float,
     observer_position: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
 ) -> tuple[float, NDArray[np.floating]]:
@@ -31,14 +19,13 @@ def get_line_of_sight(
     corresponding to the pointing.
     """
 
-    cutoff = line_of_sight_cutoffs[component_label]
     stop = _get_line_of_sight_endpoints(cutoff, observer_position, unit_vectors)
 
     return EPS, stop
 
 
 def _get_line_of_sight_endpoints(
-    r_cutoff: float,
+    cutoff: float,
     observer_position: NDArray[np.floating],
     unit_vectors: NDArray[np.floating],
 ) -> NDArray[np.floating]:
@@ -66,7 +53,7 @@ def _get_line_of_sight_endpoints(
     cos_lat = np.cos(lat)
 
     b = 2 * (x_0 * cos_lat * cos_lon + y_0 * cos_lat * sin_lon)
-    c = r**2 - r_cutoff**2
+    c = r**2 - cutoff**2
     q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
 
     return np.maximum(q, c / q)
