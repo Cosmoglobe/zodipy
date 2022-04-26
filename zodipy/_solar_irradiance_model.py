@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict, field
 
 import astropy.constants as const
 import astropy.units as u
-from astropy.units import Quantity
 from astropy.utils.data import download_file
 import numpy as np
 from scipy.interpolate import interp1d
@@ -27,8 +26,8 @@ class SolarIrradianceModel:
     """Solar irradiance spectrum given some model."""
 
     name: str
-    spectrum: Quantity[u.Hz] | Quantity[u.m]
-    irradiance: Quantity[SPECIFIC_INTENSITY_UNITS] | Quantity[u.MJy / u.sr]
+    spectrum: u.Quantity[u.Hz] | u.Quantity[u.m]
+    irradiance: u.Quantity[SPECIFIC_INTENSITY_UNITS] | u.Quantity[u.MJy / u.sr]
 
     @classmethod
     def from_url(
@@ -64,7 +63,7 @@ class SolarIrradianceModel:
         return SolarIrradianceModel(name, spectrum, irradiance)
 
     def get_solar_irradiance(
-        self, frequency: Quantity[u.Hz] | Quantity[u.m], extrapolate: bool
+        self, frequency: u.Quantity[u.Hz] | u.Quantity[u.m], extrapolate: bool
     ) -> float:
         """Returns the interpolated / extrapolated solar irradiance."""
 
@@ -119,8 +118,8 @@ class SolarIrradianceModelRegistry:
     def register_model_from_table(
         self,
         name: str,
-        spectrum: Quantity[u.Hz] | Quantity[u.m],
-        irradiance: Quantity[SPECIFIC_INTENSITY_UNITS] | Quantity[u.MJy / u.sr],
+        spectrum: u.Quantity[u.Hz] | u.Quantity[u.m],
+        irradiance: u.Quantity[SPECIFIC_INTENSITY_UNITS] | u.Quantity[u.MJy / u.sr],
     ) -> None:
         """Registers a model from a spectra."""
 

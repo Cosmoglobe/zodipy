@@ -6,7 +6,6 @@ from typing import Literal, Sequence
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 import astropy.units as u
-from astropy.units import Quantity
 import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
@@ -23,9 +22,6 @@ from ._unit_vectors import (
 )
 from .models import model_registry
 from .solar_irradiance_models import solar_irradiance_model_registry
-
-
-__all__ = ("Zodipy",)
 
 
 class Zodipy:
@@ -103,7 +99,7 @@ class Zodipy:
 
     @property
     def supported_observers(self) -> list[str]:
-        """Returns all observers suported by the ephemeridis."""
+        """Returns a list of all supported observers given the ephemeris."""
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
@@ -111,21 +107,20 @@ class Zodipy:
     @validate_angles
     def get_emission_ang(
         self,
-        freq: Quantity[u.Hz] | Quantity[u.m],
-        theta: Quantity[u.rad] | Quantity[u.deg],
-        phi: Quantity[u.rad] | Quantity[u.deg],
+        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
+        theta: u.Quantity[u.rad] | u.Quantity[u.deg],
+        phi: u.Quantity[u.rad] | u.Quantity[u.deg],
         obs: str = "earth",
         obs_time: Time = Time.now(),
-        *,
-        obs_pos: Quantity[u.AU] | None = None,
+        obs_pos: u.Quantity[u.AU] | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-    ) -> Quantity[u.MJy / u.sr]:
+    ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated Zodiacal Emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified either in
-        the form of angles on the sky (`theta`, `phi`)
+        The pointing, for which to compute the emission, is specified in from
+        of angles on the sky given by `theta` and `phi`.
 
         Parameters
         ----------
@@ -192,16 +187,15 @@ class Zodipy:
     @validate_pixels
     def get_emission_pix(
         self,
-        freq: Quantity[u.Hz] | Quantity[u.m],
+        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
         pixels: int | Sequence[int] | NDArray[np.integer],
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
-        *,
-        obs_pos: Quantity[u.AU] | None = None,
+        obs_pos: u.Quantity[u.AU] | None = None,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-    ) -> Quantity[u.MJy / u.sr]:
+    ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated Zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with
@@ -265,22 +259,21 @@ class Zodipy:
     @validate_frequency
     def get_binned_emission_ang(
         self,
-        freq: Quantity[u.Hz] | Quantity[u.m],
-        theta: Quantity[u.rad] | Quantity[u.deg],
-        phi: Quantity[u.rad] | Quantity[u.deg],
+        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
+        theta: u.Quantity[u.rad] | u.Quantity[u.deg],
+        phi: u.Quantity[u.rad] | u.Quantity[u.deg],
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
-        *,
-        obs_pos: Quantity[u.AU] | None = None,
+        obs_pos: u.Quantity[u.AU] | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-    ) -> Quantity[u.MJy / u.sr]:
+    ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated binned Zodiacal Emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified either in
-        the form of angles on the sky (`theta`, `phi`). The emission is binned
+        The pointing, for which to compute the emission, is specified in from
+        of angles on the sky given by `theta` and `phi`. The emission is binned
         to a HEALPix grid of resolution given by `nside`
 
         Parameters
@@ -354,16 +347,15 @@ class Zodipy:
     @validate_pixels
     def get_binned_emission_pix(
         self,
-        freq: Quantity[u.Hz] | Quantity[u.m],
+        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
         pixels: int | Sequence[int] | NDArray[np.integer],
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
-        *,
-        obs_pos: Quantity[u.AU] | None = None,
+        obs_pos: u.Quantity[u.AU] | None = None,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
-    ) -> Quantity[u.MJy / u.sr]:
+    ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated binned Zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with
@@ -427,13 +419,13 @@ class Zodipy:
 
     def _get_emission(
         self,
-        frequency: Quantity[u.GHz],
+        frequency: u.Quantity[u.GHz],
         obs: str,
         obs_time: Time,
         unit_vectors: NDArray[np.floating],
         indicies: NDArray[np.floating],
         binned: bool = False,
-        obs_pos: Quantity[u.AU] | None = None,
+        obs_pos: u.Quantity[u.AU] | None = None,
         pixels: NDArray[np.floating] | None = None,
         nside: int | None = None,
     ) -> NDArray[np.floating]:

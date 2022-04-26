@@ -1,7 +1,6 @@
 from functools import wraps
 from typing import TYPE_CHECKING, Sequence, Union
 
-from astropy.units import Quantity, quantity_input
 import astropy.units as u
 import healpy as hp
 import numpy as np
@@ -12,17 +11,20 @@ if TYPE_CHECKING:
 
 
 def validate_frequency(function):
-    """Decorator that validates the user inputed frequency or wavelength."""
+    """
+    Decorator that validates the user inputed frequency or wavelength. This
+    function also converts the 'freq' argument to units of GHz.
+    """
 
     @wraps(function)
-    @quantity_input
+    @u.quantity_input
     def wrapper(
         self,
-        freq: Union[Quantity[u.Hz], Quantity[u.m]],
+        freq: Union[u.Quantity[u.Hz], u.Quantity[u.m]],
         *args,
         **kwargs,
     ):
-        # `quantity_input` doesnt work with TYPE_CHECKING string annotations.
+        # `u.quantity_input` doesnt work with TYPE_CHECKING string annotations.
         zodipy: "Zodipy" = self
 
         if not zodipy.extrapolate:
@@ -37,7 +39,7 @@ def validate_frequency(function):
                 )
 
         freq = freq.to(u.GHz, equivalencies=u.spectral())
-        
+
         return function(self=self, freq=freq, *args, **kwargs)
 
     return wrapper
@@ -47,11 +49,11 @@ def validate_angles(function):
     """Decorator that validates the user inputed angles."""
 
     @wraps(function)
-    @quantity_input
+    @u.quantity_input
     def wrapper(
         *args,
-        theta: Union[Quantity[u.deg], Quantity[u.rad]],
-        phi: Union[Quantity[u.deg], Quantity[u.rad]],
+        theta: Union[u.Quantity[u.deg], u.Quantity[u.rad]],
+        phi: Union[u.Quantity[u.deg], u.Quantity[u.rad]],
         **kwargs,
     ):
         lonlat = kwargs.get("lonlat")
@@ -78,7 +80,7 @@ def validate_pixels(function):
         nside: int,
         **kwargs,
     ):
-        
+
         max_pixel_number = hp.nside2npix(nside)
         if np.max(pixels) > max_pixel_number:
             raise ValueError("invalid pixel number given nside")

@@ -1,5 +1,4 @@
 import astropy.units as u
-from astropy.units import Quantity
 
 from ._component_label import ComponentLabel
 
@@ -7,8 +6,8 @@ from ._component_label import ComponentLabel
 T_0_DIRBE = 286  # K
 DELTA_DIRBE = 0.46686259861486573
 
-SPECTRUM_PLANCK = Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
-SPECTRUM_DIRBE = Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
+SPECTRUM_PLANCK = u.Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
+SPECTRUM_DIRBE = u.Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
 
 EMISSIVITY_PLANCK_13 = {
     ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),

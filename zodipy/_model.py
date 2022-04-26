@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from astropy.units import Quantity
 import astropy.units as u
 import numpy as np
 from scipy.interpolate import interp1d
@@ -23,7 +22,7 @@ class Model:
 
     name: str
     components: dict[ComponentLabel, Component]
-    spectrum: Quantity[u.Hz] | Quantity[u.m]
+    spectrum: u.Quantity[u.Hz] | u.Quantity[u.m]
     emissivities: dict[ComponentLabel, tuple[float, ...]]
     albedos: dict[ComponentLabel, tuple[float, ...]] | None = None
     phase_coefficients: list[tuple[float, ...]] | None = None
@@ -37,7 +36,7 @@ class Model:
     def get_source_parameters(
         self,
         component_label: ComponentLabel,
-        frequency: Quantity[u.GHz] | Quantity[u.m],
+        frequency: u.Quantity[u.GHz] | u.Quantity[u.m],
     ) -> tuple[float, float, tuple[float, float, float]]:
         """
         Returns interpolated/extrapolated source parameters for a component
@@ -105,7 +104,7 @@ class ModelRegistry:
         self,
         name: str,
         components: dict[ComponentLabel, Component],
-        spectrum: Quantity[u.Hz] | Quantity[u.m],
+        spectrum: u.Quantity[u.Hz] | u.Quantity[u.m],
         emissivities: dict[ComponentLabel, tuple[float, ...]],
         albedos: dict[ComponentLabel, tuple[float, ...]] | None = None,
         phase_coefficients: list[tuple[float, ...]] | None = None,

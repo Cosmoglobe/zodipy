@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from astropy.units import Quantity
 import astropy.units as u
 import healpy as hp
 import numpy as np
@@ -21,8 +20,8 @@ def get_unit_vectors_from_pixels(
 
 def get_unit_vectors_from_angles(
     coord_in: str,
-    phi: Quantity[u.rad] | Quantity[u.deg],
-    theta: Quantity[u.rad] | Quantity[u.deg],
+    phi: u.Quantity[u.rad] | u.Quantity[u.deg],
+    theta: u.Quantity[u.rad] | u.Quantity[u.deg],
     lonlat: bool = False,
 ) -> NDArray[np.floating]:
     """Returns ecliptic unit vectors from sky angles representing some pointing."""

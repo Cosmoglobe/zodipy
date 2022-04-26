@@ -1,4 +1,4 @@
-from astropy.units import Unit
+import astropy.units as u
 
 from .source_parameters import SPECTRUM_DIRBE, SOLAR_IRRADIANCE_DIRBE
 from ._solar_irradiance_model import solar_irradiance_model_registry
@@ -14,15 +14,15 @@ solar_irradiance_model_registry.register_model_from_table(
 solar_irradiance_model_registry.register_model_from_url(
     name="thuillier",
     url=DOWNLOAD_URL + "thuillier2004_flux.txt",
-    spectrum_unit=Unit("nm"),
-    irradiance_unit=Unit("mW/(m^2 nm sr)"),
+    spectrum_unit=u.Unit("nm"),
+    irradiance_unit=u.Unit("mW/(m^2 nm sr)"),
     skip_rows=2,
 )
 
 solar_irradiance_model_registry.register_model_from_url(
     name="gueymard",
     url=DOWNLOAD_URL + "gueymard2003_flux.txt",
-    spectrum_unit=Unit("nm"),
-    irradiance_unit=Unit("W/(m^2 nm sr)"),
+    spectrum_unit=u.Unit("nm"),
+    irradiance_unit=u.Unit("W/(m^2 nm sr)"),
     skip_rows=9,
 )
