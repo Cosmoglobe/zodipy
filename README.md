@@ -30,12 +30,12 @@ model = Zodipy(model="Planck18") # Planck 2018
 import astropy.units as u
 from astropy.time import Time
 
-model.get_emission(
+model.get_emission_ang(
     25*u.micron,
-    obs="earth",
-    obs_time=Time.now(),
     theta=10*u.deg,
     phi=40*u.deg,
+    obs="earth",
+    obs_time=Time.now(),
 )
 >> <Quantity [16.65684599] MJy / sr>
 ```
@@ -45,12 +45,12 @@ model.get_emission(
 theta = [10.1, 10.5, 11.1, 11.5] * u.deg # Longitude
 phi = [40.2, 39.9, 39.8, 41.3] * u.deg # Latitude
 
-model.get_emission(
+model.get_emission_ang(
     25*u.micron,
-    obs="earth",
-    obs_time=Time.now(),
     theta=theta,
     phi=phi,
+    obs="earth",
+    obs_time=Time.now(),
     lonlat=True,
 )
 >> <Quantity [29.11106315, 29.33735654, 29.41248579, 28.30858417] MJy / sr>
@@ -59,12 +59,12 @@ model.get_emission(
 
 **Get emission from pixel indices on a HEALPIX grid:** a sequence of pixel indicies along with an NSIDE parameter can be used.
 ```python
-model.get_emission(
+model.get_emission_pix(
     25*u.micron,
-    obs="earth",
-    obs_time=Time.now(),
     pixels=[24654, 12937, 26135],
     nside=128,
+    obs="earth",
+    obs_time=Time.now(),
 )
 >> <Quantity [17.77385144, 19.7889428 , 22.44797121] MJy / sr>
 ```
@@ -76,13 +76,12 @@ import numpy as np
 
 nside = 128
 
-model.get_emission(
+model.get_binned_emission_pix(
     25*u.micron,
-    obs="earth",
-    obs_time=Time.now(),
     pixels=np.arange(hp.nside2npix(nside)),
     nside=nside,
-    binned=True,
+    obs="earth",
+    obs_time=Time.now(),
     return_comps=True
 ).shape
 >> (6, 196608)
