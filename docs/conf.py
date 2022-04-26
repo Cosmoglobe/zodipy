@@ -48,6 +48,8 @@ napoleon_attr_annotations=True
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
+autodoc_member_order = 'bysource'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

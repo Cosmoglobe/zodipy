@@ -27,10 +27,37 @@ from .solar_irradiance_models import solar_irradiance_model_registry
 class Zodipy:
     """The Zodipy interface.
 
-    Zodipy simulates the Zodiacal emission that a Solar System observer is
-    predicted to see given the DIRBE Interplanetary Dust model or other models,
-    such as the Planck Interplanetary Dust models which extend the DIRBE model
-    to other frequencies.
+    Simulate the Zodiacal emission that a Solar System observer is predicted to
+    observer given the DIRBE Interplanetary Dust model or other models which 
+    extend the DIRBE model to other frequencies.
+
+    Parameters
+    ----------
+    model
+        The name of the interplanetary dust model. Defaults to DIRBE. See all
+        available models with `zodipy.MODELS`.
+    ephemeris
+        Ephemeris used to compute the positions of the observer and Earth.
+        Defaults to 'de432s' which requires downloading (and caching) a ~10
+        MB file. For more information on available ephemeridis, please visit
+        https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+    solar_irradiance_model
+        Solar irradiance model to use when computing the scattered emission.
+        Only relevant at wavelenghts around 1 micron. Default is the tabulated
+        DIRBE Solar flux. Other models requires downloading (and caching)
+        small (<1MB) files containing the tabulated model spectra and
+        irradiance.
+    extrapolate
+        If True, then the spectral quantities in the model will be linearly
+        extrapolated to the requested frequency if this is outside of the
+        range covered by the model. If False, an Exception will be raised.
+        Default is False.
+    gauss_quad_order
+        Order of the Gaussian-Legendre quadrature used to evaluate the
+        brightness integral. Default is 50 points.
+    cutoff:
+        Radial distance from the Sun at which marks the end point of all
+        line of sights. Defaults to 5.2 AU which is the distance to Jupiter.
     """
 
     def __init__(
@@ -42,36 +69,6 @@ class Zodipy:
         gauss_quad_order: int = 100,
         cutoff: float = DISTANCE_TO_JUPITER,
     ) -> None:
-        """Initializes the Zodipy interface.
-
-        Parameters
-        ----------
-        model
-            The name of the interplanetary dust model. Defaults to DIRBE. See all
-            available models with `zodipy.MODELS`.
-        ephemeris
-            Ephemeris used to compute the positions of the observer and Earth.
-            Defaults to 'de432s' which requires downloading (and caching) a ~10
-            MB file. For more information on available ephemeridis, please visit
-            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
-        solar_irradiance_model
-            Solar irradiance model to use when computing the scattered emission.
-            Only relevant at wavelenghts around 1 micron. Default is the tabulated
-            DIRBE Solar flux. Other models requires downloading (and caching)
-            small (<1MB) files containing the tabulated model spectra and
-            irradiance.
-        extrapolate
-            If True, then the spectral quantities in the model will be linearly
-            extrapolated to the requested frequency if this is outside of the
-            range covered by the model. If False, an Exception will be raised.
-            Default is False.
-        gauss_quad_order
-            Order of the Gaussian-Legendre quadrature used to evaluate the
-            brightness integral. Default is 50 points.
-        cutoff:
-            Radial distance from the Sun at which marks the end point of all
-            line of sights. Defaults to 5.2 AU which is the distance to Jupiter.
-        """
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
@@ -119,7 +116,7 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated Zodiacal Emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified in from
+        The pointing, for which to compute the emission, is specified in form
         of angles on the sky given by `theta` and `phi`.
 
         Parameters
@@ -272,7 +269,7 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated binned Zodiacal Emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified in from
+        The pointing, for which to compute the emission, is specified in form
         of angles on the sky given by `theta` and `phi`. The emission is binned
         to a HEALPix grid of resolution given by `nside`
 

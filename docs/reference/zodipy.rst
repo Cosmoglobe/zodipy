@@ -4,4 +4,4 @@
 =================
 
 .. autoclass:: zodipy.Zodipy
-    :members: 
+    :members: get_emission_ang, get_emission_pix, get_binned_emission_ang, get_binned_emission_ang

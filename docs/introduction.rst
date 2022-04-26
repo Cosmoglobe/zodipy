@@ -43,30 +43,23 @@ The interface also accepts the following optional arguments:
       solar_irradiance_model="gueymard",  # Solar flux model. Only relevant at 
                                           # scattering dominated wavelengths around
                                           # ~1 micron. Default is "dirbe".
-      extrapolate=True,                   # If True the model will linearly extrapolate 
-                                          # outside of the frequency/wavelength for 
-                                          # which it is valid. Default is False.
-      gauss_quad_order=125,               # Number of quadrature points. Default is 100.
+      extrapolate=True,                   # Whether or not to extrapolate in the 
+                                          # spectral parameters in the model. Default is 
+                                          # False.
+      gauss_quad_order=125,               # Number of quadrature points in the line of 
+                                          # sight integration. Default is 100.
    )
 
 ----------------------------
 Simulating Zodiacal emission
 ----------------------------
-Once Zodipy is initialized, the next step is to simulate some emission. This is
-done with the ``get_emission`` function. Below is a list of the key arguments a
-user is expected to provide (see :ref:`Zodipy overview` for a full list of
-argument):
+The `Zodipy` interface has *four* methods with similar interfaces for computing the emission, given the initialized model.
+These are: ``get_emission_ang``, ``get_emission_pix``, ``get_binned_emission_ang``, and ``get_binned_emission_pix``. 
+See :ref:`Zodipy overview` for an overview of the API.
 
-- **freq** (required): must be an ``astropy.quantity.Quantity`` object with units of either frequncy or length.
-- **obs_time** (required): must be an ``astropy.time.Time`` object that represents the time of observation.
-- **obs**: a string representing the observer, e.g. "earth". Must be supported by the ephemeris or be "SEMB-L2".
-- **pixels** and **nside**: ``Pixels`` must be a ``Sequence[int]`` or an ``NDArray[int]`` representing the pixel indicies on a HEALPix grid, and ``nside`` is an integer representing the resolution.
-- **theta** and **phi**: Angular coordinates on the sky (co-latitude, longitude). Must be ``astropy.quantity.Quantity`` objects with units of either degrees or radians.
-
-Below is a minimal example where we use the ``get_emission`` function to compute
-the emission as predicted by the "Planck18" model and seen by an observer
-located at the Sun-Earth-Moon-Barycenter Lagrange point 2, who observes a point on the sky given by the coordinate
-``theta`` and ``phi``:
+Below is a minimal example where we use the ``get_emission_ang`` function to compute
+the emission as predicted by the "Planck18" model seen by an observer
+located at the Sun-Earth-Moon-Barycenter Lagrange point 2, who observes a point on the sky:
 
 .. code-block:: python
 
@@ -76,7 +69,7 @@ located at the Sun-Earth-Moon-Barycenter Lagrange point 2, who observes a point 
 
    model = Zodipy(model="planck18")
 
-   emission = model.get_emission(
+   emission = model.get_emission_ang(
       654*u.GHz,
       obs="semb-l2",
       obs_time=Time("2022-06-14"),
@@ -88,5 +81,5 @@ located at the Sun-Earth-Moon-Barycenter Lagrange point 2, who observes a point 
    [0.03166994] MJy / sr
 
 For other use-cases, see the `GitHub README
-<https://github.com/MetinSa/zodipy>`_. A Zodipy tutorial will be made in the
+<https://github.com/MetinSa/zodipy>`_. A `Zodipy` tutorial will be made in the
 future.
