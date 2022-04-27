@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from zodipy._source_functions import get_blackbody_emission_nu, get_interplanetary_temperature
+from zodipy._source_functions import get_blackbody_emission_nu, get_dust_grain_temperature
 
 
 TEMPERATURE = 30
@@ -45,14 +45,14 @@ def test_blackbody_emission_returns_array():
 def test_interplanetary_temperature_value():
     """Tests that the returned value given a float R."""
 
-    ipd_temperature = get_interplanetary_temperature(R, TEMPERATURE, DELTA)
+    ipd_temperature = get_dust_grain_temperature(R, TEMPERATURE, DELTA)
     assert ipd_temperature == pytest.approx(21.0152213243, abs=1e-10)
 
 
 def test_interplanetary_temperature_value_array():
     """Tests that the returned value given a float R."""
 
-    ipd_temperature = get_interplanetary_temperature(R_ARRAY, TEMPERATURE, DELTA)
+    ipd_temperature = get_dust_grain_temperature(R_ARRAY, TEMPERATURE, DELTA)
     true_values = np.array([19.1449315324, 17.4765568067, 16.7880498296])
     assert ipd_temperature == pytest.approx(true_values, abs=1e-10)
 
@@ -60,12 +60,12 @@ def test_interplanetary_temperature_value_array():
 def test_interplanetary_temperature_returns_float():
     """Tests that the returned value is a float given a float R."""
 
-    ipd_temperature = get_interplanetary_temperature(R, TEMPERATURE, DELTA)
+    ipd_temperature = get_dust_grain_temperature(R, TEMPERATURE, DELTA)
     assert isinstance(ipd_temperature, float)
 
 
 def test_interplanetary_temperature_returns_array():
     """Tests that the returned value is a array given a array R."""
 
-    ipd_temperature = get_interplanetary_temperature(R_ARRAY, TEMPERATURE, DELTA)
+    ipd_temperature = get_dust_grain_temperature(R_ARRAY, TEMPERATURE, DELTA)
     assert isinstance(ipd_temperature, np.ndarray)
