@@ -136,11 +136,11 @@ class ModelRegistry:
             Coefficient fits for the phase function at the frequencies
             corresponding to 'spectrum'.
         T_0
-            Interplanetary temperature at 1 AU. Defaults to the DIRBE model value.
+            Dust grain temperature at 1 AU. Defaults to the DIRBE model value.
         delta
-            Interplanetary temperatue powerlaw parameter describing how the
-            interplanetary temperature falls with radial distance from the Sun.
-            Defaults to the DIRBE model value.
+            Dust grain temperature powerlaw parameter describing how the
+            temperature falls with radial distance from the Sun. Defaults to the 
+            DIRBE model value.
         """
 
         if (name := name.lower()) in self._registry:

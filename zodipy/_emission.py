@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from ._component import Component
 from ._source_functions import (
     get_blackbody_emission_nu,
-    get_interplanetary_temperature,
+    get_dust_grain_temperature,
     get_phase_function,
     get_scattering_angle,
 )
@@ -48,9 +48,9 @@ def get_emission_at_step(
     frequency
         Frequency at which to evaluate the brightness integral [GHz].
     T_0
-        Interplanetary temperature at 1 AU.
+        Dust grain temperature at 1 AU.
     delta
-        Interplanetary temperature power law parameter.
+        Dust grain temperature power law parameter.
     emissivity
         Frequency and component dependant emissivity factor representing the
         deviation of the emisstion from a black body.
@@ -78,10 +78,8 @@ def get_emission_at_step(
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
     density = component.compute_density(X_helio=X_helio, X_earth=X_earth)
-    interplanetary_temperature = get_interplanetary_temperature(R_helio, T_0, delta)
-    blackbody_emission = get_blackbody_emission_nu(
-        frequency, interplanetary_temperature
-    )
+    temperature = get_dust_grain_temperature(R_helio, T_0, delta)
+    blackbody_emission = get_blackbody_emission_nu(frequency, temperature)
 
     emission = (1 - albedo) * (emissivity * blackbody_emission)
 

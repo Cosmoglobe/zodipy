@@ -41,23 +41,23 @@ def get_blackbody_emission_nu(
     return term1 / term2
 
 
-def get_interplanetary_temperature(
+def get_dust_grain_temperature(
     R: float | NDArray[np.floating], T_0: float, delta: float
 ) -> float | NDArray[np.floating]:
-    """Returns the Interplanetary Temperature given a radial distance from the Sun.
+    """Returns the dust grain temperature given a radial distance from the Sun.
 
     Parameters
     ----------
     R
         Radial distance from the sun in ecliptic heliocentric coordinates [AU / 1AU].
     T_0
-        Temperature of the solar system at 1 AU [K].
+        Temperature of dust grains located 1 AU from the Sun [K].
     delta
         Powerlaw index.
 
     Returns
     -------
-        Interplanetary temperature [K].
+        Dust grain temperature [K].
     """
 
     return T_0 * R**-delta
