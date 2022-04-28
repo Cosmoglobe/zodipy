@@ -42,8 +42,8 @@ def tabulate_density(
 
     earth_position = np.reshape(earth_position, (3, 1, 1, 1))
 
-    density_grid = np.zeros((model.n_components, *grid.shape[1:]))
-    for idx, comp in enumerate(model.components.values()):
+    density_grid = np.zeros((model.n_comps, *grid.shape[1:]))
+    for idx, comp in enumerate(model.comps.values()):
         comp.X_0 = np.reshape(comp.X_0, (3, 1, 1, 1))
         density_grid[idx] = comp.compute_density(
             X_helio=grid,

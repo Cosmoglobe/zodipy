@@ -11,10 +11,10 @@ import numpy as np
 from numpy.typing import NDArray
 import quadpy
 
-from ._emission import get_emission_at_step
-from ._decorators import validate_frequency, validate_angles, validate_pixels
-from ._ephemeris import get_solar_system_positions
-from ._line_of_sight import get_line_of_sights, DISTANCE_TO_JUPITER
+from ._emission import compute_comp_emission_at_step
+from ._decorators import validate_freq, validate_angles, validate_pixels
+from ._ephemeris import get_obs_earth_positions
+from ._line_of_sight import get_line_of_sight_start_stop, DISTANCE_TO_JUPITER
 from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._unit_vectors import (
     get_unit_vectors_from_angles,
@@ -28,7 +28,7 @@ class Zodipy:
     """The Zodipy interface.
 
     Simulate the Zodiacal emission that a Solar System observer is predicted to
-    observer given the DIRBE Interplanetary Dust model or other models which 
+    observer given the DIRBE Interplanetary Dust model or other models which
     extend the DIRBE model to other frequencies.
 
     Parameters
@@ -100,7 +100,7 @@ class Zodipy:
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
-    @validate_frequency
+    @validate_freq
     @validate_angles
     def get_emission_ang(
         self,
@@ -167,8 +167,8 @@ class Zodipy:
             lonlat=lonlat,
         )
 
-        emission = self._get_emission(
-            frequency=freq,
+        emission = self._compute_emission(
+            freq=freq,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -180,7 +180,7 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @validate_frequency
+    @validate_freq
     @validate_pixels
     def get_emission_pix(
         self,
@@ -237,8 +237,8 @@ class Zodipy:
             nside=nside,
         )
 
-        emission = self._get_emission(
-            frequency=freq,
+        emission = self._compute_emission(
+            freq=freq,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -253,7 +253,7 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
     @validate_angles
-    @validate_frequency
+    @validate_freq
     def get_binned_emission_ang(
         self,
         freq: u.Quantity[u.Hz] | u.Quantity[u.m],
@@ -324,8 +324,8 @@ class Zodipy:
             lonlat=lonlat,
         )
 
-        emission = self._get_emission(
-            frequency=freq,
+        emission = self._compute_emission(
+            freq=freq,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -340,7 +340,7 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @validate_frequency
+    @validate_freq
     @validate_pixels
     def get_binned_emission_pix(
         self,
@@ -398,8 +398,8 @@ class Zodipy:
             nside=nside,
         )
 
-        emission = self._get_emission(
-            frequency=freq,
+        emission = self._compute_emission(
+            freq=freq,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -414,49 +414,39 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    def _get_emission(
+    def _compute_emission(
         self,
-        frequency: u.Quantity[u.GHz],
+        freq: u.Quantity[u.GHz],
         obs: str,
         obs_time: Time,
         unit_vectors: NDArray[np.floating],
-        indicies: NDArray[np.floating],
+        indicies: NDArray[np.integer],
         binned: bool = False,
         obs_pos: u.Quantity[u.AU] | None = None,
-        pixels: NDArray[np.floating] | None = None,
+        pixels: NDArray[np.integer] | None = None,
         nside: int | None = None,
     ) -> NDArray[np.floating]:
         """Computes the component-wise Zodiacal emission."""
 
-        observer_position, earth_position = get_solar_system_positions(
-            observer=obs,
-            time_of_observation=obs_time,
-            observer_position=obs_pos,
+        observer_position, earth_position = get_obs_earth_positions(
+            obs, obs_time, obs_pos
         )
 
-        # Model includes scattering so we compute the Solar irradiance.
-        if self.model.albedos is not None:
-            solar_irradiance = self.solar_irradiance_model.get_solar_irradiance(
-                frequency, self.extrapolate
-            )
-        else:
-            solar_irradiance = 0
-
-        start, stop = get_line_of_sights(
-            cutoff=self.cutoff,
-            observer_position=observer_position,
-            unit_vectors=unit_vectors,
+        solar_irradiance = self.solar_irradiance_model.interpolate_solar_irradiance(
+            freq, self.model.albedos, self.extrapolate
         )
 
-        output_shape = (
-            self.model.n_components,
-            hp.nside2npix(nside) if binned else len(indicies),
+        start, stop = get_line_of_sight_start_stop(
+            self.cutoff, observer_position, unit_vectors
         )
-        emission = np.zeros(output_shape)
 
-        for idx, (label, component) in enumerate(self.model.components.items()):
-            # We get the interpolated/extrapolated model parameters.
-            source_parameters = self.model.get_source_parameters(label, frequency)
+        emission = np.zeros(
+            (self.model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
+        )
+
+        # For each component, compute the integrated line of sight emission
+        for idx, (label, comp) in enumerate(self.model.comps.items()):
+            source_parameters = self.model.interpolate_source_parameters(label, freq)
             emissivity, albedo, phase_coefficients = source_parameters
 
             # Here we create a partial function that will be passed to the
@@ -464,15 +454,15 @@ class Zodipy:
             # is the geometrical dimensionality, n is the number of different
             # pointings, and p is the number of integration points of the
             # quadrature.
-            emission_integrand = partial(
-                get_emission_at_step,
+            emission_comp_integrand = partial(
+                compute_comp_emission_at_step,
                 start=start,
                 stop=np.expand_dims(stop, axis=-1),
                 X_obs=np.expand_dims(observer_position, axis=-1),
                 X_earth=np.expand_dims(earth_position, axis=-1),
                 u_los=np.expand_dims(unit_vectors, axis=-1),
-                component=component,
-                frequency=frequency.value,
+                comp=comp,
+                freq=freq.value,
                 T_0=self.model.T_0,
                 delta=self.model.delta,
                 emissivity=emissivity,
@@ -482,7 +472,7 @@ class Zodipy:
             )
 
             integrated_comp_emission = self.integration_scheme.integrate(
-                emission_integrand, [-1, 1]
+                emission_comp_integrand, [-1, 1]
             )
             # We convert the integral from [-1, 1] back to [start, stop].
             integrated_comp_emission *= 0.5 * (stop - start)

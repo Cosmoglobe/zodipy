@@ -9,6 +9,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ._source_functions import SPECIFIC_INTENSITY_UNITS
+from ._component_label import ComponentLabel
 
 
 @dataclass(frozen=True)
@@ -62,19 +63,25 @@ class SolarIrradianceModel:
 
         return SolarIrradianceModel(name, spectrum, irradiance)
 
-    def get_solar_irradiance(
-        self, frequency: u.Quantity[u.Hz] | u.Quantity[u.m], extrapolate: bool
+    def interpolate_solar_irradiance(
+        self,
+        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
+        albedos: dict[ComponentLabel, tuple[float, ...]] | None,
+        extrapolate: bool,
     ) -> float:
         """Returns the interpolated / extrapolated solar irradiance."""
 
-        frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
+        if albedos is None:
+            return 0
+
+        freq = freq.to(self.spectrum.unit, equivalencies=u.spectral())
         interpolator = interp1d(
             x=self.spectrum.value,
             y=self.irradiance.value,
             fill_value="extrapolate" if extrapolate else None,
         )
         try:
-            solar_flux = interpolator(frequency.value)
+            solar_flux = interpolator(freq.value)
         except ValueError:
             raise ValueError(
                 f"Solar flux model {self.name!r} is only valid in the "

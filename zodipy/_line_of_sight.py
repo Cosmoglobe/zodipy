@@ -8,10 +8,8 @@ DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
 
 
-def get_line_of_sights(
-    cutoff: float,
-    observer_position: NDArray[np.floating],
-    unit_vectors: NDArray[np.floating],
+def get_line_of_sight_start_stop(
+    cutoff: float, obs_pos: NDArray[np.floating], unit_vectors: NDArray[np.floating]
 ) -> tuple[float, NDArray[np.floating]]:
     """
     Returns the start and stop positions along the line of sights for an
@@ -19,22 +17,20 @@ def get_line_of_sights(
     corresponding to the pointing.
     """
 
-    stop = _get_line_of_sight_endpoints(cutoff, observer_position, unit_vectors)
+    stop = _get_line_of_sight_endpoints(cutoff, obs_pos, unit_vectors)
 
     return EPS, stop
 
 
 def _get_line_of_sight_endpoints(
-    cutoff: float,
-    observer_position: NDArray[np.floating],
-    unit_vectors: NDArray[np.floating],
+    cutoff: float, obs_pos: NDArray[np.floating], unit_vectors: NDArray[np.floating]
 ) -> NDArray[np.floating]:
     """
     Computes the distance from the observer to the point along the line of
     sight which intersects the the sphere of length r_max around the Sun.
     """
 
-    x, y, z = observer_position.flatten()
+    x, y, z = obs_pos.flatten()
 
     r = np.sqrt(x**2 + y**2 + z**2)
     theta = np.arctan2(y, x)

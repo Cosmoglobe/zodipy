@@ -21,7 +21,7 @@ class Model:
     """
 
     name: str
-    components: dict[ComponentLabel, Component]
+    comps: dict[ComponentLabel, Component]
     spectrum: u.Quantity[u.Hz] | u.Quantity[u.m]
     emissivities: dict[ComponentLabel, tuple[float, ...]]
     albedos: dict[ComponentLabel, tuple[float, ...]] | None = None
@@ -30,34 +30,32 @@ class Model:
     delta: float = DELTA_DIRBE
 
     @property
-    def n_components(self) -> int:
-        return len(self.components)
+    def n_comps(self) -> int:
+        return len(self.comps)
 
-    def get_source_parameters(
-        self,
-        component_label: ComponentLabel,
-        frequency: u.Quantity[u.GHz] | u.Quantity[u.m],
+    def interpolate_source_parameters(
+        self, comp_label: ComponentLabel, freq: u.Quantity[u.GHz] | u.Quantity[u.m]
     ) -> tuple[float, float, tuple[float, float, float]]:
         """
         Returns interpolated/extrapolated source parameters for a component
         given a frequency.
         """
 
-        frequency = frequency.to(self.spectrum.unit, equivalencies=u.spectral())
+        freq = freq.to(self.spectrum.unit, equivalencies=u.spectral())
         emissivity_interpolator = interp1d(
             x=self.spectrum,
-            y=self.emissivities[component_label],
+            y=self.emissivities[comp_label],
             fill_value="extrapolate",
         )
-        emissivity = emissivity_interpolator(frequency)
+        emissivity = emissivity_interpolator(freq)
 
         if self.albedos is not None:
             albedo_interpolator = interp1d(
                 x=self.spectrum,
-                y=self.albedos[component_label],
+                y=self.albedos[comp_label],
                 fill_value="extrapolate",
             )
-            albedo = albedo_interpolator(frequency)
+            albedo = albedo_interpolator(freq)
         else:
             albedo = 0.0
 
@@ -67,18 +65,18 @@ class Model:
                 y=np.asarray(self.phase_coefficients),
                 fill_value="extrapolate",
             )
-            phase_coefficient = phase_coefficient_interpolator(frequency)
+            phase_coefficient = phase_coefficient_interpolator(freq)
         else:
             phase_coefficient = [0.0 for _ in range(3)]
 
         return emissivity, albedo, tuple(phase_coefficient)
 
     def __repr__(self) -> str:
-        component_names = [component_label.value for component_label in self.components]
+        comp_names = [comp_label.value for comp_label in self.comps]
         repr = f"{type(self).__name__}( \n"
         repr += f"   name: {self.name!r},\n"
         repr += "   components: (\n"
-        for name in component_names:
+        for name in comp_names:
             repr += f"      {name!r},\n"
         repr += "   ),\n"
         repr += "   thermal: True,\n"
@@ -103,7 +101,7 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        components: dict[ComponentLabel, Component],
+        comps: dict[ComponentLabel, Component],
         spectrum: u.Quantity[u.Hz] | u.Quantity[u.m],
         emissivities: dict[ComponentLabel, tuple[float, ...]],
         albedos: dict[ComponentLabel, tuple[float, ...]] | None = None,
@@ -121,7 +119,7 @@ class ModelRegistry:
         name
             String representing the name of the model. This is the name that is
             used for the 'model' argument when initializing `Zodipy`.
-        components
+        comps
             Dict mapping `CompLabel`s to `Component` classes.
         spectrum
             The spectrum (frequency or length units) corresponding to the
@@ -139,7 +137,7 @@ class ModelRegistry:
             Dust grain temperature at 1 AU. Defaults to the DIRBE model value.
         delta
             Dust grain temperature powerlaw parameter describing how the
-            temperature falls with radial distance from the Sun. Defaults to the 
+            temperature falls with radial distance from the Sun. Defaults to the
             DIRBE model value.
         """
 
@@ -148,7 +146,7 @@ class ModelRegistry:
 
         self._registry[name] = Model(
             name=name,
-            components=components,
+            comps=comps,
             spectrum=spectrum,
             emissivities=emissivities,
             T_0=T_0,

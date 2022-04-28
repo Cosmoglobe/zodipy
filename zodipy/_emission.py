@@ -5,14 +5,14 @@ from numpy.typing import NDArray
 
 from ._component import Component
 from ._source_functions import (
-    get_blackbody_emission_nu,
+    get_blackbody_emission,
     get_dust_grain_temperature,
     get_phase_function,
     get_scattering_angle,
 )
 
 
-def get_emission_at_step(
+def compute_comp_emission_at_step(
     r: float | NDArray[np.floating],
     *,
     start: float,
@@ -20,8 +20,8 @@ def get_emission_at_step(
     X_obs: NDArray[np.floating],
     X_earth: NDArray[np.floating],
     u_los: NDArray[np.floating],
-    component: Component,
-    frequency: float,
+    comp: Component,
+    freq: float,
     T_0: float,
     delta: float,
     emissivity: float,
@@ -43,9 +43,9 @@ def get_emission_at_step(
         The heliocentric ecliptic cartesian position of the Earth [AU ].
     u_los
         Heliocentric ecliptic cartesian unit vectors for each pointing [AU].
-    component
+    comp
         Interplanetary Dust component.
-    frequency
+    freq
         Frequency at which to evaluate the brightness integral [GHz].
     T_0
         Dust grain temperature at 1 AU.
@@ -77,9 +77,9 @@ def get_emission_at_step(
     X_helio = X_los + X_obs
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
-    density = component.compute_density(X_helio=X_helio, X_earth=X_earth)
+    density = comp.compute_density(X_helio, X_earth=X_earth)
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
-    blackbody_emission = get_blackbody_emission_nu(frequency, temperature)
+    blackbody_emission = get_blackbody_emission(freq, temperature)
 
     emission = (1 - albedo) * (emissivity * blackbody_emission)
 

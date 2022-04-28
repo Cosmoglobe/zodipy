@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .zodipy import Zodipy
 
 
-def validate_frequency(function):
+def validate_freq(function):
     """
     Decorator that validates the user inputed frequency or wavelength. This
     function also converts the 'freq' argument to units of GHz.

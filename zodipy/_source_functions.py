@@ -16,27 +16,26 @@ T_sun = 5778  # K
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
 
-def get_blackbody_emission_nu(
-    nu: float | NDArray[np.floating],
-    T: float | NDArray[np.floating],
+def get_blackbody_emission(
+    freq: float | NDArray[np.floating], T: float | NDArray[np.floating]
 ) -> float | NDArray[np.floating]:
-    """Returns the blackbody emission.
+    """Returns the blackbody emission given a frequency.
 
     Parameters
     ----------
+    freq
+        Frequency [GHz].
     T
         Temperature of the blackbody [K].
-    nu
-        Frequency [GHz].
 
     Returns
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
 
-    nu *= 1e9
-    term1 = (2 * h * nu**3) / c**2
-    term2 = np.expm1(((h * nu) / (k_B * T)))
+    freq *= 1e9
+    term1 = (2 * h * freq**3) / c**2
+    term2 = np.expm1(((h * freq) / (k_B * T)))
 
     return term1 / term2
 

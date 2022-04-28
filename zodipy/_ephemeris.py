@@ -22,39 +22,35 @@ from numpy.typing import NDArray
 DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 
 
-def get_solar_system_positions(
-    observer: str,
-    time_of_observation: Time,
-    observer_position: u.Quantity[u.AU] | None,
+def get_obs_earth_positions(
+    obs: str, obs_time: Time, obs_pos: u.Quantity[u.AU] | None
 ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
 
-    earth_position = _get_earth_position(time_of_observation)
-    if observer_position is None:
-        observer_position = _get_observer_position(
-            observer, time_of_observation, earth_position
-        )
+    earth_position = _get_earth_position(obs_time)
+    if obs_pos is None:
+        obs_pos = _get_observer_position(obs, obs_time, earth_position)
 
-    return observer_position.reshape(3, 1).value, earth_position.reshape(3, 1).value
+    return obs_pos.reshape(3, 1).value, earth_position.reshape(3, 1).value
 
 
-def _get_earth_position(time_of_observation: Time) -> u.Quantity[u.AU]:
+def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:
     """Returns the position of the Earth given an ephemeris and observation time."""
 
-    earth_skycoordinate = get_body("earth", time_of_observation)
+    earth_skycoordinate = get_body("earth", obs_time)
     earth_skycoordinate = earth_skycoordinate.transform_to(HeliocentricMeanEcliptic)
 
     return earth_skycoordinate.cartesian.xyz.to(u.AU)
 
 
 def _get_observer_position(
-    observer: str, time_of_observation: Time, earth_position: u.Quantity[u.AU]
+    obs: str, obs_time: Time, earth_pos: u.Quantity[u.AU]
 ) -> u.Quantity[u.AU]:
     """Returns the position of the Earth and the observer."""
 
-    if observer.lower() == "semb-l2":
-        return _get_sun_earth_moon_barycenter(earth_position)
+    if obs.lower() == "semb-l2":
+        return _get_sun_earth_moon_barycenter(earth_pos)
 
-    observer_skycoordinate = get_body(observer, time_of_observation)
+    observer_skycoordinate = get_body(obs, obs_time)
     observer_skycoordinate = observer_skycoordinate.transform_to(
         HeliocentricMeanEcliptic
     )
