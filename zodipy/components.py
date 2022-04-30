@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from ._component import Band, Cloud, Component, Feature, Ring
 from ._component_label import ComponentLabel
-from ._component import Component, Cloud, Band, Ring, Feature
-
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(

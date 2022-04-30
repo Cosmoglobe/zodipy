@@ -1,7 +1,5 @@
+from . import components, source_parameters
 from ._model import model_registry
-from . import components
-from . import source_parameters
-
 
 model_registry.register_model(
     name="dirbe",

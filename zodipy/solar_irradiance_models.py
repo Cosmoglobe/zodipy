@@ -1,8 +1,7 @@
 import astropy.units as u
 
-from .source_parameters import SPECTRUM_DIRBE, SOLAR_IRRADIANCE_DIRBE
 from ._solar_irradiance_model import solar_irradiance_model_registry
-
+from .source_parameters import SOLAR_IRRADIANCE_DIRBE, SPECTRUM_DIRBE
 
 # Temporary storage location for Solar irradiance tables
 DOWNLOAD_URL = "http://tsih3.uio.no/www_cmb/metins/"

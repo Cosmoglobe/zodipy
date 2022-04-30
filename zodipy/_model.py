@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 
 from ._component import Component
 from ._component_label import ComponentLabel
-from .source_parameters import T_0_DIRBE, DELTA_DIRBE
+from .source_parameters import DELTA_DIRBE, T_0_DIRBE
 
 
 @dataclass(frozen=True)

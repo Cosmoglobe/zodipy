@@ -12,12 +12,11 @@ pointing to Earth from the Sun.
 
 from __future__ import annotations
 
-from astropy.coordinates import HeliocentricMeanEcliptic, get_body
 import astropy.units as u
-from astropy.time import Time
 import numpy as np
+from astropy.coordinates import HeliocentricMeanEcliptic, get_body
+from astropy.time import Time
 from numpy.typing import NDArray
-
 
 DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 

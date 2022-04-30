@@ -3,23 +3,20 @@ from __future__ import annotations
 from functools import partial
 from typing import Literal, Sequence
 
-from astropy.coordinates import solar_system_ephemeris
-from astropy.time import Time
 import astropy.units as u
 import healpy as hp
 import numpy as np
-from numpy.typing import NDArray
 import quadpy
+from astropy.coordinates import solar_system_ephemeris
+from astropy.time import Time
+from numpy.typing import NDArray
 
+from ._decorators import validate_angles, validate_freq, validate_pixels
 from ._emission import compute_comp_emission_at_step
-from ._decorators import validate_freq, validate_angles, validate_pixels
 from ._ephemeris import get_obs_earth_positions
-from ._line_of_sight import get_line_of_sight_start_stop, DISTANCE_TO_JUPITER
+from ._line_of_sight import DISTANCE_TO_JUPITER, get_line_of_sight_start_stop
 from ._source_functions import SPECIFIC_INTENSITY_UNITS
-from ._unit_vectors import (
-    get_unit_vectors_from_angles,
-    get_unit_vectors_from_pixels,
-)
+from ._unit_vectors import get_unit_vectors_from_angles, get_unit_vectors_from_pixels
 from .models import model_registry
 from .solar_irradiance_models import solar_irradiance_model_registry
 

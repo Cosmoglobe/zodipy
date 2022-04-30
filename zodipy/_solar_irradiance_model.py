@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 
 import astropy.constants as const
 import astropy.units as u
-from astropy.utils.data import download_file
 import numpy as np
+from astropy.utils.data import download_file
 from scipy.interpolate import interp1d
 
-from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._component_label import ComponentLabel
+from ._source_functions import SPECIFIC_INTENSITY_UNITS
 
 
 @dataclass(frozen=True)

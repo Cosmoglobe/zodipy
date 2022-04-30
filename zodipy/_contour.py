@@ -6,7 +6,6 @@ from numpy.typing import NDArray
 from ._model import Model
 from .models import model_registry
 
-
 DEFAULT_EARTH_POS = (1, 0, 0)
 
 

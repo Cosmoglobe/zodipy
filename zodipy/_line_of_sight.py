@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-
 DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
 

@@ -7,7 +7,6 @@ import astropy.units as u
 import numpy as np
 from numpy.typing import NDArray
 
-
 h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
