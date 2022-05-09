@@ -9,20 +9,19 @@
 ---
 
 
-*Zodipy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
+ZodiPy is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
 
 ![plot](imgs/zodipy_map.png)
 
 
 # Usage
-See the [documentation](https://zodipy.readthedocs.io/en/latest/) for a broader introduction to using *Zodipy*.
+See the [documentation](https://zodipy.readthedocs.io/en/latest/) for a broader introduction to using ZodiPy.
 
 **Interplanetary Dust models:** select between built in models.
 ```python
 from zodipy import Zodipy
 
-model = Zodipy(model="DIRBE") # DIRBE
-model = Zodipy(model="Planck18") # Planck 2018
+model = Zodipy(model="Planck18")
 ```
 
 **Get emission from a point on the sky:** choose a frequency/wavelength, an observer, a time of observation, and angular coordinates (co-latitude, longitude).
@@ -42,8 +41,8 @@ model.get_emission_ang(
 
 **Get emission from a sequence of angular coordinates:** `theta` and `phi` can be a sequence of angles that can represent some time-ordered pointing.
 ```python
-theta = [10.1, 10.5, 11.1, 11.5] * u.deg # Longitude
-phi = [40.2, 39.9, 39.8, 41.3] * u.deg # Latitude
+theta = [10.1, 10.5, 11.1, 11.5] * u.deg
+phi = [40.2, 39.9, 39.8, 41.3] * u.deg
 
 model.get_emission_ang(
     25*u.micron,
@@ -69,7 +68,7 @@ model.get_emission_pix(
 >> <Quantity [17.77385144, 19.7889428 , 22.44797121] MJy / sr>
 ```
 
-**Get binned emission component-wise:** the emission can be binned to a HEALPIX map, and also returned component-wise.
+**Get binned emission component-wise:** the emission can be binned to a HEALPix map, and also returned component-wise.
 ```python
 import healpy as hp
 import numpy as np
@@ -88,12 +87,12 @@ model.get_binned_emission_pix(
 ```
 
 # Documentation
-A detailed introduction along with a tutorial of how to use *Zodipy* will shortly be available in the [documentation](https://zodipy.readthedocs.io/en/latest/).
+A detailed introduction along with a tutorial of how to use ZodiPy will shortly be available in the [documentation](https://zodipy.readthedocs.io/en/latest/).
 # Installing
-Zodipy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
+ZodiPy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
 # Scientific paper
-- San et al. (2022). *Zodipy: software for simulating Zodiacal Emission.* Manuscript in preparation.
+- San et al. (2022). *ZodiPy: software for simulating Zodiacal Emission.* Manuscript in preparation.
 
 
-<!-- *Zodipy* defaults to using the interplanetary dust model developed by the DIRBE team, and the `de432s` JPL ephemeris (10 MB file downloaded and cached first time `Zodipy` is initialized). The ephemeris is used to compute the position of the relevant Solar System bodies through the `astropy.coordinates.solar_system_ephemeris` api.  -->
+<!-- ZodiPy defaults to using the interplanetary dust model developed by the DIRBE team, and the `de432s` JPL ephemeris (10 MB file downloaded and cached first time `Zodipy` is initialized). The ephemeris is used to compute the position of the relevant Solar System bodies through the `astropy.coordinates.solar_system_ephemeris` api.  -->
