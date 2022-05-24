@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Literal, Sequence
+from typing import Literal, Sequence, Union
 
 import astropy.units as u
 import healpy as hp
@@ -19,6 +19,10 @@ from ._source_functions import SPECIFIC_INTENSITY_UNITS
 from ._unit_vectors import get_unit_vectors_from_angles, get_unit_vectors_from_pixels
 from .models import model_registry
 from .solar_irradiance_models import solar_irradiance_model_registry
+
+HEALPixIndicies = Union[int, Sequence[int], NDArray[np.integer]]
+SkyAngles = Union[u.Quantity[u.deg], u.Quantity[u.rad]]
+FrequencyOrWavelength = Union[u.Quantity[u.Hz], u.Quantity[u.m]]
 
 
 class Zodipy:
@@ -43,7 +47,9 @@ class Zodipy:
         Only relevant at wavelenghts around 1 micron. Default is the tabulated
         DIRBE Solar flux. Other models requires downloading (and caching)
         small (<1MB) files containing the tabulated model spectra and
-        irradiance.
+        irradiance. NOTE: This will be changed to be a part of the IPD model
+        instead of a separate option since it is likely to affect the fitted
+        IPD model parameters.
     extrapolate
         If True, then the spectral quantities in the model will be linearly
         extrapolated to the requested frequency if this is outside of the
@@ -77,21 +83,6 @@ class Zodipy:
         self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
-    def ephemeris(self) -> str:
-        """The ephemeris used to compute Solar System positions."""
-
-        return self._ephemeris
-
-    @ephemeris.setter
-    def ephemeris(self, value: str):
-        try:
-            solar_system_ephemeris.set(value)
-        except (ValueError, AttributeError):
-            raise ValueError(f"{value!r} is not a supported astropy ephemeris.")
-
-        self._ephemeris = value
-
-    @property
     def supported_observers(self) -> list[str]:
         """Returns a list of all supported observers given the ephemeris."""
 
@@ -101,9 +92,9 @@ class Zodipy:
     @validate_angles
     def get_emission_ang(
         self,
-        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
-        theta: u.Quantity[u.rad] | u.Quantity[u.deg],
-        phi: u.Quantity[u.rad] | u.Quantity[u.deg],
+        freq: FrequencyOrWavelength,
+        theta: SkyAngles,
+        phi: SkyAngles,
         obs: str = "earth",
         obs_time: Time = Time.now(),
         obs_pos: u.Quantity[u.AU] | None = None,
@@ -181,8 +172,8 @@ class Zodipy:
     @validate_pixels
     def get_emission_pix(
         self,
-        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
-        pixels: int | Sequence[int] | NDArray[np.integer],
+        freq: FrequencyOrWavelength,
+        pixels: HEALPixIndicies,
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
@@ -253,9 +244,9 @@ class Zodipy:
     @validate_freq
     def get_binned_emission_ang(
         self,
-        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
-        theta: u.Quantity[u.rad] | u.Quantity[u.deg],
-        phi: u.Quantity[u.rad] | u.Quantity[u.deg],
+        freq: FrequencyOrWavelength,
+        theta: SkyAngles,
+        phi: SkyAngles,
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
@@ -341,8 +332,8 @@ class Zodipy:
     @validate_pixels
     def get_binned_emission_pix(
         self,
-        freq: u.Quantity[u.Hz] | u.Quantity[u.m],
-        pixels: int | Sequence[int] | NDArray[np.integer],
+        freq: FrequencyOrWavelength,
+        pixels: HEALPixIndicies,
         nside: int,
         obs: str = "earth",
         obs_time: Time = Time.now(),
@@ -441,6 +432,12 @@ class Zodipy:
             (self.model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
         )
 
+        # Preparing quantities for broadcasting
+        stop_expanded = np.expand_dims(stop, axis=-1)
+        observer_position = np.expand_dims(observer_position, axis=-1)
+        earth_position = np.expand_dims(earth_position, axis=-1)
+        unit_vectors = np.expand_dims(unit_vectors, axis=-1)
+
         # For each component, compute the integrated line of sight emission
         for idx, (label, comp) in enumerate(self.model.comps.items()):
             source_parameters = self.model.interpolate_source_parameters(label, freq)
@@ -454,10 +451,10 @@ class Zodipy:
             emission_comp_integrand = partial(
                 compute_comp_emission_at_step,
                 start=start,
-                stop=np.expand_dims(stop, axis=-1),
-                X_obs=np.expand_dims(observer_position, axis=-1),
-                X_earth=np.expand_dims(earth_position, axis=-1),
-                u_los=np.expand_dims(unit_vectors, axis=-1),
+                stop=stop_expanded,
+                X_obs=observer_position,
+                X_earth=earth_position,
+                u_los=unit_vectors,
                 comp=comp,
                 freq=freq.value,
                 T_0=self.model.T_0,

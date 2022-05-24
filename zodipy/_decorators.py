@@ -60,10 +60,10 @@ def validate_angles(function):
         theta = theta.to(u.deg) if lonlat is not None else theta.to(u.rad)
         phi = phi.to(u.deg) if lonlat is not None else phi.to(u.rad)
 
-        if theta.ndim == 0:
-            theta = np.expand_dims(theta, axis=0)
-        if phi.ndim == 0:
-            phi = np.expand_dims(phi, axis=0)
+        if theta.isscalar:
+            theta = u.Quantity([theta])
+        if phi.isscalar:
+            phi = u.Quantity([phi])
 
         return function(theta=theta, phi=phi, *args, **kwargs)
 
@@ -81,8 +81,7 @@ def validate_pixels(function):
         **kwargs,
     ):
 
-        max_pixel_number = hp.nside2npix(nside)
-        if np.max(pixels) > max_pixel_number:
+        if np.max(pixels) > hp.nside2npix(nside):
             raise ValueError("invalid pixel number given nside")
 
         if np.ndim(pixels) == 0:

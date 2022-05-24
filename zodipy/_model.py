@@ -11,7 +11,7 @@ from ._component_label import ComponentLabel
 from .source_parameters import DELTA_DIRBE, T_0_DIRBE
 
 
-@dataclass(frozen=True)
+@dataclass
 class Model:
     """Interplanetary Dust model.
 
