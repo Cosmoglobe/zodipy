@@ -92,7 +92,7 @@ A detailed introduction along with a tutorial of how to use ZodiPy will shortly 
 ZodiPy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
 # Scientific paper
-See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION)
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib)
 
 - [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962)
 
