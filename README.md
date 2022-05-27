@@ -92,7 +92,16 @@ A detailed introduction along with a tutorial of how to use ZodiPy will shortly 
 ZodiPy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
 # Scientific paper
-- San et al. (2022). *ZodiPy: software for simulating Zodiacal Emission.* Manuscript in preparation.
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION) 
 
+- [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962)
 
-<!-- ZodiPy defaults to using the interplanetary dust model developed by the DIRBE team, and the `de432s` JPL ephemeris (10 MB file downloaded and cached first time `Zodipy` is initialized). The ephemeris is used to compute the position of the relevant Solar System bodies through the `astropy.coordinates.solar_system_ephemeris` api.  -->
+# Funding
+This work has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreements No 776282 (COMPET-4; BeyondPlanck), 772253 (ERC; bits2cosmology) and 819478 (ERC; Cosmoglobe).
+
+<table align="center">
+    <tr>
+        <td><img src="https://github.com/Cosmoglobe/Cosmoglobe/tree/main/imgs/LOGO_ERC-FLAG_EU_.jpg" height="200"></td>
+        <td><img src="https://github.com/Cosmoglobe/Cosmoglobe/tree/main/imgs/horizon2020_logo.jpg" height="200"></td>
+    </tr>
+</table>
