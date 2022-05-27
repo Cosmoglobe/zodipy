@@ -92,7 +92,7 @@ A detailed introduction along with a tutorial of how to use ZodiPy will shortly 
 ZodiPy is available on PyPI and can be installed with ``pip install zodipy`` (Python >= 3.8 required).
 
 # Scientific paper
-See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION) 
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION)
 
 - [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962)
 
@@ -101,7 +101,7 @@ This work has received funding from the European Union's Horizon 2020 research a
 
 <table align="center">
     <tr>
-        <td><img src="https://github.com/Cosmoglobe/Cosmoglobe/tree/main/imgs/LOGO_ERC-FLAG_EU_.jpg" height="200"></td>
-        <td><img src="https://github.com/Cosmoglobe/Cosmoglobe/tree/main/imgs/horizon2020_logo.jpg" height="200"></td>
+        <td><img src="https://user-images.githubusercontent.com/28634670/170697040-d5ec2935-29d0-4847-8999-9bc4eaa59e56.jpeg" height="200"></td>
+        <td><img src="https://user-images.githubusercontent.com/28634670/170697140-b010aa69-9f9a-44c0-b702-8a05ec0b6d3e.jpeg" height="200"></td>
     </tr>
 </table>
