@@ -1,0 +1,1 @@
+::: zodipy._component.Component

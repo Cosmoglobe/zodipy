@@ -1,0 +1,31 @@
+site_name: ZodiPy
+
+theme:
+  name: "material"
+  # logo: "img/zodipy_logo.png"
+  # palette:
+  #   primary: blue grey
+  #   accent: deep orange
+
+nav:
+  - Overview: index.md
+  - introduction.md
+  - install.md
+  - usage.md
+  - reference.md
+
+plugins:
+  - mkdocstrings
+  # - exclude:
+  #     glob:
+  #     - _build/*
+  #     - build/*
+  #     - examples/*
+  #     - requirements.txt
+
+# markdown_extensions:
+#   - pymdownx.highlight:
+#       anchor_linenums: true
+#   - pymdownx.inlinehilite
+#   - pymdownx.snippets
+#   - pymdownx.superfences
