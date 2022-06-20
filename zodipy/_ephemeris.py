@@ -21,7 +21,7 @@ from numpy.typing import NDArray
 DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
 
 
-def get_obs_earth_positions(
+def get_obs_and_earth_positions(
     obs: str, obs_time: Time, obs_pos: u.Quantity[u.AU] | None
 ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
 

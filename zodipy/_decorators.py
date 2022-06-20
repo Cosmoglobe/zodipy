@@ -45,7 +45,7 @@ def validate_freq(function):
     return wrapper
 
 
-def validate_angles(function):
+def validate_ang(function):
     """Decorator that validates the user inputed angles."""
 
     @wraps(function)

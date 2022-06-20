@@ -18,7 +18,7 @@ def get_unit_vectors_from_pixels(
     return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))
 
 
-def get_unit_vectors_from_angles(
+def get_unit_vectors_from_ang(
     coord_in: str,
     phi: u.Quantity[u.rad] | u.Quantity[u.deg],
     theta: u.Quantity[u.rad] | u.Quantity[u.deg],
