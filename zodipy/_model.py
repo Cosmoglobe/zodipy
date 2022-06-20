@@ -8,6 +8,9 @@ from scipy.interpolate import interp1d
 
 from ._component import Component
 from ._component_label import ComponentLabel
+
+from._solar_irradiance_model import SolarIrradianceModel
+from .solar_irradiance_models import solar_irradiance_model_registry
 from .source_parameters import DELTA_DIRBE, T_0_DIRBE
 
 
@@ -25,6 +28,7 @@ class Model:
     spectrum: u.Quantity[u.Hz] | u.Quantity[u.m]
     emissivities: dict[ComponentLabel, tuple[float, ...]]
     albedos: dict[ComponentLabel, tuple[float, ...]] | None = None
+    solar_irradiance_model: SolarIrradianceModel | None = None
     phase_coefficients: list[tuple[float, ...]] | None = None
     T_0: float = T_0_DIRBE
     delta: float = DELTA_DIRBE
@@ -105,6 +109,7 @@ class ModelRegistry:
         spectrum: u.Quantity[u.Hz] | u.Quantity[u.m],
         emissivities: dict[ComponentLabel, tuple[float, ...]],
         albedos: dict[ComponentLabel, tuple[float, ...]] | None = None,
+        solar_irradiance_model: str | None = None,
         phase_coefficients: list[tuple[float, ...]] | None = None,
         T_0: float = T_0_DIRBE,
         delta: float = DELTA_DIRBE,
@@ -130,6 +135,8 @@ class ModelRegistry:
         albedos
             Albedo factor fits for each IPD component at the frequencies
             corresponding to 'spectrum'.
+        solar_irradiance_model
+            Model for the solar irradiance.
         phase_coefficients
             Coefficient fits for the phase function at the frequencies
             corresponding to 'spectrum'.
@@ -144,6 +151,17 @@ class ModelRegistry:
         if (name := name.lower()) in self._registry:
             raise ValueError(f"a model by the name {name!s} is already registered.")
 
+        if solar_irradiance_model is not None:
+            solar_model = solar_irradiance_model_registry.get_model(
+                solar_irradiance_model
+            )
+        else:
+            solar_model = solar_irradiance_model
+
+        if albedos is not None and solar_irradiance_model is None:
+            raise ValueError(
+                "albedos are provided but no solar irradiance model is provided."
+            )
         self._registry[name] = Model(
             name=name,
             comps=comps,
@@ -152,6 +170,7 @@ class ModelRegistry:
             T_0=T_0,
             delta=delta,
             albedos=albedos,
+            solar_irradiance_model=solar_model,
             phase_coefficients=phase_coefficients,
         )
 

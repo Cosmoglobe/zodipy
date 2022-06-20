@@ -7,6 +7,7 @@ model_registry.register_model(
     spectrum=source_parameters.SPECTRUM_DIRBE,
     emissivities=source_parameters.EMISSIVITY_DIRBE,
     albedos=source_parameters.ALBEDO_DIRBE,
+    solar_irradiance_model="dirbe",
     phase_coefficients=source_parameters.PHASE_FUNCTION_DIRBE,
 )
 

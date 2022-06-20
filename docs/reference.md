@@ -1,1 +1,1 @@
-::: zodipy._component.Component
+::: zodipy.zodipy.Zodipy

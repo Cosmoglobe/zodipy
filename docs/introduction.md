@@ -8,10 +8,8 @@ ZodiPy attempts to make Zodiacal emission simulations more accessible by providi
 ## Interplanetary Dust Models
 Currently, ZodiPy supports the following interplanetary dust models:
 
-- dirbe ([Kelsall et al .1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
+- dirbe ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
 - planck13 ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
 - planck15 ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P>))
 - planck18 ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P>))
 - odegard ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
-
-See the model selection section in Usage for more information.
