@@ -1,13 +1,12 @@
-<!-- # ZodiPy -->
-<center>
-   <img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%">
 
-   *ZodiPy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
+<img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%">
 
-   [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
-   ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
-   [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)![ZodiPy Logo](img/zodipy_map.png)
-</center>
+[![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
+![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+
+*ZodiPy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
+![ZodiPy Logo](img/zodipy_map.png)
 
 
 ## Example

@@ -19,8 +19,7 @@ emission = model.get_emission_ang(
 
 
 plt.plot(emission)
-plt.title("Zodiacal emission along theta with phi = 0")
 plt.xlabel("Theta [rad]")
 plt.ylabel("Emission [MJy/sr]")
-plt.savefig("zodiacal_emission_theta.png")
+plt.savefig("../img/timestream.png", dpi=300)
 plt.show()

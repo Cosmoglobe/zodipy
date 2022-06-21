@@ -33,25 +33,25 @@ FrequencyOrWavelength = Union[u.Quantity[u.Hz], u.Quantity[u.m]]
 class Zodipy:
     """The ZodiPy interface.
 
-    Used to simulate the Zodiacal emission that a Solar System observer is predicted to observer
-    given the DIRBE Interplanetary Dust model or other models which extend the DIRBE model to
-    other frequencies/wavelengths.
+    Used to simulate the Zodiacal emission that a Solar System observer is predicted to
+    observer given the DIRBE Interplanetary Dust model or other models which extend the
+    DIRBE model to other frequencies/wavelengths.
 
     Attributes:
-        model (str): Name of the interplanetary dust model to use in the simulations. Defaults to
-            DIRBE.
-        ephemeris (str): Ephemeris used to compute the positions of the observer and the Earth.
-            Defaults to 'de432s' which requires downloading (and caching) a ~10MB file. For more
-            information on available ephemeridis, please visit
+        model (str): Name of the interplanetary dust model to use in the simulations.
+            Defaults to DIRBE.
+        ephemeris (str): Ephemeris used to compute the positions of the observer and the
+            Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
+            file. For more information on available ephemeridis, please visit
             https://docs.astropy.org/en/stable/coordinates/solarsystem.html
-        extrapolate (bool): If True all spectral quantities in the selected model are linearly
-            extrapolated to the requested frequency/wavelength. If False, an Exception will be
-            raised on requested frequencies/wavelengths outside of the valid model range. Default
-            is False.
-        gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate the
-            brightness integral. Default is 50 points.
-        cutoff (float): Radial distance from the Sun at which all line of sights are truncated.
-            Defaults to 5.2 AU which is the distance to Jupiter.
+        extrapolate (bool): If True all spectral quantities in the selected model are
+            linearly extrapolated to the requested frequency/wavelength. If False, an
+            Exception will be raised on requested frequencies/wavelengths outside of the
+            valid model range. Default is False.
+        gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
+            the brightness integral. Default is 50 points.
+        cutoff (float): Radial distance from the Sun at which all line of sights are
+            truncated. Defaults to 5.2 AU which is the distance to Jupiter.
 
     """
 
@@ -92,28 +92,28 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated Zodiacal emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified in form of angles on the
-        sky given by `theta` and `phi`.
+        The pointing, for which to compute the emission, is specified in form of angles on
+        the sky given by `theta` and `phi`.
 
         Args:
             freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
-            theta: Angular co-latitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, π] rad. Units must be either radians
-                or degrees.
+            theta: Angular co-latitude coordinate of a point, or a sequence of points, on
+                the celestial sphere. Must be in the range [0, π] rad. Units must be either
+                radians or degrees.
             phi: Angular longitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, 2π] rad. Units must be either radians
-                or degrees.
+                celestial sphere. Must be in the range [0, 2π] rad. Units must be either
+                radians or degrees.
             obs_time: Time of observation.
-            obs: Name of the Solar System observer. A list of all support observers (for a given
-                ephemeridis) is specified in `supported_observers` attribute of the `Zodipy`
-                instance. Defaults to 'earth'.
+            obs: Name of the Solar System observer. A list of all support observers (for a
+                given ephemeridis) is specified in `supported_observers` attribute of the
+                `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic coordinates)
-                by default.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
 
         Returns:
             emission: Simulated Zodiacal emission in units of 'MJy/sr'.
@@ -158,22 +158,22 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated Zodiacal emission given pixel numbers.
 
-        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution given by
-        `nside`.
+        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
+        given by `nside`.
 
         Args:
             freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
-            obs: Name of the Solar System observer. A list of all support observers (for a given
-                ephemeridis) is specified in `supported_observers` attribute of the `Zodipy`
-                instance. Defaults to 'earth'.
+            obs: Name of the Solar System observer. A list of all support observers (for a
+                given ephemeridis) is specified in `supported_observers` attribute of the
+                `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic coordinates)
-                by default.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
 
         Returns:
             emission: Simulated Zodiacal emission in units of 'MJy/sr'.
@@ -219,30 +219,30 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated binned Zodiacal emission given angles on the sky.
 
-        The pointing, for which to compute the emission, is specified in form of angles on the
-        sky given by `theta` and `phi`. The emission is binned to a HEALPix map with resolution
-        given by `nside`.
+        The pointing, for which to compute the emission, is specified in form of angles on
+        the sky given by `theta` and `phi`. The emission is binned to a HEALPix map with
+        resolution given by `nside`.
 
         Args:
             freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
-            theta: Angular co-latitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, π] rad. Units must be either radians
-                or degrees.
+            theta: Angular co-latitude coordinate of a point, or a sequence of points, on
+                the celestial sphere. Must be in the range [0, π] rad. Units must be either
+                radians or degrees.
             phi: Angular longitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, 2π] rad. Units must be either radians
-                or degrees.
+                celestial sphere. Must be in the range [0, 2π] rad. Units must be either
+                radians or degrees.
             nside: HEALPix resolution parameter of the binned map.
             obs_time: Time of observation.
-            obs: Name of the Solar System observer. A list of all support observers (for a given
-                ephemeridis) is specified in `supported_observers` attribute of the `Zodipy`
-                instance. Defaults to 'earth'.
+            obs: Name of the Solar System observer. A list of all support observers (for a
+                given ephemeridis) is specified in `supported_observers` attribute of the
+                `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
-            lonlat: If True, input angles `theta`, `phi` are assumed to be longitude and latitude,
-                otherwise, they are co-latitude and longitude.
+            lonlat: If True, input angles `theta`, `phi` are assumed to be longitude and
+                latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic coordinates)
-                by default.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
 
         Returns:
             emission: Simulated Zodiacal emission in units of 'MJy/sr'.
@@ -291,22 +291,23 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Returns the simulated binned Zodiacal Emission given pixel numbers.
 
-        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution given by
-        `nside`. The emission is binned to a HEALPix map with resolution given by `nside`.
+        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
+        given by `nside`. The emission is binned to a HEALPix map with resolution given by
+        `nside`.
 
         Args:
             freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
-            obs: Name of the Solar System observer. A list of all support observers (for a given
-                ephemeridis) is specified in `supported_observers` attribute of the `Zodipy`
-                instance. Defaults to 'earth'.
+            obs: Name of the Solar System observer. A list of all support observers (for a
+                given ephemeridis) is specified in `supported_observers` attribute of the
+                `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic coordinates)
-                by default.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
 
         Returns:
             emission: Simulated Zodiacal emission in units of 'MJy/sr'.

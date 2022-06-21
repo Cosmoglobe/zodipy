@@ -1,78 +1,62 @@
-# Usage
+## Timestreams
+Below we illustrate how ZodiPy can be used to create timestreams of the Zodiacal emission.
 
-Below we illustrate a few use-cases of ZodiPy.
+### Timestream along a meridian
 
-
-
-## Timestream
-
-In the following example we make a timestream representing one sweep perpendicular to the ecliptic (`phi=0`) 
-as seen by an observer on earth 2022-06-14 given the DIRBE interplanetary dust model.
+In the following example we simulate what an observer on Earth is expected to see on 14 June, 
+2022 when looking along the prime meridian (line of constant longitude) at 30 microns, given the 
+DIRBE interplanetary dust model.
 
 ```python
-import astropy.units as u
-import matplotlib.pyplot as plt
-import numpy as np
-from astropy.time import Time
-
-from zodipy import Zodipy
-
-model = Zodipy("dirbe")
-
-theta = np.linspace(0, np.pi, 10000) * u.rad
-phi = np.zeros_like(theta)
-
-emission = model.get_emission_ang(
-    30 * u.micron,
-    theta=theta,
-    phi=phi,
-    obs_time=Time("2022-06-14"),
-    obs="earth",
-)
-
-plt.plot(emission)
-plt.title("Zodiacal emission along theta with phi = 0")
-plt.xlabel("Theta [rad]")
-plt.ylabel("Emission [MJy/sr]")
-plt.show()
-
+{!examples/get_emission_ang.py!}
 ```
 
-![Zodiacal emission timestream](img/zodiacal_emission_theta.png)
+![Zodiacal emission timestream](img/timestream.png)
 
-## Binned HEALPix map
+## HEALPix Maps
+
+Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the Zodiacal emission.
+
+### Instantaneous Ecliptic map
 
 In the following example we make an instantaneous map of of the Zodiacal emission at 857 GHz
-as seen by an observer on earth on 2022-06-14 given the Planck 2018 interplanetary dust model.
+as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.
 
 ```python
-import astropy.units as u
-import healpy as hp
-import matplotlib.pyplot as plt
-import numpy as np
-from astropy.time import Time
-
-from zodipy import Zodipy
-
-model = Zodipy("planck18")
-nside = 256
-binned_emission = model.get_binned_emission_pix(
-    857 * u.GHz,
-    pixels=np.arange(hp.nside2npix(nside)),
-    nside=nside,
-    obs_time=Time("2022-06-14"),
-    obs="earth",
-)
-
-
-hp.mollview(
-    binned_emission,
-    norm="hist",
-    title="Zodiacal emission 857 GHz (from Earth at 2022-06-14)",
-    unit="MJy/sr"
-)
-plt.savefig("zodiacal_emission_857_GHz.png")
-plt.show()
+{!examples/get_binned_emission.py!}
 ```
+![Zodiacal emission map](img/binned.png)
+*Note that the color bar is logarithmic.*
 
-![Zodiacal emission map](img/zodiacal_emission_857_GHz.png)
+### Instantaneous Galactic map
+
+We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.
+
+```python hl_lines="18"
+{!examples/get_binned_gal_emission.py!}
+```
+![Zodiacal emission map galactic](img/binned_gal.png)
+*Note that the color bar is logarithmic.*
+
+### Component-wise maps
+
+ZodiPy can also return the Zodiacal emission component-wise. In the following example we use
+the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
+feature components. For more information on the interplanetary dust models, please read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962).
+
+```python hl_lines="18"
+{!examples/get_comp_binned_emission.py!}
+```
+![Component-wise emission maps](img/binned_comp.png)
+*Note that the color bar for the Cloud component is logarithmic, while the others are linear.*
+
+
+## Gridding the Density Distribution of a Model
+
+In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
+and plot the cross section of the diffuse cloud components density in the yz-plane.
+
+```python
+{!examples/get_density_contour.py!}
+```
+![Interplanetary dust distribution](img/density_grid.png)
