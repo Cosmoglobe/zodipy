@@ -71,7 +71,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage" class="md-skip">
+        <a href="#timestreams" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
           <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
             </label>
           
         
@@ -126,7 +126,7 @@
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
           
             <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
             </label>
           
         
@@ -289,8 +289,6 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
       
-        
-      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           Usage
@@ -306,8 +304,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -316,15 +312,62 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#timestream" class="md-nav__link">
-    Timestream
+  <a href="#timestreams" class="md-nav__link">
+    Timestreams
   </a>
+  
+    <nav class="md-nav" aria-label="Timestreams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestream-along-a-meridian" class="md-nav__link">
+    Timestream along a meridian
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#binned-healpix-map" class="md-nav__link">
-    Binned HEALPix map
+  <a href="#healpix-maps" class="md-nav__link">
+    HEALPix Maps
+  </a>
+  
+    <nav class="md-nav" aria-label="HEALPix Maps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instantaneous-ecliptic-map" class="md-nav__link">
+    Instantaneous Ecliptic map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instantaneous-galactic-map" class="md-nav__link">
+    Instantaneous Galactic map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-wise-maps" class="md-nav__link">
+    Component-wise maps
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gridding-the-density-distribution-of-a-model" class="md-nav__link">
+    Gridding the Density Distribution of a Model
   </a>
   
 </li>
@@ -368,8 +411,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -378,15 +419,62 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#timestream" class="md-nav__link">
-    Timestream
+  <a href="#timestreams" class="md-nav__link">
+    Timestreams
   </a>
+  
+    <nav class="md-nav" aria-label="Timestreams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestream-along-a-meridian" class="md-nav__link">
+    Timestream along a meridian
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#binned-healpix-map" class="md-nav__link">
-    Binned HEALPix map
+  <a href="#healpix-maps" class="md-nav__link">
+    HEALPix Maps
+  </a>
+  
+    <nav class="md-nav" aria-label="HEALPix Maps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instantaneous-ecliptic-map" class="md-nav__link">
+    Instantaneous Ecliptic map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instantaneous-galactic-map" class="md-nav__link">
+    Instantaneous Galactic map
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-wise-maps" class="md-nav__link">
+    Component-wise maps
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gridding-the-density-distribution-of-a-model" class="md-nav__link">
+    Gridding the Density Distribution of a Model
   </a>
   
 </li>
@@ -408,16 +496,18 @@
                   </a>
                 
                 
-                <h1 id="usage">Usage</h1>
-<p>Below we illustrate a few use-cases of ZodiPy.</p>
-<h2 id="timestream">Timestream</h2>
-<p>In the following example we make a timestream representing one sweep perpendicular to the ecliptic (<code>phi=0</code>) 
-as seen by an observer on earth 2022-06-14 given the DIRBE interplanetary dust model.</p>
+                  <h1>Usage</h1>
+                
+                <h2 id="timestreams">Timestreams</h2>
+<p>Below we illustrate how ZodiPy can be used to create timestreams of the Zodiacal emission.</p>
+<h3 id="timestream-along-a-meridian">Timestream along a meridian</h3>
+<p>In the following example we simulate what an observer on Earth is expected to see on 14 June, 
+2022 when looking along the prime meridian (line of constant longitude) at 30 microns, given the 
+DIRBE interplanetary dust model.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
-
 <span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;dirbe&quot;</span><span class="p">)</span>
@@ -433,17 +523,20 @@ as seen by an observer on earth 2022-06-14 given the DIRBE interplanetary dust m
     <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
+
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">emission</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Zodiacal emission along theta with phi = 0&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Theta [rad]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Emission [MJy/sr]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/timestream.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
-<p><img alt="Zodiacal emission timestream" src="../img/zodiacal_emission_theta.png" /></p>
-<h2 id="binned-healpix-map">Binned HEALPix map</h2>
+<p><img alt="Zodiacal emission timestream" src="../img/timestream.png" /></p>
+<h2 id="healpix-maps">HEALPix Maps</h2>
+<p>Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the Zodiacal emission.</p>
+<h3 id="instantaneous-ecliptic-map">Instantaneous Ecliptic map</h3>
 <p>In the following example we make an instantaneous map of of the Zodiacal emission at 857 GHz
-as seen by an observer on earth on 2022-06-14 given the Planck 2018 interplanetary dust model.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -453,6 +546,7 @@ as seen by an observer on earth on 2022-06-14 given the Planck 2018 interplaneta
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;planck18&quot;</span><span class="p">)</span>
 <span class="n">nside</span> <span class="o">=</span> <span class="mi">256</span>
+
 <span class="n">binned_emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
     <span class="mi">857</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">GHz</span><span class="p">,</span>
     <span class="n">pixels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)),</span>
@@ -461,17 +555,133 @@ as seen by an observer on earth on 2022-06-14 given the Planck 2018 interplaneta
     <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
+    <span class="n">binned_emission</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned Zodiacal emission at 857 GHz&quot;</span><span class="p">,</span>
+    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span><span class="p">,</span>
+    <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span>
+    <span class="n">coord</span><span class="o">=</span><span class="s2">&quot;E&quot;</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;afmhot&quot;</span>
+<span class="p">)</span>
+<span class="n">hp</span><span class="o">.</span><span class="n">graticule</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/binned.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<img alt="Zodiacal emission map" src="../img/binned.png" />
+<em>Note that the color bar is logarithmic.</em></p>
+<h3 id="instantaneous-galactic-map">Instantaneous Galactic map</h3>
+<p>We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+<span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+
+<span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;planck18&quot;</span><span class="p">)</span>
+<span class="n">nside</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="n">binned_emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
+    <span class="mi">857</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">GHz</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)),</span>
+    <span class="n">nside</span><span class="o">=</span><span class="n">nside</span><span class="p">,</span>
+    <span class="n">obs_time</span><span class="o">=</span><span class="n">Time</span><span class="p">(</span><span class="s2">&quot;2022-06-14&quot;</span><span class="p">),</span>
+    <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
+<span class="hll">    <span class="n">coord_in</span><span class="o">=</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>   <span class="c1"># Coordinates of the input pointing</span>
+</span><span class="p">)</span>
 
 <span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
     <span class="n">binned_emission</span><span class="p">,</span>
-    <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;hist&quot;</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Zodiacal emission 857 GHz (from Earth at 2022-06-14)&quot;</span><span class="p">,</span>
-    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned Zodiacal emission  at 857 GHz&quot;</span><span class="p">,</span>
+    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span><span class="p">,</span>
+    <span class="n">coord</span><span class="o">=</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>
+    <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;afmhot&quot;</span>
 <span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;zodiacal_emission_857_GHz.png&quot;</span><span class="p">)</span>
+<span class="n">hp</span><span class="o">.</span><span class="n">graticule</span><span class="p">(</span><span class="n">coord</span><span class="o">=</span><span class="s2">&quot;E&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/binned_gal.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
-<p><img alt="Zodiacal emission map" src="../img/zodiacal_emission_857_GHz.png" /></p>
+<img alt="Zodiacal emission map galactic" src="../img/binned_gal.png" />
+<em>Note that the color bar is logarithmic.</em></p>
+<h3 id="component-wise-maps">Component-wise maps</h3>
+<p>ZodiPy can also return the Zodiacal emission component-wise. In the following example we use
+the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
+feature components. For more information on the interplanetary dust models, please read <a href="https://arxiv.org/abs/2205.12962">Cosmoglobe: Simulating Zodiacal Emission with ZodiPy</a>.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+<span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+
+<span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;dirbe&quot;</span><span class="p">)</span>
+<span class="n">nside</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="n">binned_emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
+    <span class="mi">25</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)),</span>
+    <span class="n">nside</span><span class="o">=</span><span class="n">nside</span><span class="p">,</span>
+    <span class="n">obs_time</span><span class="o">=</span><span class="n">Time</span><span class="p">(</span><span class="s2">&quot;2022-01-01&quot;</span><span class="p">),</span>
+    <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
+<span class="hll">    <span class="n">return_comps</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">),</span> <span class="n">constrained_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">comps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Cloud&quot;</span><span class="p">,</span> <span class="s2">&quot;Band1&quot;</span><span class="p">,</span> <span class="s2">&quot;Band2&quot;</span><span class="p">,</span> <span class="s2">&quot;Band3&quot;</span><span class="p">,</span> <span class="s2">&quot;Ring&quot;</span><span class="p">,</span> <span class="s2">&quot;Feature&quot;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">binned_comp_emission</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">binned_emission</span><span class="p">):</span>
+    <span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
+        <span class="n">binned_comp_emission</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">comps</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+        <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;log&quot;</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;afmhot&quot;</span><span class="p">,</span>
+        <span class="n">cbar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">sub</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/binned_comp.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<img alt="Component-wise emission maps" src="../img/binned_comp.png" />
+<em>Note that the color bar for the Cloud component is logarithmic, while the others are linear.</em></p>
+<h2 id="gridding-the-density-distribution-of-a-model">Gridding the Density Distribution of a Model</h2>
+<p>In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
+and plot the cross section of the diffuse cloud components density in the yz-plane.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">LogNorm</span>
+
+<span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">tabulate_density</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">200</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>   <span class="c1"># x-plane</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>   <span class="c1"># y-plane</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>   <span class="c1"># z-plane</span>
+
+<span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+<span class="n">density_grid</span> <span class="o">=</span> <span class="n">tabulate_density</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;dirbe&quot;</span><span class="p">)</span>
+<span class="n">density_grid</span> <span class="o">=</span> <span class="n">density_grid</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Sum over all components</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="n">density_grid</span><span class="p">[</span><span class="n">N</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>   <span class="c1"># cross section in the yz-plane</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;afmhot&quot;</span><span class="p">,</span>
+    <span class="n">norm</span><span class="o">=</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">density_grid</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">vmax</span><span class="o">=</span><span class="n">density_grid</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+    <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;gouraud&quot;</span><span class="p">,</span>
+    <span class="n">rasterized</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Cross section of the interplanetary dust density (yz-plane)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;x [AU]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;z [AU]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/density_grid.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<img alt="Interplanetary dust distribution" src="../img/density_grid.png" /></p>
                 
               
               
