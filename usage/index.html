@@ -347,6 +347,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#solar-cutoff-angle" class="md-nav__link">
+    Solar Cutoff Angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#instantaneous-galactic-map" class="md-nav__link">
     Instantaneous Galactic map
   </a>
@@ -454,6 +461,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#solar-cutoff-angle" class="md-nav__link">
+    Solar Cutoff Angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#instantaneous-galactic-map" class="md-nav__link">
     Instantaneous Galactic map
   </a>
@@ -502,7 +516,7 @@
 <p>Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.</p>
 <h3 id="timestream-along-a-meridian">Timestream along a meridian</h3>
 <p>In the following example we simulate what an observer on Earth is expected to see on 14 June, 
-2022 when looking along the prime meridian (line of constant longitude) at 30 microns, given the 
+2022 when looking along a meridian (line of constant longitude) at 30 microns, given the 
 DIRBE interplanetary dust model.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -576,6 +590,40 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 </code></pre></div>
 <img alt="Zodiacal emission map" src="../img/binned.png" />
 <em>Note that the color bar is logarithmic.</em></p>
+<h3 id="solar-cutoff-angle">Solar Cutoff Angle</h3>
+<p>Few experiments look directly in towards the Sun. We can initialize <code>Zodipy</code> with the <code>solar_cutoff</code> argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the <code>solar_cutoff</code> value.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+<span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+
+<span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
+
+<span class="hll"><span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;dirbe&quot;</span><span class="p">,</span> <span class="n">solar_cutoff</span><span class="o">=</span><span class="mi">60</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">)</span>
+</span><span class="n">nside</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="n">binned_emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
+    <span class="mi">25</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">nside2npix</span><span class="p">(</span><span class="n">nside</span><span class="p">)),</span>
+    <span class="n">nside</span><span class="o">=</span><span class="n">nside</span><span class="p">,</span>
+    <span class="n">obs_time</span><span class="o">=</span><span class="n">Time</span><span class="p">(</span><span class="s2">&quot;2020-01-01&quot;</span><span class="p">),</span>
+    <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
+    <span class="n">binned_emission</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Solar cutoff at 60 degrees&quot;</span><span class="p">,</span>
+    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span><span class="p">,</span>
+    <span class="nb">max</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">coord</span><span class="o">=</span><span class="s2">&quot;E&quot;</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;afmhot&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">hp</span><span class="o">.</span><span class="n">graticule</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;../img/binned_solar_cutoff.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<img alt="Zodiacal emission map" src="../img/binned_solar_cutoff.png" /></p>
 <h3 id="instantaneous-galactic-map">Instantaneous Galactic map</h3>
 <p>We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
