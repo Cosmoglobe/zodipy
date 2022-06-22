@@ -71,7 +71,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zodipy.zodipy.Zodipy" class="md-skip">
+        <a href="#reference" class="md-skip">
           Skip to content
         </a>
       
@@ -304,6 +304,8 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           Reference
@@ -319,6 +321,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -327,44 +331,57 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#zodipy.zodipy.Zodipy" class="md-nav__link">
-    zodipy.zodipy.Zodipy
+  <a href="#zodipy.zodipy" class="md-nav__link">
+    zodipy.zodipy
   </a>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#zodipy.zodipy.Zodipy" class="md-nav__link">
+    Zodipy
+  </a>
+  
+    <nav class="md-nav" aria-label="Zodipy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.supported_observers" class="md-nav__link">
     supported_observers
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_binned_emission_ang" class="md-nav__link">
     get_binned_emission_ang()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_binned_emission_pix" class="md-nav__link">
     get_binned_emission_pix()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_emission_ang" class="md-nav__link">
     get_emission_ang()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_emission_pix" class="md-nav__link">
     get_emission_pix()
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -392,6 +409,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -400,44 +419,57 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#zodipy.zodipy.Zodipy" class="md-nav__link">
-    zodipy.zodipy.Zodipy
+  <a href="#zodipy.zodipy" class="md-nav__link">
+    zodipy.zodipy
   </a>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#zodipy.zodipy.Zodipy" class="md-nav__link">
+    Zodipy
+  </a>
+  
+    <nav class="md-nav" aria-label="Zodipy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.supported_observers" class="md-nav__link">
     supported_observers
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_binned_emission_ang" class="md-nav__link">
     get_binned_emission_ang()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_binned_emission_pix" class="md-nav__link">
     get_binned_emission_pix()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_emission_ang" class="md-nav__link">
     get_emission_ang()
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_emission_pix" class="md-nav__link">
     get_emission_pix()
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -458,17 +490,47 @@
                   </a>
                 
                 
-                  <h1>Reference</h1>
-                
-                <div class="doc doc-object doc-class">
+                <h1 id="reference">Reference</h1>
 
-<a id="zodipy.zodipy.Zodipy"></a>
+
+  <div class="doc doc-object doc-module">
+
+<a id="zodipy.zodipy"></a>
     <div class="doc doc-contents first">
 
-      <p>The ZodiPy interface.</p>
-<p>Used to simulate the Zodiacal emission that a Solar System observer is predicted to
-observer given the DIRBE Interplanetary Dust model or other models which extend the
-DIRBE model to other frequencies/wavelengths.</p>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="zodipy.zodipy.Zodipy" class="doc doc-heading">
+        <code>Zodipy</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Interface for simulating zodiacal emission.</p>
+<p>Sets up the simulation configuration and provides methods for simulating the zodiacal
+emission that a solar system observer is predicted to see given an interplanetary dust
+model.</p>
 
 <p><strong>Attributes:</strong></p>
 <table>
@@ -510,9 +572,20 @@ the brightness integral. Default is 50 points.</p></td>
       </tr>
       <tr>
         <td><code>cutoff</code></td>
-        <td><code>float</code></td>
-        <td><p>Radial distance from the Sun at which all line of sights are
-truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
+        <td><code>u.Quantity[u.AU]</code></td>
+        <td><p>Radial distance from the Sun at which all line of sights
+are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
+      </tr>
+      <tr>
+        <td><code>solar_cutoff</code></td>
+        <td><code>u.Quantity[u.deg]</code></td>
+        <td><p>Cutoff angle from the sun in degrees. The emission
+for all the pointing with angular distance between the sun smaller than
+<code>solar_cutoff</code> are set to <code>np.nan</code>. This is due to the model singularity of the
+diffuse cloud component at the heliocentric origin. Such a cutoff may be
+useful when using simulated pointing, but actual scanning strategies are
+unlikely to look directly at the sun. This feature is turned of by setting this
+argument to <code>None</code>. Defaults to 5 degrees.</p></td>
       </tr>
   </tbody>
 </table>
@@ -530,7 +603,7 @@ truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
 
 
 
-<h2 id="zodipy.zodipy.Zodipy.supported_observers" class="doc doc-heading">
+<h3 id="zodipy.zodipy.Zodipy.supported_observers" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">supported_observers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></code>
 
   <span class="doc doc-properties">
@@ -538,11 +611,11 @@ truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
       <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
   </span>
 
-</h2>
+</h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns a list of supported observers given an ephemeris.</p>
+      <p>Returns a list of available observers given an ephemeris.</p>
     </div>
 
   </div>
@@ -559,15 +632,15 @@ truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
 
 
 
-<h2 id="zodipy.zodipy.Zodipy.get_binned_emission_ang" class="doc doc-heading">
+<h3 id="zodipy.zodipy.Zodipy.get_binned_emission_ang" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_binned_emission_ang</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">nside</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">obs</span><span class="o">=</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">obs_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lonlat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_comps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coord_in</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">)</span></code>
 
 
-</h2>
+</h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated binned Zodiacal emission given angles on the sky.</p>
+      <p>Returns the simulated binned zodiacal emission given angles on the sky.</p>
 <p>The pointing, for which to compute the emission, is specified in form of angles on
 the sky given by <code>theta</code> and <code>phi</code>. The emission is binned to a HEALPix map with
 resolution given by <code>nside</code>.</p>
@@ -586,7 +659,7 @@ resolution given by <code>nside</code>.</p>
       <tr>
         <td><code>freq</code></td>
         <td><code>FrequencyOrWavelength</code></td>
-        <td><p>Frequency or wavelength at which to evaluate the Zodiacal emission.</p></td>
+        <td><p>Frequency or wavelength at which to evaluate the zodiacal emission.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
@@ -665,7 +738,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated Zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
     </tr>
   </tbody>
 </table>
@@ -679,15 +752,15 @@ coordinates) by default.</p></td>
 
 
 
-<h2 id="zodipy.zodipy.Zodipy.get_binned_emission_pix" class="doc doc-heading">
+<h3 id="zodipy.zodipy.Zodipy.get_binned_emission_pix" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_binned_emission_pix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">pixels</span><span class="p">,</span> <span class="n">nside</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">obs</span><span class="o">=</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">obs_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_comps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coord_in</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">)</span></code>
 
 
-</h2>
+</h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated binned Zodiacal Emission given pixel numbers.</p>
+      <p>Returns the simulated binned zodiacal Emission given pixel numbers.</p>
 <p>The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
 given by <code>nside</code>. The emission is binned to a HEALPix map with resolution given by
 <code>nside</code>.</p>
@@ -706,7 +779,7 @@ given by <code>nside</code>. The emission is binned to a HEALPix map with resolu
       <tr>
         <td><code>freq</code></td>
         <td><code>FrequencyOrWavelength</code></td>
-        <td><p>Frequency or wavelength at which to evaluate the Zodiacal emission.</p></td>
+        <td><p>Frequency or wavelength at which to evaluate the zodiacal emission.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
@@ -768,7 +841,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated Zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
     </tr>
   </tbody>
 </table>
@@ -782,15 +855,15 @@ coordinates) by default.</p></td>
 
 
 
-<h2 id="zodipy.zodipy.Zodipy.get_emission_ang" class="doc doc-heading">
+<h3 id="zodipy.zodipy.Zodipy.get_emission_ang" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_emission_ang</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">obs</span><span class="o">=</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">obs_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lonlat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_comps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coord_in</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">)</span></code>
 
 
-</h2>
+</h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated Zodiacal emission given angles on the sky.</p>
+      <p>Returns the simulated zodiacal emission given angles on the sky.</p>
 <p>The pointing, for which to compute the emission, is specified in form of angles on
 the sky given by <code>theta</code> and <code>phi</code>.</p>
 
@@ -808,7 +881,7 @@ the sky given by <code>theta</code> and <code>phi</code>.</p>
       <tr>
         <td><code>freq</code></td>
         <td><code>FrequencyOrWavelength</code></td>
-        <td><p>Frequency or wavelength at which to evaluate the Zodiacal emission.</p></td>
+        <td><p>Frequency or wavelength at which to evaluate the zodiacal emission.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
@@ -881,7 +954,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated Zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
     </tr>
   </tbody>
 </table>
@@ -895,15 +968,15 @@ coordinates) by default.</p></td>
 
 
 
-<h2 id="zodipy.zodipy.Zodipy.get_emission_pix" class="doc doc-heading">
+<h3 id="zodipy.zodipy.Zodipy.get_emission_pix" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_emission_pix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">pixels</span><span class="p">,</span> <span class="n">nside</span><span class="p">,</span> <span class="n">obs_time</span><span class="p">,</span> <span class="n">obs</span><span class="o">=</span><span class="s1">&#39;earth&#39;</span><span class="p">,</span> <span class="n">obs_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_comps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coord_in</span><span class="o">=</span><span class="s1">&#39;E&#39;</span><span class="p">)</span></code>
 
 
-</h2>
+</h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated Zodiacal emission given pixel numbers.</p>
+      <p>Returns the simulated zodiacal emission given pixel numbers.</p>
 <p>The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
 given by <code>nside</code>.</p>
 
@@ -921,7 +994,7 @@ given by <code>nside</code>.</p>
       <tr>
         <td><code>freq</code></td>
         <td><code>FrequencyOrWavelength</code></td>
-        <td><p>Frequency or wavelength at which to evaluate the Zodiacal emission.</p></td>
+        <td><p>Frequency or wavelength at which to evaluate the zodiacal emission.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
@@ -983,13 +1056,25 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated Zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
     </tr>
   </tbody>
 </table>
     </div>
 
   </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
 
 
 

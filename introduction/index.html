@@ -292,6 +292,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#scientific-paper" class="md-nav__link">
+    Scientific Paper
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -377,6 +384,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#scientific-paper" class="md-nav__link">
+    Scientific Paper
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -395,8 +409,8 @@
                 
                 
                 <h1 id="introduction">Introduction</h1>
-<p>ZodiPy simulates the Zodiacal emission that a Solar System observer is predicted to see given an interplanetary dust model. The user selects between a set of built in models, for which the emission can be computed either in the form of timestreams or binned HEALPix maps. </p>
-<p>ZodiPy attempts to make Zodiacal emission simulations more accessible by providing the community with a simple Python interface to existing models. For other Zodiacal emission tools, see <a href="https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html">Zodiacal Light Models on LAMBDA</a>. ZodiPy is an open source project and all contributions are welcome.</p>
+<p>ZodiPy simulates the zodiacal emission that a solar system observer is predicted to see given an interplanetary dust model. The user selects between a set of built in models, for which the emission can be computed either in the form of timestreams or binned HEALPix maps. </p>
+<p>ZodiPy attempts to make zodiacal emission simulations more accessible by providing the community with a simple Python interface to existing models. For other zodiacal emission tools, see <a href="https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html">Zodiacal Light Models on LAMBDA</a>. ZodiPy is an open source project and all contributions are welcome.</p>
 <h2 id="interplanetary-dust-models">Interplanetary Dust Models</h2>
 <p>Currently, ZodiPy supports the following interplanetary dust models:</p>
 <ul>
@@ -405,6 +419,14 @@
 <li>planck15 (<a href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P&gt;">Planck Collaboration et al. 2016</a>)</li>
 <li>planck18 (<a href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P&gt;">Planck Collaboration et al. 2020</a>)</li>
 <li>odegard (<a href="https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract">Odegard et al. 2019</a>)</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These are all models which implement or extend the DIRBE model meaning that the geometric representation of the interplanetary dust distribution is constant over all models. The difference in the models comes from changes in the spectral parameters relating to the component emissivities and other source terms. </p>
+</div>
+<h2 id="scientific-paper">Scientific Paper</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2205.12962">Cosmoglobe: Simulating Zodiacal Emission with ZodiPy</a></li>
 </ul>
                 
               

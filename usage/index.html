@@ -499,7 +499,7 @@
                   <h1>Usage</h1>
                 
                 <h2 id="timestreams">Timestreams</h2>
-<p>Below we illustrate how ZodiPy can be used to create timestreams of the Zodiacal emission.</p>
+<p>Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.</p>
 <h3 id="timestream-along-a-meridian">Timestream along a meridian</h3>
 <p>In the following example we simulate what an observer on Earth is expected to see on 14 June, 
 2022 when looking along the prime meridian (line of constant longitude) at 30 microns, given the 
@@ -531,10 +531,16 @@ DIRBE interplanetary dust model.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 <p><img alt="Zodiacal emission timestream" src="../img/timestream.png" /></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, the true zodiacal emission
+signal will move along the ecliptic on the sky by roughly one degree each day. To account for this effect, the full pointing sequence of an experiment
+must be chunked into small subsequences with timescales corresponding to at maximum a day.</p>
+</div>
 <h2 id="healpix-maps">HEALPix Maps</h2>
-<p>Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the Zodiacal emission.</p>
+<p>Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the zodiacal emission.</p>
 <h3 id="instantaneous-ecliptic-map">Instantaneous Ecliptic map</h3>
-<p>In the following example we make an instantaneous map of of the Zodiacal emission at 857 GHz
+<p>In the following example we make an instantaneous map of of the zodiacal emission at 857 GHz
 as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
@@ -557,7 +563,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 
 <span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
     <span class="n">binned_emission</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned Zodiacal emission at 857 GHz&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned zodiacal emission at 857 GHz&quot;</span><span class="p">,</span>
     <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span><span class="p">,</span>
     <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;log&quot;</span><span class="p">,</span>
@@ -594,7 +600,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 
 <span class="n">hp</span><span class="o">.</span><span class="n">mollview</span><span class="p">(</span>
     <span class="n">binned_emission</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned Zodiacal emission  at 857 GHz&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Binned zodiacal emission  at 857 GHz&quot;</span><span class="p">,</span>
     <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;MJy/sr&quot;</span><span class="p">,</span>
     <span class="n">coord</span><span class="o">=</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>
     <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -608,7 +614,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 <img alt="Zodiacal emission map galactic" src="../img/binned_gal.png" />
 <em>Note that the color bar is logarithmic.</em></p>
 <h3 id="component-wise-maps">Component-wise maps</h3>
-<p>ZodiPy can also return the Zodiacal emission component-wise. In the following example we use
+<p>ZodiPy can also return the zodiacal emission component-wise. In the following example we use
 the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
 feature components. For more information on the interplanetary dust models, please read <a href="https://arxiv.org/abs/2205.12962">Cosmoglobe: Simulating Zodiacal Emission with ZodiPy</a>.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>

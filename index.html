@@ -273,13 +273,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#scientific-paper" class="md-nav__link">
-    Scientific Paper
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -378,13 +371,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#scientific-paper" class="md-nav__link">
-    Scientific Paper
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -408,15 +394,16 @@
 <p><a href="https://badge.fury.io/py/zodipy"><img alt="PyPI version" src="https://badge.fury.io/py/zodipy.svg" /></a>
 <img alt="Tests" src="https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg" />
 <a href="http://www.astropy.org/"><img alt="astropy" src="http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat" /></a></p>
-<p><em>ZodiPy</em> is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
+<p>ZodiPy is software for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
 <img alt="ZodiPy Logo" src="img/zodipy_map.png" /></p>
 <h2 id="example">Example</h2>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+
 <span class="kn">from</span> <span class="nn">zodipy</span> <span class="kn">import</span> <span class="n">Zodipy</span>
 
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;dirbe&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Zodipy</span><span class="p">(</span><span class="s2">&quot;dirbe&quot;</span><span class="p">)</span>
 
 <span class="n">emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_emission_ang</span><span class="p">(</span>
     <span class="mi">25</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
@@ -447,18 +434,15 @@
 </code></pre></div>
 <p>What's going on here:</p>
 <ul>
-<li>We start by initializing the <a href="reference/#zodipy.zodipy.Zodipy"><code>Zodipy</code></a> class using the DIRBE interplanetary dust model.</li>
-<li>We use the <a href="reference/#zodipy.zodipy.Zodipy.get_emission_ang"><code>get_emission_ang</code></a> method to compute simulated emission from angular sky coordinates.</li>
-<li>The first argument, <code>25 * u.micron</code>, specifies the frequency or wavelength of the simulated observation. Note that we use Astropy units for many of the input arguments.</li>
-<li><code>theta</code> and <code>phi</code> represent the pointing of the observation. In this scenario, we observe three sky coordinates.</li>
-<li><code>obs_time</code> represents the time of observation which is used internally to compute the position of all required Solar System bodies and the observer.</li>
+<li>We start by initializing the <a href="reference/#zodipy.zodipy.Zodipy"><code>Zodipy</code></a> class where we specify that we want to use the DIRBE interplanetary dust model.</li>
+<li>We use the <a href="reference/#zodipy.zodipy.Zodipy.get_emission_ang"><code>get_emission_ang</code></a> method which is a method to compute simulated emission from angular sky coordinates. See the <a href="reference/">reference</a> for other available methods.</li>
+<li>The first argument to the <a href="reference/#zodipy.zodipy.Zodipy.get_emission_ang"><code>get_emission_ang</code></a> method, <code>25 * u.micron</code>, specifies the wavelength (or frequency) of the simulated observation. Note that we use Astropy units for many of the input arguments.</li>
+<li><code>theta</code> and <code>phi</code> represent the pointing of the observation (co-latitude and longitude). In this scenario, we observe three sky coordinates.</li>
+<li><code>obs_time</code> represents the time of observation which is used internally to compute the position of the observer and all other required solar system bodies.</li>
 <li><code>obs</code> represents the observer, and must be an solar system observer supported by the <a href="https://docs.astropy.org/en/stable/coordinates/solarsystem.html">Astropy ephemeris</a> used internally.</li>
+<li><code>lonlat</code> is a boolean which converts the convention of <code>theta</code> and <code>phi</code> from co-latitude and longitude to longitude and latitude.</li>
 </ul>
-<p>For more information on using <em>ZodiPy</em>, see <a href="usage/">the usage section</a>.</p>
-<h2 id="scientific-paper">Scientific Paper</h2>
-<ul>
-<li><a href="https://arxiv.org/abs/2205.12962">Cosmoglobe: Simulating Zodiacal Emission with ZodiPy</a></li>
-</ul>
+<p>For more information on using ZodiPy, see <a href="usage/">the usage section</a>.</p>
                 
               
               
