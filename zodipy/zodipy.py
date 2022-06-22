@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 from ._component import Component
 from ._decorators import validate_ang, validate_freq, validate_pixels
 from ._ephemeris import get_obs_and_earth_positions
-from ._line_of_sight import DISTANCE_TO_JUPITER, get_line_of_sight_endpoints
+from ._line_of_sight import get_line_of_sight_endpoints
 from ._source_functions import (
     SPECIFIC_INTENSITY_UNITS,
     get_blackbody_emission,
@@ -25,17 +25,20 @@ from ._source_functions import (
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from .models import model_registry
 
+DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
+DEFAULT_SOLAR_CUTOFF = u.Quantity(5, u.deg)
+
 HEALPixIndicies = Union[int, Sequence[int], NDArray[np.integer]]
 SkyAngles = Union[u.Quantity[u.deg], u.Quantity[u.rad]]
 FrequencyOrWavelength = Union[u.Quantity[u.Hz], u.Quantity[u.m]]
 
 
 class Zodipy:
-    """The ZodiPy interface.
+    """Interface for simulating zodiacal emission.
 
-    Used to simulate the Zodiacal emission that a Solar System observer is predicted to
-    observer given the DIRBE Interplanetary Dust model or other models which extend the
-    DIRBE model to other frequencies/wavelengths.
+    Sets up the simulation configuration and provides methods for simulating the zodiacal
+    emission that a solar system observer is predicted to see given an interplanetary dust
+    model.
 
     Attributes:
         model (str): Name of the interplanetary dust model to use in the simulations.
@@ -50,8 +53,15 @@ class Zodipy:
             valid model range. Default is False.
         gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the brightness integral. Default is 50 points.
-        cutoff (float): Radial distance from the Sun at which all line of sights are
-            truncated. Defaults to 5.2 AU which is the distance to Jupiter.
+        cutoff (u.Quantity[u.AU]): Radial distance from the Sun at which all line of sights
+            are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
+        solar_cutoff (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
+            for all the pointing with angular distance between the sun smaller than
+            `solar_cutoff` are set to `np.nan`. This is due to the model singularity of the
+            diffuse cloud component at the heliocentric origin. Such a cutoff may be
+            useful when using simulated pointing, but actual scanning strategies are
+            unlikely to look directly at the sun. This feature is turned of by setting this
+            argument to `None`. Defaults to 5 degrees.
 
     """
 
@@ -61,18 +71,20 @@ class Zodipy:
         ephemeris: str = "de432s",
         extrapolate: bool = False,
         gauss_quad_order: int = 100,
-        cutoff: float = DISTANCE_TO_JUPITER,
+        cutoff: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
+        solar_cutoff: u.Quantity[u.deg] | None = DEFAULT_SOLAR_CUTOFF,
     ) -> None:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
         self.extrapolate = extrapolate
         self.cutoff = cutoff
+        self.solar_cutoff = solar_cutoff.to(u.rad) if solar_cutoff is not None else solar_cutoff
         self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
     def supported_observers(self) -> list[str]:
-        """Returns a list of supported observers given an ephemeris."""
+        """Returns a list of available observers given an ephemeris."""
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
@@ -90,13 +102,13 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated Zodiacal emission given angles on the sky.
+        """Returns the simulated zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
+            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
             theta: Angular co-latitude coordinate of a point, or a sequence of points, on
                 the celestial sphere. Must be in the range [0, π] rad. Units must be either
                 radians or degrees.
@@ -116,7 +128,7 @@ class Zodipy:
                 coordinates) by default.
 
         Returns:
-            emission: Simulated Zodiacal emission in units of 'MJy/sr'.
+            emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
 
@@ -156,13 +168,13 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated Zodiacal emission given pixel numbers.
+        """Returns the simulated zodiacal emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
+            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
@@ -176,7 +188,7 @@ class Zodipy:
                 coordinates) by default.
 
         Returns:
-            emission: Simulated Zodiacal emission in units of 'MJy/sr'.
+            emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
 
@@ -217,14 +229,14 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned Zodiacal emission given angles on the sky.
+        """Returns the simulated binned zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`. The emission is binned to a HEALPix map with
         resolution given by `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
+            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
             theta: Angular co-latitude coordinate of a point, or a sequence of points, on
                 the celestial sphere. Must be in the range [0, π] rad. Units must be either
                 radians or degrees.
@@ -245,7 +257,7 @@ class Zodipy:
                 coordinates) by default.
 
         Returns:
-            emission: Simulated Zodiacal emission in units of 'MJy/sr'.
+            emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
 
@@ -289,14 +301,14 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned Zodiacal Emission given pixel numbers.
+        """Returns the simulated binned zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`. The emission is binned to a HEALPix map with resolution given by
         `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the Zodiacal emission.
+            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
@@ -310,7 +322,7 @@ class Zodipy:
                 coordinates) by default.
 
         Returns:
-            emission: Simulated Zodiacal emission in units of 'MJy/sr'.
+            emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
 
@@ -349,11 +361,20 @@ class Zodipy:
         pixels: NDArray[np.integer] | None = None,
         nside: int | None = None,
     ) -> NDArray[np.floating]:
-        """Computes the component-wise Zodiacal emission."""
+        """Computes the component-wise zodiacal emission."""
 
         observer_position, earth_position = get_obs_and_earth_positions(
             obs=obs, obs_time=obs_time, obs_pos=obs_pos
         )
+
+        if self.solar_cutoff is not None:
+            # The observer position is aquired in geocentric coordinates before being
+            # rotated to ecliptic coordinates which means that we can find the
+            # heliocentric origin by simply taking the negative of the observer position.
+            # We set all unit_vectors with a angular distance from the suns smaller than
+            # the cutoff to np.nan which will propagate to np.nan/hp.UNSEEN in the emission.
+            ang_dist = hp.rotator.angdist(-observer_position, unit_vectors)
+            unit_vectors[:, ang_dist < self.solar_cutoff.value] = np.nan
 
         if self.model.solar_irradiance_model is not None:
             solar_irradiance = (
@@ -365,7 +386,9 @@ class Zodipy:
             solar_irradiance = 0
 
         start, stop = get_line_of_sight_endpoints(
-            cutoff=self.cutoff, obs_pos=observer_position, unit_vectors=unit_vectors
+            cutoff=self.cutoff.value,
+            obs_pos=observer_position,
+            unit_vectors=unit_vectors,
         )
 
         emission = np.zeros(
@@ -422,6 +445,8 @@ class Zodipy:
 
         return emission
 
+    # def _remove_masked_pointing
+
     def __repr__(self) -> str:
         return (
             f"{type(self).__name__}(model={self.model.name!r}, "
@@ -450,7 +475,7 @@ def _compute_comp_emission_at_step(
     phase_coefficients: tuple[float, float, float],
     solar_irradiance: float,
 ) -> NDArray[np.floating]:
-    """Returns the Zodiacal emission at a step along a line of sight."""
+    """Returns the zodiacal emission at a step along a line of sight."""
 
     # Convert the line of sight range from [-1, 1] to the true ecliptic positions
     R_los = ((stop - start) / 2) * r + (stop + start) / 2

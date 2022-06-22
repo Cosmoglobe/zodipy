@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-DISTANCE_TO_JUPITER = 5.2  # AU
 EPS = float(np.finfo(float).eps)
+
 
 def get_line_of_sight_endpoints(
     cutoff: float, obs_pos: NDArray[np.floating], unit_vectors: NDArray[np.floating]
