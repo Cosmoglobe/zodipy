@@ -26,7 +26,6 @@ from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixe
 from .models import model_registry
 
 DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
-DEFAULT_SOLAR_CUTOFF = u.Quantity(5, u.deg)
 
 HEALPixIndicies = Union[int, Sequence[int], NDArray[np.integer]]
 SkyAngles = Union[u.Quantity[u.deg], u.Quantity[u.rad]]
@@ -72,14 +71,16 @@ class Zodipy:
         extrapolate: bool = False,
         gauss_quad_order: int = 100,
         cutoff: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
-        solar_cutoff: u.Quantity[u.deg] | None = DEFAULT_SOLAR_CUTOFF,
+        solar_cutoff: u.Quantity[u.deg] | None = None,
     ) -> None:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
         self.extrapolate = extrapolate
         self.cutoff = cutoff
-        self.solar_cutoff = solar_cutoff.to(u.rad) if solar_cutoff is not None else solar_cutoff
+        self.solar_cutoff = (
+            solar_cutoff.to(u.rad) if solar_cutoff is not None else solar_cutoff
+        )
         self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
