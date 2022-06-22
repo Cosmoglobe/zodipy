@@ -19,7 +19,7 @@ binned_emission = model.get_binned_emission_pix(
 
 hp.mollview(
     binned_emission,
-    title="Binned Zodiacal emission at 857 GHz",
+    title="Binned zodiacal emission at 857 GHz",
     unit="MJy/sr",
     max=1,
     norm="log",

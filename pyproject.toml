@@ -2,7 +2,7 @@
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
 version = "0.6.1"
-description = "ZodiPy is a python tool that simulates the Zodiacal emission."
+description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0"

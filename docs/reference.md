@@ -1,1 +1,3 @@
-::: zodipy.zodipy.Zodipy
+# Reference
+
+::: zodipy.zodipy

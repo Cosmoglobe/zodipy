@@ -5,18 +5,19 @@
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
-*ZodiPy* is a Python tool for simulating the Interplanetary Dust Emission that a Solar System observer sees, either in the form of timestreams or binned HEALPix maps.
+ZodiPy is software for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
 ![ZodiPy Logo](img/zodipy_map.png)
 
 
 ## Example
-```py
+```python
 import astropy.units as u
 from astropy.time import Time
+
 from zodipy import Zodipy
 
 
-model = Zodipy(model="dirbe")
+model = Zodipy("dirbe")
 
 emission = model.get_emission_ang(
     25 * u.micron,
@@ -48,14 +49,12 @@ print(emission)
 
 What's going on here:
 
-- We start by initializing the [`Zodipy`][zodipy.zodipy.Zodipy] class using the DIRBE interplanetary dust model.
-- We use the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method to compute simulated emission from angular sky coordinates.
-- The first argument, `25 * u.micron`, specifies the frequency or wavelength of the simulated observation. Note that we use Astropy units for many of the input arguments.
-- `theta` and `phi` represent the pointing of the observation. In this scenario, we observe three sky coordinates.
-- `obs_time` represents the time of observation which is used internally to compute the position of all required Solar System bodies and the observer.
+- We start by initializing the [`Zodipy`][zodipy.zodipy.Zodipy] class where we specify that we want to use the DIRBE interplanetary dust model.
+- We use the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method which is a method to compute simulated emission from angular sky coordinates. See the [reference](reference.md) for other available methods.
+- The first argument to the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method, `25 * u.micron`, specifies the wavelength (or frequency) of the simulated observation. Note that we use Astropy units for many of the input arguments.
+- `theta` and `phi` represent the pointing of the observation (co-latitude and longitude). In this scenario, we observe three sky coordinates.
+- `obs_time` represents the time of observation which is used internally to compute the position of the observer and all other required solar system bodies.
 - `obs` represents the observer, and must be an solar system observer supported by the [Astropy ephemeris](https://docs.astropy.org/en/stable/coordinates/solarsystem.html) used internally.
+- `lonlat` is a boolean which converts the convention of `theta` and `phi` from co-latitude and longitude to longitude and latitude.
 
-For more information on using *ZodiPy*, see [the usage section](usage.md).
-
-## Scientific Paper
-- [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962)
+For more information on using ZodiPy, see [the usage section](usage.md).

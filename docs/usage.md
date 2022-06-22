@@ -1,5 +1,5 @@
 ## Timestreams
-Below we illustrate how ZodiPy can be used to create timestreams of the Zodiacal emission.
+Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.
 
 ### Timestream along a meridian
 
@@ -13,13 +13,18 @@ DIRBE interplanetary dust model.
 
 ![Zodiacal emission timestream](img/timestream.png)
 
+!!! note
+    ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, the true zodiacal emission
+    signal will move along the ecliptic on the sky by roughly one degree each day. To account for this effect, the full pointing sequence of an experiment
+    must be chunked into small subsequences with timescales corresponding to at maximum a day.
+
 ## HEALPix Maps
 
-Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the Zodiacal emission.
+Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the zodiacal emission.
 
 ### Instantaneous Ecliptic map
 
-In the following example we make an instantaneous map of of the Zodiacal emission at 857 GHz
+In the following example we make an instantaneous map of of the zodiacal emission at 857 GHz
 as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.
 
 ```python
@@ -40,7 +45,7 @@ We can make the same map in galactic coordinates by specifying that the input po
 
 ### Component-wise maps
 
-ZodiPy can also return the Zodiacal emission component-wise. In the following example we use
+ZodiPy can also return the zodiacal emission component-wise. In the following example we use
 the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
 feature components. For more information on the interplanetary dust models, please read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962).
 
