@@ -2,7 +2,7 @@
 Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.
 
 
-### Timestream along a meridian
+### Emission along a meridian
 In the following example we simulate what an observer on Earth is expected to see on 14 June, 
 2022 when looking along a meridian (line of constant longitude) at 30 microns, given the 
 DIRBE interplanetary dust model.
@@ -19,11 +19,11 @@ DIRBE interplanetary dust model.
     must be chunked into small subsequences with timescales corresponding to at maximum a day.
 
 
-## HEALPix Maps
+## HEALPix maps
 Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the zodiacal emission.
 
 
-### Instantaneous Ecliptic map
+### Instantaneous map in ecliptic coordinates
 In the following example we make an instantaneous map of of the zodiacal emission at 857 GHz
 as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.
 
@@ -33,7 +33,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 ![Zodiacal emission map](img/binned.png)
 *Note that the color bar is logarithmic.*
 
-### Solar Cutoff Angle
+### Solar cutoff angle
 Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cutoff` argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the `solar_cutoff` value.
 
 ```python hl_lines="9"
@@ -42,7 +42,7 @@ Few experiments look directly in towards the Sun. We can initialize `Zodipy` wit
 ![Zodiacal emission map](img/binned_solar_cutoff.png)
 
 
-### Instantaneous Galactic map
+### Instantaneous map in Galactic coordinates
 We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.
 
 ```python hl_lines="18"
@@ -64,7 +64,7 @@ feature components. For more information on the interplanetary dust models, plea
 *Note that the color bar for the Cloud component is logarithmic, while the others are linear.*
 
 
-## Gridding the Density Distribution of a Model
+## Gridding the interplanetary dust density distribution
 In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
 and plot the cross section of the diffuse cloud components density in the yz-plane.
 

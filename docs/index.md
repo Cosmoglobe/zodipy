@@ -10,7 +10,7 @@ ZodiPy is software for simulating the zodiacal emission that a solar system obse
 ![ZodiPy Logo](img/zodipy_map.png)
 
 
-## Example
+## A simple example
 ```python
 import astropy.units as u
 from astropy.time import Time
