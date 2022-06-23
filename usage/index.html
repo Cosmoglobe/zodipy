@@ -320,8 +320,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#timestream-along-a-meridian" class="md-nav__link">
-    Timestream along a meridian
+  <a href="#emission-along-a-meridian" class="md-nav__link">
+    Emission along a meridian
   </a>
   
 </li>
@@ -333,29 +333,29 @@
       
         <li class="md-nav__item">
   <a href="#healpix-maps" class="md-nav__link">
-    HEALPix Maps
+    HEALPix maps
   </a>
   
-    <nav class="md-nav" aria-label="HEALPix Maps">
+    <nav class="md-nav" aria-label="HEALPix maps">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#instantaneous-ecliptic-map" class="md-nav__link">
-    Instantaneous Ecliptic map
+  <a href="#instantaneous-map-in-ecliptic-coordinates" class="md-nav__link">
+    Instantaneous map in ecliptic coordinates
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#solar-cutoff-angle" class="md-nav__link">
-    Solar Cutoff Angle
+    Solar cutoff angle
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#instantaneous-galactic-map" class="md-nav__link">
-    Instantaneous Galactic map
+  <a href="#instantaneous-map-in-galactic-coordinates" class="md-nav__link">
+    Instantaneous map in Galactic coordinates
   </a>
   
 </li>
@@ -373,8 +373,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gridding-the-density-distribution-of-a-model" class="md-nav__link">
-    Gridding the Density Distribution of a Model
+  <a href="#gridding-the-interplanetary-dust-density-distribution" class="md-nav__link">
+    Gridding the interplanetary dust density distribution
   </a>
   
 </li>
@@ -434,8 +434,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#timestream-along-a-meridian" class="md-nav__link">
-    Timestream along a meridian
+  <a href="#emission-along-a-meridian" class="md-nav__link">
+    Emission along a meridian
   </a>
   
 </li>
@@ -447,29 +447,29 @@
       
         <li class="md-nav__item">
   <a href="#healpix-maps" class="md-nav__link">
-    HEALPix Maps
+    HEALPix maps
   </a>
   
-    <nav class="md-nav" aria-label="HEALPix Maps">
+    <nav class="md-nav" aria-label="HEALPix maps">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#instantaneous-ecliptic-map" class="md-nav__link">
-    Instantaneous Ecliptic map
+  <a href="#instantaneous-map-in-ecliptic-coordinates" class="md-nav__link">
+    Instantaneous map in ecliptic coordinates
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#solar-cutoff-angle" class="md-nav__link">
-    Solar Cutoff Angle
+    Solar cutoff angle
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#instantaneous-galactic-map" class="md-nav__link">
-    Instantaneous Galactic map
+  <a href="#instantaneous-map-in-galactic-coordinates" class="md-nav__link">
+    Instantaneous map in Galactic coordinates
   </a>
   
 </li>
@@ -487,8 +487,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gridding-the-density-distribution-of-a-model" class="md-nav__link">
-    Gridding the Density Distribution of a Model
+  <a href="#gridding-the-interplanetary-dust-density-distribution" class="md-nav__link">
+    Gridding the interplanetary dust density distribution
   </a>
   
 </li>
@@ -514,7 +514,7 @@
                 
                 <h2 id="timestreams">Timestreams</h2>
 <p>Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.</p>
-<h3 id="timestream-along-a-meridian">Timestream along a meridian</h3>
+<h3 id="emission-along-a-meridian">Emission along a meridian</h3>
 <p>In the following example we simulate what an observer on Earth is expected to see on 14 June, 
 2022 when looking along a meridian (line of constant longitude) at 30 microns, given the 
 DIRBE interplanetary dust model.</p>
@@ -551,9 +551,9 @@ DIRBE interplanetary dust model.</p>
 signal will move along the ecliptic on the sky by roughly one degree each day. To account for this effect, the full pointing sequence of an experiment
 must be chunked into small subsequences with timescales corresponding to at maximum a day.</p>
 </div>
-<h2 id="healpix-maps">HEALPix Maps</h2>
+<h2 id="healpix-maps">HEALPix maps</h2>
 <p>Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the zodiacal emission.</p>
-<h3 id="instantaneous-ecliptic-map">Instantaneous Ecliptic map</h3>
+<h3 id="instantaneous-map-in-ecliptic-coordinates">Instantaneous map in ecliptic coordinates</h3>
 <p>In the following example we make an instantaneous map of of the zodiacal emission at 857 GHz
 as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
@@ -590,7 +590,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 </code></pre></div>
 <img alt="Zodiacal emission map" src="../img/binned.png" />
 <em>Note that the color bar is logarithmic.</em></p>
-<h3 id="solar-cutoff-angle">Solar Cutoff Angle</h3>
+<h3 id="solar-cutoff-angle">Solar cutoff angle</h3>
 <p>Few experiments look directly in towards the Sun. We can initialize <code>Zodipy</code> with the <code>solar_cutoff</code> argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the <code>solar_cutoff</code> value.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
@@ -624,7 +624,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 <img alt="Zodiacal emission map" src="../img/binned_solar_cutoff.png" /></p>
-<h3 id="instantaneous-galactic-map">Instantaneous Galactic map</h3>
+<h3 id="instantaneous-map-in-galactic-coordinates">Instantaneous map in Galactic coordinates</h3>
 <p>We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
 <span class="kn">import</span> <span class="nn">healpy</span> <span class="k">as</span> <span class="nn">hp</span>
@@ -701,7 +701,7 @@ feature components. For more information on the interplanetary dust models, plea
 </code></pre></div>
 <img alt="Component-wise emission maps" src="../img/binned_comp.png" />
 <em>Note that the color bar for the Cloud component is logarithmic, while the others are linear.</em></p>
-<h2 id="gridding-the-density-distribution-of-a-model">Gridding the Density Distribution of a Model</h2>
+<h2 id="gridding-the-interplanetary-dust-density-distribution">Gridding the interplanetary dust density distribution</h2>
 <p>In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
 and plot the cross section of the diffuse cloud components density in the yz-plane.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
