@@ -8,8 +8,7 @@ from scipy.interpolate import interp1d
 
 from ._component import Component
 from ._component_label import ComponentLabel
-
-from._solar_irradiance_model import SolarIrradianceModel
+from ._solar_irradiance_model import SolarIrradianceModel
 from .solar_irradiance_models import solar_irradiance_model_registry
 from .source_parameters import DELTA_DIRBE, T_0_DIRBE
 
@@ -39,7 +38,7 @@ class Model:
 
     def interpolate_source_parameters(
         self, comp_label: ComponentLabel, freq: u.Quantity[u.GHz] | u.Quantity[u.m]
-    ) -> tuple[float, float, tuple[float, float, float]]:
+    ) -> tuple[float, float, tuple[float, ...]]:
         """
         Returns interpolated/extrapolated source parameters for a component
         given a frequency.
