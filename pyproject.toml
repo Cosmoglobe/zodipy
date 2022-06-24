@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.6.2"
+version = "0.6.3"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ license = "GPL-3.0"
 exclude = ["zodipy/dirbe"]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <=3.10"
+python = ">=3.8"
 numpy = "^1.22.3"
 healpy = "^1.15.0"
 astropy = ">=5.0.1"
@@ -23,7 +23,7 @@ black = "^22.3.0"
 mypy = "^0.910"
 tox = "^3.24.3"
 mkdocs = "^1.2.1"
-mkdocstrings = "^0.15.2"
+mkdocstrings = {version = "^0.15.2", python = ">=3.8,<4.0"}
 mkdocs-material = "^7.1.10"
 Jinja2 = "<3.1.0"
 pygments =">=2.10, <2.12"
