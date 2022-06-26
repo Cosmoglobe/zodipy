@@ -12,7 +12,3 @@ repos:
     - id: check-yaml
       langauge_version: python3
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-    - id: isort

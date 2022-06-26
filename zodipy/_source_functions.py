@@ -34,7 +34,7 @@ def get_blackbody_emission(
 
     freq *= 1e9
     term1 = (2 * h * freq**3) / c**2
-    term2 = np.expm1(((h * freq) / (k_B * T)))
+    term2 = np.expm1(((h * freq) / (k_B * T)), dtype=np.float128)
 
     return term1 / term2
 

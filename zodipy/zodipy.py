@@ -52,8 +52,8 @@ class Zodipy:
             valid model range. Default is False.
         gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the brightness integral. Default is 50 points.
-        cutoff (u.Quantity[u.AU]): Radial distance from the Sun at which all line of sights
-            are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
+        los_cutoff (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
+            sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
         solar_cutoff (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
             for all the pointing with angular distance between the sun smaller than
             `solar_cutoff` are set to `np.nan`. This is due to the model singularity of the
@@ -70,14 +70,14 @@ class Zodipy:
         ephemeris: str = "de432s",
         extrapolate: bool = False,
         gauss_quad_order: int = 100,
-        cutoff: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
+        los_cutoff: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
         solar_cutoff: u.Quantity[u.deg] | None = None,
     ) -> None:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
         self.extrapolate = extrapolate
-        self.cutoff = cutoff
+        self.los_cutoff = los_cutoff
         self.solar_cutoff = (
             solar_cutoff.to(u.rad) if solar_cutoff is not None else solar_cutoff
         )
@@ -387,7 +387,7 @@ class Zodipy:
             solar_irradiance = 0
 
         start, stop = get_line_of_sight_endpoints(
-            cutoff=self.cutoff.value,
+            cutoff=self.los_cutoff.value,
             obs_pos=observer_position,
             unit_vectors=unit_vectors,
         )

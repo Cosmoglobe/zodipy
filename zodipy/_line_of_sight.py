@@ -14,6 +14,9 @@ def get_line_of_sight_endpoints(
     x, y, z = obs_pos.flatten()
 
     r = np.sqrt(x**2 + y**2 + z**2)
+    if cutoff < r:
+        raise ValueError("cutoff must be futher away than the observer's position.")
+
     theta = np.arctan2(y, x)
 
     x_0 = r * np.cos(theta)
@@ -26,6 +29,7 @@ def get_line_of_sight_endpoints(
     cos_lat = np.cos(lat)
     b = 2 * (x_0 * cos_lat * np.cos(lon) + y_0 * cos_lat * np.sin(lon))
     c = r**2 - cutoff**2
+
     q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
 
     return EPS, np.maximum(q, c / q)
