@@ -1,12 +1,7 @@
+import numpy as np
 import pytest
 
-import numpy as np
-
-from zodipy._source_functions import (
-    get_blackbody_emission,
-    get_dust_grain_temperature,
-)
-
+from zodipy._source_functions import get_blackbody_emission, get_dust_grain_temperature
 
 TEMPERATURE = 30
 TEMPERATURE_ARRAY = np.array([31, 45, 53])
@@ -35,7 +30,7 @@ def test_blackbody_emission_returns_float():
     """Tests that the returned value is a float given a float temperature."""
 
     emission = get_blackbody_emission(T=TEMPERATURE, freq=FREQUENCY)
-    assert isinstance(emission, float)
+    assert isinstance(emission, np.floating)
 
 
 def test_blackbody_emission_returns_array():
