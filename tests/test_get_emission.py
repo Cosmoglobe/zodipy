@@ -20,7 +20,7 @@ def test_get_emission_pix(
     data: DataObject,
 ) -> None:
 
-    observer = data.draw(obs(model))
+    observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
     pix = data.draw(pixels(nside))
 
@@ -55,7 +55,7 @@ def test_get_emission_ang(
 
     theta, phi = angles
 
-    observer = data.draw(obs(model))
+    observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
 
     emission = model.get_emission_ang(

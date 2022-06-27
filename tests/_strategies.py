@@ -126,18 +126,19 @@ def freq(
 
 
 @composite
-def obs(draw: DrawFn, model: zodipy.Zodipy) -> str:
-    def get_obs_dist(obs: str) -> u.Quantity[u.AU]:
+def obs(draw: DrawFn, model: zodipy.Zodipy, obs_time: Time) -> str:
+    def get_obs_dist(obs: str, obs_time: Time) -> u.Quantity[u.AU]:
         if obs == "semb-l2":
-            obs_pos = get_body_barycentric("earth", OBS_TIME).to_cartesian().xyz
+            obs_pos = get_body_barycentric("earth", obs_time).to_cartesian().xyz
+            obs_pos += 0.01 * u.AU
         else:
-            obs_pos = get_body_barycentric(obs, OBS_TIME).to_cartesian().xyz
+            obs_pos = get_body_barycentric(obs, obs_time).to_cartesian().xyz
         return u.Quantity(np.linalg.norm(obs_pos.value), u.AU)
 
     los_dist_cut = model.los_dist_cut
     return draw(
         sampled_from(model.supported_observers).filter(
-            lambda obs: get_obs_dist(obs) < los_dist_cut
+            lambda obs: get_obs_dist(obs, obs_time) < los_dist_cut
         )
     )
 
