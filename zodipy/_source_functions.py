@@ -34,7 +34,7 @@ def get_blackbody_emission(
 
     freq *= 1e9
     term1 = (2 * h * freq**3) / c**2
-    term2 = np.expm1(((h * freq) / (k_B * T)))
+    term2 = np.expm1(((h * freq) / (k_B * T)), dtype=np.float128)
 
     return term1 / term2
 
@@ -86,8 +86,8 @@ def get_scattering_angle(
     -------
         Scattering angle.
     """
-
     cos_theta = (X_los * X_helio).sum(axis=0) / (R_los * R_helio)
+    cos_theta = np.clip(cos_theta, -1, 1)
 
     return np.arccos(-cos_theta)
 
