@@ -33,6 +33,20 @@ def test_get_emission_pix(
     )
     assert len(emission) == len(pix)
 
+
+@given(model(), time(), nside(), data())
+@settings(deadline=None)
+def test_get_binned_emission_pix(
+    model: zodipy.Zodipy,
+    time: Time,
+    nside: int,
+    data: DataObject,
+) -> None:
+
+    observer = data.draw(obs(model, time))
+    frequency = data.draw(freq(model))
+    pix = data.draw(pixels(nside))
+
     emission_binned = model.get_binned_emission_pix(
         frequency,
         pixels=pix,
@@ -43,12 +57,11 @@ def test_get_emission_pix(
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-@given(model(), time(), nside(), angles(), data())
+@given(model(), time(), angles(), data())
 @settings(deadline=None)
 def test_get_emission_ang(
     model: zodipy.Zodipy,
     time: Time,
-    nside: int,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     data: DataObject,
 ) -> None:
@@ -66,6 +79,22 @@ def test_get_emission_ang(
         obs=observer,
     )
     assert emission.shape == theta.shape == phi.shape
+
+
+@given(model(), time(), nside(), angles(), data())
+@settings(deadline=None)
+def test_get_binned_emission_ang(
+    model: zodipy.Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    data: DataObject,
+) -> None:
+
+    theta, phi = angles
+
+    observer = data.draw(obs(model, time))
+    frequency = data.draw(freq(model))
 
     emission_binned = model.get_binned_emission_ang(
         frequency,

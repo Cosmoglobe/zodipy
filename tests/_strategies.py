@@ -31,18 +31,19 @@ MIN_FREQ = u.Quantity(10, u.GHz)
 MAX_FREQ = u.Quantity(0.1, u.micron).to(u.GHz, equivalencies=u.spectral())
 N_FREQS = 1000
 FREQ_LOG_RANGE = np.geomspace(
-    np.log(MIN_FREQ.value),
-    np.log(MAX_FREQ.value),
-    N_FREQS,
+    np.log(MIN_FREQ.value), np.log(MAX_FREQ.value), N_FREQS
 ).tolist()
+
 MIN_DATE = datetime.datetime(year=1900, month=1, day=1)
 MAX_DATE = datetime.datetime(year=2100, month=1, day=1)
+
 MIN_NSIDE = 8
 MAX_NSIDE = 1024
+
 MAX_PIXELS_LEN = 10000
 MAX_ANGELS_LEN = 10000
+
 AVAILABLE_MODELS = zodipy.model_registry.models
-OBS_TIME = Time("2020-01-01")
 
 
 @composite
@@ -138,42 +139,27 @@ def obs(draw: DrawFn, model: zodipy.Zodipy, obs_time: Time) -> str:
     los_dist_cut = model.los_dist_cut
     return draw(
         sampled_from(model.supported_observers).filter(
-            lambda obs: get_obs_dist(obs, obs_time) < los_dist_cut
+            lambda obs: los_dist_cut > get_obs_dist(obs, obs_time)
         )
     )
 
 
-@composite
-def model(
-    draw: DrawFn,
-    model: str | None = None,
-    gauss_quad_order: int | None = None,
-    extrapolate: bool | None = None,
-    los_dist_cut: u.Quantity[u.AU] | None = None,
-    solar_cut: u.Quantity[u.deg] | None = None,
-) -> zodipy.Zodipy:
+MODEL_STRATEGY_MAPPINGS: dict[str, SearchStrategy[Any]] = {
+    "model": sampled_from(AVAILABLE_MODELS),
+    "gauss_quad_order": integers(min_value=1, max_value=200),
+    "extrapolate": booleans(),
+    "los_dist_cut": quantities(min_value=3, max_value=50, unit=u.AU),
+    "solar_cut": quantities(min_value=0, max_value=360, unit=u.deg),
+}
 
-    strategies: dict[str, SearchStrategy[Any]] = {}
-    static_params: dict[str, Any] = {}
-    if model is None:
-        strategies["model"] = sampled_from(AVAILABLE_MODELS)
-    else:
-        static_params["model"] = model
-    if gauss_quad_order is None:
-        strategies["gauss_quad_order"] = integers(min_value=1, max_value=200)
-    else:
-        static_params["gauss_quad_order"] = gauss_quad_order
-    if extrapolate is None:
-        strategies["extrapolate"] = booleans()
-    else:
-        static_params["extrapolate"] = extrapolate
-    if los_dist_cut is None:
-        strategies["los_dist_cut"] = quantities(min_value=3, max_value=100, unit=u.AU)
-    else:
-        static_params["los_dist_cut"] = los_dist_cut
-    if solar_cut is None:
-        strategies["solar_cut"] = quantities(min_value=0, max_value=360, unit=u.deg)
-    else:
-        static_params["solar_cut"] = solar_cut
+
+@composite
+def model(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodipy:
+    strategies = MODEL_STRATEGY_MAPPINGS.copy()
+    for key in static_params.keys():
+        try:
+            strategies.pop(key)
+        except KeyError:
+            raise KeyError(f"Unknown model parameter: {key}")
 
     return draw(builds(partial(zodipy.Zodipy, **static_params), **strategies))
