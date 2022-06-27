@@ -34,7 +34,7 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 *Note that the color bar is logarithmic.*
 
 ### Solar cutoff angle
-Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cutoff` argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the `solar_cutoff` value.
+Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cut` argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the `solar_cut` value.
 
 ```python hl_lines="9"
 {!examples/get_binned_emission_solar_cutoff.py!}
@@ -61,7 +61,7 @@ feature components. For more information on the interplanetary dust models, plea
 {!examples/get_comp_binned_emission.py!}
 ```
 ![Component-wise emission maps](img/binned_comp.png)
-*Note that the color bar for the Cloud component is logarithmic, while the others are linear.*
+*Note that the color for the Cloud component is logarithmic, while the others are linear.*
 
 
 ## Gridding the interplanetary dust density distribution
