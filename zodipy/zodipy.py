@@ -52,15 +52,17 @@ class Zodipy:
             valid model range. Default is False.
         gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the brightness integral. Default is 50 points.
-        los_cutoff (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
+        los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
             sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
-        solar_cutoff (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
+        solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
             for all the pointing with angular distance between the sun smaller than
             `solar_cutoff` are set to `np.nan`. This is due to the model singularity of the
             diffuse cloud component at the heliocentric origin. Such a cutoff may be
             useful when using simulated pointing, but actual scanning strategies are
             unlikely to look directly at the sun. This feature is turned of by setting this
             argument to `None`. Defaults to 5 degrees.
+        solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
+            Defaults to `np.nan`.
 
     """
 
@@ -70,17 +72,17 @@ class Zodipy:
         ephemeris: str = "de432s",
         extrapolate: bool = False,
         gauss_quad_order: int = 100,
-        los_cutoff: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
-        solar_cutoff: u.Quantity[u.deg] | None = None,
+        los_dist_cut: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
+        solar_cut: u.Quantity[u.deg] | None = None,
+        solar_cut_fill_value: float = np.nan,
     ) -> None:
 
         self.model = model_registry.get_model(model)
         self.ephemeris = ephemeris
         self.extrapolate = extrapolate
-        self.los_cutoff = los_cutoff
-        self.solar_cutoff = (
-            solar_cutoff.to(u.rad) if solar_cutoff is not None else solar_cutoff
-        )
+        self.los_dist_cut = los_dist_cut
+        self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
+        self.solar_cut_fill_value = solar_cut_fill_value
         self.integration_scheme = quadpy.c1.gauss_legendre(gauss_quad_order)
 
     @property
@@ -368,15 +370,6 @@ class Zodipy:
             obs=obs, obs_time=obs_time, obs_pos=obs_pos
         )
 
-        if self.solar_cutoff is not None:
-            # The observer position is aquired in geocentric coordinates before being
-            # rotated to ecliptic coordinates which means that we can find the
-            # heliocentric origin by simply taking the negative of the observer position.
-            # We set all unit_vectors with a angular distance from the suns smaller than
-            # the cutoff to np.nan which will propagate to np.nan/hp.UNSEEN in the emission.
-            ang_dist = hp.rotator.angdist(-observer_position, unit_vectors)
-            unit_vectors[:, ang_dist < self.solar_cutoff.value] = np.nan
-
         if self.model.solar_irradiance_model is not None:
             solar_irradiance = (
                 self.model.solar_irradiance_model.interpolate_solar_irradiance(
@@ -387,7 +380,7 @@ class Zodipy:
             solar_irradiance = 0
 
         start, stop = get_line_of_sight_endpoints(
-            cutoff=self.los_cutoff.value,
+            cutoff=self.los_dist_cut.value,
             obs_pos=observer_position,
             unit_vectors=unit_vectors,
         )
@@ -398,9 +391,9 @@ class Zodipy:
 
         # Preparing quantities for broadcasting
         stop_expanded = np.expand_dims(stop, axis=-1)
-        observer_position = np.expand_dims(observer_position, axis=-1)
-        earth_position = np.expand_dims(earth_position, axis=-1)
-        unit_vectors = np.expand_dims(unit_vectors, axis=-1)
+        observer_position_expanded = np.expand_dims(observer_position, axis=-1)
+        earth_position_expanded = np.expand_dims(earth_position, axis=-1)
+        unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
         # For each component, compute the integrated line of sight emission
         for idx, (label, comp) in enumerate(self.model.comps.items()):
@@ -416,9 +409,9 @@ class Zodipy:
                 _compute_comp_emission_at_step,
                 start=start,
                 stop=stop_expanded,
-                X_obs=observer_position,
-                X_earth=earth_position,
-                u_los=unit_vectors,
+                X_obs=observer_position_expanded,
+                X_earth=earth_position_expanded,
+                u_los=unit_vectors_expanded,
                 comp=comp,
                 freq=freq.value,
                 T_0=self.model.T_0,
@@ -440,13 +433,21 @@ class Zodipy:
             else:
                 emission[idx] = integrated_comp_emission[indicies]
 
-        if binned:
-            # We multiply the binned map by the number of hits.
-            emission[:, pixels] *= indicies
+        if self.solar_cut is not None:
+            # The observer position is aquired in geocentric coordinates before being
+            # rotated to ecliptic coordinates. This means that we can find the
+            # heliocentric origin in this coordinate system by simply taking the negative
+            # of the observer position. The emission corresponding to unit_vectors with a
+            # angular distance (between the pointing and the sun) smaller than the
+            # specified `solar_cutoff` value is masked with the `solar_cutoff_fill_value`.
+            ang_dist = hp.rotator.angdist(-observer_position, unit_vectors)
+            solar_mask = ang_dist < self.solar_cut.value
+            if binned and pixels is not None:
+                emission[:, pixels[solar_mask]] = self.solar_cut_fill_value
+            else:
+                emission[:, solar_mask[indicies]] = self.solar_cut_fill_value
 
         return emission
-
-    # def _remove_masked_pointing
 
     def __repr__(self) -> str:
         return (

@@ -1,171 +1,78 @@
-import pytest
+from __future__ import annotations
 
 import astropy.units as u
-from astropy.time import Time
 import healpy as hp
-import numpy as np
+from astropy.time import Time
+from hypothesis import given, settings
+from hypothesis.strategies import DataObject, data
 
-time = Time.now()
+import zodipy
 
-
-def test_single_pix(DIRBE):
-    emission = DIRBE.get_emission_pix(
-        34 * u.micron,
-        pixels=2342,
-        nside=64,
-        obs="earth",
-        obs_time=time,
-    )
-    assert np.size(emission) == 1
+from ._strategies import angles, freq, model, nside, obs, pixels, time
 
 
-def test_single_pointing(DIRBE):
-    emission = DIRBE.get_emission_ang(
-        34 * u.micron,
-        theta=1 * u.deg,
-        phi=30 * u.deg,
-        obs="earth",
-        obs_time=time,
-    )
-    assert np.size(emission) == 1
+@given(model(), time(), nside(), data())
+@settings(deadline=None)
+def test_get_emission_pix(
+    model: zodipy.Zodipy,
+    time: Time,
+    nside: int,
+    data: DataObject,
+) -> None:
 
-    emission = DIRBE.get_emission_ang(
-        34 * u.micron,
-        theta=170 * u.deg,
-        phi=-60 * u.deg,
-        obs="earth",
-        obs_time=time,
-        lonlat=True,
-    )
-    assert np.size(emission) == 1
+    observer = data.draw(obs(model))
+    frequency = data.draw(freq(model))
+    pix = data.draw(pixels(nside))
 
-    # test theta out of range
-    with pytest.raises(ValueError):
-        DIRBE.get_emission_ang(
-            34 * u.micron,
-            theta=200 * u.deg,
-            phi=150 * u.deg,
-            obs="earth",
-            obs_time=time,
-        )
-
-
-def test_multi_pointing(DIRBE):
-    emission = DIRBE.get_emission_ang(
-        34 * u.micron,
-        theta=[50, 80, 170] * u.deg,
-        phi=[50, 30, 20] * u.deg,
-        obs="earth",
-        obs_time=time,
-    )
-    assert np.size(emission) > 1
-
-    emission = DIRBE.get_emission_ang(
-        34 * u.micron,
-        theta=[50, 80, 180] * u.deg,
-        phi=[50, 30, 20] * u.deg,
-        obs="earth",
-        obs_time=time,
-        lonlat=True,
-    )
-    assert np.size(emission) > 1
-
-    # test theta out of range
-    with pytest.raises(ValueError):
-        DIRBE.get_emission_ang(
-            34 * u.micron,
-            theta=[50, 80, 300] * u.deg,
-            phi=[50, 30, 20] * u.deg,
-            obs="earth",
-            obs_time=time,
-        )
-
-
-def test_binned(DIRBE):
-    nside = 32
-    npix = hp.nside2npix(nside)
-    theta, phi = hp.pix2ang(nside, np.arange(npix))
-
-    # test shape == npix
-    emission = DIRBE.get_binned_emission_ang(
-        34 * u.micron,
-        theta=theta * u.deg,
-        phi=phi * u.deg,
+    emission = model.get_emission_pix(
+        frequency,
+        pixels=pix,
         nside=nside,
-        obs="earth",
         obs_time=time,
+        obs=observer,
     )
-    assert np.size(emission) == npix
+    assert len(emission) == len(pix)
 
-    emission = DIRBE.get_binned_emission_ang(
-        34 * u.micron,
-        theta=theta[:100] * u.deg,
-        phi=phi[:100] * u.deg,
+    emission_binned = model.get_binned_emission_pix(
+        frequency,
+        pixels=pix,
         nside=nside,
-        obs="earth",
         obs_time=time,
+        obs=observer,
     )
-    assert np.size(emission) == npix
+    assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-def test_time(DIRBE):
-    # test non supported time
-    with pytest.raises(AttributeError):
-        DIRBE.get_emission_pix(
-            34 * u.micron,
-            pixels=2342,
-            nside=64,
-            obs="earth",
-            obs_time="2020-10-10",
-        )
+@given(model(), time(), nside(), angles(), data())
+@settings(deadline=None)
+def test_get_emission_ang(
+    model: zodipy.Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    data: DataObject,
+) -> None:
 
+    theta, phi = angles
 
-def test_obs_pos_vs_obs(DIRBE):
-    # test close value for manual position vs obs
-    from astropy.coordinates import get_body, HeliocentricMeanEcliptic
+    observer = data.draw(obs(model))
+    frequency = data.draw(freq(model))
 
-    earth_skycoord = get_body("Earth", time=time)
-    earth_skycoord = earth_skycoord.transform_to(HeliocentricMeanEcliptic)
-    earth_pos = earth_skycoord.represent_as("cartesian").xyz.to(u.AU)
-
-    emission_obs_pos = DIRBE.get_emission_pix(
-        34 * u.micron,
-        pixels=2342,
-        nside=64,
-        obs_pos=earth_pos,
+    emission = model.get_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
         obs_time=time,
+        obs=observer,
     )
+    assert emission.shape == theta.shape == phi.shape
 
-    emission_obs = DIRBE.get_emission_pix(
-        34 * u.micron,
-        pixels=2342,
-        nside=64,
-        obs="earth",
+    emission_binned = model.get_binned_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
+        nside=nside,
         obs_time=time,
+        obs=observer,
     )
-
-    assert np.isclose(emission_obs, emission_obs_pos)
-
-
-def test_return_comps(DIRBE):
-    no_comps = DIRBE.get_emission_pix(
-        34 * u.micron,
-        pixels=2342,
-        nside=64,
-        obs="earth",
-        obs_time=time,
-    )
-
-    comps = DIRBE.get_emission_pix(
-        34 * u.micron,
-        pixels=2342,
-        nside=64,
-        obs="earth",
-        obs_time=time,
-        return_comps=True,
-    )
-
-    assert no_comps.shape[0] == 1
-    assert comps.shape[0] == DIRBE.model.n_comps
-
-    assert np.isclose(comps.sum(axis=0), no_comps)
+    assert emission_binned.shape == (hp.nside2npix(nside),)

@@ -6,7 +6,7 @@ from astropy.time import Time
 
 from zodipy import Zodipy
 
-model = Zodipy("dirbe", solar_cutoff=60 * u.deg)
+model = Zodipy("dirbe", solar_cut=60 * u.deg)
 nside = 256
 
 binned_emission = model.get_binned_emission_pix(

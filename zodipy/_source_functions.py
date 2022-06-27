@@ -86,8 +86,8 @@ def get_scattering_angle(
     -------
         Scattering angle.
     """
-
     cos_theta = (X_los * X_helio).sum(axis=0) / (R_los * R_helio)
+    cos_theta = np.clip(cos_theta, -1, 1)
 
     return np.arccos(-cos_theta)
 

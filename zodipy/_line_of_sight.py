@@ -15,7 +15,7 @@ def get_line_of_sight_endpoints(
 
     r = np.sqrt(x**2 + y**2 + z**2)
     if cutoff < r:
-        raise ValueError("cutoff must be futher away than the observer's position.")
+        raise ValueError(f"los_dist_cut is {cutoff} but observer_pos is {r}")
 
     theta = np.arctan2(y, x)
 
