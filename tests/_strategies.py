@@ -30,7 +30,7 @@ import zodipy
 MIN_FREQ = u.Quantity(10, u.GHz)
 MAX_FREQ = u.Quantity(0.1, u.micron).to(u.GHz, equivalencies=u.spectral())
 N_FREQS = 1000
-FREQ_RANGE = np.geomspace(
+FREQ_LOG_RANGE = np.geomspace(
     np.log(MIN_FREQ.value),
     np.log(MAX_FREQ.value),
     N_FREQS,
@@ -114,13 +114,15 @@ def freq(
 ) -> u.Quantity[u.GHz] | u.Quantity[u.micron]:
 
     if model.extrapolate:
-        return u.Quantity(np.exp(draw(sampled_from(FREQ_RANGE))), u.GHz)
+        return u.Quantity(np.exp(draw(sampled_from(FREQ_LOG_RANGE))), u.GHz)
 
     min_freq = model.model.spectrum.value[0]
     max_freq = model.model.spectrum.value[-1]
 
     freq_range = np.geomspace(np.log(min_freq), np.log(max_freq), N_FREQS).tolist()
-    return u.Quantity(np.exp(draw(sampled_from(freq_range))), model.model.spectrum.unit)
+    freq = np.clip(np.exp(draw(sampled_from(freq_range))), min_freq, max_freq)
+
+    return u.Quantity(freq, model.model.spectrum.unit)
 
 
 @composite
