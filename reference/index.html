@@ -568,13 +568,13 @@ valid model range. Default is False.</p></td>
 the brightness integral. Default is 50 points.</p></td>
       </tr>
       <tr>
-        <td><code>cutoff</code></td>
+        <td><code>los_dist_cut</code></td>
         <td><code>u.Quantity[u.AU]</code></td>
-        <td><p>Radial distance from the Sun at which all line of sights
-are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
+        <td><p>Radial distance from the Sun at which all line of
+sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
       </tr>
       <tr>
-        <td><code>solar_cutoff</code></td>
+        <td><code>solar_cut</code></td>
         <td><code>u.Quantity[u.deg]</code></td>
         <td><p>Cutoff angle from the sun in degrees. The emission
 for all the pointing with angular distance between the sun smaller than
@@ -583,6 +583,12 @@ diffuse cloud component at the heliocentric origin. Such a cutoff may be
 useful when using simulated pointing, but actual scanning strategies are
 unlikely to look directly at the sun. This feature is turned of by setting this
 argument to <code>None</code>. Defaults to 5 degrees.</p></td>
+      </tr>
+      <tr>
+        <td><code>solar_cut_fill_value</code></td>
+        <td><code>float</code></td>
+        <td><p>Fill value for the masked solar cut pointing.
+Defaults to <code>np.nan</code>.</p></td>
       </tr>
   </tbody>
 </table>
