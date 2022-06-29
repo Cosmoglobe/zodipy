@@ -81,7 +81,7 @@ def validate_pixels(function):
         **kwargs,
     ):
 
-        if np.max(pixels) > hp.nside2npix(nside):
+        if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
             raise ValueError("invalid pixel number given nside")
 
         if np.ndim(pixels) == 0:
