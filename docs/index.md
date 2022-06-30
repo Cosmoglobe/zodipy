@@ -54,7 +54,7 @@ What's going on here:
 - We start by initializing the [`Zodipy`][zodipy.zodipy.Zodipy] class where we specify that we want to use the DIRBE interplanetary dust model.
 - We use the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method which is a method to compute simulated emission from angular sky coordinates. See the [reference](reference.md) for other available methods.
 - The first argument to the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method, `25 * u.micron`, specifies the wavelength (or frequency) of the simulated observation. Note that we use Astropy units for many of the input arguments.
-- `theta` and `phi` represent the pointing of the observation (co-latitude and longitude). In this scenario, we observe three sky coordinates.
+- `theta` and `phi` represent the pointing of the observation (co-latitude and longitude). In this example we observe three sky coordinates.
 - `obs_time` represents the time of observation which is used internally to compute the position of the observer and all other required solar system bodies.
 - `obs` represents the observer, and must be an solar system observer supported by the [Astropy ephemeris](https://docs.astropy.org/en/stable/coordinates/solarsystem.html) used internally.
 - `lonlat` is a boolean which converts the convention of `theta` and `phi` from co-latitude and longitude to longitude and latitude.

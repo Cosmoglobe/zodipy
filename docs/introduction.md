@@ -8,14 +8,23 @@ ZodiPy attempts to make zodiacal emission simulations more accessible by providi
 ## Interplanetary Dust Models
 Currently, ZodiPy supports the following interplanetary dust models:
 
-- dirbe ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
-- planck13 ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
-- planck15 ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P>))
-- planck18 ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P>))
-- odegard ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
+**1.25-240 $\boldsymbol{\mu}$m**
 
-!!! note
-    These are all models which implement or extend the DIRBE model meaning that the geometric representation of the interplanetary dust distribution is constant over all models. The difference in the models comes from changes in the spectral parameters relating to the component emissivities and other source terms. 
+- DIRBE ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
+
+**100-857 GHz**
+
+- Planck 2013 ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
+- Planck 2015 ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P))
+- Planck 2018 ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P))
+- Odegard ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
+
+!!! info
+    The Planck and Odegard models extend the DIRBE interplanetary dust model to CMB frequencies by fitting the blackbody emissivity of the dust in the respective DIRBE interplanetary dust components to Planck HFI data.
+
+
 
 ## Scientific Paper
+For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
+
 - [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962)
