@@ -437,7 +437,7 @@
 <li>We start by initializing the <a href="reference/#zodipy.zodipy.Zodipy"><code>Zodipy</code></a> class where we specify that we want to use the DIRBE interplanetary dust model.</li>
 <li>We use the <a href="reference/#zodipy.zodipy.Zodipy.get_emission_ang"><code>get_emission_ang</code></a> method which is a method to compute simulated emission from angular sky coordinates. See the <a href="reference/">reference</a> for other available methods.</li>
 <li>The first argument to the <a href="reference/#zodipy.zodipy.Zodipy.get_emission_ang"><code>get_emission_ang</code></a> method, <code>25 * u.micron</code>, specifies the wavelength (or frequency) of the simulated observation. Note that we use Astropy units for many of the input arguments.</li>
-<li><code>theta</code> and <code>phi</code> represent the pointing of the observation (co-latitude and longitude). In this scenario, we observe three sky coordinates.</li>
+<li><code>theta</code> and <code>phi</code> represent the pointing of the observation (co-latitude and longitude). In this example we observe three sky coordinates.</li>
 <li><code>obs_time</code> represents the time of observation which is used internally to compute the position of the observer and all other required solar system bodies.</li>
 <li><code>obs</code> represents the observer, and must be an solar system observer supported by the <a href="https://docs.astropy.org/en/stable/coordinates/solarsystem.html">Astropy ephemeris</a> used internally.</li>
 <li><code>lonlat</code> is a boolean which converts the convention of <code>theta</code> and <code>phi</code> from co-latitude and longitude to longitude and latitude.</li>
@@ -504,6 +504,12 @@
     
     
       <script src="assets/javascripts/bundle.4fc53ad4.min.js"></script>
+      
+        <script src="javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -411,18 +411,23 @@
 <p>ZodiPy attempts to make zodiacal emission simulations more accessible by providing the community with a simple Python interface to existing models. For other zodiacal emission tools, see <a href="https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html">Zodiacal Light Models on LAMBDA</a>. ZodiPy is an open source project and all contributions are welcome.</p>
 <h2 id="interplanetary-dust-models">Interplanetary Dust Models</h2>
 <p>Currently, ZodiPy supports the following interplanetary dust models:</p>
+<p><strong>1.25-240 <span class="arithmatex">\(\boldsymbol{\mu}\)</span>m</strong></p>
 <ul>
-<li>dirbe (<a href="https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract">Kelsall et al. 1998</a>)</li>
-<li>planck13 (<a href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract&gt;">Planck Collaboration et al. 2014</a>)</li>
-<li>planck15 (<a href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P&gt;">Planck Collaboration et al. 2016</a>)</li>
-<li>planck18 (<a href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P&gt;">Planck Collaboration et al. 2020</a>)</li>
-<li>odegard (<a href="https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract">Odegard et al. 2019</a>)</li>
+<li>DIRBE (<a href="https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract">Kelsall et al. 1998</a>)</li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>These are all models which implement or extend the DIRBE model meaning that the geometric representation of the interplanetary dust distribution is constant over all models. The difference in the models comes from changes in the spectral parameters relating to the component emissivities and other source terms. </p>
+<p><strong>100-857 GHz</strong></p>
+<ul>
+<li>Planck 2013 (<a href="https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract&gt;">Planck Collaboration et al. 2014</a>)</li>
+<li>Planck 2015 (<a href="https://ui.adsabs.harvard.edu/abs/2016A&amp;A...594A...8P">Planck Collaboration et al. 2016</a>)</li>
+<li>Planck 2018 (<a href="https://ui.adsabs.harvard.edu/abs/2020A&amp;A...641A...3P">Planck Collaboration et al. 2020</a>)</li>
+<li>Odegard (<a href="https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract">Odegard et al. 2019</a>)</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The Planck and Odegard models extend the DIRBE interplanetary dust model to CMB frequencies by fitting the blackbody emissivity of the dust in the respective DIRBE interplanetary dust components to Planck HFI data.</p>
 </div>
 <h2 id="scientific-paper">Scientific Paper</h2>
+<p>For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:</p>
 <ul>
 <li><a href="https://arxiv.org/abs/2205.12962">Cosmoglobe: Simulating Zodiacal Emission with ZodiPy</a></li>
 </ul>
@@ -502,6 +507,12 @@
     
     
       <script src="../assets/javascripts/bundle.4fc53ad4.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
