@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import multiprocessing
 from functools import partial
 from typing import Literal, Sequence, Union
 
@@ -390,48 +391,73 @@ class Zodipy:
         )
 
         # Preparing quantities for broadcasting
-        stop_expanded = np.expand_dims(stop, axis=-1)
+        # stop_expanded = np.expand_dims(stop, axis=-1)
         observer_position_expanded = np.expand_dims(observer_position, axis=-1)
         earth_position_expanded = np.expand_dims(earth_position, axis=-1)
-        unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
+        # unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
-        # For each component, compute the integrated line of sight emission
-        for idx, (label, comp) in enumerate(self.model.comps.items()):
-            source_parameters = self.model.interpolate_source_parameters(label, freq)
-            emissivity, albedo, phase_coefficients = source_parameters
+        n_proc = multiprocessing.cpu_count()
+        with multiprocessing.Pool(n_proc) as pool:
 
-            # Here we create a partial function that will be passed to the
-            # integration scheme. The arrays are reshaped to (d, n, p) where d
-            # is the geometrical dimensionality, n is the number of different
-            # pointings, and p is the number of integration points of the
-            # quadrature.
-            emission_comp_integrand = partial(
-                _compute_comp_emission_at_step,
-                start=start,
-                stop=stop_expanded,
-                X_obs=observer_position_expanded,
-                X_earth=earth_position_expanded,
-                u_los=unit_vectors_expanded,
-                comp=comp,
-                freq=freq.value,
-                T_0=self.model.T_0,
-                delta=self.model.delta,
-                emissivity=emissivity,
-                albedo=albedo,
-                phase_coefficients=phase_coefficients,
-                solar_irradiance=solar_irradiance,
-            )
+            unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
+            stop_chunks = np.array_split(stop, n_proc, axis=-1)
 
-            integrated_comp_emission = self.integration_scheme.integrate(
-                emission_comp_integrand, [-1, 1]
-            )
-            # We convert the integral from [-1, 1] back to [start, stop].
-            integrated_comp_emission *= 0.5 * (stop - start)
+            # emission = np.concatenate(result_chunks, axis=1)
 
-            if binned:
-                emission[idx, pixels] = integrated_comp_emission
-            else:
-                emission[idx] = integrated_comp_emission[indicies]
+            # For each component, compute the integrated line of sight emission
+            for idx, (label, comp) in enumerate(self.model.comps.items()):
+                source_parameters = self.model.interpolate_source_parameters(
+                    label, freq
+                )
+                emissivity, albedo, phase_coefficients = source_parameters
+
+                # Here we create a partial function that will be passed to the
+                # integration scheme. The arrays are reshaped to (d, n, p) where d
+                # is the geometrical dimensionality, n is the number of different
+                # pointings, and p is the number of integration points of the
+                # quadrature.
+                emission_comp_integrand_partials = [
+                    partial(
+                        _compute_comp_emission_at_step,
+                        start=start,
+                        stop=np.expand_dims(stop, axis=-1),
+                        X_obs=observer_position_expanded,
+                        X_earth=earth_position_expanded,
+                        u_los=np.expand_dims(unit_vectors, axis=-1),
+                        comp=comp,
+                        freq=freq.value,
+                        T_0=self.model.T_0,
+                        delta=self.model.delta,
+                        emissivity=emissivity,
+                        albedo=albedo,
+                        phase_coefficients=phase_coefficients,
+                        solar_irradiance=solar_irradiance,
+                    )
+                    for unit_vectors, stop in zip(unit_vector_chunks, stop_chunks)
+                ]
+
+                proc_chunks = [
+                    pool.apply_async(
+                        self.integration_scheme.integrate,
+                        args=(partial_integrand, [-1, 1]),
+                    )
+                    for partial_integrand in emission_comp_integrand_partials
+                ]
+                result_chunks = [result.get() for result in proc_chunks]
+
+                integrated_comp_emission = np.concatenate(result_chunks, axis=0)
+                # print(np.shape(result_chunks))
+
+                # integrated_comp_emission = self.integration_scheme.integrate(
+                #     emission_comp_integrand, [-1, 1]
+                # )
+                # We convert the integral from [-1, 1] back to [start, stop].
+                integrated_comp_emission *= 0.5 * (stop - start)
+
+                if binned:
+                    emission[idx, pixels] = integrated_comp_emission
+                else:
+                    emission[idx] = integrated_comp_emission[indicies]
 
         if self.solar_cut is not None:
             # The observer position is aquired in geocentric coordinates before being
