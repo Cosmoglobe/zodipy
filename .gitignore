@@ -15,6 +15,7 @@ build
 .cache
 htmlcov
 .coverage
+coverage.xml
 UNKNOWN.egg-info
 docs/_build/
 site

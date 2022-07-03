@@ -27,7 +27,7 @@ DIRBE_START_DAY = Time("1990-01-01")
 
 
 @given(model(), time(), nside(), data())
-@settings(deadline=None, max_examples=100)
+@settings(deadline=None)
 def test_get_emission_pix(
     model: Zodipy,
     time: Time,
@@ -96,6 +96,7 @@ def test_get_emission_ang(
         obs_time=time,
         obs=observer,
     )
+    print(emission)
     assert emission.size == theta.size == phi.size
 
 
@@ -272,3 +273,87 @@ def test_invalid_los_dist_cut(
                 obs_time=time,
                 obs=observer,
             )
+
+
+def test_multiprocessing() -> None:
+    """
+    Testing that model with multiprocessing enabled returns the same value as
+    without multiprocessing.
+    """
+
+    model = Zodipy()
+    model_parallel = Zodipy(parallel=True)
+
+    observer = "earth"
+    time = Time("2020-01-01")
+    frequency = 78 * u.micron
+    nside = 32
+    pix = np.random.randint(0, hp.nside2npix(nside), size=1000)
+    theta = np.random.uniform(0, 180, size=1000) * u.deg
+    phi = np.random.uniform(0, 360, size=1000) * u.deg
+
+    emission_pix = model.get_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    emission_pix_parallel = model_parallel.get_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert np.array_equal(emission_pix, emission_pix_parallel)
+
+    emission_binned_pix = model.get_binned_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    emission_binned_pix_parallel = model_parallel.get_binned_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert np.array_equal(emission_binned_pix, emission_binned_pix_parallel)
+
+    emission_ang = model.get_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
+        obs_time=time,
+        obs=observer,
+    )
+    emission_ang_parallel = model_parallel.get_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
+        obs_time=time,
+        obs=observer,
+    )
+    assert np.array_equal(emission_ang, emission_ang_parallel)
+
+    emission_binned_ang = model.get_binned_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    emission_binned_ang_parallel = model_parallel.get_binned_emission_ang(
+        frequency,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert np.array_equal(emission_binned_ang, emission_binned_ang_parallel)

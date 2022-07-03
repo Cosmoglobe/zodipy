@@ -190,6 +190,7 @@ MODEL_STRATEGY_MAPPINGS: dict[str, SearchStrategy[Any]] = {
 def model(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodipy:
     strategies = MODEL_STRATEGY_MAPPINGS.copy()
     for key in static_params.keys():
-        strategies.pop(key)
+        if key in strategies:
+            strategies.pop(key)
 
     return draw(builds(partial(zodipy.Zodipy, **static_params), **strategies))
