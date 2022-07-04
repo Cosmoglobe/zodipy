@@ -306,7 +306,7 @@ def test_multiprocessing() -> None:
         obs_time=time,
         obs=observer,
     )
-    assert np.array_equal(emission_pix, emission_pix_parallel)
+    assert np.allclose(emission_pix, emission_pix_parallel)
 
     emission_binned_pix = model.get_binned_emission_pix(
         frequency,
@@ -322,7 +322,7 @@ def test_multiprocessing() -> None:
         obs_time=time,
         obs=observer,
     )
-    assert np.array_equal(emission_binned_pix, emission_binned_pix_parallel)
+    assert np.allclose(emission_binned_pix, emission_binned_pix_parallel)
 
     emission_ang = model.get_emission_ang(
         frequency,
@@ -338,7 +338,7 @@ def test_multiprocessing() -> None:
         obs_time=time,
         obs=observer,
     )
-    assert np.array_equal(emission_ang, emission_ang_parallel)
+    assert np.allclose(emission_ang, emission_ang_parallel)
 
     emission_binned_ang = model.get_binned_emission_ang(
         frequency,

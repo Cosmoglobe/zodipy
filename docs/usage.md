@@ -72,3 +72,14 @@ and plot the cross section of the diffuse cloud components density in the yz-pla
 {!examples/get_density_contour.py!}
 ```
 ![Interplanetary dust distribution](img/density_grid.png)
+
+
+## Parallel computations
+Simulations with large `nside` or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing `Zodipy` with `parallel=True`. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the `n_proc` keyword when initializing `ZodiPy`
+
+!!! important
+    To avoid spawning infinite processes, the `get_emission_xxx` function call must be executed from within a `if __name__ == "__main__"` guard.
+
+```python
+{!examples/get_parallel_emission.py!}
+```

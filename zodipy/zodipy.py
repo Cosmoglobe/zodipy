@@ -43,18 +43,16 @@ class Zodipy:
     Attributes:
         model (str): Name of the interplanetary dust model to use in the simulations.
             Defaults to DIRBE.
-        ephemeris (str): Ephemeris used to compute the positions of the observer and the
-            Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
-            file. For more information on available ephemeridis, please visit
-            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
         extrapolate (bool): If True all spectral quantities in the selected model are
             linearly extrapolated to the requested frequency/wavelength. If False, an
             Exception will be raised on requested frequencies/wavelengths outside of the
             valid model range. Default is False.
-        gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
-            the brightness integral. Default is 50 points.
-        los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
-            sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
+        parallel (bool): If True, input pointing sequences will be split among all
+            available cores on the machine, and the emission will be computed in parallel.
+            This is useful for large simulations. NOTE: This will require the user to guard
+            the executed code in a `if __name__ == "__main__"` block. Default is False.
+        n_proc (int): Number of cores to use when parallel computation. Defaults is None,
+            which will use all available cores.
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
             for all the pointing with angular distance between the sun smaller than
             `solar_cutoff` are set to `np.nan`. This is due to the model singularity of the
@@ -64,32 +62,41 @@ class Zodipy:
             argument to `None`. Defaults to 5 degrees.
         solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
             Defaults to `np.nan`.
+        gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
+            the brightness integral. Default is 50 points.
+        los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
+            sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
+        ephemeris (str): Ephemeris used to compute the positions of the observer and the
+            Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
+            file. For more information on available ephemeridis, please visit
+            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+
 
     """
 
     def __init__(
         self,
         model: str = "dirbe",
-        ephemeris: str = "de432s",
         extrapolate: bool = False,
-        gauss_quad_order: int = 100,
-        los_dist_cut: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
+        parallel: bool = False,
+        n_proc: int | None = None,
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
-        parallel: bool = False,
-        n_procs: int | None = None,
+        gauss_quad_order: int = 100,
+        los_dist_cut: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
+        ephemeris: str = "de432s",
     ) -> None:
 
         self.model = model_registry.get_model(model)
-        self.ephemeris = ephemeris
         self.extrapolate = extrapolate
+        self.parallel = parallel
+        self.n_proc = n_proc
+        self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
+        self.solar_cut_fill_value = solar_cut_fill_value
         self.gauss_quad_order = gauss_quad_order
         self.integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_order)
         self.los_dist_cut = los_dist_cut
-        self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
-        self.solar_cut_fill_value = solar_cut_fill_value
-        self.parallel = parallel
-        self.n_procs = n_procs
+        self.ephemeris = ephemeris
 
     @property
     def supported_observers(self) -> list[str]:
@@ -399,15 +406,16 @@ class Zodipy:
         observer_position_expanded = np.expand_dims(observer_position, axis=-1)
         earth_position_expanded = np.expand_dims(earth_position, axis=-1)
 
+        # Distribute pointing to available CPUs and compute the emission in parallel.
         if self.parallel:
-            n_proc = (
-                multiprocessing.cpu_count() if self.n_procs is None else self.n_procs
-            )
-            with multiprocessing.Pool(n_proc) as pool:
-                unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
-                stop_chunks = np.array_split(stop, n_proc, axis=-1)
+            n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 
-                # For each component, compute the integrated line of sight emission
+            unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
+            stop_chunks = np.array_split(stop, n_proc, axis=-1)
+
+            with multiprocessing.Pool(processes=n_proc) as pool:
+                # Compute the integrated line-of-sight emission for each component and
+                # pointing.
                 for idx, (label, comp) in enumerate(self.model.comps.items()):
                     source_parameters = self.model.interpolate_source_parameters(
                         label, freq
@@ -446,10 +454,11 @@ class Zodipy:
                         )
                         for partial_integrand in partial_integrand_chunks
                     ]
-                    integrated_chunks = [result.get() for result in proc_chunks]
-                    integrated_comp_emission = np.concatenate(integrated_chunks, axis=0)
+                    integrated_comp_emission = np.concatenate(
+                        [result.get() for result in proc_chunks], axis=0
+                    )
 
-                    # We convert the integral from [-1, 1] back to [start, stop].
+                    # Convert the integral from [-1, 1] back to [start, stop].
                     integrated_comp_emission *= 0.5 * (stop - start)
 
                     if binned:
@@ -457,6 +466,7 @@ class Zodipy:
                     else:
                         emission[idx] = integrated_comp_emission[indicies]
 
+        # Compute the emission in the main process.
         else:
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
             stop_expanded = np.expand_dims(stop, axis=-1)
