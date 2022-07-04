@@ -546,14 +546,6 @@ model.</p>
 Defaults to DIRBE.</p></td>
       </tr>
       <tr>
-        <td><code>ephemeris</code></td>
-        <td><code>str</code></td>
-        <td><p>Ephemeris used to compute the positions of the observer and the
-Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
-file. For more information on available ephemeridis, please visit
-https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
-      </tr>
-      <tr>
         <td><code>extrapolate</code></td>
         <td><code>bool</code></td>
         <td><p>If True all spectral quantities in the selected model are
@@ -562,16 +554,18 @@ Exception will be raised on requested frequencies/wavelengths outside of the
 valid model range. Default is False.</p></td>
       </tr>
       <tr>
-        <td><code>gauss_quad_order</code></td>
-        <td><code>int</code></td>
-        <td><p>Order of the Gaussian-Legendre quadrature used to evaluate
-the brightness integral. Default is 50 points.</p></td>
+        <td><code>parallel</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True, input pointing sequences will be split among all
+available cores on the machine, and the emission will be computed in parallel.
+This is useful for large simulations. NOTE: This will require the user to guard
+the executed code in a <code>if __name__ == "__main__"</code> block. Default is False.</p></td>
       </tr>
       <tr>
-        <td><code>los_dist_cut</code></td>
-        <td><code>u.Quantity[u.AU]</code></td>
-        <td><p>Radial distance from the Sun at which all line of
-sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
+        <td><code>n_proc</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of cores to use when parallel computation. Defaults is None,
+which will use all available cores.</p></td>
       </tr>
       <tr>
         <td><code>solar_cut</code></td>
@@ -589,6 +583,26 @@ argument to <code>None</code>. Defaults to 5 degrees.</p></td>
         <td><code>float</code></td>
         <td><p>Fill value for the masked solar cut pointing.
 Defaults to <code>np.nan</code>.</p></td>
+      </tr>
+      <tr>
+        <td><code>gauss_quad_order</code></td>
+        <td><code>int</code></td>
+        <td><p>Order of the Gaussian-Legendre quadrature used to evaluate
+the brightness integral. Default is 50 points.</p></td>
+      </tr>
+      <tr>
+        <td><code>los_dist_cut</code></td>
+        <td><code>u.Quantity[u.AU]</code></td>
+        <td><p>Radial distance from the Sun at which all line of
+sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
+      </tr>
+      <tr>
+        <td><code>ephemeris</code></td>
+        <td><code>str</code></td>
+        <td><p>Ephemeris used to compute the positions of the observer and the
+Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
+file. For more information on available ephemeridis, please visit
+https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
       </tr>
   </tbody>
 </table>
