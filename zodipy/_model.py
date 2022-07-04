@@ -36,31 +36,35 @@ class Model:
     def n_comps(self) -> int:
         return len(self.comps)
 
-    def interpolate_source_parameters(
-        self, comp_label: ComponentLabel, freq: u.Quantity[u.GHz] | u.Quantity[u.m]
-    ) -> tuple[float, float, tuple[float, ...]]:
+    def interp_source_params(
+        self, freq: u.Quantity[u.GHz] | u.Quantity[u.m]
+    ) -> tuple[list[float], list[float], tuple[float, ...]]:
         """
         Returns interpolated/extrapolated source parameters for a component
         given a frequency.
         """
+        albedos: list[float] = []
+        emissivities: list[float] = []
 
         freq = freq.to(self.spectrum.unit, equivalencies=u.spectral())
-        emissivity_interpolator = interp1d(
-            x=self.spectrum,
-            y=self.emissivities[comp_label],
-            fill_value="extrapolate",
-        )
-        emissivity = emissivity_interpolator(freq)
-
-        if self.albedos is not None:
-            albedo_interpolator = interp1d(
+        for comp_label in self.comps.keys():
+            emissivity_interpolator = interp1d(
                 x=self.spectrum,
-                y=self.albedos[comp_label],
+                y=self.emissivities[comp_label],
                 fill_value="extrapolate",
             )
-            albedo = albedo_interpolator(freq)
-        else:
-            albedo = 0.0
+            emissivities.append(emissivity_interpolator(freq))
+
+            if self.albedos is not None:
+                albedo_interpolator = interp1d(
+                    x=self.spectrum,
+                    y=self.albedos[comp_label],
+                    fill_value="extrapolate",
+                )
+                albedo = albedo_interpolator(freq)
+            else:
+                albedo = 0.0
+            albedos.append(albedo)
 
         if self.phase_coefficients is not None:
             phase_coefficient_interpolator = interp1d(
@@ -68,11 +72,11 @@ class Model:
                 y=np.asarray(self.phase_coefficients),
                 fill_value="extrapolate",
             )
-            phase_coefficient = phase_coefficient_interpolator(freq)
+            phase_coefficients = phase_coefficient_interpolator(freq)
         else:
-            phase_coefficient = [0.0 for _ in range(3)]
+            phase_coefficients = [0.0 for _ in range(3)]
 
-        return emissivity, albedo, tuple(phase_coefficient)
+        return emissivities, albedos, tuple(phase_coefficients)
 
     def __repr__(self) -> str:
         comp_names = [comp_label.value for comp_label in self.comps]

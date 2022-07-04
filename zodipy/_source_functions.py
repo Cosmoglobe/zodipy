@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import TypeVar
 
 import astropy.constants as const
 import astropy.units as u
@@ -14,10 +15,10 @@ T_sun = 5778  # K
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
+A = TypeVar("A", float, NDArray[np.floating])
 
-def get_blackbody_emission(
-    freq: float | NDArray[np.floating], T: float | NDArray[np.floating]
-) -> float | NDArray[np.floating]:
+
+def get_blackbody_emission(freq: float, T: A) -> A:
     """Returns the blackbody emission given a frequency.
 
     Parameters
@@ -39,9 +40,7 @@ def get_blackbody_emission(
     return term1 / term2
 
 
-def get_dust_grain_temperature(
-    R: float | NDArray[np.floating], T_0: float, delta: float
-) -> float | NDArray[np.floating]:
+def get_dust_grain_temperature(R: A, T_0: float, delta: float) -> A:
     """Returns the dust grain temperature given a radial distance from the Sun.
 
     Parameters
