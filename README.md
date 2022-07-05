@@ -2,10 +2,10 @@
 <img src="docs/img/zodipy_logo.png" width="350">
 
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
-![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
-[![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
+![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ)](https://codecov.io/gh/Cosmoglobe/zodipy)
+[![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
 ---
 
 
@@ -36,22 +36,7 @@ emission = model.get_emission_ang(
     obs_time=Time("2022-01-01 12:00:00"),
     obs="earth",
 )
-print(model)
-"""
-Model(
-   name: 'dirbe',
-   components: (
-      'cloud',
-      'band1',
-      'band2',
-      'band3',
-      'ring',
-      'feature',
-   ),
-   thermal: True,
-   scattering: True,
-)
-"""
+
 print(emission)
 #> [15.35392831 15.35495051 15.35616009] MJy / sr
 ```
@@ -65,9 +50,9 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if yo
 # Funding
 This work has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreements No 776282 (COMPET-4; BeyondPlanck), 772253 (ERC; bits2cosmology) and 819478 (ERC; Cosmoglobe).
 
-<table align="center">
-    <tr>
-        <td><img src="https://user-images.githubusercontent.com/28634670/170697040-d5ec2935-29d0-4847-8999-9bc4eaa59e56.jpeg" height="200"></td>
-        <td><img src="https://user-images.githubusercontent.com/28634670/170697140-b010aa69-9f9a-44c0-b702-8a05ec0b6d3e.jpeg" height="200"></td>
-    </tr>
-</table>
+
+<div style="display: flex; flex-direction: row; justify-content: space-evenly">
+    <img style="width: 49%; height: auto; max-width: 500px; align-self: center" src="https://user-images.githubusercontent.com/28634670/170697040-d5ec2935-29d0-4847-8999-9bc4eaa59e56.jpeg"> 
+    &nbsp; 
+    <img style="width: 49%; height: auto; max-width: 500px; align-self: center" src="https://user-images.githubusercontent.com/28634670/170697140-b010aa69-9f9a-44c0-b702-8a05ec0b6d3e.jpeg">
+</div>

@@ -2,10 +2,10 @@
 <img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%">
 
 [![PyPI version](https://badge.fury.io/py/zodipy.svg)](https://badge.fury.io/py/zodipy)
-![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
-[![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ)](https://codecov.io/gh/Cosmoglobe/zodipy)
+[![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
 
 ZodiPy is software for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
 ![ZodiPy Logo](img/zodipy_map.png)
@@ -29,22 +29,7 @@ emission = model.get_emission_ang(
     obs="earth",
     lonlat=True,
 )
-print(model)
-"""
-Model(
-   name: 'dirbe',
-   components: (
-      'cloud',
-      'band1',
-      'band2',
-      'band3',
-      'ring',
-      'feature',
-   ),
-   thermal: True,
-   scattering: True,
-)
-"""
+
 print(emission)
 #> [15.53095493 15.52883577 15.53121942] MJy / sr
 ```

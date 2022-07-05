@@ -75,11 +75,18 @@ and plot the cross section of the diffuse cloud components density in the yz-pla
 
 
 ## Parallel computations
-Simulations with large `nside` or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing `Zodipy` with `parallel=True`. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the `n_proc` keyword when initializing `ZodiPy`
+Simulations with large `nside` or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing `Zodipy` with `parallel=True`. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the `n_proc` keyword when initializing `ZodiPy`.
 
-!!! important
-    To avoid spawning infinite processes, the `get_emission_xxx` function call must be executed from within a `if __name__ == "__main__"` guard.
 
-```python
+```python hl_lines="16"
 {!examples/get_parallel_emission.py!}
 ```
+!!! warning "Windows users"
+    On windows, the parallel code must be executed in a `if __name__ == "__main__"` guard to avoid spawning infinite processes: 
+    ```python
+    ...
+    if __name__ == "__main__":
+        emission = model.get_emission_pix(
+            ...
+        )
+    ```

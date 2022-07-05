@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import multiprocessing
+import platform
 from functools import partial
 from typing import Literal, Sequence, Union
 
@@ -25,6 +26,8 @@ from ._source_functions import (
 )
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from .models import model_registry
+
+SYS_PROC_START_METHOD = "fork" if "windows" not in platform.system().lower() else None
 
 DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 
@@ -86,16 +89,18 @@ class Zodipy:
         ephemeris: str = "de432s",
     ) -> None:
 
-        self.model = model_registry.get_model(model)
+        self.model = model
         self.extrapolate = extrapolate
         self.parallel = parallel
         self.n_proc = n_proc
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
         self.gauss_quad_order = gauss_quad_order
-        self.integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_order)
         self.los_dist_cut = los_dist_cut
         self.ephemeris = ephemeris
+
+        self._model = model_registry.get_model(model)
+        self._integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_order)
 
     @property
     def supported_observers(self) -> list[str]:
@@ -382,11 +387,11 @@ class Zodipy:
             obs=obs, obs_time=obs_time, obs_pos=obs_pos
         )
 
-        if self.model.solar_irradiance_model is not None:
+        if self._model.solar_irradiance_model is not None:
             solar_irradiance = (
-                self.model.solar_irradiance_model.interpolate_solar_irradiance(
+                self._model.solar_irradiance_model.interpolate_solar_irradiance(
                     freq=freq,
-                    albedos=self.model.albedos,
+                    albedos=self._model.albedos,
                     extrapolate=self.extrapolate,
                 )
             )
@@ -400,14 +405,14 @@ class Zodipy:
         )
 
         emission = np.zeros(
-            (self.model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
+            (self._model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
         )
 
         # Preparing quantities for broadcasting
         observer_position_expanded = np.expand_dims(observer_position, axis=-1)
         earth_position_expanded = np.expand_dims(earth_position, axis=-1)
 
-        emissivities, albedos, phase_coefficients = self.model.interp_source_params(
+        emissivities, albedos, phase_coefficients = self._model.interp_source_params(
             freq
         )
         # Distribute pointing to available CPUs and compute the emission in parallel.
@@ -417,12 +422,13 @@ class Zodipy:
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
             stop_chunks = np.array_split(stop, n_proc, axis=-1)
 
-            with multiprocessing.Pool(processes=n_proc) as pool:
-                # Here we create a partial function that will be passed to the
-                # integration scheme. The arrays are reshaped to (d, n, p) where d
-                # is the geometrical dimensionality, n is the number of different
-                # pointings, and p is the number of integration points of the
-                # quadrature.
+            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
+                processes=n_proc
+            ) as pool:
+                # Create a partial functions that will be passed to the quadpy integration
+                # scheme. Arrays are reshaped to (d, n, p) for broadcasting purposes where
+                # d is the geometrical dimensionality, n is the number of different
+                # pointings, and p is the number of integration points of the quadrature.
                 partial_integrand_chunks = [
                     partial(
                         _compute_emission_at_step,
@@ -432,10 +438,10 @@ class Zodipy:
                         X_obs=observer_position_expanded,
                         X_earth=earth_position_expanded,
                         u_los=np.expand_dims(unit_vectors, axis=-1),
-                        comps=list(self.model.comps.values()),
+                        comps=list(self._model.comps.values()),
                         freq=freq.value,
-                        T_0=self.model.T_0,
-                        delta=self.model.delta,
+                        T_0=self._model.T_0,
+                        delta=self._model.delta,
                         emissivities=emissivities,
                         albedos=albedos,
                         phase_coefficients=phase_coefficients,
@@ -446,7 +452,7 @@ class Zodipy:
 
                 proc_chunks = [
                     pool.apply_async(
-                        self.integration_scheme.integrate,
+                        self._integration_scheme.integrate,
                         args=(partial_integrand, [-1, 1]),
                     )
                     for partial_integrand in partial_integrand_chunks
@@ -468,17 +474,17 @@ class Zodipy:
                 X_obs=observer_position_expanded,
                 X_earth=earth_position_expanded,
                 u_los=unit_vectors_expanded,
-                comps=list(self.model.comps.values()),
+                comps=list(self._model.comps.values()),
                 freq=freq.value,
-                T_0=self.model.T_0,
-                delta=self.model.delta,
+                T_0=self._model.T_0,
+                delta=self._model.delta,
                 emissivities=emissivities,
                 albedos=albedos,
                 phase_coefficients=phase_coefficients,
                 solar_irradiance=solar_irradiance,
             )
 
-            integrated_comp_emission = self.integration_scheme.integrate(
+            integrated_comp_emission = self._integration_scheme.integrate(
                 partial_emission_integrand, [-1, 1]
             )
 
@@ -507,14 +513,13 @@ class Zodipy:
         return emission
 
     def __repr__(self) -> str:
-        return (
-            f"{type(self).__name__}(model={self.model.name!r}, "
-            f"ephemeris={self.ephemeris!r}, "
-            f"extrapolate={self.extrapolate!r})"
-        )
+        repr_str = f"{self.__class__.__name__}("
+        for attribute_name, attribute in self.__dict__.items():
+            if attribute_name.startswith("_"):
+                continue
+            repr_str += f"{attribute_name}={attribute!r}, "
 
-    def __str__(self) -> str:
-        return repr(self.model)
+        return repr_str[:-2] + ")"
 
 
 def _compute_emission_at_step(

@@ -113,7 +113,7 @@ def angles(
 
 @composite
 def freq(
-    draw: DrawFn, model: zodipy.Zodipy, unit: u.Unit | None = None
+    draw: DrawFn, model: zodipy.Zodipy
 ) -> u.Quantity[u.GHz] | u.Quantity[u.micron]:
 
     if model.extrapolate:
@@ -123,13 +123,13 @@ def freq(
             .map(partial(u.Quantity, unit=u.GHz))
         )
 
-    min_freq = model.model.spectrum[0]
-    max_freq = model.model.spectrum[-1]
+    min_freq = model._model.spectrum[0]
+    max_freq = model._model.spectrum[-1]
     freq_range = np.geomspace(np.log(min_freq.value), np.log(max_freq.value), N_FREQS)
     freq_strategy = (
         sampled_from(freq_range.tolist())
         .map(np.exp)
-        .map(partial(u.Quantity, unit=model.model.spectrum.unit))
+        .map(partial(u.Quantity, unit=model._model.spectrum.unit))
     )
 
     return np.clip(draw(freq_strategy), min_freq, max_freq)

@@ -28,14 +28,14 @@ def validate_freq(function):
         zodipy: "Zodipy" = self
 
         if not zodipy.extrapolate:
-            freq = freq.to(zodipy.model.spectrum.unit, equivalencies=u.spectral())
-            spectrum_min = zodipy.model.spectrum.min()
-            spectrum_max = zodipy.model.spectrum.max()
+            freq = freq.to(zodipy._model.spectrum.unit, equivalencies=u.spectral())
+            spectrum_min = zodipy._model.spectrum.min()
+            spectrum_max = zodipy._model.spectrum.max()
 
             if not (spectrum_min <= freq <= spectrum_max):
                 raise ValueError(
-                    f"model {zodipy.model.name!r} is only valid in the [{spectrum_min.value},"
-                    f" {spectrum_max.value}] {zodipy.model.spectrum.unit} range."
+                    f"model {zodipy._model.name!r} is only valid in the [{spectrum_min.value},"
+                    f" {spectrum_max.value}] {zodipy._model.spectrum.unit} range."
                 )
 
         freq = freq.to(u.GHz, equivalencies=u.spectral())
