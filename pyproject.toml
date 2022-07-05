@@ -1,12 +1,11 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.6.5"
+version = "0.6.6"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0"
-exclude = ["zodipy/dirbe"]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
