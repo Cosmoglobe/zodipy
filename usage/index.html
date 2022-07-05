@@ -749,11 +749,7 @@ and plot the cross section of the diffuse cloud components density in the yz-pla
 </code></pre></div>
 <img alt="Interplanetary dust distribution" src="../img/density_grid.png" /></p>
 <h2 id="parallel-computations">Parallel computations</h2>
-<p>Simulations with large <code>nside</code> or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing <code>Zodipy</code> with <code>parallel=True</code>. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the <code>n_proc</code> keyword when initializing <code>ZodiPy</code></p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>To avoid spawning infinite processes, the <code>get_emission_xxx</code> function call must be executed from within a <code>if __name__ == "__main__"</code> guard.</p>
-</div>
+<p>Simulations with large <code>nside</code> or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing <code>Zodipy</code> with <code>parallel=True</code>. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the <code>n_proc</code> keyword when initializing <code>ZodiPy</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">multiprocessing</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
@@ -769,37 +765,44 @@ and plot the cross section of the diffuse cloud components density in the yz-pla
 <span class="n">obs_time</span> <span class="o">=</span> <span class="n">Time</span><span class="p">(</span><span class="s2">&quot;2020-01-01&quot;</span><span class="p">)</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">zodipy</span><span class="o">.</span><span class="n">Zodipy</span><span class="p">()</span>
-<span class="n">model_parallel</span> <span class="o">=</span> <span class="n">zodipy</span><span class="o">.</span><span class="n">Zodipy</span><span class="p">(</span><span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="hll"><span class="n">model_parallel</span> <span class="o">=</span> <span class="n">zodipy</span><span class="o">.</span><span class="n">Zodipy</span><span class="p">(</span><span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
+    <span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="o">=</span><span class="n">pixels</span><span class="p">,</span>
+    <span class="n">nside</span><span class="o">=</span><span class="n">NSIDE</span><span class="p">,</span>
+    <span class="n">obs_time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Time spent on a single CPU:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;seconds&quot;</span><span class="p">)</span>
+<span class="c1"># &gt; Time spent on a single CPU: 91.76 seconds</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
-        <span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
-        <span class="n">pixels</span><span class="o">=</span><span class="n">pixels</span><span class="p">,</span>
-        <span class="n">nside</span><span class="o">=</span><span class="n">NSIDE</span><span class="p">,</span>
-        <span class="n">obs_time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="s2">&quot;Time spent on a single CPU:&quot;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;seconds&quot;</span>
-    <span class="p">)</span>
-    <span class="c1"># &gt; Time spent on a single CPU: 143.49 seconds</span>
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">emission_parallel</span> <span class="o">=</span> <span class="n">model_parallel</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
+    <span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
+    <span class="n">pixels</span><span class="o">=</span><span class="n">pixels</span><span class="p">,</span>
+    <span class="n">nside</span><span class="o">=</span><span class="n">NSIDE</span><span class="p">,</span>
+    <span class="n">obs_time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;Time spent on </span><span class="si">{</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="si">}</span><span class="s2"> CPUs:&quot;</span><span class="p">,</span>
+    <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="s2">&quot;seconds&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># &gt; Time spent on 8 CPUs: 26.87 seconds</span>
 
-    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">emission_parallel</span> <span class="o">=</span> <span class="n">model_parallel</span><span class="o">.</span><span class="n">get_binned_emission_pix</span><span class="p">(</span>
-        <span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">micron</span><span class="p">,</span>
-        <span class="n">pixels</span><span class="o">=</span><span class="n">pixels</span><span class="p">,</span>
-        <span class="n">nside</span><span class="o">=</span><span class="n">NSIDE</span><span class="p">,</span>
-        <span class="n">obs_time</span><span class="o">=</span><span class="n">obs_time</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Time spent on </span><span class="si">{</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="si">}</span><span class="s2"> CPUs:&quot;</span><span class="p">,</span>
-        <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="s2">&quot;seconds&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="c1"># &gt; Time spent on 8 CPUs: 42.52 seconds</span>
-
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">emission</span><span class="p">,</span> <span class="n">emission_parallel</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">emission</span><span class="p">,</span> <span class="n">emission_parallel</span><span class="p">)</span>
 </code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Windows users</p>
+<p>On windows, the parallel code must be executed in a <code>if __name__ == "__main__"</code> guard to avoid spawning infinite processes: 
+<div class="highlight"><pre><span></span><code><span class="o">...</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">emission</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_emission_pix</span><span class="p">(</span>
+        <span class="o">...</span>
+    <span class="p">)</span>
+</code></pre></div></p>
+</div>
                 
               
               

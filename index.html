@@ -390,10 +390,10 @@
                 
                 <p><img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%"></p>
 <p><a href="https://badge.fury.io/py/zodipy"><img alt="PyPI version" src="https://badge.fury.io/py/zodipy.svg" /></a>
-<img alt="Tests" src="https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg" />
-<a href="https://arxiv.org/abs/2205.12962"><img alt="arXiv Paper" src="https://img.shields.io/badge/arXiv-2205.12962-green" /></a>
 <a href="http://www.astropy.org/"><img alt="astropy" src="http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat" /></a>
-<a href="https://codecov.io/gh/Cosmoglobe/zodipy"><img alt="codecov" src="https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ" /></a></p>
+<img alt="Tests" src="https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg" />
+<a href="https://codecov.io/gh/Cosmoglobe/zodipy"><img alt="codecov" src="https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ" /></a>
+<a href="https://arxiv.org/abs/2205.12962"><img alt="arXiv Paper" src="https://img.shields.io/badge/arXiv-2205.12962-green" /></a></p>
 <p>ZodiPy is software for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
 <img alt="ZodiPy Logo" src="img/zodipy_map.png" /></p>
 <h2 id="a-simple-example">A simple example</h2>
@@ -413,22 +413,7 @@
     <span class="n">obs</span><span class="o">=</span><span class="s2">&quot;earth&quot;</span><span class="p">,</span>
     <span class="n">lonlat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Model(</span>
-<span class="sd">   name: &#39;dirbe&#39;,</span>
-<span class="sd">   components: (</span>
-<span class="sd">      &#39;cloud&#39;,</span>
-<span class="sd">      &#39;band1&#39;,</span>
-<span class="sd">      &#39;band2&#39;,</span>
-<span class="sd">      &#39;band3&#39;,</span>
-<span class="sd">      &#39;ring&#39;,</span>
-<span class="sd">      &#39;feature&#39;,</span>
-<span class="sd">   ),</span>
-<span class="sd">   thermal: True,</span>
-<span class="sd">   scattering: True,</span>
-<span class="sd">)</span>
-<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="nb">print</span><span class="p">(</span><span class="n">emission</span><span class="p">)</span>
 <span class="c1">#&gt; [15.53095493 15.52883577 15.53121942] MJy / sr</span>
 </code></pre></div>
