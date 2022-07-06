@@ -351,6 +351,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#zodipy.zodipy.Zodipy.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.get_binned_emission_ang" class="md-nav__link">
     get_binned_emission_ang()
   </a>
@@ -434,6 +441,13 @@
           <li class="md-nav__item">
   <a href="#zodipy.zodipy.Zodipy.supported_observers" class="md-nav__link">
     supported_observers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zodipy.zodipy.Zodipy.__init__" class="md-nav__link">
+    __init__()
   </a>
   
 </li>
@@ -525,88 +539,10 @@
 
     <div class="doc doc-contents ">
 
-      <p>Interface for simulating zodiacal emission.</p>
-<p>Sets up the simulation configuration and provides methods for simulating the zodiacal
-emission that a solar system observer is predicted to see given an interplanetary dust
-model.</p>
+      <p>Interface for simulating zodiacal emission with ZodiPy.</p>
+<p>This class specifies the configuration for an interplanetary dust model and provides
+methods for simulating zodiacal emission.</p>
 
-<p><strong>Attributes:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>model</code></td>
-        <td><code>str</code></td>
-        <td><p>Name of the interplanetary dust model to use in the simulations.
-Defaults to DIRBE.</p></td>
-      </tr>
-      <tr>
-        <td><code>extrapolate</code></td>
-        <td><code>bool</code></td>
-        <td><p>If True all spectral quantities in the selected model are
-linearly extrapolated to the requested frequency/wavelength. If False, an
-Exception will be raised on requested frequencies/wavelengths outside of the
-valid model range. Default is False.</p></td>
-      </tr>
-      <tr>
-        <td><code>parallel</code></td>
-        <td><code>bool</code></td>
-        <td><p>If True, input pointing sequences will be split among all
-available cores on the machine, and the emission will be computed in parallel.
-This is useful for large simulations. NOTE: This will require the user to guard
-the executed code in a <code>if __name__ == "__main__"</code> block. Default is False.</p></td>
-      </tr>
-      <tr>
-        <td><code>n_proc</code></td>
-        <td><code>int</code></td>
-        <td><p>Number of cores to use when parallel computation. Defaults is None,
-which will use all available cores.</p></td>
-      </tr>
-      <tr>
-        <td><code>solar_cut</code></td>
-        <td><code>u.Quantity[u.deg]</code></td>
-        <td><p>Cutoff angle from the sun in degrees. The emission
-for all the pointing with angular distance between the sun smaller than
-<code>solar_cutoff</code> are set to <code>np.nan</code>. This is due to the model singularity of the
-diffuse cloud component at the heliocentric origin. Such a cutoff may be
-useful when using simulated pointing, but actual scanning strategies are
-unlikely to look directly at the sun. This feature is turned of by setting this
-argument to <code>None</code>. Defaults to 5 degrees.</p></td>
-      </tr>
-      <tr>
-        <td><code>solar_cut_fill_value</code></td>
-        <td><code>float</code></td>
-        <td><p>Fill value for the masked solar cut pointing.
-Defaults to <code>np.nan</code>.</p></td>
-      </tr>
-      <tr>
-        <td><code>gauss_quad_order</code></td>
-        <td><code>int</code></td>
-        <td><p>Order of the Gaussian-Legendre quadrature used to evaluate
-the brightness integral. Default is 50 points.</p></td>
-      </tr>
-      <tr>
-        <td><code>los_dist_cut</code></td>
-        <td><code>u.Quantity[u.AU]</code></td>
-        <td><p>Radial distance from the Sun at which all line of
-sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.</p></td>
-      </tr>
-      <tr>
-        <td><code>ephemeris</code></td>
-        <td><code>str</code></td>
-        <td><p>Ephemeris used to compute the positions of the observer and the
-Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
-file. For more information on available ephemeridis, please visit
-https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
-      </tr>
-  </tbody>
-</table>
 
 
 
@@ -633,7 +569,7 @@ https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Returns a list of available observers given an ephemeris.</p>
+      <p>Returns a list of available observers given the specified ephemeris.</p>
     </div>
 
   </div>
@@ -641,6 +577,170 @@ https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
 
 
 
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="zodipy.zodipy.Zodipy.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;dirbe&#39;</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_proc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solar_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solar_cut_fill_value</span><span class="o">=</span><span class="n">nan</span><span class="p">,</span> <span class="n">gauss_quad_order</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">los_dist_cut</span><span class="o">=&lt;</span><span class="n">Quantity</span> <span class="mf">5.2</span> <span class="n">AU</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">ephemeris</span><span class="o">=</span><span class="s1">&#39;de432s&#39;</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Initializes an interplanetary dust model given a configuration.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>model</code></td>
+        <td><code>str</code></td>
+        <td><p>Name of the interplanetary dust model to use in the simulations.
+Defaults to DIRBE.</p></td>
+        <td><code>&#39;dirbe&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>extrapolate</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True all spectral quantities in the selected model are linearly
+extrapolated to the requested frequency/wavelength. If False, an Exception
+will be raised on requested frequencies/wavelengths outside of the valid
+model range. Default is False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>parallel</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True, input pointing sequences will be split among all available
+cores on the machine, and the emission will be computed in parallel. This
+is useful for large simulations. Defaults is None, which will use all
+available cores.</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>solar_cut</code></td>
+        <td><code>u.Quantity[u.deg] | None</code></td>
+        <td><p>Cutoff angle from the sun in degrees. The emission for all the
+pointing with angular distance between the sun smaller than <code>solar_cutoff</code>
+are set to <code>np.nan</code>. This is due to the model singularity of the diffuse
+cloud component at the heliocentric origin. Such a cutoff may be useful
+when using simulated pointing, but actual scanning strategies are unlikely
+to look directly at the sun. This feature is turned of by setting this
+argument to <code>None</code>. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>solar_cut_fill_value</code></td>
+        <td><code>float</code></td>
+        <td><p>Fill value for the masked solar cut pointing. Defaults to
+<code>np.nan</code>.</p></td>
+        <td><code>nan</code></td>
+      </tr>
+      <tr>
+        <td><code>gauss_quad_order</code></td>
+        <td><code>int</code></td>
+        <td><p>Order of the Gaussian-Legendre quadrature used to evaluate
+the brightness integral. Default is 100 points.</p></td>
+        <td><code>100</code></td>
+      </tr>
+      <tr>
+        <td><code>los_dist_cut</code></td>
+        <td><code>u.Quantity[u.AU]</code></td>
+        <td><p>Radial distance from the Sun at which all line of sights are
+truncated. Defaults to 5.2 AU (distance to Jupiter).</p></td>
+        <td><code>&lt;Quantity 5.2 AU&gt;</code></td>
+      </tr>
+      <tr>
+        <td><code>ephemeris</code></td>
+        <td><code>str</code></td>
+        <td><p>Ephemeris used to compute the positions of the observer and the
+Earth. Defaults to 'de432s' which requires downloading (and caching) a
+~10MB file. See
+https://docs.astropy.org/en/stable/coordinates/solarsystem.html for more
+information.</p></td>
+        <td><code>&#39;de432s&#39;</code></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>zodipy/zodipy.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dirbe&quot;</span><span class="p">,</span>
+    <span class="n">extrapolate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">n_proc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">solar_cut</span><span class="p">:</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">deg</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">solar_cut_fill_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="n">gauss_quad_order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">los_dist_cut</span><span class="p">:</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">]</span> <span class="o">=</span> <span class="n">DISTANCE_TO_JUPITER</span><span class="p">,</span>
+    <span class="n">ephemeris</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;de432s&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an interplanetary dust model given a configuration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: Name of the interplanetary dust model to use in the simulations.</span>
+<span class="sd">            Defaults to DIRBE.</span>
+<span class="sd">        extrapolate: If True all spectral quantities in the selected model are linearly</span>
+<span class="sd">            extrapolated to the requested frequency/wavelength. If False, an Exception</span>
+<span class="sd">            will be raised on requested frequencies/wavelengths outside of the valid</span>
+<span class="sd">            model range. Default is False.</span>
+<span class="sd">        parallel: If True, input pointing sequences will be split among all available</span>
+<span class="sd">            cores on the machine, and the emission will be computed in parallel. This</span>
+<span class="sd">            is useful for large simulations. Defaults is None, which will use all</span>
+<span class="sd">            available cores.</span>
+<span class="sd">        solar_cut: Cutoff angle from the sun in degrees. The emission for all the</span>
+<span class="sd">            pointing with angular distance between the sun smaller than `solar_cutoff`</span>
+<span class="sd">            are set to `np.nan`. This is due to the model singularity of the diffuse</span>
+<span class="sd">            cloud component at the heliocentric origin. Such a cutoff may be useful</span>
+<span class="sd">            when using simulated pointing, but actual scanning strategies are unlikely</span>
+<span class="sd">            to look directly at the sun. This feature is turned of by setting this</span>
+<span class="sd">            argument to `None`. Defaults to None.</span>
+<span class="sd">        solar_cut_fill_value: Fill value for the masked solar cut pointing. Defaults to</span>
+<span class="sd">            `np.nan`.</span>
+<span class="sd">        gauss_quad_order: Order of the Gaussian-Legendre quadrature used to evaluate</span>
+<span class="sd">            the brightness integral. Default is 100 points.</span>
+<span class="sd">        los_dist_cut: Radial distance from the Sun at which all line of sights are</span>
+<span class="sd">            truncated. Defaults to 5.2 AU (distance to Jupiter).</span>
+<span class="sd">        ephemeris: Ephemeris used to compute the positions of the observer and the</span>
+<span class="sd">            Earth. Defaults to &#39;de432s&#39; which requires downloading (and caching) a</span>
+<span class="sd">            ~10MB file. See</span>
+<span class="sd">            https://docs.astropy.org/en/stable/coordinates/solarsystem.html for more</span>
+<span class="sd">            information.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">extrapolate</span> <span class="o">=</span> <span class="n">extrapolate</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_proc</span> <span class="o">=</span> <span class="n">n_proc</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">solar_cut</span> <span class="o">=</span> <span class="n">solar_cut</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">rad</span><span class="p">)</span> <span class="k">if</span> <span class="n">solar_cut</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">solar_cut</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">solar_cut_fill_value</span> <span class="o">=</span> <span class="n">solar_cut_fill_value</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">gauss_quad_order</span> <span class="o">=</span> <span class="n">gauss_quad_order</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">los_dist_cut</span> <span class="o">=</span> <span class="n">los_dist_cut</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ephemeris</span> <span class="o">=</span> <span class="n">ephemeris</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_registry</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_integration_scheme</span> <span class="o">=</span> <span class="n">quadpy</span><span class="o">.</span><span class="n">c1</span><span class="o">.</span><span class="n">gauss_legendre</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gauss_quad_order</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -657,10 +757,8 @@ https://docs.astropy.org/en/stable/coordinates/solarsystem.html</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated binned zodiacal emission given angles on the sky.</p>
-<p>The pointing, for which to compute the emission, is specified in form of angles on
-the sky given by <code>theta</code> and <code>phi</code>. The emission is binned to a HEALPix map with
-resolution given by <code>nside</code>.</p>
+      <p>Simulates a binned HEALPIX map of zodiacal emission given angles on the sky
+(<code>theta</code>, <code>phi</code>).</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -710,16 +808,15 @@ radians or degrees.</p></td>
       <tr>
         <td><code>obs</code></td>
         <td><code>str</code></td>
-        <td><p>Name of the Solar System observer. A list of all support observers (for a
-given ephemeridis) is specified in <code>supported_observers</code> attribute of the
-<code>Zodipy</code> instance. Defaults to 'earth'.</p></td>
+        <td><p>Name of the Solar System observer. Defaults to 'earth'.</p></td>
         <td><code>&#39;earth&#39;</code></td>
       </tr>
       <tr>
         <td><code>obs_pos</code></td>
         <td><code>u.Quantity[u.AU] | None</code></td>
         <td><p>The heliocentric ecliptic cartesian position of the observer in AU.
-Overrides the <code>obs</code> argument. Default is None.</p></td>
+If given, the position computed with the ephemeris for the <code>obs</code> argument
+is ignored.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
@@ -732,14 +829,15 @@ latitude, otherwise, they are co-latitude and longitude.</p></td>
       <tr>
         <td><code>return_comps</code></td>
         <td><code>bool</code></td>
-        <td><p>If True, the emission is returned component-wise. Defaults to False.</p></td>
+        <td><p>If True, the emission is returned component-wise. Defaults to
+False.</p></td>
         <td><code>False</code></td>
       </tr>
       <tr>
         <td><code>coord_in</code></td>
         <td><code>Literal[(&#39;E&#39;, &#39;G&#39;, &#39;C&#39;)]</code></td>
-        <td><p>Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-coordinates) by default.</p></td>
+        <td><p>Coordinate frame of the input pointing. Default is 'E' (ecliptic
+coordinates).</p></td>
         <td><code>&#39;E&#39;</code></td>
       </tr>
   </tbody>
@@ -755,7 +853,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>Binned map of simulated zodiacal emission [MJy/sr].</p></td>
     </tr>
   </tbody>
 </table>
@@ -776,11 +874,9 @@ coordinates) by default.</p></td>
     <span class="n">return_comps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">coord_in</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Returns the simulated binned zodiacal emission given angles on the sky.</span>
-
-<span class="sd">    The pointing, for which to compute the emission, is specified in form of angles on</span>
-<span class="sd">    the sky given by `theta` and `phi`. The emission is binned to a HEALPix map with</span>
-<span class="sd">    resolution given by `nside`.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simulates a binned HEALPIX map of zodiacal emission given angles on the sky</span>
+<span class="sd">    (`theta`, `phi`).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        freq: Frequency or wavelength at which to evaluate the zodiacal emission.</span>
@@ -792,19 +888,19 @@ coordinates) by default.</p></td>
 <span class="sd">            radians or degrees.</span>
 <span class="sd">        nside: HEALPix resolution parameter of the binned map.</span>
 <span class="sd">        obs_time: Time of observation.</span>
-<span class="sd">        obs: Name of the Solar System observer. A list of all support observers (for a</span>
-<span class="sd">            given ephemeridis) is specified in `supported_observers` attribute of the</span>
-<span class="sd">            `Zodipy` instance. Defaults to &#39;earth&#39;.</span>
+<span class="sd">        obs: Name of the Solar System observer. Defaults to &#39;earth&#39;.</span>
 <span class="sd">        obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.</span>
-<span class="sd">            Overrides the `obs` argument. Default is None.</span>
+<span class="sd">            If given, the position computed with the ephemeris for the `obs` argument</span>
+<span class="sd">            is ignored.</span>
 <span class="sd">        lonlat: If True, input angles `theta`, `phi` are assumed to be longitude and</span>
 <span class="sd">            latitude, otherwise, they are co-latitude and longitude.</span>
-<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to False.</span>
-<span class="sd">        coord_in: Coordinate frame of the input pointing. Assumes &#39;E&#39; (ecliptic</span>
-<span class="sd">            coordinates) by default.</span>
+<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to</span>
+<span class="sd">            False.</span>
+<span class="sd">        coord_in: Coordinate frame of the input pointing. Default is &#39;E&#39; (ecliptic</span>
+<span class="sd">            coordinates).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        emission: Simulated zodiacal emission in units of &#39;MJy/sr&#39;.</span>
+<span class="sd">        Binned map of simulated zodiacal emission [MJy/sr].</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -854,10 +950,7 @@ coordinates) by default.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated binned zodiacal Emission given pixel numbers.</p>
-<p>The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
-given by <code>nside</code>. The emission is binned to a HEALPix map with resolution given by
-<code>nside</code>.</p>
+      <p>Simulates a binned HEALPIX map of zodiacal emission given pixel indicies.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -897,22 +990,22 @@ given by <code>nside</code>. The emission is binned to a HEALPix map with resolu
       <tr>
         <td><code>obs</code></td>
         <td><code>str</code></td>
-        <td><p>Name of the Solar System observer. A list of all support observers (for a
-given ephemeridis) is specified in <code>supported_observers</code> attribute of the
-<code>Zodipy</code> instance. Defaults to 'earth'.</p></td>
+        <td><p>Name of the Solar System observer. Defaults to 'earth'.</p></td>
         <td><code>&#39;earth&#39;</code></td>
       </tr>
       <tr>
         <td><code>obs_pos</code></td>
         <td><code>u.Quantity[u.AU] | None</code></td>
         <td><p>The heliocentric ecliptic cartesian position of the observer in AU.
-Overrides the <code>obs</code> argument. Default is None.</p></td>
+If given, the position computed with the ephemeris for the <code>obs</code> argument
+is ignored.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
         <td><code>return_comps</code></td>
         <td><code>bool</code></td>
-        <td><p>If True, the emission is returned component-wise. Defaults to False.</p></td>
+        <td><p>If True, the emission is returned component-wise. Defaults to
+False.</p></td>
         <td><code>False</code></td>
       </tr>
       <tr>
@@ -935,7 +1028,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>Binned map of simulated zodiacal emission [MJy/sr].</p></td>
     </tr>
   </tbody>
 </table>
@@ -954,28 +1047,24 @@ coordinates) by default.</p></td>
     <span class="n">return_comps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">coord_in</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Returns the simulated binned zodiacal Emission given pixel numbers.</span>
-
-<span class="sd">    The pixel numbers represent the pixel indicies on a HEALPix grid with resolution</span>
-<span class="sd">    given by `nside`. The emission is binned to a HEALPix map with resolution given by</span>
-<span class="sd">    `nside`.</span>
+    <span class="sd">&quot;&quot;&quot;Simulates a binned HEALPIX map of zodiacal emission given pixel indicies.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        freq: Frequency or wavelength at which to evaluate the zodiacal emission.</span>
 <span class="sd">        pixels: HEALPix pixel indicies representing points on the celestial sphere.</span>
 <span class="sd">        nside: HEALPix resolution parameter of the pixels and the binned map.</span>
 <span class="sd">        obs_time: Time of observation.</span>
-<span class="sd">        obs: Name of the Solar System observer. A list of all support observers (for a</span>
-<span class="sd">            given ephemeridis) is specified in `supported_observers` attribute of the</span>
-<span class="sd">            `Zodipy` instance. Defaults to &#39;earth&#39;.</span>
+<span class="sd">        obs: Name of the Solar System observer. Defaults to &#39;earth&#39;.</span>
 <span class="sd">        obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.</span>
-<span class="sd">            Overrides the `obs` argument. Default is None.</span>
-<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to False.</span>
+<span class="sd">            If given, the position computed with the ephemeris for the `obs` argument</span>
+<span class="sd">            is ignored.</span>
+<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to</span>
+<span class="sd">            False.</span>
 <span class="sd">        coord_in: Coordinate frame of the input pointing. Assumes &#39;E&#39; (ecliptic</span>
 <span class="sd">            coordinates) by default.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        emission: Simulated zodiacal emission in units of &#39;MJy/sr&#39;.</span>
+<span class="sd">        Binned map of simulated zodiacal emission [MJy/sr].</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1021,9 +1110,7 @@ coordinates) by default.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated zodiacal emission given angles on the sky.</p>
-<p>The pointing, for which to compute the emission, is specified in form of angles on
-the sky given by <code>theta</code> and <code>phi</code>.</p>
+      <p>Simulates zodiacal emission given angles on the sky (<code>theta</code>, <code>phi</code>).</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -1067,16 +1154,15 @@ radians or degrees.</p></td>
       <tr>
         <td><code>obs</code></td>
         <td><code>str</code></td>
-        <td><p>Name of the Solar System observer. A list of all support observers (for a
-given ephemeridis) is specified in <code>supported_observers</code> attribute of the
-<code>Zodipy</code> instance. Defaults to 'earth'.</p></td>
+        <td><p>Name of the Solar System observer. Defaults to 'earth'.</p></td>
         <td><code>&#39;earth&#39;</code></td>
       </tr>
       <tr>
         <td><code>obs_pos</code></td>
         <td><code>u.Quantity[u.AU] | None</code></td>
         <td><p>The heliocentric ecliptic cartesian position of the observer in AU.
-Overrides the <code>obs</code> argument. Default is None.</p></td>
+If given, the position computed with the ephemeris for the <code>obs</code> argument
+is ignored.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
@@ -1112,7 +1198,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>Simulated zodiacal emission [MJy/sr].</p></td>
     </tr>
   </tbody>
 </table>
@@ -1132,10 +1218,7 @@ coordinates) by default.</p></td>
     <span class="n">return_comps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">coord_in</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Returns the simulated zodiacal emission given angles on the sky.</span>
-
-<span class="sd">    The pointing, for which to compute the emission, is specified in form of angles on</span>
-<span class="sd">    the sky given by `theta` and `phi`.</span>
+    <span class="sd">&quot;&quot;&quot;Simulates zodiacal emission given angles on the sky (`theta`, `phi`).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        freq: Frequency or wavelength at which to evaluate the zodiacal emission.</span>
@@ -1146,11 +1229,10 @@ coordinates) by default.</p></td>
 <span class="sd">            celestial sphere. Must be in the range [0, 2π] rad. Units must be either</span>
 <span class="sd">            radians or degrees.</span>
 <span class="sd">        obs_time: Time of observation.</span>
-<span class="sd">        obs: Name of the Solar System observer. A list of all support observers (for a</span>
-<span class="sd">            given ephemeridis) is specified in `supported_observers` attribute of the</span>
-<span class="sd">            `Zodipy` instance. Defaults to &#39;earth&#39;.</span>
+<span class="sd">        obs: Name of the Solar System observer. Defaults to &#39;earth&#39;.</span>
 <span class="sd">        obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.</span>
-<span class="sd">            Overrides the `obs` argument. Default is None.</span>
+<span class="sd">            If given, the position computed with the ephemeris for the `obs` argument</span>
+<span class="sd">            is ignored.</span>
 <span class="sd">        lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and</span>
 <span class="sd">            latitude, otherwise, they are co-latitude and longitude.</span>
 <span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to False.</span>
@@ -1158,7 +1240,7 @@ coordinates) by default.</p></td>
 <span class="sd">            coordinates) by default.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        emission: Simulated zodiacal emission in units of &#39;MJy/sr&#39;.</span>
+<span class="sd">        Simulated zodiacal emission [MJy/sr].</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1204,9 +1286,7 @@ coordinates) by default.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the simulated zodiacal emission given pixel numbers.</p>
-<p>The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
-given by <code>nside</code>.</p>
+      <p>Simulates zodiacal emission given pixel indicies on a HEALPix grid.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -1246,29 +1326,29 @@ given by <code>nside</code>.</p>
       <tr>
         <td><code>obs</code></td>
         <td><code>str</code></td>
-        <td><p>Name of the Solar System observer. A list of all support observers (for a
-given ephemeridis) is specified in <code>supported_observers</code> attribute of the
-<code>Zodipy</code> instance. Defaults to 'earth'.</p></td>
+        <td><p>Name of the Solar System observer. Defaults to 'earth'.</p></td>
         <td><code>&#39;earth&#39;</code></td>
       </tr>
       <tr>
         <td><code>obs_pos</code></td>
         <td><code>u.Quantity[u.AU] | None</code></td>
         <td><p>The heliocentric ecliptic cartesian position of the observer in AU.
-Overrides the <code>obs</code> argument. Default is None.</p></td>
+If given, the position computed with the ephemeris for the <code>obs</code> argument
+is ignored.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
         <td><code>return_comps</code></td>
         <td><code>bool</code></td>
-        <td><p>If True, the emission is returned component-wise. Defaults to False.</p></td>
+        <td><p>If True, the emission is returned component-wise. Defaults to
+False.</p></td>
         <td><code>False</code></td>
       </tr>
       <tr>
         <td><code>coord_in</code></td>
         <td><code>Literal[(&#39;E&#39;, &#39;G&#39;, &#39;C&#39;)]</code></td>
-        <td><p>Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-coordinates) by default.</p></td>
+        <td><p>Coordinate frame of the input pointing. Default is 'E' (ecliptic
+coordinates).</p></td>
         <td><code>&#39;E&#39;</code></td>
       </tr>
   </tbody>
@@ -1284,7 +1364,7 @@ coordinates) by default.</p></td>
   <tbody>
     <tr>
       <td><code>u.Quantity[u.MJy / u.sr]</code></td>
-      <td><p>emission: Simulated zodiacal emission in units of 'MJy/sr'.</p></td>
+      <td><p>Simulated zodiacal emission [MJy/sr].</p></td>
     </tr>
   </tbody>
 </table>
@@ -1303,27 +1383,24 @@ coordinates) by default.</p></td>
     <span class="n">return_comps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">coord_in</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">MJy</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">sr</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Returns the simulated zodiacal emission given pixel numbers.</span>
-
-<span class="sd">    The pixel numbers represent the pixel indicies on a HEALPix grid with resolution</span>
-<span class="sd">    given by `nside`.</span>
+    <span class="sd">&quot;&quot;&quot;Simulates zodiacal emission given pixel indicies on a HEALPix grid.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        freq: Frequency or wavelength at which to evaluate the zodiacal emission.</span>
 <span class="sd">        pixels: HEALPix pixel indicies representing points on the celestial sphere.</span>
 <span class="sd">        nside: HEALPix resolution parameter of the pixels and the binned map.</span>
 <span class="sd">        obs_time: Time of observation.</span>
-<span class="sd">        obs: Name of the Solar System observer. A list of all support observers (for a</span>
-<span class="sd">            given ephemeridis) is specified in `supported_observers` attribute of the</span>
-<span class="sd">            `Zodipy` instance. Defaults to &#39;earth&#39;.</span>
+<span class="sd">        obs: Name of the Solar System observer. Defaults to &#39;earth&#39;.</span>
 <span class="sd">        obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.</span>
-<span class="sd">            Overrides the `obs` argument. Default is None.</span>
-<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to False.</span>
-<span class="sd">        coord_in: Coordinate frame of the input pointing. Assumes &#39;E&#39; (ecliptic</span>
-<span class="sd">            coordinates) by default.</span>
+<span class="sd">            If given, the position computed with the ephemeris for the `obs` argument</span>
+<span class="sd">            is ignored.</span>
+<span class="sd">        return_comps: If True, the emission is returned component-wise. Defaults to</span>
+<span class="sd">            False.</span>
+<span class="sd">        coord_in: Coordinate frame of the input pointing. Default is &#39;E&#39; (ecliptic</span>
+<span class="sd">            coordinates).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        emission: Simulated zodiacal emission in units of &#39;MJy/sr&#39;.</span>
+<span class="sd">        Simulated zodiacal emission [MJy/sr].</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
