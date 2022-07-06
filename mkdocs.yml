@@ -46,12 +46,6 @@ plugins:
 - search
 - mkdocstrings:
     default_handler: python
-    handlers:
-        python:
-          rendering:
-            filters:
-              - "!^_"
-              - "^__init__$"
 
     watch:
       - zodipy
