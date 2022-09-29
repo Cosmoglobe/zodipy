@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from zodipy._source_functions import get_blackbody_emission, get_dust_grain_temperature
+from zodipy._source_functions import get_blackbody_emission
 
 TEMPERATURE = 30
 TEMPERATURE_ARRAY = np.array([31, 45, 53])
