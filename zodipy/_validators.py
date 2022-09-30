@@ -8,7 +8,7 @@ from ._exceptions import FrequencyOutOfBoundsError
 from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
 
 
-@u.quantity_input(freq=[u.Hz, u.m])
+@u.quantity_input(freq=[u.GHz, u.m])
 def validate_freq(
     freq: FrequencyOrWavelength,
     extrapolate: bool,

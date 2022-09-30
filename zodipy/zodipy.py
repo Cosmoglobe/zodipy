@@ -158,7 +158,6 @@ class Zodipy:
                 f" {error.upper_limit}] {self._model.name} range."
             )
             raise
-
         theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, indicies = np.unique(
