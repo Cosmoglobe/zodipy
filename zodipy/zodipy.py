@@ -3,7 +3,7 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Literal, Sequence, Union
+from typing import Literal
 
 import astropy.units as u
 import healpy as hp
@@ -14,8 +14,8 @@ from astropy.time import Time
 from numpy.typing import NDArray
 
 from ._component import Component
-from ._decorators import validate_ang, validate_freq, validate_pixels
 from ._ephemeris import get_obs_and_earth_positions
+from ._exceptions import FrequencyOutOfBoundsError
 from ._line_of_sight import get_line_of_sight_endpoints
 from ._source_functions import (
     SPECIFIC_INTENSITY_UNITS,
@@ -24,16 +24,14 @@ from ._source_functions import (
     get_phase_function,
     get_scattering_angle,
 )
+from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
+from ._validators import validate_ang, validate_freq, validate_pixels
 from .models import model_registry
 
 SYS_PROC_START_METHOD = "fork" if "windows" not in platform.system().lower() else None
 
 DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
-
-HEALPixIndicies = Union[int, Sequence[int], NDArray[np.integer]]
-SkyAngles = Union[u.Quantity[u.deg], u.Quantity[u.rad]]
-FrequencyOrWavelength = Union[u.Quantity[u.Hz], u.Quantity[u.m]]
 
 
 class Zodipy:
@@ -108,8 +106,6 @@ class Zodipy:
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
-    @validate_freq
-    @validate_ang
     def get_emission_ang(
         self,
         freq: FrequencyOrWavelength,
@@ -152,6 +148,19 @@ class Zodipy:
 
         """
 
+        try:
+            freq = validate_freq(
+                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
+            )
+        except FrequencyOutOfBoundsError as error:
+            print(
+                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
+                f" {error.upper_limit}] {self._model.name} range."
+            )
+            raise
+
+        theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
+
         unique_angles, indicies = np.unique(
             np.asarray([theta, phi]), return_inverse=True, axis=1
         )
@@ -175,12 +184,10 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @validate_freq
-    @validate_pixels
     def get_emission_pix(
         self,
         freq: FrequencyOrWavelength,
-        pixels: HEALPixIndicies,
+        pixels: Pixels,
         nside: int,
         obs_time: Time,
         obs: str = "earth",
@@ -212,6 +219,18 @@ class Zodipy:
 
         """
 
+        try:
+            freq = validate_freq(
+                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
+            )
+        except FrequencyOutOfBoundsError as error:
+            print(
+                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
+                f" {error.upper_limit}] {self._model.name} range."
+            )
+            raise
+        pixels = validate_pixels(pixels=pixels, nside=nside)
+
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         unit_vectors = get_unit_vectors_from_pixels(
             coord_in=coord_in,
@@ -234,8 +253,6 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @validate_ang
-    @validate_freq
     def get_binned_emission_ang(
         self,
         freq: FrequencyOrWavelength,
@@ -281,6 +298,18 @@ class Zodipy:
 
         """
 
+        try:
+            freq = validate_freq(
+                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
+            )
+        except FrequencyOutOfBoundsError as error:
+            print(
+                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
+                f" {error.upper_limit}] {self._model.name} range."
+            )
+            raise
+        theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
+
         unique_angles, counts = np.unique(
             np.asarray([theta, phi]), return_counts=True, axis=1
         )
@@ -308,12 +337,10 @@ class Zodipy:
 
         return emission if return_comps else emission.sum(axis=0)
 
-    @validate_freq
-    @validate_pixels
     def get_binned_emission_pix(
         self,
         freq: FrequencyOrWavelength,
-        pixels: HEALPixIndicies,
+        pixels: Pixels,
         nside: int,
         obs_time: Time,
         obs: str = "earth",
@@ -345,6 +372,18 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+
+        try:
+            freq = validate_freq(
+                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
+            )
+        except FrequencyOutOfBoundsError as error:
+            print(
+                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
+                f" {error.upper_limit}] {self._model.name} range."
+            )
+            raise
+        pixels = validate_pixels(pixels=pixels, nside=nside)
 
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         unit_vectors = get_unit_vectors_from_pixels(

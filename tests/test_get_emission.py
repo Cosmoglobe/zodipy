@@ -8,6 +8,7 @@ from astropy.time import Time, TimeDelta
 from hypothesis import given, settings
 from hypothesis.strategies import DataObject, data, integers
 
+from zodipy._exceptions import FrequencyOutOfBoundsError
 from zodipy.zodipy import Zodipy
 
 from ._strategies import (
@@ -147,7 +148,7 @@ def test_invalid_freq(
 
     freq = data.draw(random_freq(unit=model._model.spectrum.unit))
     if not (model._model.spectrum[0] <= freq <= model._model.spectrum[-1]):
-        with pytest.raises(ValueError):
+        with pytest.raises(FrequencyOutOfBoundsError):
             model.get_emission_pix(
                 freq,
                 pixels=pix,
@@ -156,7 +157,7 @@ def test_invalid_freq(
                 obs=observer,
             )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(FrequencyOutOfBoundsError):
             model.get_emission_ang(
                 freq,
                 theta=theta,
@@ -166,7 +167,7 @@ def test_invalid_freq(
                 lonlat=True,
             )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(FrequencyOutOfBoundsError):
             model.get_binned_emission_pix(
                 freq,
                 pixels=pix,
@@ -175,7 +176,7 @@ def test_invalid_freq(
                 obs=observer,
             )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(FrequencyOutOfBoundsError):
             model.get_binned_emission_ang(
                 freq,
                 theta=theta,
