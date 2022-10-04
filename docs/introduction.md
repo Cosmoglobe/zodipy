@@ -27,4 +27,4 @@ Currently, ZodiPy supports the following interplanetary dust models:
 ## Scientific Paper
 For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
 
-- [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962)
+- [Cosmoglobe: Simulating zodiacal emission with ZodiPy](https://arxiv.org/abs/2205.12962)

@@ -206,6 +206,8 @@ class Zodipy:
                 `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The
+                weights are assumed to be in units of MJy/sr.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
@@ -273,6 +275,8 @@ class Zodipy:
                 `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The
+                weights are assumed to be in units of MJy/sr.
             lonlat: If True, input angles `theta`, `phi` are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -340,6 +344,8 @@ class Zodipy:
                 `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The
+                weights are assumed to be in units of MJy/sr.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.

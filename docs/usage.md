@@ -64,6 +64,20 @@ feature components. For more information on the interplanetary dust models, plea
 *Note that the color for the Cloud component is logarithmic, while the others are linear.*
 
 
+### Bandpass integrated emission
+Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
+what the emission looks like over some instrument bandpass. ZodiPy accepts a sequence of frequencies to the `freq`
+argument in addition to corresponding weights in the `weights` argument. Note that the bandpass weights must be given in power units, i.e. they must be in units compatible with `Jy/sr`. A top hat
+bandpass is assumed if a sequence of frequencies are used without providing weights.
+```python hl_lines="32 33"
+{!examples/get_bandpass_integrated_emission.py!}
+```
+![Component-wise emission maps](img/center_freq.png)
+![Component-wise emission maps](img/bandpass_integrated.png)
+!!! warning "Memory usage"
+    Bandpass integration in the current implementation uses significantly more memory in the intermediate computations when compared to delta frequency simulations. Consider smaller chunks sizes if this becomes an issue.
+
+
 ## Gridding the interplanetary dust density distribution
 In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
 and plot the cross section of the diffuse cloud components density in the yz-plane.
