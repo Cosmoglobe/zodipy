@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from functools import partial
 from math import log2
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import astropy.units as u
 import healpy as hp
@@ -57,9 +57,12 @@ def quantities(
     unit: u.Unit,
 ) -> u.Quantity:
     return draw(
-        floats(min_value=min_value, max_value=max_value).map(
-            partial(u.Quantity, unit=unit)
-        )
+        floats(
+            min_value=min_value,
+            max_value=max_value,
+            allow_infinity=False,
+            allow_nan=False,
+        ).map(partial(u.Quantity, unit=unit))
     )
 
 
@@ -136,13 +139,43 @@ def freq(
 
 
 @composite
-def random_freq(draw: DrawFn, unit: u.Unit | None = None) -> u.Quantity[u.GHz]:
+def random_freq(
+    draw: DrawFn, unit: u.Unit | None = None, bandpass: bool = False
+) -> u.Quantity:
     random_freq = draw(
         sampled_from(FREQ_LOG_RANGE).map(np.exp).map(partial(u.Quantity, unit=u.GHz))
     )
     if unit is not None:
         random_freq = random_freq.to(unit, u.spectral())
+
+    if bandpass:
+        shape = draw(integers(min_value=2, max_value=100))
+        sigma = draw(floats(min_value=0.1, max_value=0.3))
+        freq_range = np.linspace(
+            random_freq - random_freq * sigma, random_freq + random_freq * sigma, shape
+        )
+        return freq_range
+
     return random_freq
+
+
+@composite
+def weights(
+    draw: DrawFn, freqs: u.Quantity[u.GHz] | u.Quantity[u.micron]
+) -> u.Quantity[u.MJy / u.sr]:
+    def normalize_array(
+        array: Sequence[float] | NDArray[np.floating],
+        freqs: u.Quantity[u.GHz] | u.Quantity[u.micron],
+    ) -> u.Quantity[u.MJy / u.sr]:
+        return u.Quantity((array / np.trapz(array, freqs)).value, unit=u.MJy / u.sr)
+
+    weights_strategy = floats(min_value=1, max_value=100)
+    list_stategy = lists(weights_strategy, min_size=freqs.size, max_size=freqs.size)
+    array_strategy = arrays(dtype=float, shape=freqs.size, elements=weights_strategy)
+
+    return draw(
+        one_of(list_stategy, array_strategy).map(partial(normalize_array, freqs=freqs))
+    )
 
 
 @composite

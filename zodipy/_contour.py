@@ -3,15 +3,15 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from ._model import Model
-from .models import model_registry
+from ._ipd_model import InterplanetaryDustModel
+from .ipd_models import model_registry
 
 DEFAULT_EARTH_POS = (1, 0, 0)
 
 
 def tabulate_density(
     grid: NDArray[np.floating] | list[NDArray[np.floating]],
-    model: str | Model = "DIRBE",
+    model: str | InterplanetaryDustModel = "DIRBE",
     earth_position: tuple[float, float, float]
     | NDArray[np.floating] = DEFAULT_EARTH_POS,
 ) -> NDArray[np.floating]:
@@ -33,7 +33,7 @@ def tabulate_density(
         The tabulate densities of the Interplanetary Dust components.
     """
 
-    if not isinstance(model, Model):
+    if not isinstance(model, InterplanetaryDustModel):
         model = model_registry.get_model(model)
 
     if not isinstance(grid, np.ndarray):

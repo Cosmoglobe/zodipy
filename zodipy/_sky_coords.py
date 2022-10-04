@@ -19,6 +19,7 @@ from astropy.time import Time
 from numpy.typing import NDArray
 
 DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
+DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 
 
 def get_obs_and_earth_positions(

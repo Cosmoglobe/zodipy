@@ -11,11 +11,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 
 import numpy as np
 from numpy.typing import NDArray
 
-π = np.pi
+
+class ComponentLabel(Enum):
+    """Labels representing the components in the DIRBE model."""
+
+    CLOUD = "cloud"
+    BAND1 = "band1"
+    BAND2 = "band2"
+    BAND3 = "band3"
+    RING = "ring"
+    FEATURE = "feature"
 
 
 @dataclass
@@ -279,10 +289,10 @@ class Feature(Component):
         )
 
         Δθ = θ_comp - self.theta_rad
-        condition1 = Δθ < -π
-        condition2 = Δθ > π
-        Δθ[condition1] = Δθ[condition1] + 2 * π
-        Δθ[condition2] = Δθ[condition2] - 2 * π
+        condition1 = Δθ < -np.pi
+        condition2 = Δθ > np.pi
+        Δθ[condition1] = Δθ[condition1] + 2 * np.pi
+        Δθ[condition2] = Δθ[condition2] - 2 * np.pi
 
         # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
         # term. See Planck 2013 XIV, section 4.1.3.

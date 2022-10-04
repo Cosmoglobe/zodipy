@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from zodipy._source_functions import get_blackbody_emission
+from zodipy._source_funcs import get_blackbody_emission
 
 TEMPERATURE = 30
 TEMPERATURE_ARRAY = np.array([31, 45, 53])
 R = 3
 R_ARRAY = np.array([4, 5.3, 6])
 DELTA = 0.324
-FREQUENCY = 549
+FREQUENCY = 549e9
 
 
 def test_blackbody_emission_value():

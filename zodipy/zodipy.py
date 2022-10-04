@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import multiprocessing
 import platform
+from dataclasses import asdict
 from functools import partial
 from typing import Literal
 
@@ -13,11 +14,11 @@ from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 from numpy.typing import NDArray
 
-from ._component import Component
-from ._ephemeris import get_obs_and_earth_positions
-from ._exceptions import FrequencyOutOfBoundsError
+from ._interp import interpolate_source_parameters
+from ._ipd_component import Component
 from ._line_of_sight import get_line_of_sight_endpoints
-from ._source_functions import (
+from ._sky_coords import DISTANCE_TO_JUPITER, get_obs_and_earth_positions
+from ._source_funcs import (
     SPECIFIC_INTENSITY_UNITS,
     get_blackbody_emission,
     get_dust_grain_temperature,
@@ -26,12 +27,15 @@ from ._source_functions import (
 )
 from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
-from ._validators import validate_ang, validate_freq, validate_pixels
-from .models import model_registry
+from ._validators import (
+    validate_ang,
+    validate_frequency,
+    validate_pixels,
+    validate_weights,
+)
+from .ipd_models import model_registry
 
 SYS_PROC_START_METHOD = "fork" if "windows" not in platform.system().lower() else None
-
-DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 
 
 class Zodipy:
@@ -50,8 +54,7 @@ class Zodipy:
             valid model range. Default is False.
         parallel (bool): If True, input pointing sequences will be split among all
             available cores on the machine, and the emission will be computed in parallel.
-            This is useful for large simulations. NOTE: This will require the user to guard
-            the executed code in a `if __name__ == "__main__"` block. Default is False.
+            This is useful for large simulations. Default is False.
         n_proc (int): Number of cores to use when parallel computation. Defaults is None,
             which will use all available cores.
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
@@ -114,6 +117,7 @@ class Zodipy:
         obs_time: Time,
         obs: str = "earth",
         obs_pos: u.Quantity[u.AU] | None = None,
+        weights: u.Quantity[u.MJy / u.sr] | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
@@ -124,7 +128,8 @@ class Zodipy:
         the sky given by `theta` and `phi`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission.
             theta: Angular co-latitude coordinate of a point, or a sequence of points, on
                 the celestial sphere. Must be in the range [0, π] rad. Units must be either
                 radians or degrees.
@@ -137,6 +142,8 @@ class Zodipy:
                 `Zodipy` instance. Defaults to 'earth'.
             obs_pos: The heliocentric ecliptic cartesian position of the observer in AU.
                 Overrides the `obs` argument. Default is None.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The
+                weights are assumed to be in units of MJy/sr.
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -148,16 +155,6 @@ class Zodipy:
 
         """
 
-        try:
-            freq = validate_freq(
-                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
-            )
-        except FrequencyOutOfBoundsError as error:
-            print(
-                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
-                f" {error.upper_limit}] {self._model.name} range."
-            )
-            raise
         theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, indicies = np.unique(
@@ -170,18 +167,16 @@ class Zodipy:
             lonlat=lonlat,
         )
 
-        emission = self._compute_emission(
+        return self._compute_emission(
             freq=freq,
+            weights=weights,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
             unit_vectors=unit_vectors,
             indicies=indicies,
+            return_comps=return_comps,
         )
-
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
-
-        return emission if return_comps else emission.sum(axis=0)
 
     def get_emission_pix(
         self,
@@ -191,6 +186,7 @@ class Zodipy:
         obs_time: Time,
         obs: str = "earth",
         obs_pos: u.Quantity[u.AU] | None = None,
+        weights: u.Quantity[u.MJy / u.sr] | None = None,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
@@ -200,7 +196,8 @@ class Zodipy:
         given by `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
@@ -218,16 +215,6 @@ class Zodipy:
 
         """
 
-        try:
-            freq = validate_freq(
-                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
-            )
-        except FrequencyOutOfBoundsError as error:
-            print(
-                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
-                f" {error.upper_limit}] {self._model.name} range."
-            )
-            raise
         pixels = validate_pixels(pixels=pixels, nside=nside)
 
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
@@ -237,8 +224,9 @@ class Zodipy:
             nside=nside,
         )
 
-        emission = self._compute_emission(
+        return self._compute_emission(
             freq=freq,
+            weights=weights,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -246,11 +234,8 @@ class Zodipy:
             indicies=indicies,
             pixels=unique_pixels,
             nside=nside,
+            return_comps=return_comps,
         )
-
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
-
-        return emission if return_comps else emission.sum(axis=0)
 
     def get_binned_emission_ang(
         self,
@@ -261,6 +246,7 @@ class Zodipy:
         obs_time: Time,
         obs: str = "earth",
         obs_pos: u.Quantity[u.AU] | None = None,
+        weights: u.Quantity[u.MJy / u.sr] | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
@@ -272,7 +258,8 @@ class Zodipy:
         resolution given by `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission.
             theta: Angular co-latitude coordinate of a point, or a sequence of points, on
                 the celestial sphere. Must be in the range [0, π] rad. Units must be either
                 radians or degrees.
@@ -297,16 +284,6 @@ class Zodipy:
 
         """
 
-        try:
-            freq = validate_freq(
-                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
-            )
-        except FrequencyOutOfBoundsError as error:
-            print(
-                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
-                f" {error.upper_limit}] {self._model.name} range."
-            )
-            raise
         theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, counts = np.unique(
@@ -320,8 +297,9 @@ class Zodipy:
             lonlat=lonlat,
         )
 
-        emission = self._compute_emission(
+        return self._compute_emission(
             freq=freq,
+            weights=weights,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -330,11 +308,8 @@ class Zodipy:
             binned=True,
             pixels=unique_pixels,
             nside=nside,
+            return_comps=return_comps,
         )
-
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
-
-        return emission if return_comps else emission.sum(axis=0)
 
     def get_binned_emission_pix(
         self,
@@ -344,6 +319,7 @@ class Zodipy:
         obs_time: Time,
         obs: str = "earth",
         obs_pos: u.Quantity[u.AU] | None = None,
+        weights: u.Quantity[u.MJy / u.sr] | None = None,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
@@ -354,7 +330,8 @@ class Zodipy:
         `nside`.
 
         Args:
-            freq: Frequency or wavelength at which to evaluate the zodiacal emission.
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission.
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
             obs_time: Time of observation.
@@ -372,16 +349,6 @@ class Zodipy:
 
         """
 
-        try:
-            freq = validate_freq(
-                freq=freq, extrapolate=self.extrapolate, spectrum=self._model.spectrum
-            )
-        except FrequencyOutOfBoundsError as error:
-            print(
-                f"model {self._model.name!r} is only valid in the [{error.lower_limit},"
-                f" {error.upper_limit}] {self._model.name} range."
-            )
-            raise
         pixels = validate_pixels(pixels=pixels, nside=nside)
 
         unique_pixels, counts = np.unique(pixels, return_counts=True)
@@ -391,8 +358,9 @@ class Zodipy:
             nside=nside,
         )
 
-        emission = self._compute_emission(
+        return self._compute_emission(
             freq=freq,
+            weights=weights,
             obs=obs,
             obs_time=obs_time,
             obs_pos=obs_pos,
@@ -401,15 +369,13 @@ class Zodipy:
             binned=True,
             pixels=unique_pixels,
             nside=nside,
+            return_comps=return_comps,
         )
-
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
-
-        return emission if return_comps else emission.sum(axis=0)
 
     def _compute_emission(
         self,
-        freq: u.Quantity[u.GHz],
+        freq: FrequencyOrWavelength,
+        weights: u.Quantity[u.MJy / u.sr] | None,
         obs: str,
         obs_time: Time,
         unit_vectors: NDArray[np.floating],
@@ -418,23 +384,23 @@ class Zodipy:
         obs_pos: u.Quantity[u.AU] | None = None,
         pixels: NDArray[np.integer] | None = None,
         nside: int | None = None,
-    ) -> NDArray[np.floating]:
+        return_comps: bool = False,
+    ) -> u.Quantity[u.MJy / u.sr]:
         """Computes the component-wise zodiacal emission."""
+
+        freq = validate_frequency(
+            freq=freq,
+            spectrum=self._model.spectrum if not self.extrapolate else None,
+        )
+        normalized_weights = validate_weights(freq=freq, weights=weights)
+
+        interpolated_source_params = interpolate_source_parameters(
+            model=self._model, freq=freq, weights=normalized_weights
+        )
 
         observer_position, earth_position = get_obs_and_earth_positions(
             obs=obs, obs_time=obs_time, obs_pos=obs_pos
         )
-
-        if self._model.solar_irradiance_model is not None:
-            solar_irradiance = (
-                self._model.solar_irradiance_model.interpolate_solar_irradiance(
-                    freq=freq,
-                    albedos=self._model.albedos,
-                    extrapolate=self.extrapolate,
-                )
-            )
-        else:
-            solar_irradiance = 0
 
         start, stop = get_line_of_sight_endpoints(
             cutoff=self.los_dist_cut.value,
@@ -446,12 +412,27 @@ class Zodipy:
             (self._model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
         )
 
-        # Preparing quantities for broadcasting
-        observer_position_expanded = np.expand_dims(observer_position, axis=-1)
-        earth_position_expanded = np.expand_dims(earth_position, axis=-1)
+        # Convert to Hz if `freq` is in units of wavelength
+        freq = freq.to(u.Hz, u.spectral())
+        # Renormalize weights with respect to the spectrum in Hz.
+        if normalized_weights is not None:
+            normalized_weights /= np.trapz(normalized_weights, freq.value)
 
-        emissivities, albedos, phase_coefficients = self._model.interp_source_params(
-            freq
+        # Create partial function with fixed arguments. This partial will again be used
+        # as the basis for another partial depnding on wether or not the code is run in
+        # parallel.
+        partial_common_integrand = partial(
+            _compute_emission_at_step,
+            start=start,
+            n_quad_points=self.gauss_quad_order,
+            X_obs=np.expand_dims(observer_position, axis=-1),
+            X_earth=np.expand_dims(earth_position, axis=-1),
+            comps=list(self._model.comps.values()),
+            freq=freq.value,
+            weights=normalized_weights,
+            T_0=self._model.T_0,
+            delta=self._model.delta,
+            **asdict(interpolated_source_params),
         )
         # Distribute pointing to available CPUs and compute the emission in parallel.
         if self.parallel:
@@ -469,21 +450,9 @@ class Zodipy:
                 # pointings, and p is the number of integration points of the quadrature.
                 partial_integrand_chunks = [
                     partial(
-                        _compute_emission_at_step,
-                        start=start,
+                        partial_common_integrand,
                         stop=np.expand_dims(stop, axis=-1),
-                        n_quad_points=self.gauss_quad_order,
-                        X_obs=observer_position_expanded,
-                        X_earth=earth_position_expanded,
                         u_los=np.expand_dims(unit_vectors, axis=-1),
-                        comps=list(self._model.comps.values()),
-                        freq=freq.value,
-                        T_0=self._model.T_0,
-                        delta=self._model.delta,
-                        emissivities=emissivities,
-                        albedos=albedos,
-                        phase_coefficients=phase_coefficients,
-                        solar_irradiance=solar_irradiance,
                     )
                     for unit_vectors, stop in zip(unit_vector_chunks, stop_chunks)
                 ]
@@ -504,26 +473,14 @@ class Zodipy:
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
             stop_expanded = np.expand_dims(stop, axis=-1)
 
-            partial_emission_integrand = partial(
-                _compute_emission_at_step,
-                start=start,
+            partial_integrand = partial(
+                partial_common_integrand,
                 stop=stop_expanded,
-                n_quad_points=self.gauss_quad_order,
-                X_obs=observer_position_expanded,
-                X_earth=earth_position_expanded,
                 u_los=unit_vectors_expanded,
-                comps=list(self._model.comps.values()),
-                freq=freq.value,
-                T_0=self._model.T_0,
-                delta=self._model.delta,
-                emissivities=emissivities,
-                albedos=albedos,
-                phase_coefficients=phase_coefficients,
-                solar_irradiance=solar_irradiance,
             )
 
             integrated_comp_emission = self._integration_scheme.integrate(
-                partial_emission_integrand, [-1, 1]
+                partial_integrand, [-1, 1]
             )
 
         # We convert the integral from [-1, 1] back to [start, stop].
@@ -548,7 +505,9 @@ class Zodipy:
             else:
                 emission[:, solar_mask[indicies]] = self.solar_cut_fill_value
 
-        return emission
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
+
+        return emission if return_comps else emission.sum(axis=0)
 
     def __repr__(self) -> str:
         repr_str = f"{self.__class__.__name__}("
@@ -570,12 +529,13 @@ def _compute_emission_at_step(
     X_earth: NDArray[np.floating],
     u_los: NDArray[np.floating],
     comps: list[Component],
-    freq: float,
+    freq: float | NDArray[np.floating],
+    weights: NDArray[np.floating] | None,
     T_0: float,
     delta: float,
-    emissivities: list[float],
-    albedos: list[float],
-    phase_coefficients: tuple[float, float, float],
+    emissivities: NDArray[np.floating],
+    albedos: NDArray[np.floating],
+    phase_coefficients: tuple[float, ...],
     solar_irradiance: float,
 ) -> NDArray[np.floating]:
     """Returns the zodiacal emission at a step along all lines of sight."""
@@ -588,11 +548,20 @@ def _compute_emission_at_step(
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
 
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
-    blackbody_emission = get_blackbody_emission(freq, temperature)
+
+    if weights is not None:
+        # Expand T array along axis -1 to make broadcastable with bandpass
+        blackbody_emission_bandpass = get_blackbody_emission(
+            freq=freq, T=np.expand_dims(temperature, axis=-1)
+        )
+        blackbody_emission = np.trapz(
+            blackbody_emission_bandpass * weights, freq, axis=-1
+        )
+    else:
+        blackbody_emission = get_blackbody_emission(freq, temperature)
 
     emission = np.zeros((len(comps), np.shape(X_helio)[1], n_quad_points))
-    density = np.zeros((len(comps), np.shape(X_helio)[1], n_quad_points))
-
+    density = np.zeros_like(emission)
     for idx, (comp, albedo, emissivity) in enumerate(zip(comps, albedos, emissivities)):
         density[idx] = comp.compute_density(X_helio, X_earth=X_earth)
         emission[idx] = (1 - albedo) * (emissivity * blackbody_emission)

@@ -8,7 +8,6 @@ from astropy.time import Time, TimeDelta
 from hypothesis import given, settings
 from hypothesis.strategies import DataObject, data, integers
 
-from zodipy._exceptions import FrequencyOutOfBoundsError
 from zodipy.zodipy import Zodipy
 
 from ._strategies import (
@@ -21,6 +20,7 @@ from ._strategies import (
     pixels,
     random_freq,
     time,
+    weights,
 )
 from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 
@@ -97,7 +97,6 @@ def test_get_emission_ang(
         obs_time=time,
         obs=observer,
     )
-    print(emission)
     assert emission.size == theta.size == phi.size
 
 
@@ -148,7 +147,7 @@ def test_invalid_freq(
 
     freq = data.draw(random_freq(unit=model._model.spectrum.unit))
     if not (model._model.spectrum[0] <= freq <= model._model.spectrum[-1]):
-        with pytest.raises(FrequencyOutOfBoundsError):
+        with pytest.raises(ValueError):
             model.get_emission_pix(
                 freq,
                 pixels=pix,
@@ -157,7 +156,7 @@ def test_invalid_freq(
                 obs=observer,
             )
 
-        with pytest.raises(FrequencyOutOfBoundsError):
+        with pytest.raises(ValueError):
             model.get_emission_ang(
                 freq,
                 theta=theta,
@@ -167,7 +166,7 @@ def test_invalid_freq(
                 lonlat=True,
             )
 
-        with pytest.raises(FrequencyOutOfBoundsError):
+        with pytest.raises(ValueError):
             model.get_binned_emission_pix(
                 freq,
                 pixels=pix,
@@ -176,7 +175,7 @@ def test_invalid_freq(
                 obs=observer,
             )
 
-        with pytest.raises(FrequencyOutOfBoundsError):
+        with pytest.raises(ValueError):
             model.get_binned_emission_ang(
                 freq,
                 theta=theta,
@@ -358,3 +357,68 @@ def test_multiprocessing() -> None:
         obs=observer,
     )
     assert np.array_equal(emission_binned_ang, emission_binned_ang_parallel)
+
+
+@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@settings(deadline=None)
+def test_bandpass_integration(
+    model: Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
+    data: DataObject,
+) -> None:
+    """Property test for bandpass integrations."""
+
+    theta, phi = angles
+    model.extrapolate = True
+    observer = data.draw(obs(model, time))
+    bp_weights = data.draw(weights(freqs))
+    emission_binned = model.get_binned_emission_ang(
+        freqs,
+        weights=bp_weights,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert emission_binned.shape == (hp.nside2npix(nside),)
+
+
+@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@settings(deadline=None)
+def test_weights(
+    model: Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
+    data: DataObject,
+) -> None:
+    """Property test for bandpass weights."""
+
+    theta, phi = angles
+    model.extrapolate = True
+    observer = data.draw(obs(model, time))
+    bp_weights = data.draw(weights(freqs))
+    with pytest.raises(u.UnitConversionError):
+        model.get_binned_emission_ang(
+            freqs,
+            weights=bp_weights.to(u.m),
+            theta=theta,
+            phi=phi,
+            nside=nside,
+            obs_time=time,
+            obs=observer,
+        )
+
+    model.get_binned_emission_ang(
+        freqs,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
