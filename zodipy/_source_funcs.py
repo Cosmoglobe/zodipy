@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TypeVar
+from typing import TypeVar, Union
 
 import astropy.constants as const
 import astropy.units as u
+import numba
 import numpy as np
 from numpy.typing import NDArray
 
@@ -15,16 +16,17 @@ T_sun = 5778  # K
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
-A = TypeVar("A", float, NDArray[np.floating])
+FloatOrNDArray = TypeVar("FloatOrNDArray", bound=Union[float, NDArray[np.floating]])
 
 
-def get_blackbody_emission(freq: float, T: A) -> A:
+@numba.njit(parallel=True)
+def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrNDArray:
     """Returns the blackbody emission given a frequency.
 
     Parameters
     ----------
     freq
-        Frequency [GHz].
+        Frequency [Hz].
     T
         Temperature of the blackbody [K].
 
@@ -32,15 +34,47 @@ def get_blackbody_emission(freq: float, T: A) -> A:
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
-
-    freq *= 1e9
     term1 = (2 * h * freq**3) / c**2
-    term2 = np.expm1(((h * freq) / (k_B * T)), dtype=np.float128)
+    term2 = np.expm1(((h * freq) / (k_B * T)))
 
     return term1 / term2
 
 
-def get_dust_grain_temperature(R: A, T_0: float, delta: float) -> A:
+@numba.njit(parallel=True)
+def get_bandpass_integrated_blackbody_emission(
+    freq: NDArray[np.floating],
+    weights: NDArray[np.floating],
+    T: NDArray[np.floating],
+) -> NDArray[np.floating]:
+    """Returns the bandpass integrated blackbody emission.
+
+    Parameters
+    ----------
+    freq
+        Bandpass frequencies [Hz].
+    weights
+        Bandpass weights.
+    T
+        Temperature of the blackbody [K].
+
+    Returns
+    -------
+        Bandpass integrated blackbody emission [W / m^2 Hz sr].
+    """
+    emission = np.zeros_like(T)
+    delta_freq = np.diff(freq)
+
+    for i in range(1, len(freq)):
+        curr = get_blackbody_emission(freq[i], T) * weights[i]
+        prev = get_blackbody_emission(freq[i - 1], T) * weights[i - 1]
+        emission += (curr + prev) * delta_freq[i - 1]
+
+    return emission * 0.5
+
+
+def get_dust_grain_temperature(
+    R: FloatOrNDArray, T_0: float, delta: float
+) -> FloatOrNDArray:
     """Returns the dust grain temperature given a radial distance from the Sun.
 
     Parameters
@@ -92,7 +126,7 @@ def get_scattering_angle(
 
 
 def get_phase_function(
-    Theta: NDArray[np.floating], C: tuple[float, float, float]
+    Theta: NDArray[np.floating], C: tuple[float, ...]
 ) -> NDArray[np.floating]:
     """Returns the phase function.
 
@@ -114,7 +148,7 @@ def get_phase_function(
 
 
 @lru_cache
-def _get_phase_normalization(C: tuple[float, float, float]) -> float:
+def _get_phase_normalization(C: tuple[float, ...]) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
 
     int_term1 = 2 * np.pi

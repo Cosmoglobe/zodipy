@@ -8,18 +8,18 @@ from astropy.time import Time
 
 import zodipy
 
-NSIDE = 256
-pixels = np.arange(hp.nside2npix(NSIDE))
+nside = 256
+pixels = np.arange(hp.nside2npix(nside))
 obs_time = Time("2020-01-01")
 
-model = zodipy.Zodipy()
-model_parallel = zodipy.Zodipy(parallel=True)
+model = zodipy.Zodipy(parallel=False)
+model_parallel = zodipy.Zodipy()
 
 start = time.perf_counter()
 emission = model.get_binned_emission_pix(
     40 * u.micron,
     pixels=pixels,
-    nside=NSIDE,
+    nside=nside,
     obs_time=obs_time,
 )
 print("Time spent on a single CPU:", round(time.perf_counter() - start, 2), "seconds")
@@ -29,7 +29,7 @@ start = time.perf_counter()
 emission_parallel = model_parallel.get_binned_emission_pix(
     40 * u.micron,
     pixels=pixels,
-    nside=NSIDE,
+    nside=nside,
     obs_time=obs_time,
 )
 print(

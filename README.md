@@ -9,7 +9,7 @@
 ---
 
 
-ZodiPy is a Python tool for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
+ZodiPy is a Python tool for simulating the zodiacal emission in intensity that an arbitrary Solar System observer sees, either in the form of timestreams or full-sky HEALPix maps.
 
 ![plot](docs/img/zodipy_map.png)
 
@@ -43,7 +43,7 @@ print(emission)
 
 # Scientific paper and citation
 For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
-- [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
+- [Cosmoglobe: Simulating zodiacal emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
 
 See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if you have used ZodiPy in your work and want to cite the software.
 

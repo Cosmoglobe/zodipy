@@ -1,6 +1,6 @@
 import astropy.units as u
 
-from ._component_label import ComponentLabel
+from ._ipd_component import ComponentLabel
 
 T_0_DIRBE = 286  # K
 DELTA_DIRBE = 0.46686259861486573

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 import astropy.units as u
 import healpy as hp
 import numpy as np
@@ -20,10 +22,12 @@ from ._strategies import (
     pixels,
     random_freq,
     time,
+    weights,
 )
 from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 
 DIRBE_START_DAY = Time("1990-01-01")
+warnings.filterwarnings("ignore")  # , category=numba.errors.NumbaPerformanceWarning)
 
 
 @given(model(), time(), nside(), data())
@@ -96,7 +100,6 @@ def test_get_emission_ang(
         obs_time=time,
         obs=observer,
     )
-    print(emission)
     assert emission.size == theta.size == phi.size
 
 
@@ -281,7 +284,7 @@ def test_multiprocessing() -> None:
     without multiprocessing.
     """
 
-    model = Zodipy()
+    model = Zodipy(parallel=False)
     model_parallel = Zodipy(parallel=True)
 
     observer = "earth"
@@ -357,3 +360,68 @@ def test_multiprocessing() -> None:
         obs=observer,
     )
     assert np.array_equal(emission_binned_ang, emission_binned_ang_parallel)
+
+
+@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@settings(deadline=None)
+def test_bandpass_integration(
+    model: Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
+    data: DataObject,
+) -> None:
+    """Property test for bandpass integrations."""
+
+    theta, phi = angles
+    model.extrapolate = True
+    observer = data.draw(obs(model, time))
+    bp_weights = data.draw(weights(freqs))
+    emission_binned = model.get_binned_emission_ang(
+        freqs,
+        weights=bp_weights,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert emission_binned.shape == (hp.nside2npix(nside),)
+
+
+@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@settings(deadline=None)
+def test_weights(
+    model: Zodipy,
+    time: Time,
+    nside: int,
+    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
+    freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
+    data: DataObject,
+) -> None:
+    """Property test for bandpass weights."""
+
+    theta, phi = angles
+    model.extrapolate = True
+    observer = data.draw(obs(model, time))
+    bp_weights = data.draw(weights(freqs))
+    with pytest.raises(u.UnitConversionError):
+        model.get_binned_emission_ang(
+            freqs,
+            weights=bp_weights.to(u.m),
+            theta=theta,
+            phi=phi,
+            nside=nside,
+            obs_time=time,
+            obs=observer,
+        )
+
+    model.get_binned_emission_ang(
+        freqs,
+        theta=theta,
+        phi=phi,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )

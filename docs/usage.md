@@ -1,5 +1,8 @@
 ## Timestreams
-Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission.
+Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission. 
+Note that since ZodiPy assumes a constant observer position over the input pointing sequence, the output
+will not be *real* timestreams, but for small enough time intervals ($\Delta t$ < 1 day) the error is 
+negligable.
 
 
 ### Emission along a meridian
@@ -14,9 +17,10 @@ DIRBE interplanetary dust model.
 ![Zodiacal emission timestream](img/timestream.png)
 
 !!! note
-    ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, the true zodiacal emission
-    signal will move along the ecliptic on the sky by roughly one degree each day. To account for this effect, the full pointing sequence of an experiment
-    must be chunked into small subsequences with timescales corresponding to at maximum a day.
+    ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, 
+    the true zodiacal emission signal will move along the ecliptic on the sky by roughly one degree each day. 
+    To account for this effect, the full pointing sequence of an experiment must be chunked into small 
+    subsequences with timescales corresponding to at maximum a day.
 
 
 ## HEALPix maps
@@ -34,7 +38,9 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 *Note that the color bar is logarithmic.*
 
 ### Solar cutoff angle
-Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cut` argument to mask all input pointing that looks in towards the sun with an angular distance smaller than the `solar_cut` value.
+Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cut` 
+argument to mask all input pointing that looks in towards the sun with an angular distance smaller 
+than the `solar_cut` value.
 
 ```python hl_lines="9"
 {!examples/get_binned_emission_solar_cutoff.py!}
@@ -55,13 +61,29 @@ We can make the same map in galactic coordinates by specifying that the input po
 ### Component-wise maps
 ZodiPy can also return the zodiacal emission component-wise. In the following example we use
 the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
-feature components. For more information on the interplanetary dust models, please read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962).
+feature components. For more information on the interplanetary dust models, please 
+read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962).
 
 ```python hl_lines="18"
 {!examples/get_comp_binned_emission.py!}
 ```
 ![Component-wise emission maps](img/binned_comp.png)
 *Note that the color for the Cloud component is logarithmic, while the others are linear.*
+
+
+### Bandpass integrated emission
+Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
+what the emission looks like over some instrument bandpass. ZodiPy will accept a sequence of frequencies to the `freq`
+argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
+Note that the bandpass weights must be given in power units (even if it is normalized), i.e. they must be in units 
+compatible with `Jy/sr`. A top hat
+bandpass is assumed if a sequence of frequencies are used without providing weights.
+```python hl_lines="32 33"
+{!examples/get_bandpass_integrated_emission.py!}
+```
+![Generated Bandpass](img/random_bandpass.png)
+![Center frequency emission](img/center_freq.png)
+![Bandpass integrated emission](img/bandpass_integrated.png)
 
 
 ## Gridding the interplanetary dust density distribution
@@ -74,11 +96,13 @@ and plot the cross section of the diffuse cloud components density in the yz-pla
 ![Interplanetary dust distribution](img/density_grid.png)
 
 
-## Parallel computations
-Simulations with large `nside` or with large pointing sequences can be slow to execute due to the massive amounts of line of sights that needs to be computed. We can however speed up calculations by initializing `Zodipy` with `parallel=True`. ZodiPy will then automatically distribute the pointing sequence over all available CPUs on the machine. Optionally, the number of CPUs can also be manually specified by using the `n_proc` keyword when initializing `ZodiPy`.
+## Multiprocessing
+By default, ZodiPy runs concurrently and will spawn processes based on the number of available CPU's 
+(given by `os.cpu_count()`). This can be turned off by initializing `Zodipy` with `parallel=False`. 
+The number of CPUs can be manually specified by using the `n_proc` keyword when initializing `ZodiPy`. 
 
 
-```python hl_lines="16"
+```python hl_lines="15 16"
 {!examples/get_parallel_emission.py!}
 ```
 !!! warning "Windows users"

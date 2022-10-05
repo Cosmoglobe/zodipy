@@ -1,20 +1,24 @@
+import warnings
+
 import numpy as np
 import pytest
+from numba.core.errors import NumbaPerformanceWarning
 
-from zodipy._source_functions import get_blackbody_emission, get_dust_grain_temperature
+from zodipy._source_funcs import get_blackbody_emission
 
 TEMPERATURE = 30
 TEMPERATURE_ARRAY = np.array([31, 45, 53])
 R = 3
 R_ARRAY = np.array([4, 5.3, 6])
 DELTA = 0.324
-FREQUENCY = 549
+FREQUENCY = 549e9
 
 
 def test_blackbody_emission_value():
     """Tests that return value."""
-
-    emission = get_blackbody_emission(T=TEMPERATURE, freq=FREQUENCY)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=NumbaPerformanceWarning)
+        emission = get_blackbody_emission(T=TEMPERATURE, freq=FREQUENCY)
     assert emission == pytest.approx(1.73442848898e-15, abs=1e-20)
 
 

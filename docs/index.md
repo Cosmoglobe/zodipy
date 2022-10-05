@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ)](https://codecov.io/gh/Cosmoglobe/zodipy)
 [![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
 
-ZodiPy is software for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
+ZodiPy simulates zodiacal emission in intensity for arbitrary Solar System observers in the form of timestreams or full-sky maps
 ![ZodiPy Logo](img/zodipy_map.png)
 
 

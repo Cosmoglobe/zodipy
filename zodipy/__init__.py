@@ -1,16 +1,12 @@
-from . import components, source_parameters
-from ._component_label import ComponentLabel
+from . import ipd_components, source_params
 from ._contour import tabulate_density
-from .models import model_registry
-from .solar_irradiance_models import solar_irradiance_model_registry
+from .ipd_models import model_registry
 from .zodipy import Zodipy
 
 __all__ = (
     "Zodipy",
     "model_registry",
-    "solar_irradiance_model_registry",
-    "components",
-    "source_parameters",
+    "ipd_components",
+    "source_params",
     "tabulate_density",
-    "ComponentLabel",
 )
