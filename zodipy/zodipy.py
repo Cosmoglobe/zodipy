@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import multiprocessing
+import os
 import platform
 from dataclasses import asdict
 from functools import partial
@@ -20,6 +21,7 @@ from ._line_of_sight import get_line_of_sight_endpoints
 from ._sky_coords import DISTANCE_TO_JUPITER, get_obs_and_earth_positions
 from ._source_funcs import (
     SPECIFIC_INTENSITY_UNITS,
+    get_bandpass_integrated_blackbody_emission,
     get_blackbody_emission,
     get_dust_grain_temperature,
     get_phase_function,
@@ -35,7 +37,13 @@ from ._validators import (
 )
 from .ipd_models import model_registry
 
-SYS_PROC_START_METHOD = "fork" if "windows" not in platform.system().lower() else None
+PLATFORM = platform.system().lower()
+SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
+
+# `omp_set_nested` was deprecated in OpenMP 5.0. This silences the warning generated
+# by numba. See https://github.com/numba/numba/issues/5275 for more info.
+if PLATFORM in ("linux", "darwin"):
+    os.environ["KMP_WARNINGS"] = "0"
 
 
 class Zodipy:
@@ -48,13 +56,13 @@ class Zodipy:
     Attributes:
         model (str): Name of the interplanetary dust model to use in the simulations.
             Defaults to DIRBE.
-        extrapolate (bool): If True all spectral quantities in the selected model are
-            linearly extrapolated to the requested frequency/wavelength. If False, an
-            Exception will be raised on requested frequencies/wavelengths outside of the
-            valid model range. Default is False.
-        parallel (bool): If True, input pointing sequences will be split among all
+        extrapolate (bool): If `True` all spectral quantities in the selected model are
+            linearly extrapolated to the requested frequency/wavelength. If `False`, an
+            exception is raised on requested frequencies/wavelengths outside of the
+            valid model range. Default is `False`.
+        parallel (bool): If `True`, input pointing sequences will be split among all
             available cores on the machine, and the emission will be computed in parallel.
-            This is useful for large simulations. Default is False.
+            This is useful for large simulations. Default is `True`.
         n_proc (int): Number of cores to use when parallel computation. Defaults is None,
             which will use all available cores.
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
@@ -67,7 +75,7 @@ class Zodipy:
         solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
             Defaults to `np.nan`.
         gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
-            the brightness integral. Default is 50 points.
+            the brightness integral. Default is 100 points.
         los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
             sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
@@ -81,7 +89,7 @@ class Zodipy:
         self,
         model: str = "dirbe",
         extrapolate: bool = False,
-        parallel: bool = False,
+        parallel: bool = True,
         n_proc: int | None = None,
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
@@ -428,7 +436,7 @@ class Zodipy:
         # as the basis for another partial depnding on wether or not the code is run in
         # parallel.
         partial_common_integrand = partial(
-            _compute_emission_at_step,
+            _get_emission_at_step,
             start=start,
             n_quad_points=self.gauss_quad_order,
             X_obs=np.expand_dims(observer_position, axis=-1),
@@ -525,7 +533,7 @@ class Zodipy:
         return repr_str[:-2] + ")"
 
 
-def _compute_emission_at_step(
+def _get_emission_at_step(
     r: float | NDArray[np.floating],
     *,
     start: float,
@@ -556,15 +564,13 @@ def _compute_emission_at_step(
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
 
     if weights is not None:
-        # Expand T array along axis -1 to make broadcastable with bandpass
-        blackbody_emission_bandpass = get_blackbody_emission(
-            freq=freq, T=np.expand_dims(temperature, axis=-1)
-        )
-        blackbody_emission = np.trapz(
-            blackbody_emission_bandpass * weights, freq, axis=-1
+        blackbody_emission = get_bandpass_integrated_blackbody_emission(
+            freq=freq,
+            weights=weights,
+            T=temperature,
         )
     else:
-        blackbody_emission = get_blackbody_emission(freq, temperature)
+        blackbody_emission = get_blackbody_emission(freq=freq, T=temperature)
 
     emission = np.zeros((len(comps), np.shape(X_helio)[1], n_quad_points))
     density = np.zeros_like(emission)

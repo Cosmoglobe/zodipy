@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 import astropy.units as u
 import healpy as hp
 import numpy as np
@@ -25,6 +27,7 @@ from ._strategies import (
 from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 
 DIRBE_START_DAY = Time("1990-01-01")
+warnings.filterwarnings("ignore")  # , category=numba.errors.NumbaPerformanceWarning)
 
 
 @given(model(), time(), nside(), data())
@@ -281,7 +284,7 @@ def test_multiprocessing() -> None:
     without multiprocessing.
     """
 
-    model = Zodipy()
+    model = Zodipy(parallel=False)
     model_parallel = Zodipy(parallel=True)
 
     observer = "earth"

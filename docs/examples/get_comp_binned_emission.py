@@ -29,5 +29,5 @@ for idx, binned_comp_emission in enumerate(binned_emission):
         sub=(3, 2, idx + 1),
         fig=fig,
     )
-plt.savefig("../img/binned_comp.png", dpi=300)
+# plt.savefig("../img/binned_comp.png", dpi=300)
 plt.show()

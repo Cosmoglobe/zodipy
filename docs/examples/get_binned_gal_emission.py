@@ -15,7 +15,7 @@ binned_emission = model.get_binned_emission_pix(
     nside=nside,
     obs_time=Time("2022-06-14"),
     obs="earth",
-    coord_in="G",   # Coordinates of the input pointing
+    coord_in="G",  # Coordinates of the input pointing
 )
 
 hp.mollview(
@@ -25,8 +25,8 @@ hp.mollview(
     coord="G",
     max=1,
     norm="log",
-    cmap="afmhot"
+    cmap="afmhot",
 )
 hp.graticule(coord="E")
-plt.savefig("../img/binned_gal.png", dpi=300)
+# plt.savefig("../img/binned_gal.png", dpi=300)
 plt.show()

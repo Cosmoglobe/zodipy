@@ -9,7 +9,7 @@
 ---
 
 
-ZodiPy is a Python tool for simulating the zodiacal emission that a solar system observer sees, either in the form of timestreams or binned HEALPix maps.
+ZodiPy is a Python tool for simulating the zodiacal emission in intensity that an arbitrary Solar System observer sees, either in the form of timestreams or full-sky HEALPix maps.
 
 ![plot](docs/img/zodipy_map.png)
 

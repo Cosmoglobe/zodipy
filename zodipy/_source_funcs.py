@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Sequence, TypeVar, Union
+from typing import TypeVar, Union
 
 import astropy.constants as const
 import astropy.units as u
+import numba
 import numpy as np
 from numpy.typing import NDArray
 
@@ -18,6 +19,7 @@ SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 FloatOrNDArray = TypeVar("FloatOrNDArray", bound=Union[float, NDArray[np.floating]])
 
 
+@numba.njit(parallel=True)
 def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrNDArray:
     """Returns the blackbody emission given a frequency.
 
@@ -32,11 +34,42 @@ def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrND
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
-
     term1 = (2 * h * freq**3) / c**2
-    term2 = np.expm1(((h * freq) / (k_B * T)), dtype=np.float128)
+    term2 = np.expm1(((h * freq) / (k_B * T)))
 
     return term1 / term2
+
+
+@numba.njit(parallel=True)
+def get_bandpass_integrated_blackbody_emission(
+    freq: NDArray[np.floating],
+    weights: NDArray[np.floating],
+    T: NDArray[np.floating],
+) -> NDArray[np.floating]:
+    """Returns the bandpass integrated blackbody emission.
+
+    Parameters
+    ----------
+    freq
+        Bandpass frequencies [Hz].
+    weights
+        Bandpass weights.
+    T
+        Temperature of the blackbody [K].
+
+    Returns
+    -------
+        Bandpass integrated blackbody emission [W / m^2 Hz sr].
+    """
+    emission = np.zeros_like(T)
+    delta_freq = np.diff(freq)
+
+    for i in range(1, len(freq)):
+        curr = get_blackbody_emission(freq[i], T) * weights[i]
+        prev = get_blackbody_emission(freq[i - 1], T) * weights[i - 1]
+        emission += (curr + prev) * delta_freq[i - 1]
+
+    return emission * 0.5
 
 
 def get_dust_grain_temperature(

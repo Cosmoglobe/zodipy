@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.6.6"
+version = "0.7.0"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -15,6 +15,7 @@ astropy = ">=5.0.1"
 jplephem = "^2.17"
 typing-extensions = "^4.1.1"
 quadpy = "^0.16.13"
+numba = "^0.56.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -42,6 +43,7 @@ disable_error_code = ["misc"]
 overrides = [
     { module = "healpy.*", ignore_missing_imports = true },
     { module = "astropy.*", ignore_missing_imports = true },
+    { module = "numba.*", ignore_missing_imports = true },
 ]
 
 [tool.pytest.ini_options]

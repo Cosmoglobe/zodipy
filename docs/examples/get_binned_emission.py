@@ -24,8 +24,8 @@ hp.mollview(
     max=1,
     norm="log",
     coord="E",
-    cmap="afmhot"
+    cmap="afmhot",
 )
 hp.graticule()
-plt.savefig("../img/binned.png", dpi=300)
+# plt.savefig("../img/binned.png", dpi=300)
 plt.show()
