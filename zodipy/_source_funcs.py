@@ -16,10 +16,10 @@ T_sun = 5778  # K
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
-FloatOrNDArray = TypeVar("FloatOrNDArray", bound=Union[float, NDArray[np.floating]])
+FloatOrNDArray = TypeVar("FloatOrNDArray", float, NDArray[np.floating])
 
 
-@numba.njit(parallel=True)
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrNDArray:
     """Returns the blackbody emission given a frequency.
 
@@ -40,7 +40,7 @@ def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrND
     return term1 / term2
 
 
-@numba.njit(parallel=True)
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def get_bandpass_integrated_blackbody_emission(
     freq: NDArray[np.floating],
     weights: NDArray[np.floating],
@@ -72,6 +72,7 @@ def get_bandpass_integrated_blackbody_emission(
     return emission * 0.5
 
 
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def get_dust_grain_temperature(
     R: FloatOrNDArray, T_0: float, delta: float
 ) -> FloatOrNDArray:
@@ -94,6 +95,7 @@ def get_dust_grain_temperature(
     return T_0 * R**-delta
 
 
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def get_scattering_angle(
     R_los: float | NDArray[np.floating],
     R_helio: NDArray[np.floating],
@@ -125,6 +127,7 @@ def get_scattering_angle(
     return np.arccos(-cos_theta)
 
 
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def get_phase_function(
     Theta: NDArray[np.floating], C: tuple[float, ...]
 ) -> NDArray[np.floating]:
@@ -148,6 +151,7 @@ def get_phase_function(
 
 
 @lru_cache
+@numba.njit(cache=True, parallel=True, fastmath=True)
 def _get_phase_normalization(C: tuple[float, ...]) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
 

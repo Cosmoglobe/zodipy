@@ -44,6 +44,7 @@ overrides = [
     { module = "healpy.*", ignore_missing_imports = true },
     { module = "astropy.*", ignore_missing_imports = true },
     { module = "numba.*", ignore_missing_imports = true },
+    { module = "scipy.*", ignore_missing_imports = true },
 ]
 
 [tool.pytest.ini_options]

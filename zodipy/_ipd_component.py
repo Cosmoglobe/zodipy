@@ -64,10 +64,7 @@ class Component(ABC):
 
     @abstractmethod
     def compute_density(
-        self,
-        X_helio: NDArray[np.floating],
-        *,
-        X_earth: NDArray[np.floating] | None = None,
+        self, X_helio: NDArray[np.floating], X_earth: NDArray[np.floating]
     ) -> NDArray[np.floating]:
         """Returns the dust density of a component at points in the Solar System
         given by 'X_helio'.
@@ -112,7 +109,7 @@ class Cloud(Component):
     mu: float
 
     def compute_density(
-        self, X_helio: NDArray[np.floating], **_
+        self, X_helio: NDArray[np.floating], *_
     ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
@@ -165,7 +162,7 @@ class Band(Component):
         self.delta_zeta_rad = np.radians(self.delta_zeta)
 
     def compute_density(
-        self, X_helio: NDArray[np.floating], **_
+        self, X_helio: NDArray[np.floating], *_
     ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
@@ -214,7 +211,7 @@ class Ring(Component):
     sigma_z: float
 
     def compute_density(
-        self, X_helio: NDArray[np.floating], **_
+        self, X_helio: NDArray[np.floating], *_
     ) -> NDArray[np.floating]:
         """See base class for documentation."""
 
@@ -267,10 +264,7 @@ class Feature(Component):
         self.sigma_theta_rad = np.radians(self.sigma_theta)
 
     def compute_density(
-        self,
-        X_helio: NDArray[np.floating],
-        X_earth: NDArray[np.floating],
-        **_,
+        self, X_helio: NDArray[np.floating], X_earth: NDArray[np.floating]
     ) -> NDArray[np.floating]:
         """See base class for documentation."""
 

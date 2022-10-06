@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Mapping, Sequence
 
 import astropy.units as u
 
@@ -13,12 +14,12 @@ class InterplanetaryDustModel:
     """Container for fitted interplanetary dust model parameters."""
 
     name: str
-    comps: dict[ComponentLabel, Component]
+    comps: Mapping[ComponentLabel, Component]
     spectrum: u.Quantity[u.Hz] | u.Quantity[u.m]
-    emissivities: dict[ComponentLabel, tuple[float, ...]]
-    albedos: dict[ComponentLabel, tuple[float, ...]] | None = None
+    emissivities: Mapping[ComponentLabel, Sequence[float]]
+    albedos: Mapping[ComponentLabel, Sequence[float]] | None = None
     solar_irradiance: u.Quantity[u.MJy / u.sr] | None = None
-    phase_coefficients: list[tuple[float, ...]] | None = None
+    phase_coefficients: Sequence[Sequence[float]] | None = None
     T_0: float = T_0_DIRBE
     delta: float = DELTA_DIRBE
 
@@ -56,12 +57,12 @@ class InterplanetaryDustModelRegistry:
     def register_model(
         self,
         name: str,
-        comps: dict[ComponentLabel, Component],
+        comps: Mapping[ComponentLabel, Component],
         spectrum: u.Quantity[u.Hz] | u.Quantity[u.m],
-        emissivities: dict[ComponentLabel, tuple[float, ...]],
-        albedos: dict[ComponentLabel, tuple[float, ...]] | None = None,
+        emissivities: Mapping[ComponentLabel, Sequence[float]],
+        albedos: Mapping[ComponentLabel, Sequence[float]] | None = None,
         solar_irradiance: u.Quantity[u.MJy / u.sr] | None = None,
-        phase_coefficients: list[tuple[float, ...]] | None = None,
+        phase_coefficients: Sequence[Sequence[float]] | None = None,
         T_0: float = T_0_DIRBE,
         delta: float = DELTA_DIRBE,
     ) -> None:

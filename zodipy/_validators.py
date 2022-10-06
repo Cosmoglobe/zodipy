@@ -5,47 +5,50 @@ import healpy as hp
 import numpy as np
 from numpy.typing import NDArray
 
+from ._ipd_model import InterplanetaryDustModel
 from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
 
 
 @u.quantity_input(equivalencies=u.spectral())
-def validate_frequency(
-    freq: FrequencyOrWavelength, spectrum: Union[FrequencyOrWavelength, None]
-):
-    # If model is not set to extrapolate, we raise an error if the bandpass is out
-    # of range with the supported spetrum.
-    if spectrum is not None:
-        freq = freq.to(spectrum.unit, equivalencies=u.spectral())
-        spectrum_min = spectrum.min()
-        spectrum_max = spectrum.max()
+def validate_frequency_in_model_range(
+    freq: FrequencyOrWavelength, model: InterplanetaryDustModel
+) -> None:
+    freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
 
-        if freq.isscalar:
-            freq_is_in_range = spectrum_min <= freq <= spectrum_max
-        else:
-            freq_is_in_range = all(
-                spectrum_min.value <= freq <= spectrum_max.value and freq
-                for freq in freq.value
-            )
+    lower_freq_range = model.spectrum.min()
+    upper_freq_range = model.spectrum.max()
 
-        if not freq_is_in_range:
-            raise ValueError(
-                f"The selected model is only valid in the [{spectrum_min},"
-                f" {spectrum_max}] range."
-            )
+    if freq_in_spectrum_units.isscalar:
+        freq_is_in_range = (
+            lower_freq_range <= freq_in_spectrum_units <= upper_freq_range
+        )
+    else:
+        freq_is_in_range = all(
+            lower_freq_range.value <= nu <= upper_freq_range.value and nu
+            for nu in freq_in_spectrum_units.value
+        )
 
-    return freq
+    if not freq_is_in_range:
+        raise ValueError(
+            f"Model: {model.name} is only valid in the [{lower_freq_range},"
+            f" {upper_freq_range}] range."
+        )
 
 
-@u.quantity_input(weights=[u.MJy / u.sr, None])
-def validate_weights(
+@u.quantity_input
+def validate_and_normalize_weights(
     freq: FrequencyOrWavelength, weights: Union[u.Quantity[u.MJy / u.sr], None]
 ) -> Union[NDArray[np.floating], None]:
+
     if weights is not None:
+        weights = weights.to(u.MJy / u.sr)
         return (weights / np.trapz(weights, freq)).value
 
     if weights is None and not freq.isscalar:
         print("Warning: weights not provided, assuming uniform weights.")
         return np.ones_like(freq).value / len(freq)
+
+    return None
 
 
 @u.quantity_input(theta=[u.deg, u.rad], phi=[u.deg, u.rad])

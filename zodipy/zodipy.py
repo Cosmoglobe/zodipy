@@ -30,10 +30,10 @@ from ._source_funcs import (
 from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from ._validators import (
+    validate_and_normalize_weights,
     validate_ang,
-    validate_frequency,
+    validate_frequency_in_model_range,
     validate_pixels,
-    validate_weights,
 )
 from .ipd_models import model_registry
 
@@ -108,7 +108,7 @@ class Zodipy:
         self.los_dist_cut = los_dist_cut
         self.ephemeris = ephemeris
 
-        self._model = model_registry.get_model(model)
+        self.ipd_model = model_registry.get_model(model)
         self._integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_order)
 
     @property
@@ -402,14 +402,13 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Computes the component-wise zodiacal emission."""
 
-        freq = validate_frequency(
-            freq=freq,
-            spectrum=self._model.spectrum if not self.extrapolate else None,
-        )
-        normalized_weights = validate_weights(freq=freq, weights=weights)
+        if not self.extrapolate:
+            validate_frequency_in_model_range(freq=freq, model=self.ipd_model)
+
+        normalized_weights = validate_and_normalize_weights(freq=freq, weights=weights)
 
         interpolated_source_params = interpolate_source_parameters(
-            model=self._model, freq=freq, weights=normalized_weights
+            model=self.ipd_model, freq=freq, weights=normalized_weights
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
@@ -423,7 +422,7 @@ class Zodipy:
         )
 
         emission = np.zeros(
-            (self._model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
+            (self.ipd_model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
         )
 
         # Convert to Hz if `freq` is in units of wavelength
@@ -441,11 +440,11 @@ class Zodipy:
             n_quad_points=self.gauss_quad_order,
             X_obs=np.expand_dims(observer_position, axis=-1),
             X_earth=np.expand_dims(earth_position, axis=-1),
-            comps=list(self._model.comps.values()),
+            comps=list(self.ipd_model.comps.values()),
             freq=freq.value,
             weights=normalized_weights,
-            T_0=self._model.T_0,
-            delta=self._model.delta,
+            T_0=self.ipd_model.T_0,
+            delta=self.ipd_model.delta,
             **asdict(interpolated_source_params),
         )
         # Distribute pointing to available CPUs and compute the emission in parallel.
@@ -575,7 +574,7 @@ def _get_emission_at_step(
     emission = np.zeros((len(comps), np.shape(X_helio)[1], n_quad_points))
     density = np.zeros_like(emission)
     for idx, (comp, albedo, emissivity) in enumerate(zip(comps, albedos, emissivities)):
-        density[idx] = comp.compute_density(X_helio, X_earth=X_earth)
+        density[idx] = comp.compute_density(X_helio, X_earth)
         emission[idx] = (1 - albedo) * (emissivity * blackbody_emission)
 
     if any(albedo != 0 for albedo in albedos):
