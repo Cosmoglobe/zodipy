@@ -49,4 +49,5 @@ overrides = [
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::UserWarning",
+    "ignore:.*overflow encountered in expm1.*",
 ]
