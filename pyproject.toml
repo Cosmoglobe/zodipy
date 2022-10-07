@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/MetinSa/zodipy"
-version = "0.7.0"
+version = "0.7.1"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -45,6 +45,7 @@ overrides = [
     { module = "astropy.*", ignore_missing_imports = true },
     { module = "numba.*", ignore_missing_imports = true },
     { module = "scipy.*", ignore_missing_imports = true },
+    { module = "pkg_resources.*", ignore_missing_imports = true },
 ]
 
 [tool.pytest.ini_options]

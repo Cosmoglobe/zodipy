@@ -38,12 +38,8 @@ def compute_cloud_density(
     )
 
     ζ = np.abs(Z_cloud / R_cloud)
-    μ = mu
-    g = np.zeros_like(ζ)
 
-    condition = ζ < μ
-    g[condition] = ζ[condition] ** 2 / (2 * μ)
-    g[~condition] = ζ[~condition] - (μ / 2)
+    g = np.where(ζ < mu, ζ**2 / (2 * mu), ζ - (mu / 2))
 
     return n_0 * R_cloud**-alpha * np.exp(-beta * g**gamma)
 
@@ -157,10 +153,8 @@ def compute_feature_density(
     )
 
     Δθ = θ_comp - theta_rad
-    condition1 = Δθ < -np.pi
-    condition2 = Δθ > np.pi
-    Δθ[condition1] = Δθ[condition1] + 2 * np.pi
-    Δθ[condition2] = Δθ[condition2] - 2 * np.pi
+    Δθ = np.where(Δθ < -np.pi, +2 * np.pi, Δθ)
+    Δθ = np.where(Δθ > np.pi, -2 * np.pi, Δθ)
 
     # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
     # term. See Planck 2013 XIV, section 4.1.3.
@@ -196,7 +190,7 @@ KEYS_TO_REMOVE = (
 
 def construct_density_funcs(
     comps: Sequence[Component], X_earth: NDArray[np.floating]
-) -> tuple[PartialDensFunc]:
+) -> list[PartialDensFunc]:
     """Construct the density functions for the components."""
 
     partial_density_funcs: list[PartialDensFunc] = []
@@ -211,4 +205,4 @@ def construct_density_funcs(
             partial_func = partial(partial_func, X_earth=X_earth)
         partial_density_funcs.append(partial_func)
 
-    return tuple(partial_density_funcs)
+    return partial_density_funcs

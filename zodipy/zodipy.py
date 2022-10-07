@@ -436,7 +436,6 @@ class Zodipy:
             comps=list(self.ipd_model.comps.values()),
             X_earth=np.expand_dims(earth_position, axis=-1),
         )
-
         # Create partial function with fixed arguments. This partial will again be used
         # as the basis for another partial depnding on wether or not the code is run in
         # parallel.
@@ -539,13 +538,12 @@ class Zodipy:
 
 def _get_emission_at_step(
     r: float | NDArray[np.floating],
-    *,
     start: float,
     stop: float | NDArray[np.floating],
     n_quad_points: int,
     X_obs: NDArray[np.floating],
     u_los: NDArray[np.floating],
-    dens_funcs: tuple[PartialDensFunc],
+    dens_funcs: list[PartialDensFunc],
     freq: float | NDArray[np.floating],
     weights: NDArray[np.floating] | None,
     T_0: float,

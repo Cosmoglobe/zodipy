@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from ._ipd_dens_funcs import DENSITY_FUNCS
 from ._ipd_model import InterplanetaryDustModel
 from .ipd_models import model_registry
 
@@ -44,7 +45,7 @@ def tabulate_density(
     density_grid = np.zeros((model.n_comps, *grid.shape[1:]))
     for idx, comp in enumerate(model.comps.values()):
         comp.X_0 = np.reshape(comp.X_0, (3, 1, 1, 1))
-        density_grid[idx] = comp.compute_density(
+        density_grid[idx] = DENSITY_FUNCS[type(comp)](
             X_helio=grid,
             X_earth=earth_position,
         )
