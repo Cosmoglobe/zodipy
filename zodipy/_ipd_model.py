@@ -5,7 +5,7 @@ from typing import Mapping, Sequence
 
 import astropy.units as u
 
-from ._ipd_component import Component, ComponentLabel
+from ._ipd_comps import Component, ComponentLabel
 from .source_params import DELTA_DIRBE, T_0_DIRBE
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TypeVar, Union
+from typing import TypeVar
 
 import astropy.constants as const
 import astropy.units as u
