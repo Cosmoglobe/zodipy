@@ -1,18 +1,28 @@
 from __future__ import annotations
 
+import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 from ._ipd_comps import Band, Cloud, Component, Feature, Ring
 
+"""The density functions for the different types of components. Common for all of these 
+is that the first argument will be `X_helio` (the line of sight from the observer towards
+a point on the sky) and the remaining arguments will be parameters that are set by the
+`Component` subclasses. These arguments are unpacked automatically, so for a 
+ComputeDensityFunc to work, the mapped `Component` class must have all the parameters as 
+instance variables. 
+"""
+ComputeDensityFunc = Callable[..., npt.NDArray[np.float64]]
+
 
 def compute_cloud_density(
-    X_helio: NDArray[np.floating],
-    X_0: NDArray[np.floating],
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
     cos_Omega_rad: float,
     sin_i_rad: float,
@@ -22,7 +32,7 @@ def compute_cloud_density(
     alpha: float,
     beta: float,
     gamma: float,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """
     Returns the dust density of a component at points in the Solar System
     given by 'X_helio' and the parameters of the component.
@@ -45,8 +55,8 @@ def compute_cloud_density(
 
 
 def compute_band_density(
-    X_helio: NDArray[np.floating],
-    X_0: NDArray[np.floating],
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
     cos_Omega_rad: float,
     sin_i_rad: float,
@@ -56,7 +66,7 @@ def compute_band_density(
     p: float,
     v: float,
     delta_r: float,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """
     Returns the dust density of a component at points in the Solar System
     given by 'X_helio' and the parameters of the component.
@@ -86,8 +96,8 @@ def compute_band_density(
 
 
 def compute_ring_density(
-    X_helio: NDArray[np.floating],
-    X_0: NDArray[np.floating],
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
     cos_Omega_rad: float,
     sin_i_rad: float,
@@ -96,7 +106,7 @@ def compute_ring_density(
     R: float,
     sigma_r: float,
     sigma_z: float,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """
     Returns the dust density of a component at points in the Solar System
     given by 'X_helio' and the parameters of the component.
@@ -119,9 +129,9 @@ def compute_ring_density(
 
 
 def compute_feature_density(
-    X_helio: NDArray[np.floating],
-    X_0: NDArray[np.floating],
-    X_earth: NDArray[np.floating],
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    X_earth: npt.NDArray[np.float64],
     sin_Omega_rad: float,
     cos_Omega_rad: float,
     sin_i_rad: float,
@@ -132,7 +142,7 @@ def compute_feature_density(
     sigma_z: float,
     theta_rad: float,
     sigma_theta_rad: float,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """
     Returns the dust density of a component at points in the Solar System
     given by 'X_helio' and the parameters of the component.
@@ -148,61 +158,70 @@ def compute_feature_density(
     )
     X_earth_comp = X_earth - X_0
 
-    θ_comp = np.arctan2(X_feature[1], X_feature[0]) - np.arctan2(
+    theta_comp = np.arctan2(X_feature[1], X_feature[0]) - np.arctan2(
         X_earth_comp[1], X_earth_comp[0]
     )
 
-    Δθ = θ_comp - theta_rad
-    Δθ = np.where(Δθ < -np.pi, +2 * np.pi, Δθ)
-    Δθ = np.where(Δθ > np.pi, -2 * np.pi, Δθ)
+    delta_theta = theta_comp - theta_rad
+    delta_theta = np.where(delta_theta < -np.pi, +2 * np.pi, delta_theta)
+    delta_theta = np.where(delta_theta > np.pi, -2 * np.pi, delta_theta)
 
     # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
     # term. See Planck 2013 XIV, section 4.1.3.
     exp_term = (R_feature - R) ** 2 / sigma_r**2
     exp_term += np.abs(Z_feature) / sigma_z
-    exp_term += Δθ**2 / sigma_theta_rad**2
+    exp_term += delta_theta**2 / sigma_theta_rad**2
 
     return n_0 * np.exp(-exp_term)
 
 
-DensFunc = Callable[..., NDArray[np.floating]]
-PartialDensFunc = Callable[[NDArray[np.floating]], NDArray[np.floating]]
-
-DENSITY_FUNCS: dict[type[Component], DensFunc] = {
+# Mapping of implemented zodiacal component data classes and their density functions.
+DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
     Cloud: compute_cloud_density,
     Band: compute_band_density,
     Ring: compute_ring_density,
     Feature: compute_feature_density,
 }
 
-# Find nicer solution to this
-KEYS_TO_REMOVE = (
-    "x_0",
-    "y_0",
-    "z_0",
-    "i",
-    "Omega",
-    "delta_zeta",
-    "theta",
-    "sigma_theta",
-)
+PartialComputeDensityFunc = Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]
 
 
-def construct_density_funcs(
-    comps: Sequence[Component], X_earth: NDArray[np.floating]
-) -> list[PartialDensFunc]:
-    """Construct the density functions for the components."""
+def construct_density_partials(
+    comps: Sequence[Component],
+    computed_params: dict[str, Any],
+) -> tuple[PartialComputeDensityFunc, ...]:
+    """
+    Construct the density functions for the components.
+    Raises exception for incorrectly defined components or component density functions.
+    """
 
-    partial_density_funcs: list[PartialDensFunc] = []
+    partial_density_funcs: list[PartialComputeDensityFunc] = []
     for comp in comps:
-        comp_params = asdict(comp)
-        for key in KEYS_TO_REMOVE:
-            comp_params.pop(key, None)
+        comp_dict = asdict(comp)
+        func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
+        residual_params = [key for key in func_params if key not in comp_dict.keys()]
+        try:
+            residual_params.remove("X_helio")
+        except ValueError:
+            raise ValueError(
+                "X_helio must be be the first argument to the density function of a component."
+            )
+
+        if residual_params:
+            if residual_params - computed_params.keys():
+                raise ValueError(
+                    f"Argument(s) {residual_params} required by the density function "
+                    f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
+                    f"{type(comp)} or by the `computed_parameters` dict."
+                )
+            comp_dict.update(computed_params)
+
+        # Remove excess intermediate parameters from the component dict.
+        comp_params = {
+            key: value for key, value in comp_dict.items() if key in func_params
+        }
 
         partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
-
-        if isinstance(comp, Feature):
-            partial_func = partial(partial_func, X_earth=X_earth)
         partial_density_funcs.append(partial_func)
 
-    return partial_density_funcs
+    return tuple(partial_density_funcs)

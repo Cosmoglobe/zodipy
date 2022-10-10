@@ -5,12 +5,12 @@ from typing import Sequence
 import astropy.units as u
 import healpy as hp
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 
 def get_unit_vectors_from_pixels(
-    coord_in: str, pixels: Sequence[int] | NDArray[np.integer], nside: int
-) -> NDArray[np.floating]:
+    coord_in: str, pixels: Sequence[int] | npt.NDArray[np.int64], nside: int
+) -> npt.NDArray[np.float64]:
     """Returns ecliptic unit vectors from HEALPix pixels representing some pointing."""
 
     unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
@@ -23,7 +23,7 @@ def get_unit_vectors_from_ang(
     phi: u.Quantity[u.rad] | u.Quantity[u.deg],
     theta: u.Quantity[u.rad] | u.Quantity[u.deg],
     lonlat: bool = False,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """Returns ecliptic unit vectors from sky angles representing some pointing."""
 
     unit_vectors = np.asarray(hp.ang2vec(theta, phi, lonlat=lonlat)).transpose()

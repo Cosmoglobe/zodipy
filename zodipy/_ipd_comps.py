@@ -5,12 +5,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 
 @dataclass
 class Component(ABC):
-    """Base class for an Interplanetary Dust Component.
+    """Base class for storing common model parameters for zodiacal components.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ class Component(ABC):
     i: float = field(repr=False)
     Omega: float = field(repr=False)
 
-    X_0: NDArray[np.floating] = field(init=False)
+    X_0: npt.NDArray[np.float64] = field(init=False)
     sin_i_rad: float = field(init=False)
     cos_i_rad: float = field(init=False)
     sin_Omega_rad: float = field(init=False)
@@ -48,7 +48,7 @@ class Component(ABC):
 
 @dataclass
 class Cloud(Component):
-    """DIRBE Diffuse Cloud.
+    """DIRBE diffuse cloud.
 
     Parameters
     ----------
@@ -73,7 +73,7 @@ class Cloud(Component):
 
 @dataclass
 class Band(Component):
-    """DIRBe Dust Band.
+    """DIRBE asteroidal dust band.
 
     Parameters
     ----------
@@ -103,7 +103,7 @@ class Band(Component):
 
 @dataclass
 class Ring(Component):
-    """DIRBE Circum-solar Ring (excluding the Earth-trailing Feature).
+    """DIRBE circum-solar ring (excluding the Earth-trailing Feature).
 
     Parameters
     ----------

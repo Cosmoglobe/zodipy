@@ -10,13 +10,13 @@ from typing import Literal
 import astropy.units as u
 import healpy as hp
 import numpy as np
+import numpy.typing as npt
 import quadpy
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
-from numpy.typing import NDArray
 
 from ._interp import interpolate_source_parameters
-from ._ipd_dens_funcs import PartialDensFunc, construct_density_funcs
+from ._ipd_dens_funcs import PartialComputeDensityFunc, construct_density_partials
 from ._line_of_sight import get_line_of_sight_endpoints
 from ._sky_coords import DISTANCE_TO_JUPITER, get_obs_and_earth_positions
 from ._source_funcs import (
@@ -392,11 +392,11 @@ class Zodipy:
         weights: u.Quantity[u.MJy / u.sr] | None,
         obs: str,
         obs_time: Time,
-        unit_vectors: NDArray[np.floating],
-        indicies: NDArray[np.integer],
+        unit_vectors: npt.NDArray[np.float64],
+        indicies: npt.NDArray[np.int64],
         binned: bool = False,
         obs_pos: u.Quantity[u.AU] | None = None,
-        pixels: NDArray[np.integer] | None = None,
+        pixels: npt.NDArray[np.int64] | None = None,
         nside: int | None = None,
         return_comps: bool = False,
     ) -> u.Quantity[u.MJy / u.sr]:
@@ -431,10 +431,16 @@ class Zodipy:
         if normalized_weights is not None:
             normalized_weights /= np.trapz(normalized_weights, freq.value)
 
+        # Some components require additional non-static parameters to be computed, such as
+        # the earth-trailing feature which needs the earth position in addition to the
+        # model parameters.
+        computed_parameters = {
+            "X_earth": np.expand_dims(earth_position, axis=-1),
+        }
         # Construct component density functions
-        density_funcs = construct_density_funcs(
+        density_partials = construct_density_partials(
             comps=list(self.ipd_model.comps.values()),
-            X_earth=np.expand_dims(earth_position, axis=-1),
+            computed_params=computed_parameters,
         )
         # Create partial function with fixed arguments. This partial will again be used
         # as the basis for another partial depnding on wether or not the code is run in
@@ -444,7 +450,7 @@ class Zodipy:
             start=start,
             n_quad_points=self.gauss_quad_order,
             X_obs=np.expand_dims(observer_position, axis=-1),
-            dens_funcs=density_funcs,
+            density_partials=density_partials,
             freq=freq.value,
             weights=normalized_weights,
             T_0=self.ipd_model.T_0,
@@ -537,22 +543,22 @@ class Zodipy:
 
 
 def _get_emission_at_step(
-    r: float | NDArray[np.floating],
+    r: float | npt.NDArray[np.float64],
     start: float,
-    stop: float | NDArray[np.floating],
+    stop: float | npt.NDArray[np.float64],
     n_quad_points: int,
-    X_obs: NDArray[np.floating],
-    u_los: NDArray[np.floating],
-    dens_funcs: list[PartialDensFunc],
-    freq: float | NDArray[np.floating],
-    weights: NDArray[np.floating] | None,
+    X_obs: npt.NDArray[np.float64],
+    u_los: npt.NDArray[np.float64],
+    density_partials: tuple[PartialComputeDensityFunc],
+    freq: float | npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64] | None,
     T_0: float,
     delta: float,
-    emissivities: NDArray[np.floating],
-    albedos: NDArray[np.floating],
+    emissivities: npt.NDArray[np.float64],
+    albedos: npt.NDArray[np.float64],
     phase_coefficients: tuple[float, ...],
     solar_irradiance: float,
-) -> NDArray[np.floating]:
+) -> npt.NDArray[np.float64]:
     """Returns the zodiacal emission at a step along all lines of sight."""
 
     # Convert the line of sight range from [-1, 1] to the true ecliptic positions
@@ -573,12 +579,12 @@ def _get_emission_at_step(
     else:
         blackbody_emission = get_blackbody_emission(freq=freq, T=temperature)
 
-    emission = np.zeros((len(dens_funcs), np.shape(X_helio)[1], n_quad_points))
+    emission = np.zeros((len(density_partials), np.shape(X_helio)[1], n_quad_points))
     density = np.zeros_like(emission)
-    for idx, (dens_func, albedo, emissivity) in enumerate(
-        zip(dens_funcs, albedos, emissivities)
+    for idx, (get_density_func, albedo, emissivity) in enumerate(
+        zip(density_partials, albedos, emissivities)
     ):
-        density[idx] = dens_func(X_helio)
+        density[idx] = get_density_func(X_helio)
         emission[idx] = (1 - albedo) * (emissivity * blackbody_emission)
 
     if any(albedo != 0 for albedo in albedos):

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 EPS = float(np.finfo(float).eps)
 
 
 def get_line_of_sight_endpoints(
-    cutoff: float, obs_pos: NDArray[np.floating], unit_vectors: NDArray[np.floating]
-) -> tuple[float, NDArray[np.floating]]:
+    cutoff: float,
+    obs_pos: npt.NDArray[np.float64],
+    unit_vectors: npt.NDArray[np.float64],
+) -> tuple[float, npt.NDArray[np.float64]]:
     """Returns the start and stop positions along the line of sights."""
 
     x, y, z = obs_pos.flatten()

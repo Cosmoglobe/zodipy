@@ -1,30 +1,27 @@
-"""
-
-Functions that extract the positions of Solar System bodies using the astropy
+"""Functions that extract the positions of Solar System bodies using the astropy
 `solar_system_ephemeris` API.
 
 The lagrange point SEMB-L2 is not included in any of the current available
 ephemerides. We implement an approximation to its position, assuming that 
 SEMB-L2 is at all times located at a fixed distance from Earth along the vector 
 pointing to Earth from the Sun.
-
 """
 
 from __future__ import annotations
 
 import astropy.units as u
 import numpy as np
+import numpy.typing as npt
 from astropy.coordinates import HeliocentricMeanEcliptic, get_body
 from astropy.time import Time
-from numpy.typing import NDArray
 
-DISTANCE_FROM_EARTH_TO_L2 = 0.009896235034000056 * u.AU
+DISTANCE_FROM_EARTH_TO_L2 = u.Quantity(0.009896235034000056, u.AU)
 DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 
 
 def get_obs_and_earth_positions(
     obs: str, obs_time: Time, obs_pos: u.Quantity[u.AU] | None
-) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
 
     earth_position = _get_earth_position(obs_time)
     if obs_pos is None:

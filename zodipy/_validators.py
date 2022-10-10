@@ -3,7 +3,7 @@ from typing import Tuple, Union
 import astropy.units as u
 import healpy as hp
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 from ._ipd_model import InterplanetaryDustModel
 from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
@@ -38,7 +38,7 @@ def validate_frequency_in_model_range(
 @u.quantity_input
 def validate_and_normalize_weights(
     freq: FrequencyOrWavelength, weights: Union[u.Quantity[u.MJy / u.sr], None]
-) -> Union[NDArray[np.floating], None]:
+) -> Union[npt.NDArray[np.float64], None]:
 
     if weights is not None:
         weights = weights.to(u.MJy / u.sr)

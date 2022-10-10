@@ -7,6 +7,7 @@ import astropy.constants as const
 import astropy.units as u
 import numba
 import numpy as np
+import numpy.typing as npt
 from numpy.typing import NDArray
 
 h = const.h.value
@@ -16,7 +17,7 @@ T_sun = 5778  # K
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
-FloatOrNDArray = TypeVar("FloatOrNDArray", float, NDArray[np.floating])
+FloatOrNDArray = TypeVar("FloatOrNDArray", float, npt.NDArray[np.float64])
 
 
 @numba.njit(cache=True, parallel=True, fastmath=True)
@@ -42,10 +43,10 @@ def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrND
 
 @numba.njit(cache=True, parallel=True, fastmath=True)
 def get_bandpass_integrated_blackbody_emission(
-    freq: NDArray[np.floating],
-    weights: NDArray[np.floating],
-    T: NDArray[np.floating],
-) -> NDArray[np.floating]:
+    freq: npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64],
+    T: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """Returns the bandpass integrated blackbody emission.
 
     Parameters
@@ -96,11 +97,11 @@ def get_dust_grain_temperature(
 
 
 def get_scattering_angle(
-    R_los: float | NDArray[np.floating],
-    R_helio: NDArray[np.floating],
-    X_los: NDArray[np.floating],
-    X_helio: NDArray[np.floating],
-) -> NDArray[np.floating]:
+    R_los: float | npt.NDArray[np.float64],
+    R_helio: npt.NDArray[np.float64],
+    X_los: npt.NDArray[np.float64],
+    X_helio: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Returns the scattering angle between the Sun and a point along the
     line of sight.
@@ -127,8 +128,8 @@ def get_scattering_angle(
 
 
 def get_phase_function(
-    Theta: NDArray[np.floating], C: tuple[float, ...]
-) -> NDArray[np.floating]:
+    Theta: NDArray[np.float64], C: tuple[float, ...]
+) -> NDArray[np.float64]:
     """Returns the phase function.
 
     Parameters

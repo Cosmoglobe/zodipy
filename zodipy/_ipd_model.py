@@ -11,7 +11,7 @@ from .source_params import DELTA_DIRBE, T_0_DIRBE
 
 @dataclass
 class InterplanetaryDustModel:
-    """Container for fitted interplanetary dust model parameters."""
+    """Container for interplanetary dust components and model parameters."""
 
     name: str
     comps: Mapping[ComponentLabel, Component]

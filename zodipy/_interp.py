@@ -5,7 +5,7 @@ from functools import partial
 
 import astropy.units as u
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 from scipy.interpolate import interp1d
 
 from ._ipd_model import InterplanetaryDustModel
@@ -15,8 +15,8 @@ from ._typing import FrequencyOrWavelength
 
 @dataclass
 class InterpolatedSourceParameters:
-    emissivities: NDArray[np.floating]
-    albedos: NDArray[np.floating]
+    emissivities: npt.NDArray[np.float64]
+    albedos: npt.NDArray[np.float64]
     phase_coefficients: tuple[float, ...]
     solar_irradiance: float
 
@@ -24,7 +24,7 @@ class InterpolatedSourceParameters:
 def interpolate_source_parameters(
     model: InterplanetaryDustModel,
     freq: FrequencyOrWavelength,
-    weights: NDArray[np.floating] | None = None,
+    weights: npt.NDArray[np.float64] | None = None,
 ) -> InterpolatedSourceParameters:
 
     interpolator = partial(interp1d, x=model.spectrum, fill_value="extrapolate")

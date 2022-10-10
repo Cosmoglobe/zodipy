@@ -8,6 +8,7 @@ from typing import Any, Callable, Sequence
 import astropy.units as u
 import healpy as hp
 import numpy as np
+import numpy.typing as npt
 from astropy.coordinates import HeliocentricMeanEcliptic, get_body
 from astropy.time import Time
 from hypothesis.extra.numpy import arrays
@@ -24,7 +25,6 @@ from hypothesis.strategies import (
     one_of,
     sampled_from,
 )
-from numpy.typing import NDArray
 
 import zodipy
 
@@ -79,7 +79,7 @@ def nside(draw: Callable[[SearchStrategy[int]], int]) -> int:
 
 
 @composite
-def pixels(draw: DrawFn, nside: int) -> int | list[int] | NDArray[np.integer]:
+def pixels(draw: DrawFn, nside: int) -> int | list[int] | npt.NDArray[np.integer]:
     npix = hp.nside2npix(nside)
     pixel_strategy = integers(min_value=0, max_value=npix - 1)
 
@@ -164,7 +164,7 @@ def weights(
     draw: DrawFn, freqs: u.Quantity[u.GHz] | u.Quantity[u.micron]
 ) -> u.Quantity[u.MJy / u.sr]:
     def normalize_array(
-        array: Sequence[float] | NDArray[np.floating],
+        array: Sequence[float] | npt.NDArray[np.float64],
         freqs: u.Quantity[u.GHz] | u.Quantity[u.micron],
     ) -> u.Quantity[u.MJy / u.sr]:
         return u.Quantity((array / np.trapz(array, freqs)).value, unit=u.MJy / u.sr)
