@@ -11,7 +11,7 @@ from ._constants import c, h, k_B
 from ._types import FloatOrNDArray
 
 
-@numba.njit(cache=True, parallel=True, fastmath=True)
+@numba.njit(cache=True, fastmath=True)
 def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrNDArray:
     """Returns the blackbody emission given a frequency.
 
@@ -32,7 +32,7 @@ def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrND
     return term1 / term2
 
 
-@numba.njit(cache=True, parallel=True, fastmath=True)
+@numba.njit(cache=True, fastmath=True)
 def get_bandpass_integrated_blackbody_emission(
     freq: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
