@@ -8,9 +8,9 @@ import numpy as np
 import numpy.typing as npt
 from scipy.interpolate import interp1d
 
+from ._constants import SPECIFIC_INTENSITY_UNITS
 from ._ipd_model import InterplanetaryDustModel
-from ._source_funcs import SPECIFIC_INTENSITY_UNITS
-from ._typing import FrequencyOrWavelength
+from ._types import FrequencyOrWavelength
 
 
 @dataclass

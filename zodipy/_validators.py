@@ -6,13 +6,15 @@ import numpy as np
 import numpy.typing as npt
 
 from ._ipd_model import InterplanetaryDustModel
-from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
+from ._types import FrequencyOrWavelength, Pixels, SkyAngles
 
 
 @u.quantity_input(equivalencies=u.spectral())
 def validate_frequency_in_model_range(
     freq: FrequencyOrWavelength, model: InterplanetaryDustModel
 ) -> None:
+    """Validate user inputed frequency."""
+
     freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
 
     lower_freq_range = model.spectrum.min()
@@ -39,6 +41,7 @@ def validate_frequency_in_model_range(
 def validate_and_normalize_weights(
     freq: FrequencyOrWavelength, weights: Union[u.Quantity[u.MJy / u.sr], None]
 ) -> Union[npt.NDArray[np.float64], None]:
+    """Validate user inputed weights."""
 
     if weights is not None:
         weights = weights.to(u.MJy / u.sr)
@@ -55,6 +58,8 @@ def validate_and_normalize_weights(
 def validate_ang(
     theta: SkyAngles, phi: SkyAngles, lonlat: bool
 ) -> Tuple[SkyAngles, SkyAngles]:
+    """Validate user inputed sky angles."""
+
     theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
     phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
 
@@ -67,6 +72,8 @@ def validate_ang(
 
 
 def validate_pixels(pixels: Pixels, nside: int) -> Pixels:
+    """Validate user inputed pixels."""
+
     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
         raise ValueError("invalid pixel number given nside")
 

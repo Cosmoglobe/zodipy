@@ -15,19 +15,19 @@ import quadpy
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 
+from ._constants import SPECIFIC_INTENSITY_UNITS
 from ._interp import interpolate_source_parameters
 from ._ipd_dens_funcs import PartialComputeDensityFunc, construct_density_partials
 from ._line_of_sight import get_line_of_sight_endpoints
 from ._sky_coords import DISTANCE_TO_JUPITER, get_obs_and_earth_positions
 from ._source_funcs import (
-    SPECIFIC_INTENSITY_UNITS,
     get_bandpass_integrated_blackbody_emission,
     get_blackbody_emission,
     get_dust_grain_temperature,
     get_phase_function,
     get_scattering_angle,
 )
-from ._typing import FrequencyOrWavelength, Pixels, SkyAngles
+from ._types import FrequencyOrWavelength, Pixels, SkyAngles
 from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from ._validators import (
     validate_and_normalize_weights,
@@ -74,7 +74,7 @@ class Zodipy:
             argument to `None`. Defaults to 5 degrees.
         solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
             Defaults to `np.nan`.
-        gauss_quad_order (int): Order of the Gaussian-Legendre quadrature used to evaluate
+        gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the brightness integral. Default is 100 points.
         los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
             sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
@@ -93,7 +93,7 @@ class Zodipy:
         n_proc: int | None = None,
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
-        gauss_quad_order: int = 100,
+        gauss_quad_degree: int = 100,
         los_dist_cut: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
         ephemeris: str = "de432s",
     ) -> None:
@@ -104,12 +104,12 @@ class Zodipy:
         self.n_proc = n_proc
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
-        self.gauss_quad_order = gauss_quad_order
+        self.gauss_quad_degree = gauss_quad_degree
         self.los_dist_cut = los_dist_cut
         self.ephemeris = ephemeris
 
         self.ipd_model = model_registry.get_model(model)
-        self._integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_order)
+        self._integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_degree)
 
     @property
     def supported_observers(self) -> list[str]:
@@ -448,7 +448,7 @@ class Zodipy:
         partial_common_integrand = partial(
             _get_emission_at_step,
             start=start,
-            n_quad_points=self.gauss_quad_order,
+            gauss_quad_degree=self.gauss_quad_degree,
             X_obs=np.expand_dims(observer_position, axis=-1),
             density_partials=density_partials,
             freq=freq.value,
@@ -546,7 +546,7 @@ def _get_emission_at_step(
     r: float | npt.NDArray[np.float64],
     start: float,
     stop: float | npt.NDArray[np.float64],
-    n_quad_points: int,
+    gauss_quad_degree: int,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     density_partials: tuple[PartialComputeDensityFunc],
@@ -579,7 +579,9 @@ def _get_emission_at_step(
     else:
         blackbody_emission = get_blackbody_emission(freq=freq, T=temperature)
 
-    emission = np.zeros((len(density_partials), np.shape(X_helio)[1], n_quad_points))
+    emission = np.zeros(
+        (len(density_partials), np.shape(X_helio)[1], gauss_quad_degree)
+    )
     density = np.zeros_like(emission)
     for idx, (get_density_func, albedo, emissivity) in enumerate(
         zip(density_partials, albedos, emissivities)

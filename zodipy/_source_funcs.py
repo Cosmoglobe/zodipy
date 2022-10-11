@@ -1,23 +1,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TypeVar
 
-import astropy.constants as const
-import astropy.units as u
 import numba
 import numpy as np
 import numpy.typing as npt
 from numpy.typing import NDArray
 
-h = const.h.value
-c = const.c.value
-k_B = const.k_B.value
-T_sun = 5778  # K
-
-SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
-
-FloatOrNDArray = TypeVar("FloatOrNDArray", float, npt.NDArray[np.float64])
+from ._constants import c, h, k_B
+from ._types import FloatOrNDArray
 
 
 @numba.njit(cache=True, parallel=True, fastmath=True)
@@ -67,9 +58,9 @@ def get_bandpass_integrated_blackbody_emission(
     delta_freq = np.diff(freq)
 
     for idx in range(1, len(freq)):
-        curr = get_blackbody_emission(freq[idx], T) * weights[idx]
-        prev = get_blackbody_emission(freq[idx - 1], T) * weights[idx - 1]
-        emission += (curr + prev) * delta_freq[idx - 1]
+        current = get_blackbody_emission(freq[idx], T) * weights[idx]
+        previous = get_blackbody_emission(freq[idx - 1], T) * weights[idx - 1]
+        emission += (current + previous) * delta_freq[idx - 1]
 
     return emission * 0.5
 
