@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import multiprocessing
-import os
 import platform
 from dataclasses import asdict
 from functools import partial
@@ -39,11 +38,6 @@ from .ipd_models import model_registry
 
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
-
-# `omp_set_nested` was deprecated in OpenMP 5.0. This silences the warning generated
-# by numba. See https://github.com/numba/numba/issues/5275 for more info.
-if PLATFORM in ("linux", "darwin"):
-    os.environ["KMP_WARNINGS"] = "0"
 
 
 class Zodipy:
