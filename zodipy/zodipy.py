@@ -56,7 +56,7 @@ class Zodipy:
             valid model range. Default is `False`.
         parallel (bool): If `True`, input pointing sequences will be split among all
             available cores on the machine, and the emission will be computed in parallel.
-            This is useful for large simulations. Default is `True`.
+            This is useful for large pointing chunks. Default is `False`.
         n_proc (int): Number of cores to use when parallel computation. Defaults is None,
             which will use all available cores.
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
@@ -83,7 +83,7 @@ class Zodipy:
         self,
         model: str = "dirbe",
         extrapolate: bool = False,
-        parallel: bool = True,
+        parallel: bool = False,
         n_proc: int | None = None,
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
@@ -451,7 +451,7 @@ class Zodipy:
             delta=self.ipd_model.delta,
             **asdict(interpolated_source_params),
         )
-        # Distribute pointing to available CPUs and compute the emission in parallel.
+        # Distribute pointing to CPUs and compute the emission in parallel.
         if self.parallel:
             n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 

@@ -86,27 +86,15 @@ bandpass is assumed if a sequence of frequencies are used without providing weig
 ![Bandpass integrated emission](img/bandpass_integrated.png)
 
 
-## Gridding the interplanetary dust density distribution
-In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
-and plot the cross section of the diffuse cloud components density in the yz-plane.
-
-```python
-{!examples/get_density_contour.py!}
-```
-![Interplanetary dust distribution](img/density_grid.png)
-
-
-## Multiprocessing
-By default, ZodiPy runs concurrently and will spawn processes based on the number of available CPU's 
-(given by `os.cpu_count()`). This can be turned off by initializing `Zodipy` with `parallel=False`. 
-The number of CPUs can be manually specified by using the `n_proc` keyword when initializing `ZodiPy`. 
-
+## Parallelization
+If you are not using ZodiPy in an already parallelized environment **and** are working with large pointing sequences, setting `parallel=True` when initializing `Zodipy` will improve the performance. ZodiPy will then automatically distribute the pointing to all available CPU's, given by `multiprocessing.cpu_count()` or to `n_proc` if this argument is provided.
 
 ```python hl_lines="15 16"
 {!examples/get_parallel_emission.py!}
 ```
+
 !!! warning "Windows users"
-    On windows, the parallel code must be executed in a `if __name__ == "__main__"` guard to avoid spawning infinite processes: 
+    Windows users must make sure to wrap the `get_*_emission_*` function calls in a `if __name__ == "__main__"` guard to avoid spawning infinite processes: 
     ```python
     ...
     if __name__ == "__main__":
@@ -114,3 +102,21 @@ The number of CPUs can be manually specified by using the `n_proc` keyword when 
             ...
         )
     ```
+
+!!! warning "Using ZodiPy in parallelized environments"
+    If ZodiPy is used in a parallelized environment one may have to specifically set the environment variable 
+    `OMP_NUM_THREADS=1` to avoid oversubscription. This is due automatic parallelization in third party libraries such as `healpy` where for instance the `hp.Rotator` object automatically parallelizes rotation of unit vectors.
+    This means that when using ZodiPy with pointing in a coordinate system other than ecliptic, even if `Zodipy` is initialized with `parallel=False`, `healpy` will under the hood automatically distribute the pointing to available CPU's.
+
+
+## Visualizing the interplanetary dust distribution of a model
+It is possible to visualize the three-dimensional interplanetary dust distribution of the models used in
+ZodiPy by using the `tabulate_density` function which takes in a interplanetary dust model and a custom grid.
+
+In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
+and plot the cross section of the diffuse cloud components density in the yz-plane.
+
+```python
+{!examples/get_density_contour.py!}
+```
+![Interplanetary dust distribution](img/density_grid.png)
