@@ -27,6 +27,10 @@ def interpolate_source_parameters(
     weights: npt.NDArray[np.float64] | None = None,
 ) -> InterpolatedSourceParameters:
 
+    if not freq.unit.is_equivalent(model.spectrum.unit):
+        freq = freq.to(model.spectrum.unit, u.spectral())
+        weights = np.flip(weights) if weights is not None else weights
+
     interpolator = partial(interp1d, x=model.spectrum, fill_value="extrapolate")
     emissivities = np.asarray(
         [
@@ -48,7 +52,6 @@ def interpolate_source_parameters(
         phase_coefficients = interpolator(y=np.asarray(model.phase_coefficients))(freq)
 
     else:
-
         phase_coefficients = np.repeat(np.zeros((3, 1)), repeats=freq.size, axis=-1)
 
     if model.solar_irradiance is not None:

@@ -420,10 +420,14 @@ class Zodipy:
         )
 
         # Convert to Hz if `freq` is in units of wavelength
-        freq = freq.to(u.Hz, u.spectral())
-        # Renormalize weights with respect to the spectrum in Hz.
-        if normalized_weights is not None:
-            normalized_weights /= np.trapz(normalized_weights, freq.value)
+        if not freq.unit.is_equivalent(u.Hz):
+            freq = freq.to(u.Hz, u.spectral())
+
+            # Flip weights if `freq` is in units of wavelength
+            if normalized_weights is not None:
+                normalized_weights = np.flip(normalized_weights) / np.trapz(
+                    normalized_weights, freq.value
+                )
 
         # Some components require additional non-static parameters to be computed, such as
         # the earth-trailing feature which needs the earth position in addition to the
