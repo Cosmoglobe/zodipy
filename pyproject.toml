@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
-homepage = "https://github.com/MetinSa/zodipy"
-version = "0.7.2"
+homepage = "https://github.com/Cosmoglobe/zodipy"
+version = "0.7.3"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
