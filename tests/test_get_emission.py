@@ -213,7 +213,7 @@ def test_compare_to_dirbe_idl() -> None:
 
 
 @given(model(), time(), nside(), integers(min_value=1, max_value=100), data())
-@settings(max_examples=10)
+@settings(max_examples=10, deadline=None)
 def test_invalid_pixel(
     model: Zodipy,
     time: Time,
@@ -249,7 +249,7 @@ def test_invalid_pixel(
 
 
 @given(model(los_dist_cut=0.2 * u.AU), time(), angles(), data())
-@settings(max_examples=20)
+@settings(max_examples=20, deadline=None)
 def test_invalid_los_dist_cut(
     model: Zodipy,
     time: Time,
