@@ -2,61 +2,58 @@ from __future__ import annotations
 
 from typing import Sequence
 
+import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 
 from ._ipd_dens_funcs import construct_density_partials
-from ._ipd_model import InterplanetaryDustModel
 from .ipd_models import model_registry
 
-DEFAULT_EARTH_POS = (1, 0, 0)
+DEFAULT_EARTH_POS = u.Quantity([1, 0, 0], u.AU)
 
 
 def tabulate_density(
-    grid: npt.NDArray[np.float64] | Sequence[npt.NDArray[np.float64]],
-    model: str | InterplanetaryDustModel = "DIRBE",
-    earth_position: tuple[float, float, float]
-    | npt.NDArray[np.float64] = DEFAULT_EARTH_POS,
+    grid: npt.NDArray[np.floating] | Sequence[npt.NDArray[np.floating]],
+    model: str = "DIRBE",
+    earth_pos: u.Quantity[u.AU] = DEFAULT_EARTH_POS,
 ) -> npt.NDArray[np.float64]:
-    """Returns the tabulated densities of the Interplanetary Dust components.
+    """Returns the tabulated densities of the zodiacal components on a provided grid.
 
     Parameters
     ----------
     grid
-        A cartesian mesh grid (x, y, z) created with `np.meshgrid` for which to
-        tabulate the Interplanetary dust components.
+        A cartesian mesh grid (x, y, z).
     model
-        The model who's Interplanetary Dust components to tabulate.
-    earth_position
-        The position of the Earth.
+        Name of interplanetary dust model supported by ZodiPy.
+    earth_pos
+        Position of the Earth in AU.
 
     Returns
     -------
     density_grid
-        The tabulate densities of the Interplanetary Dust components.
+        The tabulated zodiacal component densities.
     """
 
-    if not isinstance(model, InterplanetaryDustModel):
-        model = model_registry.get_model(model)
+    ipd_model = model_registry.get_model(model)
 
     if not isinstance(grid, np.ndarray):
         grid = np.asarray(grid)
 
     # Prepare attributes and variables for broadcasting with the grid
-    earth_position = np.reshape(earth_position, (3, 1, 1, 1))
-    for comp in model.comps.values():
+    earth_position = np.reshape(earth_pos.to(u.AU).value, (3, 1, 1, 1))
+    for comp in ipd_model.comps.values():
         comp.X_0 = np.reshape(comp.X_0, (3, 1, 1, 1))
 
     partials = construct_density_partials(
-        list(model.comps.values()), {"X_earth": earth_position}
+        list(ipd_model.comps.values()), {"X_earth": earth_position}
     )
 
-    density_grid = np.zeros((model.n_comps, *grid.shape[1:]))
+    density_grid = np.zeros((ipd_model.n_comps, *grid.shape[1:]))
     for idx, partial in enumerate(partials):
         density_grid[idx] = partial(grid)
 
     # Revert broadcasting reshapes
-    for comp in model.comps.values():
+    for comp in ipd_model.comps.values():
         comp.X_0 = np.reshape(comp.X_0, (3, 1))
 
     return density_grid

@@ -46,6 +46,8 @@ plugins:
 - search
 - mkdocstrings:
     default_handler: python
-
+    handlers:
+      options:
+        merge_init_into_class: true
     watch:
       - zodipy

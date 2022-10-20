@@ -22,12 +22,20 @@ DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 def get_obs_and_earth_positions(
     obs: str, obs_time: Time, obs_pos: u.Quantity[u.AU] | None
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Returns the position of the observer and the Earth in broadcastable shapes
+    (3, `n_pointing`, `n_gauss_quad_degree`).
+    """
 
     earth_position = _get_earth_position(obs_time)
     if obs_pos is None:
-        obs_pos = _get_observer_position(obs, obs_time, earth_position)
+        obs_position = _get_observer_position(obs, obs_time, earth_position)
+    else:
+        obs_position = obs_pos
 
-    return obs_pos.reshape(3, 1).value, earth_position.reshape(3, 1).value
+    obs_position = obs_position.reshape(3, 1, 1)
+    earth_position = earth_position.reshape(3, 1, 1)
+
+    return obs_position.value, earth_position.value
 
 
 def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:

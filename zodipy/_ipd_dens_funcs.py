@@ -33,10 +33,7 @@ def compute_cloud_density(
     beta: float,
     gamma: float,
 ) -> npt.NDArray[np.float64]:
-    """
-    Returns the dust density of a component at points in the Solar System
-    given by 'X_helio' and the parameters of the component.
-    """
+    """Density of the diffuse cloud (see Eq (6). in K98)."""
 
     X_cloud = X_helio - X_0
     R_cloud = np.sqrt(X_cloud[0] ** 2 + X_cloud[1] ** 2 + X_cloud[2] ** 2)
@@ -47,9 +44,9 @@ def compute_cloud_density(
         + X_cloud[2] * cos_i_rad
     )
 
-    ζ = np.abs(Z_cloud / R_cloud)
+    zeta = np.abs(Z_cloud / R_cloud)
 
-    g = np.where(ζ < mu, ζ**2 / (2 * mu), ζ - (mu / 2))
+    g = np.where(zeta < mu, zeta**2 / (2 * mu), zeta - (mu / 2))
 
     return n_0 * R_cloud**-alpha * np.exp(-beta * g**gamma)
 
@@ -67,10 +64,7 @@ def compute_band_density(
     v: float,
     delta_r: float,
 ) -> npt.NDArray[np.float64]:
-    """
-    Returns the dust density of a component at points in the Solar System
-    given by 'X_helio' and the parameters of the component.
-    """
+    """Density of the dust bands (see Eq. (8) in K98)."""
 
     X_band = X_helio - X_0
     R_band = np.sqrt(X_band[0] ** 2 + X_band[1] ** 2 + X_band[2] ** 2)
@@ -81,14 +75,14 @@ def compute_band_density(
         + X_band[2] * cos_i_rad
     )
 
-    ζ = np.abs(Z_band / R_band)
-    ζ_over_δ_ζ = ζ / delta_zeta_rad
+    zeta = np.abs(Z_band / R_band)
+    zeta_over_delta_zeta = zeta / delta_zeta_rad
     term1 = 3 * n_0 / R_band
-    term2 = np.exp(-(ζ_over_δ_ζ**6))
+    term2 = np.exp(-(zeta_over_delta_zeta**6))
 
     # Differs from eq 8 in K98 by a factor of 1/self.v. See Planck XIV
     # section 4.1.2.
-    term3 = 1 + (ζ_over_δ_ζ**p) / v
+    term3 = 1 + (zeta_over_delta_zeta**p) / v
 
     term4 = 1 - np.exp(-((R_band / delta_r) ** 20))
 
@@ -107,10 +101,7 @@ def compute_ring_density(
     sigma_r: float,
     sigma_z: float,
 ) -> npt.NDArray[np.float64]:
-    """
-    Returns the dust density of a component at points in the Solar System
-    given by 'X_helio' and the parameters of the component.
-    """
+    """Density of the circum-solar ring (see Eq. (9) in K98)."""
 
     X_ring = X_helio - X_0
     R_ring = np.sqrt(X_ring[0] ** 2 + X_ring[1] ** 2 + X_ring[2] ** 2)
@@ -143,10 +134,7 @@ def compute_feature_density(
     theta_rad: float,
     sigma_theta_rad: float,
 ) -> npt.NDArray[np.float64]:
-    """
-    Returns the dust density of a component at points in the Solar System
-    given by 'X_helio' and the parameters of the component.
-    """
+    """Density of the Earth-trailing feature (see Eq. (9) in K98)."""
 
     X_feature = X_helio - X_0
     R_feature = np.sqrt(X_feature[0] ** 2 + X_feature[1] ** 2 + X_feature[2] ** 2)
@@ -188,10 +176,12 @@ PartialComputeDensityFunc = Callable[[npt.NDArray[np.float64]], npt.NDArray[np.f
 
 def construct_density_partials(
     comps: Sequence[Component],
-    computed_params: dict[str, Any],
+    dynamic_params: dict[str, Any],
 ) -> tuple[PartialComputeDensityFunc, ...]:
     """
-    Construct the density functions for the components.
+    Return a tuple of the density expressions above which has been prepopulated with model and
+    configuration parameters, leaving only the `X_helio` argument to be supplied.
+
     Raises exception for incorrectly defined components or component density functions.
     """
 
@@ -208,13 +198,13 @@ def construct_density_partials(
             )
 
         if residual_params:
-            if residual_params - computed_params.keys():
+            if residual_params - dynamic_params.keys():
                 raise ValueError(
                     f"Argument(s) {residual_params} required by the density function "
                     f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
                     f"{type(comp)} or by the `computed_parameters` dict."
                 )
-            comp_dict.update(computed_params)
+            comp_dict.update(dynamic_params)
 
         # Remove excess intermediate parameters from the component dict.
         comp_params = {

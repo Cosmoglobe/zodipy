@@ -403,19 +403,10 @@ def test_weights(
     model.extrapolate = True
     observer = data.draw(obs(model, time))
     bp_weights = data.draw(weights(freqs))
-    with pytest.raises(u.UnitConversionError):
-        model.get_binned_emission_ang(
-            freqs,
-            weights=bp_weights.to(u.m),
-            theta=theta,
-            phi=phi,
-            nside=nside,
-            obs_time=time,
-            obs=observer,
-        )
 
     model.get_binned_emission_ang(
         freqs,
+        weights=bp_weights,
         theta=theta,
         phi=phi,
         nside=nside,

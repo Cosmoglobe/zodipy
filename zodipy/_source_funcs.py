@@ -8,12 +8,13 @@ import numpy.typing as npt
 from numpy.typing import NDArray
 
 from ._constants import c, h, k_B
-from ._types import FloatOrNDArray
 
 
 @numba.njit(cache=True, fastmath=True)
-def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrNDArray:
-    """Returns the blackbody emission given a frequency.
+def get_blackbody_emission(
+    freq: float | npt.NDArray[np.float64], T: npt.NDArray[np.float64]
+) -> npt.NDArray[np.float64]:
+    """Returns the blackbody emission given a sequence of frequencies and temperatures.
 
     Parameters
     ----------
@@ -26,6 +27,7 @@ def get_blackbody_emission(freq: FloatOrNDArray, T: FloatOrNDArray) -> FloatOrND
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
+
     term1 = (2 * h * freq**3) / c**2
     term2 = np.expm1(((h * freq) / (k_B * T)))
 
@@ -38,7 +40,7 @@ def get_bandpass_integrated_blackbody_emission(
     weights: npt.NDArray[np.float64],
     T: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Returns the bandpass integrated blackbody emission.
+    """Returns the blackbody emission integrated over a bandpass.
 
     Parameters
     ----------
@@ -54,20 +56,22 @@ def get_bandpass_integrated_blackbody_emission(
         Bandpass integrated blackbody emission [W / m^2 Hz sr].
     """
 
-    emission = np.zeros_like(T)
-    delta_freq = np.diff(freq)
+    n_freqs = freq.size
+    if n_freqs == 1:
+        return get_blackbody_emission(freq, T)
 
-    for idx in range(1, len(freq)):
-        current = get_blackbody_emission(freq[idx], T) * weights[idx]
+    emission = np.zeros_like(T)
+    for idx in range(1, n_freqs):
         previous = get_blackbody_emission(freq[idx - 1], T) * weights[idx - 1]
-        emission += (current + previous) * delta_freq[idx - 1]
+        current = get_blackbody_emission(freq[idx], T) * weights[idx]
+        emission += (previous + current) * (freq[idx] - freq[idx - 1])
 
     return emission * 0.5
 
 
 def get_dust_grain_temperature(
-    R: FloatOrNDArray, T_0: float, delta: float
-) -> FloatOrNDArray:
+    R: npt.NDArray[np.float64], T_0: float, delta: float
+) -> npt.NDArray[np.float64]:
     """Returns the dust grain temperature given a radial distance from the Sun.
 
     Parameters
@@ -112,6 +116,7 @@ def get_scattering_angle(
     -------
         Scattering angle.
     """
+
     cos_theta = (X_los * X_helio).sum(axis=0) / (R_los * R_helio)
     cos_theta = np.clip(cos_theta, -1, 1)
 

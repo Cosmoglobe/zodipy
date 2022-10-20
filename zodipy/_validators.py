@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import astropy.units as u
 import healpy as hp
@@ -10,13 +10,15 @@ from ._types import FrequencyOrWavelength, Pixels, SkyAngles
 
 
 @u.quantity_input(equivalencies=u.spectral())
-def validate_frequency_in_model_range(
-    freq: FrequencyOrWavelength, model: InterplanetaryDustModel
+def validate_frequencies(
+    freq: FrequencyOrWavelength, model: InterplanetaryDustModel, extrapolate: bool
 ) -> None:
     """Validate user inputted frequency."""
 
-    freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
+    if extrapolate:
+        return
 
+    freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
     lower_freq_range = model.spectrum.min()
     upper_freq_range = model.spectrum.max()
 
@@ -37,21 +39,30 @@ def validate_frequency_in_model_range(
         )
 
 
-@u.quantity_input
 def validate_and_normalize_weights(
-    freq: FrequencyOrWavelength, weights: Union[u.Quantity[u.MJy / u.sr], None]
-) -> Union[npt.NDArray[np.float64], None]:
+    weights: Union[Sequence[float], npt.NDArray[np.floating], None],
+    freq: FrequencyOrWavelength,
+) -> npt.NDArray[np.float64]:
     """Validate user inputted weights."""
 
+    if weights is None and freq.size > 1:
+        raise ValueError(
+            "Bandpass weights must be specified if more than one frequency is given."
+        )
     if weights is not None:
-        weights = weights.to(u.MJy / u.sr)
-        return (weights / np.trapz(weights, freq)).value
+        if freq.size != len(weights):
+            raise ValueError("Number of frequencies and weights must be the same.")
+        elif np.any(np.diff(freq) < 0):
+            raise ValueError("Bandpass frequencies must be strictly increasing.")
 
-    if weights is None and not freq.isscalar:
-        print("Warning: weights not provided, assuming uniform weights.")
-        return np.ones_like(freq).value / len(freq)
+        normalized_weights = np.asarray(weights, dtype=np.float64)
+    else:
+        normalized_weights = np.array([1], dtype=np.float64)
 
-    return None
+    if normalized_weights.size > 1:
+        return normalized_weights / np.trapz(normalized_weights, freq.value)
+
+    return normalized_weights
 
 
 @u.quantity_input(theta=[u.deg, u.rad], phi=[u.deg, u.rad])

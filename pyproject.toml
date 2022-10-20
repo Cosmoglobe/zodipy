@@ -40,6 +40,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 disable_error_code = ["misc"]
+plugins = "numpy.typing.mypy_plugin"
 overrides = [
     { module = "healpy.*", ignore_missing_imports = true },
     { module = "astropy.*", ignore_missing_imports = true },

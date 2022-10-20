@@ -162,12 +162,12 @@ def random_freq(
 @composite
 def weights(
     draw: DrawFn, freqs: u.Quantity[u.GHz] | u.Quantity[u.micron]
-) -> u.Quantity[u.MJy / u.sr]:
+) -> list[float] | npt.NDArray[np.float64]:
     def normalize_array(
         array: Sequence[float] | npt.NDArray[np.float64],
         freqs: u.Quantity[u.GHz] | u.Quantity[u.micron],
     ) -> u.Quantity[u.MJy / u.sr]:
-        return u.Quantity((array / np.trapz(array, freqs)).value, unit=u.MJy / u.sr)
+        return (array / np.trapz(array, freqs)).value
 
     weights_strategy = floats(min_value=1, max_value=100)
     list_stategy = lists(weights_strategy, min_size=freqs.size, max_size=freqs.size)

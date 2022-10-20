@@ -26,11 +26,11 @@ class Component(ABC):
         Ascending node [deg].
     """
 
-    x_0: float = field(repr=False)
-    y_0: float = field(repr=False)
-    z_0: float = field(repr=False)
-    i: float = field(repr=False)
-    Omega: float = field(repr=False)
+    x_0: float
+    y_0: float
+    z_0: float
+    i: float
+    Omega: float
 
     X_0: npt.NDArray[np.float64] = field(init=False)
     sin_i_rad: float = field(init=False)

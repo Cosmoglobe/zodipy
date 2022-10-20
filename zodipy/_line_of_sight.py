@@ -14,8 +14,8 @@ def get_line_of_sight_endpoints(
     """Returns the start and stop positions along the line of sights."""
 
     x, y, z = obs_pos.flatten()
-
-    if cutoff < (r := np.sqrt(x**2 + y**2 + z**2)):
+    r = np.sqrt(x**2 + y**2 + z**2)
+    if cutoff < r:
         raise ValueError(f"los_dist_cut is {cutoff} but observer_pos is {r}")
 
     u_x, u_y, u_z = unit_vectors
