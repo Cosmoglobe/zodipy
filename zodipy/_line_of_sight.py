@@ -3,16 +3,15 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-EPS = float(np.finfo(float).eps)
-
 
 def get_line_of_sight_endpoints(
     cutoff: float,
     obs_pos: npt.NDArray[np.float64],
     unit_vectors: npt.NDArray[np.float64],
-) -> tuple[float, npt.NDArray[np.float64]]:
+) -> tuple[np.float64, npt.NDArray[np.float64]]:
     """Returns the start and stop positions along the line of sights."""
 
+    eps = np.finfo(float).eps
     x, y, z = obs_pos.flatten()
     r = np.sqrt(x**2 + y**2 + z**2)
     if cutoff < r:
@@ -25,7 +24,6 @@ def get_line_of_sight_endpoints(
     cos_lat = np.cos(lat)
     b = 2 * (x * cos_lat * np.cos(lon) + y * cos_lat * np.sin(lon))
     c = r**2 - cutoff**2
-
     q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
 
-    return EPS, np.maximum(q, c / q)
+    return eps, np.maximum(q, c / q)

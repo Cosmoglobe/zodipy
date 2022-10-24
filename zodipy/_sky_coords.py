@@ -7,7 +7,8 @@ SEMB-L2 is at all times located at a fixed distance from Earth along the vector
 pointing to Earth from the Sun.
 """
 
-from __future__ import annotations
+
+from typing import Tuple, Union
 
 import astropy.units as u
 import numpy as np
@@ -19,9 +20,10 @@ DISTANCE_FROM_EARTH_TO_L2 = u.Quantity(0.009896235034000056, u.AU)
 DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
 
 
+@u.quantity_input
 def get_obs_and_earth_positions(
-    obs: str, obs_time: Time, obs_pos: u.Quantity[u.AU] | None
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    obs: str, obs_time: Time, obs_pos: Union[u.Quantity[u.AU], None]
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Returns the position of the observer and the Earth in broadcastable shapes
     (3, `n_pointing`, `n_gauss_quad_degree`).
     """

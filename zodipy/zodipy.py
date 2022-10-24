@@ -405,7 +405,7 @@ class Zodipy:
         normalized_weights = validate_and_normalize_weights(weights=weights, freq=freq)
 
         interpolated_source_params = interpolate_source_parameters(
-            model=self.ipd_model, freq=freq.copy(), weights=normalized_weights.copy()
+            model=self.ipd_model, freq=freq, weights=normalized_weights
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
@@ -427,15 +427,15 @@ class Zodipy:
 
         # Prepare bandpass to be integrated in power units and in frequency convention.
         if not freq.unit.is_equivalent(u.Hz):
-            freq = freq.to(u.Hz, u.spectral())
-            freq_ndarray = np.flip(freq.value)
-            if freq_ndarray.size > 1:
+            freq_value = freq.to(u.Hz, u.spectral()).value
+            if freq_value.size > 1:
+                freq_value = np.flip(freq_value)
                 normalized_weights = np.flip(normalized_weights)
-                normalized_weights /= np.trapz(normalized_weights, freq_ndarray)
+                normalized_weights /= np.trapz(normalized_weights, freq_value)
         else:
-            freq_ndarray = freq.value
-        if freq_ndarray.size == 1:
-            freq_ndarray = np.expand_dims(freq_ndarray, axis=0)
+            freq_value = freq.value
+        if freq_value.size == 1:
+            freq_value = np.expand_dims(freq_value, axis=0)
 
         # Prepopulate ipd model and configuration specific arguments to the zodiacal emission
         # integrand function.
@@ -445,7 +445,7 @@ class Zodipy:
             gauss_quad_degree=self.gauss_quad_degree,
             X_obs=observer_position,
             density_partials=density_partials,
-            freq=freq_ndarray,
+            freq=freq_value,
             weights=normalized_weights,
             T_0=self.ipd_model.T_0,
             delta=self.ipd_model.delta,
@@ -541,7 +541,7 @@ class Zodipy:
 
 def _get_emission_at_step(
     r: npt.NDArray[np.float64],
-    start: float,
+    start: np.float64,
     stop: npt.NDArray[np.float64],
     gauss_quad_degree: int,
     X_obs: npt.NDArray[np.float64],
@@ -554,7 +554,7 @@ def _get_emission_at_step(
     emissivities: npt.NDArray[np.float64],
     albedos: npt.NDArray[np.float64],
     phase_coefficients: tuple[float, ...],
-    solar_irradiance: float,
+    solar_irradiance: np.float64,
 ) -> npt.NDArray[np.float64]:
     """Returns the zodiacal emission at a step along all lines of sight."""
 

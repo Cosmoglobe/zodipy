@@ -147,6 +147,10 @@ def random_freq(
     )
     if unit is not None:
         random_freq = random_freq.to(unit, u.spectral())
+    else:
+        micron = draw(booleans())
+        if micron:
+            random_freq = random_freq.to(u.micron, u.spectral())
 
     if bandpass:
         shape = draw(integers(min_value=2, max_value=100))

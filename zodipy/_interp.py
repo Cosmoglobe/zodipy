@@ -27,19 +27,22 @@ def interpolate_source_parameters(
     weights: npt.NDArray[np.float64],
 ) -> InterpolatedSourceParameters:
 
-    # Shift spectrum convention between frequency and wavelength and
-    # flip bandpass to make it strictly increasing for np.trapz.
+    # Shift spectrum convention between frequency and wavelength (if model units
+    # differes from input units) and flip bandpass to make it strictly increasing
+    # for np.trapz.
     if not freq.unit.is_equivalent(model.spectrum.unit):
-        freq_model_units = freq.to(model.spectrum.unit, u.spectral()).value
-        freq_model_units = np.flip(freq_model_units)
-        weights = np.flip(weights)
+        freq_value = freq.to(model.spectrum.unit, u.spectral()).value
+        if weights.size > 1:
+            freq_value = np.flip(freq_value)
+            weights = np.flip(weights)
+            weights = weights / np.trapz(weights, freq_value)
     else:
-        freq_model_units = freq.value
+        freq_value = freq.value
 
     interpolator = partial(interp1d, x=model.spectrum.value, fill_value="extrapolate")
     emissivities = np.asarray(
         [
-            interpolator(y=model.emissivities[comp_label])(freq_model_units)
+            interpolator(y=model.emissivities[comp_label])(freq_value)
             for comp_label in model.comps.keys()
         ]
     )
@@ -47,7 +50,7 @@ def interpolate_source_parameters(
     if model.albedos is not None:
         albedos = np.asarray(
             [
-                interpolator(y=model.albedos[comp_label])(freq_model_units)
+                interpolator(y=model.albedos[comp_label])(freq_value)
                 for comp_label in model.comps.keys()
             ]
         )
@@ -56,18 +59,16 @@ def interpolate_source_parameters(
 
     if model.phase_coefficients is not None:
         phase_coefficients = interpolator(y=np.asarray(model.phase_coefficients))(
-            freq_model_units
+            freq_value
         )
 
     else:
         phase_coefficients = np.repeat(
-            np.zeros((3, 1)), repeats=freq_model_units.size, axis=-1
+            np.zeros((3, 1)), repeats=freq_value.size, axis=-1
         )
 
     if model.solar_irradiance is not None:
-        solar_irradiance = interpolator(y=model.solar_irradiance.value)(
-            freq_model_units
-        )
+        solar_irradiance = interpolator(y=model.solar_irradiance.value)(freq_value)
         solar_irradiance = (
             u.Quantity(solar_irradiance, model.solar_irradiance.unit)
             .to(SPECIFIC_INTENSITY_UNITS, equivalencies=u.spectral())
@@ -76,10 +77,10 @@ def interpolate_source_parameters(
     else:
         solar_irradiance = 0
 
-    if freq_model_units.size > 1:
-        bandpass_integrate = lambda quantity: partial(
-            np.trapz, x=freq_model_units, axis=-1
-        )(quantity * weights)
+    if freq_value.size > 1:
+        bandpass_integrate = lambda quantity: partial(np.trapz, x=freq_value, axis=-1)(
+            quantity * weights
+        )
 
         emissivities = bandpass_integrate(emissivities)
         albedos = bandpass_integrate(albedos)

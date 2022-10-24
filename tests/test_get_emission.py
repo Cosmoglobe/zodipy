@@ -413,3 +413,68 @@ def test_weights(
         obs_time=time,
         obs=observer,
     )
+
+
+def test_custom_weights() -> None:
+    model = Zodipy()
+    time = Time("2020-01-01")
+    nside = 32
+    pix = np.arange(hp.nside2npix(nside))
+    central_freq = 25
+    sigma_freq = 3
+    freqs = (
+        np.linspace(central_freq - sigma_freq, central_freq + sigma_freq, 100)
+        * u.micron
+    )
+    weights = np.random.randn(len(freqs))
+    weights /= np.trapz(weights, freqs.value)
+
+    model.get_emission_pix(
+        freq=freqs,
+        weights=weights,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs="earth",
+    )
+
+
+def test_custom_obs_pos() -> None:
+    model = Zodipy()
+    time = Time("2020-01-01")
+    nside = 64
+    pix = np.arange(hp.nside2npix(nside))
+
+    model.get_emission_pix(
+        freq=234 * u.micron,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs_pos=[0.1, 0.2, 1] * u.AU,
+    )
+
+    model.get_emission_pix(
+        freq=234 * u.micron,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs_pos=[2, 0.1, 4] * u.AU,
+    )
+
+    with pytest.raises(TypeError):
+        model.get_emission_pix(
+            freq=234 * u.micron,
+            pixels=pix,
+            nside=nside,
+            obs_time=time,
+            obs_pos=[2, 0.1, 4],
+        )
+
+    with pytest.raises(u.UnitsError):
+        model.get_emission_pix(
+            freq=234 * u.micron,
+            pixels=pix,
+            nside=nside,
+            obs_time=time,
+            obs_pos=[2, 0.1, 4] * u.s,
+        )

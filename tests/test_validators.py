@@ -1,6 +1,5 @@
 import astropy.units as u
 import numpy as np
-import numpy.typing as npt
 import pytest
 from hypothesis import given
 from hypothesis.strategies import DataObject, data
@@ -53,6 +52,12 @@ def test_validate_weights(freq: FrequencyOrWavelength, data: DataObject) -> None
     )
     assert np.trapz(bp_weights, freq.value) == pytest.approx(1.0)
 
+    with pytest.raises(ValueError):
+        validate_and_normalize_weights(
+            weights=None,
+            freq=BANDPASS_FREQUENCIES,
+        )
+
 
 def test_validate_weights_numbers() -> None:
     validate_and_normalize_weights(
@@ -64,10 +69,12 @@ def test_validate_weights_numbers() -> None:
             weights=np.array([1, 2, 3]),
             freq=BANDPASS_FREQUENCIES,
         )
+    with pytest.raises(ValueError):
         validate_and_normalize_weights(
             weights=BANDPASS_WEIGHTS[:10],
             freq=BANDPASS_FREQUENCIES[0],
         )
+    with pytest.raises(ValueError):
         validate_and_normalize_weights(
             weights=None,
             freq=BANDPASS_FREQUENCIES,
