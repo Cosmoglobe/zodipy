@@ -5,10 +5,22 @@ from dataclasses import asdict
 from functools import partial
 from typing import Any, Callable, Sequence
 
+import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 
-from ._ipd_comps import Band, Cloud, Component, Feature, Ring
+from zodipy._ipd_comps import (
+    Band,
+    BroadBand,
+    Cloud,
+    Component,
+    Fan,
+    Feature,
+    FeatureRRM,
+    NarrowBand,
+    Ring,
+    RingRRM,
+)
 
 """The density functions for the different types of components. Common for all of these 
 is that the first argument will be `X_helio` (the line of sight from the observer towards
@@ -163,12 +175,180 @@ def compute_feature_density(
     return n_0 * np.exp(-exp_term)
 
 
+def compute_fan_density(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    Q: float,
+    P: float,
+    gamma: float,
+    Z_0: float,
+) -> npt.NDArray[np.float64]:
+    """Density of the fan (see Eq (3). in RRM)."""
+
+    X_cloud = X_helio - X_0
+    R_cloud = np.sqrt(X_cloud[0] ** 2 + X_cloud[1] ** 2 + X_cloud[2] ** 2)
+
+    Z_cloud = (
+        X_cloud[0] * sin_Omega_rad * sin_i_rad
+        - X_cloud[1] * cos_Omega_rad * sin_i_rad
+        + X_cloud[2] * cos_i_rad
+    )
+    sin_beta = Z_cloud / R_cloud
+    beta = np.arcsin(sin_beta)
+
+    epsilon = np.where(np.abs(Z_cloud) < Z_0, 2 - np.abs(Z_cloud / Z_0), 1)
+    f = np.cos(beta) ** Q * np.exp(-P * np.sin(np.abs(beta) ** epsilon))
+
+    return R_cloud**-gamma * f
+
+
+def compute_narrow_band_density(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    beta_nb_rad: float,
+    G: float,
+    gamma: float,
+    r: float,
+    A: float,
+) -> npt.NDArray[np.float64]:
+    """Density of the fan (see Eq (4). in RRM)."""
+
+    X_nb = X_helio - X_0
+    R_nb = np.sqrt(X_nb[0] ** 2 + X_nb[1] ** 2 + X_nb[2] ** 2)
+
+    Z_nb = (
+        X_nb[0] * sin_Omega_rad * sin_i_rad
+        - X_nb[1] * cos_Omega_rad * sin_i_rad
+        + X_nb[2] * cos_i_rad
+    )
+    sin_beta = Z_nb / R_nb
+    beta = np.arcsin(sin_beta)
+    f = np.where(
+        np.abs(beta) < beta_nb_rad, np.exp(G * (np.abs(beta) - beta_nb_rad)), 0
+    )
+    return A * (R_nb / r) ** (-gamma) * f
+
+
+def compute_broad_band_density(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    beta_bb_rad: float,
+    sigma_bb_rad: float,
+    gamma: float,
+    r: float,
+    A: float,
+) -> npt.NDArray[np.float64]:
+    """Density of the fan (see Eq (5). in RRM)."""
+
+    X_bb = X_helio - X_0
+    R_bb = np.sqrt(X_bb[0] ** 2 + X_bb[1] ** 2 + X_bb[2] ** 2)
+
+    Z_bb = (
+        X_bb[0] * sin_Omega_rad * sin_i_rad
+        - X_bb[1] * cos_Omega_rad * sin_i_rad
+        + X_bb[2] * cos_i_rad
+    )
+    sin_beta = Z_bb / R_bb
+    beta = np.arcsin(sin_beta)
+    f = np.exp(-((beta - beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)) + np.exp(
+        -((beta + beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)
+    )
+    return A * (R_bb / r) ** (-gamma) * f
+
+
+def compute_ring_density_rmm(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    n_0: float,
+    R: float,
+    sigma_r: float,
+    sigma_z: float,
+    A: float,
+) -> npt.NDArray[np.float64]:
+    return (
+        A
+        * compute_ring_density(
+            X_helio=X_helio,
+            X_0=X_0,
+            sin_Omega_rad=sin_Omega_rad,
+            cos_Omega_rad=cos_Omega_rad,
+            sin_i_rad=sin_i_rad,
+            cos_i_rad=cos_i_rad,
+            n_0=n_0,
+            R=R,
+            sigma_r=sigma_r,
+            sigma_z=sigma_z,
+        )
+        * 1e-6
+        / (1 * u.cm).to_value(u.AU)
+    )
+
+
+def compute_feature_density_rmm(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    X_earth: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    n_0: float,
+    R: float,
+    sigma_r: float,
+    sigma_z: float,
+    theta_rad: float,
+    sigma_theta_rad: float,
+    A: float,
+) -> npt.NDArray[np.float64]:
+    return (
+        A
+        * compute_feature_density(
+            X_helio=X_helio,
+            X_0=X_0,
+            sin_Omega_rad=sin_Omega_rad,
+            cos_Omega_rad=cos_Omega_rad,
+            sin_i_rad=sin_i_rad,
+            cos_i_rad=cos_i_rad,
+            n_0=n_0,
+            R=R,
+            sigma_r=sigma_r,
+            sigma_z=sigma_z,
+            X_earth=X_earth,
+            sigma_theta_rad=sigma_theta_rad,
+            theta_rad=theta_rad,
+        )
+        * 1e-6
+        / (1 * u.cm).to_value(u.AU)
+    )
+
+
 # Mapping of implemented zodiacal component data classes and their density functions.
 DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
     Cloud: compute_cloud_density,
     Band: compute_band_density,
     Ring: compute_ring_density,
     Feature: compute_feature_density,
+    Fan: compute_fan_density,
+    NarrowBand: compute_narrow_band_density,
+    BroadBand: compute_broad_band_density,
+    RingRRM: compute_ring_density_rmm,
+    FeatureRRM: compute_feature_density_rmm,
 }
 
 PartialComputeDensityFunc = Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]

@@ -1,6 +1,18 @@
 from __future__ import annotations
 
-from ._ipd_comps import Band, Cloud, Component, ComponentLabel, Feature, Ring
+from ._ipd_comps import (
+    Band,
+    BroadBand,
+    Cloud,
+    Component,
+    ComponentLabel,
+    Fan,
+    Feature,
+    FeatureRRM,
+    NarrowBand,
+    Ring,
+    RingRRM,
+)
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(
@@ -80,3 +92,80 @@ DIRBE: dict[ComponentLabel, Component] = {
 PLANCK = DIRBE.copy()
 PLANCK.pop(ComponentLabel.RING)
 PLANCK.pop(ComponentLabel.FEATURE)
+
+
+RRM: dict[ComponentLabel, Component] = {
+    ComponentLabel.FAN: Fan(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=1.35,
+        Omega=76,
+        P=10.7,
+        Q=2.13,
+        gamma=1.3,
+        Z_0=0.06,
+    ),
+    ComponentLabel.INNER_NARROW_BAND: NarrowBand(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=0,
+        A=0.032,
+        Omega=0,
+        gamma=1,
+        beta_nb=1.42,  # themis
+        G=0.5,
+        r=3.14,
+    ),
+    ComponentLabel.OUTER_NARROW_BAND: NarrowBand(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=0,
+        A=0.04,
+        Omega=0,
+        gamma=1,
+        beta_nb=10.14,  # eos
+        G=0.16,
+        r=3.02,
+    ),
+    ComponentLabel.BROAD_BAND: BroadBand(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=2.5,
+        Omega=76,
+        A=0.029,
+        gamma=1,
+        beta_bb=9.35,
+        sigma_bb=6,
+        r=3.1,
+    ),
+    ComponentLabel.RING_RRM: RingRRM(
+        A=0.16,
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=0.48707166006819241,
+        Omega=22.278979678854448,
+        n_0=1.8260527826501675e-08,
+        R=1.0281924326308751,
+        sigma_r=0.025000000372529030,
+        sigma_z=0.054068037356978099,
+    ),
+    ComponentLabel.FEATURE_RRM: FeatureRRM(
+        A=0.065,
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=0.48707166006819241,
+        Omega=22.278979678854448,
+        n_0=2.0094267183590947e-08,
+        R=1.0579182694524214,
+        sigma_r=0.10287314662396611,
+        sigma_z=0.091442963768716023,
+        theta=-10.0,
+        sigma_theta=12.115210933938741,
+    ),
+}

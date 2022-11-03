@@ -34,7 +34,7 @@ def validate_frequencies(
 
     if not freq_is_in_range:
         raise ValueError(
-            f"Model: {model.name} is only valid in the [{lower_freq_range},"
+            f"Model is only valid in the [{lower_freq_range},"
             f" {upper_freq_range}] range."
         )
 

@@ -248,33 +248,6 @@ def test_invalid_pixel(
         )
 
 
-@given(model(los_dist_cut=0.2 * u.AU), time(), angles(), data())
-@settings(max_examples=20, deadline=None)
-def test_invalid_los_dist_cut(
-    model: Zodipy,
-    time: Time,
-    angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
-    data: DataObject,
-) -> None:
-    """
-    Tests that an error is raised when a model with a `los_dist_cut` > distance to
-    observer is used.
-    """
-
-    frequency = data.draw(freq(model))
-    observer = data.draw(any_obs(model))
-    theta, phi = angles
-    if observer != "sun":
-        with pytest.raises(ValueError):
-            model.get_emission_ang(
-                frequency,
-                theta=theta,
-                phi=phi,
-                obs_time=time,
-                obs=observer,
-            )
-
-
 def test_multiprocessing() -> None:
     """
     Testing that model with multiprocessing enabled returns the same value as

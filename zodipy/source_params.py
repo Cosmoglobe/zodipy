@@ -1,12 +1,56 @@
 import astropy.units as u
 
-from ._ipd_comps import ComponentLabel
+from zodipy._constants import R_ASTEROID_BELT, R_JUPITER, R_KUIPER_BELT, R_MARS
+from zodipy._ipd_comps import ComponentLabel
 
-T_0_DIRBE = 286  # K
+R_MAX_DIRBE = R_JUPITER
+
+R_MIN_RRM = {
+    ComponentLabel.FAN: None,
+    ComponentLabel.INNER_NARROW_BAND: R_MARS,
+    ComponentLabel.OUTER_NARROW_BAND: R_MARS,
+    ComponentLabel.BROAD_BAND: R_MARS,
+    # ComponentLabel.INTERSTELLAR_DUST: R_MARS,
+    ComponentLabel.RING_RRM: None,
+    ComponentLabel.FEATURE_RRM: None,
+}
+R_MAX_RRM = {
+    ComponentLabel.FAN: R_MARS,
+    ComponentLabel.INNER_NARROW_BAND: R_ASTEROID_BELT,
+    ComponentLabel.OUTER_NARROW_BAND: R_ASTEROID_BELT,
+    ComponentLabel.BROAD_BAND: R_ASTEROID_BELT,
+    ComponentLabel.RING_RRM: R_JUPITER,
+    ComponentLabel.FEATURE_RRM: R_JUPITER,
+    # ComponentLabel.INTERSTELLAR_DUST: R_KUIPER_BELT,
+}
+
+T_0_DIRBE = 286
 DELTA_DIRBE = 0.46686259861486573
+
+T_0_RRM = {
+    ComponentLabel.FAN: 255,
+    ComponentLabel.INNER_NARROW_BAND: 255,
+    ComponentLabel.OUTER_NARROW_BAND: 255,
+    ComponentLabel.BROAD_BAND: 295,
+    ComponentLabel.RING_RRM: T_0_DIRBE,
+    ComponentLabel.FEATURE_RRM: T_0_DIRBE,
+    # ComponentLabel.INTERSTELLAR_DUST: 305,
+}
+DELTA_RMM = {
+    ComponentLabel.FAN: 0.5,
+    ComponentLabel.INNER_NARROW_BAND: 0.5,
+    ComponentLabel.OUTER_NARROW_BAND: 0.5,
+    ComponentLabel.BROAD_BAND: 0.4,
+    ComponentLabel.RING_RRM: DELTA_DIRBE,
+    ComponentLabel.FEATURE_RRM: DELTA_DIRBE,
+    # ComponentLabel.INTERSTELLAR_DUST: 0.4,
+}
 
 SPECTRUM_PLANCK = u.Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
 SPECTRUM_DIRBE = u.Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
+SPECTRUM_IRAS = u.Quantity([12, 25, 60, 100], u.micron)
+
+CALIBRATION_RRM = (2.45e-7, 2.42e-7, 2.24e-7, 1.97e-7)
 
 EMISSIVITY_PLANCK_13 = {
     ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),

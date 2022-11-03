@@ -6,8 +6,8 @@ import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 
-from ._ipd_dens_funcs import construct_density_partials
-from .ipd_models import model_registry
+from zodipy._ipd_dens_funcs import construct_density_partials
+from zodipy.model_registry import model_registry
 
 DEFAULT_EARTH_POS = u.Quantity([1, 0, 0], u.AU)
 
@@ -48,7 +48,7 @@ def tabulate_density(
         list(ipd_model.comps.values()), {"X_earth": earth_position}
     )
 
-    density_grid = np.zeros((ipd_model.n_comps, *grid.shape[1:]))
+    density_grid = np.zeros((len(ipd_model.comps), *grid.shape[1:]))
     for idx, partial in enumerate(partials):
         density_grid[idx] = partial(grid)
 

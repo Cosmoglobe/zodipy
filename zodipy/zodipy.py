@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import multiprocessing
 import platform
-from dataclasses import asdict
 from functools import partial
 from typing import Literal, Sequence
 
@@ -14,26 +13,17 @@ import quadpy
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 
-from ._constants import SPECIFIC_INTENSITY_UNITS
-from ._interp import interpolate_source_parameters
-from ._ipd_dens_funcs import PartialComputeDensityFunc, construct_density_partials
-from ._line_of_sight import get_line_of_sight_endpoints
-from ._sky_coords import DISTANCE_TO_JUPITER, get_obs_and_earth_positions
-from ._source_funcs import (
-    get_bandpass_integrated_blackbody_emission,
-    get_dust_grain_temperature,
-    get_phase_function,
-    get_scattering_angle,
-)
-from ._types import FrequencyOrWavelength, Pixels, SkyAngles
-from ._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
-from ._validators import (
-    validate_and_normalize_weights,
-    validate_ang,
-    validate_frequencies,
-    validate_pixels,
-)
-from .ipd_models import model_registry
+from zodipy._bandpass import validate_and_get_bandpass
+from zodipy._constants import SPECIFIC_INTENSITY_UNITS
+from zodipy._emission import EMISSION_MAPPING
+from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
+from zodipy._ipd_dens_funcs import construct_density_partials
+from zodipy._line_of_sight import LOS_MAPPING
+from zodipy._sky_coords import get_obs_and_earth_positions
+from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
+from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
+from zodipy._validators import validate_ang, validate_pixels
+from zodipy.model_registry import model_registry
 
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
@@ -69,8 +59,6 @@ class Zodipy:
             Defaults to `np.nan`.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the brightness integral. Default is 100 points.
-        los_dist_cut (u.Quantity[u.AU]): Radial distance from the Sun at which all line of
-            sights are truncated. Defaults to 5.2 AU which is the distance to Jupiter.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
             Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
             file. For more information on available ephemeridis, please visit
@@ -87,7 +75,6 @@ class Zodipy:
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
         gauss_quad_degree: int = 100,
-        los_dist_cut: u.Quantity[u.AU] = DISTANCE_TO_JUPITER,
         ephemeris: str = "de432s",
     ) -> None:
 
@@ -98,7 +85,6 @@ class Zodipy:
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
         self.gauss_quad_degree = gauss_quad_degree
-        self.los_dist_cut = los_dist_cut
         self.ephemeris = ephemeris
 
         self.ipd_model = model_registry.get_model(model)
@@ -399,65 +385,66 @@ class Zodipy:
     ) -> u.Quantity[u.MJy / u.sr]:
         """Computes the component-wise zodiacal emission."""
 
-        validate_frequencies(
-            freq=freq, model=self.ipd_model, extrapolate=self.extrapolate
+        bandpass = validate_and_get_bandpass(
+            freq=freq,
+            weights=weights,
+            model=self.ipd_model,
+            extrapolate=self.extrapolate,
         )
-        normalized_weights = validate_and_normalize_weights(weights=weights, freq=freq)
 
-        interpolated_source_params = interpolate_source_parameters(
-            model=self.ipd_model, freq=freq, weights=normalized_weights
+        # Get model parameters, some of which have been interpolated to the given
+        # frequency or bandpass.
+        source_parameters = SOURCE_PARAMS_MAPPING[type(self.ipd_model)](
+            bandpass, self.ipd_model
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
             obs=obs, obs_time=obs_time, obs_pos=obs_pos
         )
 
-        # Set up component density functions given the simulation configuration
-        # (selected ipd model, time of observation, etc.)
+        # Get the integration limits for each zodiacal component (which may be
+        # different or the same depending on the model) along all line of sights.
+        start, stop = LOS_MAPPING[type(self.ipd_model)](
+            self.ipd_model, observer_position, unit_vectors
+        )
+
+        # Dynamically construct and begin prepopulating the density expressions
+        # for the zodiacal components in the model.
         density_partials = construct_density_partials(
             comps=list(self.ipd_model.comps.values()),
             dynamic_params={"X_earth": earth_position},
         )
 
-        start, stop = get_line_of_sight_endpoints(
-            cutoff=self.los_dist_cut.value,
-            obs_pos=observer_position,
-            unit_vectors=unit_vectors,
-        )
-
         # Prepare bandpass to be integrated in power units and in frequency convention.
-        if not freq.unit.is_equivalent(u.Hz):
-            freq_value = freq.to(u.Hz, u.spectral()).value
-            if freq_value.size > 1:
-                freq_value = np.flip(freq_value)
-                normalized_weights = np.flip(normalized_weights)
-                normalized_weights /= np.trapz(normalized_weights, freq_value)
-        else:
-            freq_value = freq.value
-        if freq_value.size == 1:
-            freq_value = np.expand_dims(freq_value, axis=0)
+        if not bandpass.frequencies.unit.is_equivalent(u.Hz):
+            bandpass.switch_convention()
 
-        # Prepopulate ipd model and configuration specific arguments to the zodiacal emission
-        # integrand function.
+        if bandpass.frequencies.size != 1:
+            freq_value = bandpass.frequencies.value
+        else:
+            freq_value = np.expand_dims(bandpass.frequencies.value, axis=0)
+
+        # Create partial function for the given model emission integrand
         partial_common_integrand = partial(
-            _get_emission_at_step,
-            start=start,
+            EMISSION_MAPPING[type(self.ipd_model)],
             gauss_quad_degree=self.gauss_quad_degree,
             X_obs=observer_position,
             density_partials=density_partials,
             freq=freq_value,
-            weights=normalized_weights,
-            T_0=self.ipd_model.T_0,
-            delta=self.ipd_model.delta,
-            **asdict(interpolated_source_params),
+            weights=bandpass.weights,
+            **source_parameters,
         )
 
-        # Distribute pointing to cores.
         if self.parallel:
+            # Distribute pointing to cores.
             n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
             stop_chunks = np.array_split(stop, n_proc, axis=-1)
+            if start.size == 1:
+                start_chunks = [start] * n_proc
+            else:
+                start_chunks = np.array_split(start, n_proc, axis=-1)
 
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=n_proc
@@ -469,10 +456,13 @@ class Zodipy:
                 partial_integrand_chunks = [
                     partial(
                         partial_common_integrand,
+                        start=np.expand_dims(start, axis=-1),
                         stop=np.expand_dims(stop, axis=-1),
                         u_los=np.expand_dims(unit_vectors, axis=-1),
                     )
-                    for unit_vectors, stop in zip(unit_vector_chunks, stop_chunks)
+                    for unit_vectors, start, stop in zip(
+                        unit_vector_chunks, start_chunks, stop_chunks
+                    )
                 ]
 
                 proc_chunks = [
@@ -488,10 +478,12 @@ class Zodipy:
 
         else:
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
+            start_expanded = np.expand_dims(start, axis=-1)
             stop_expanded = np.expand_dims(stop, axis=-1)
 
             partial_integrand = partial(
                 partial_common_integrand,
+                start=start_expanded,
                 stop=stop_expanded,
                 u_los=unit_vectors_expanded,
             )
@@ -504,7 +496,10 @@ class Zodipy:
         integrated_comp_emission *= 0.5 * (stop - start)
 
         emission = np.zeros(
-            (self.ipd_model.n_comps, hp.nside2npix(nside) if binned else indicies.size)
+            (
+                len(self.ipd_model.comps),
+                hp.nside2npix(nside) if binned else indicies.size,
+            )
         )
         if binned:
             emission[:, pixels] = integrated_comp_emission
@@ -537,55 +532,3 @@ class Zodipy:
             repr_str += f"{attribute_name}={attribute!r}, "
 
         return repr_str[:-2] + ")"
-
-
-def _get_emission_at_step(
-    r: npt.NDArray[np.float64],
-    start: np.float64,
-    stop: npt.NDArray[np.float64],
-    gauss_quad_degree: int,
-    X_obs: npt.NDArray[np.float64],
-    u_los: npt.NDArray[np.float64],
-    density_partials: tuple[PartialComputeDensityFunc],
-    freq: npt.NDArray[np.float64],
-    weights: npt.NDArray[np.float64],
-    T_0: float,
-    delta: float,
-    emissivities: npt.NDArray[np.float64],
-    albedos: npt.NDArray[np.float64],
-    phase_coefficients: tuple[float, ...],
-    solar_irradiance: np.float64,
-) -> npt.NDArray[np.float64]:
-    """Returns the zodiacal emission at a step along all lines of sight."""
-
-    # Convert the quadrature range from [-1, 1] to the true ecliptic positions
-    R_los = ((stop - start) / 2) * r + (stop + start) / 2
-
-    X_los = R_los * u_los
-    X_helio = X_los + X_obs
-    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
-
-    temperature = get_dust_grain_temperature(R_helio, T_0, delta)
-    blackbody_emission = get_bandpass_integrated_blackbody_emission(
-        freq=freq,
-        weights=weights,
-        T=temperature,
-    )
-
-    emission = np.zeros((len(density_partials), stop.size, gauss_quad_degree))
-    density = np.zeros_like(emission)
-    for idx, (get_density_func, albedo, emissivity) in enumerate(
-        zip(density_partials, albedos, emissivities)
-    ):
-        density[idx] = get_density_func(X_helio)
-        emission[idx] = (1 - albedo) * (emissivity * blackbody_emission)
-
-    if any(albedo != 0 for albedo in albedos):
-        solar_flux = solar_irradiance / R_helio**2
-        scattering_angle = get_scattering_angle(R_los, R_helio, X_los, X_helio)
-        phase_function = get_phase_function(scattering_angle, phase_coefficients)
-
-        for idx, albedo in enumerate(albedos):
-            emission[idx] += albedo * solar_flux * phase_function
-
-    return emission * density
