@@ -8,7 +8,9 @@ import numpy.typing as npt
 from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 
 TModel = TypeVar("TModel", bound=InterplanetaryDustModel)
-GetLOSFn = Callable[[TModel, npt.NDArray, npt.NDArray], Tuple[npt.NDArray, npt.NDArray]]
+GetCutoffFn = Callable[
+    [TModel, npt.NDArray, npt.NDArray], Tuple[npt.NDArray, npt.NDArray]
+]
 
 
 def get_distance_from_obs_to_cutoff(
@@ -33,7 +35,7 @@ def get_distance_from_obs_to_cutoff(
     return np.maximum(q, c / q)
 
 
-def get_los_kesall(
+def get_single_outer_cutoff(
     model: Kelsall,
     obs_pos: npt.NDArray[np.float64],
     unit_vectors: npt.NDArray[np.float64],
@@ -49,7 +51,7 @@ def get_los_kesall(
     return start, stop
 
 
-def get_los_rrm(
+def get_multiple_inner_and_outer_cutoff(
     model: RRM,
     obs_pos: npt.NDArray[np.float64],
     unit_vectors: npt.NDArray[np.float64],
@@ -76,7 +78,7 @@ def get_los_rrm(
     return np.asarray(start_list), np.asarray(stop_list)
 
 
-LOS_MAPPING: dict[type[InterplanetaryDustModel], GetLOSFn] = {
-    RRM: get_los_rrm,
-    Kelsall: get_los_kesall,
+LOS_MAPPING: dict[type[InterplanetaryDustModel], GetCutoffFn] = {
+    RRM: get_multiple_inner_and_outer_cutoff,
+    Kelsall: get_single_outer_cutoff,
 }

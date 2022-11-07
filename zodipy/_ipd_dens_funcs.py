@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Protocol
 
 import astropy.units as u
 import numpy as np
@@ -351,13 +351,16 @@ DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
     FeatureRRM: compute_feature_density_rmm,
 }
 
-PartialComputeDensityFunc = Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]
+
+class ComponentDensityFn(Protocol):
+    def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        ...
 
 
 def construct_density_partials(
     comps: Sequence[Component],
     dynamic_params: dict[str, Any],
-) -> tuple[PartialComputeDensityFunc, ...]:
+) -> tuple[ComponentDensityFn, ...]:
     """
     Return a tuple of the density expressions above which has been prepopulated with model and
     configuration parameters, leaving only the `X_helio` argument to be supplied.
@@ -365,7 +368,7 @@ def construct_density_partials(
     Raises exception for incorrectly defined components or component density functions.
     """
 
-    partial_density_funcs: list[PartialComputeDensityFunc] = []
+    partial_density_funcs: list[ComponentDensityFn] = []
     for comp in comps:
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()

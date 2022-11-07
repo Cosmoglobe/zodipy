@@ -5,7 +5,7 @@ from typing import Callable
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._ipd_dens_funcs import PartialComputeDensityFunc
+from zodipy._ipd_dens_funcs import ComponentDensityFn
 from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 from zodipy._source_funcs import (
     get_bandpass_integrated_blackbody_emission,
@@ -25,7 +25,7 @@ def get_emission_at_step_kelsall(
     gauss_quad_degree: int,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
-    density_partials: tuple[PartialComputeDensityFunc],
+    density_partials: tuple[ComponentDensityFn],
     freq: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
     T_0: float,
@@ -77,7 +77,7 @@ def get_emission_at_step_rrm(
     gauss_quad_degree: int,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
-    density_partials: tuple[PartialComputeDensityFunc],
+    density_partials: tuple[ComponentDensityFn],
     freq: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
     T_0: tuple[float, ...],
