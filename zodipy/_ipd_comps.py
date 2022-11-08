@@ -169,6 +169,22 @@ class Fan(Component):
 
 
 @dataclass
+class Comet(Component):
+    """RR May cometary component."""
+
+    gamma: float
+    P: float
+    amp: float
+
+
+@dataclass
+class Interstellar(Component):
+    """RR May cometary component."""
+
+    amp: float
+
+
+@dataclass
 class NarrowBand(Component):
     """RR May narrow band component."""
 
@@ -222,6 +238,8 @@ class ComponentLabel(Enum):
     RING = "ring"
     FEATURE = "feature"
     FAN = "fan"
+    COMET = "comet"
+    INTERSTELLAR = "interstellar"
     INNER_NARROW_BAND = "inner_narrow_band"
     OUTER_NARROW_BAND = "outer_narrow_band"
     BROAD_BAND = "broad_band"

@@ -1,16 +1,32 @@
 from __future__ import annotations
 
-from typing import Callable, Tuple, TypeVar
+from typing import Iterable
 
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
+from zodipy._constants import R_ASTEROID_BELT, R_EARTH, R_JUPITER, R_KUIPER_BELT, R_MARS
+from zodipy._ipd_comps import ComponentLabel
 
-TModel = TypeVar("TModel", bound=InterplanetaryDustModel)
-GetCutoffFn = Callable[
-    [TModel, npt.NDArray, npt.NDArray], Tuple[npt.NDArray, npt.NDArray]
-]
+# Mapping of components to their inner and outer cutoff. None means that there is no
+# inner cutoff and that the line of sight starts at the observer.
+COMPONENT_CUTOFFS: dict[ComponentLabel, float] = {
+    ComponentLabel.CLOUD: R_JUPITER,
+    ComponentLabel.BAND1: R_JUPITER,
+    ComponentLabel.BAND2: R_JUPITER,
+    ComponentLabel.BAND3: R_JUPITER,
+    ComponentLabel.RING: R_JUPITER,
+    ComponentLabel.FEATURE: R_JUPITER,
+    ComponentLabel.FAN: R_MARS,
+    ComponentLabel.COMET: R_KUIPER_BELT,
+    ComponentLabel.INTERSTELLAR: R_KUIPER_BELT,
+    ComponentLabel.INNER_NARROW_BAND: R_ASTEROID_BELT,
+    ComponentLabel.OUTER_NARROW_BAND: R_ASTEROID_BELT,
+    ComponentLabel.BROAD_BAND: R_ASTEROID_BELT,
+    ComponentLabel.RING_RRM: R_JUPITER,
+    ComponentLabel.FEATURE_RRM: R_JUPITER,
+    # ComponentLabel.INTERSTELLAR_DUST: R_KUIPER_BELT,
+}
 
 
 def get_distance_from_obs_to_cutoff(
@@ -35,50 +51,26 @@ def get_distance_from_obs_to_cutoff(
     return np.maximum(q, c / q)
 
 
-def get_single_outer_cutoff(
-    model: Kelsall,
-    obs_pos: npt.NDArray[np.float64],
+def get_radial_line_of_sight_cutoff(
+    components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    obs_pos: npt.NDArray[np.float64],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
 
     start = np.asarray([np.finfo(float).eps])
-    stop = get_distance_from_obs_to_cutoff(
-        obs_pos=obs_pos,
-        unit_vectors=unit_vectors,
-        cutoff=model.outer_cutoff,
-    )
+    cutoffs = [COMPONENT_CUTOFFS[component] for component in components]
+    if len(set(cutoffs)) == 1:
+        stop = get_distance_from_obs_to_cutoff(
+            obs_pos=obs_pos,
+            unit_vectors=unit_vectors,
+            cutoff=cutoffs[1],
+        )
+    else:
+        stop = np.asarray(
+            [
+                get_distance_from_obs_to_cutoff(obs_pos, unit_vectors, cutoff)
+                for cutoff in cutoffs
+            ]
+        )
 
     return start, stop
-
-
-def get_multiple_inner_and_outer_cutoff(
-    model: RRM,
-    obs_pos: npt.NDArray[np.float64],
-    unit_vectors: npt.NDArray[np.float64],
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-
-    start_list: list[npt.NDArray[np.float64]] = []
-    for inner_cutoff in model.inner_cutoff.values():
-        if inner_cutoff is None:
-            start_list.append(np.full(np.shape(unit_vectors)[-1], np.finfo(float).eps))
-        else:
-            start_list.append(
-                get_distance_from_obs_to_cutoff(
-                    obs_pos=obs_pos,
-                    unit_vectors=unit_vectors,
-                    cutoff=inner_cutoff,
-                )
-            )
-
-    stop_list = [
-        get_distance_from_obs_to_cutoff(obs_pos, unit_vectors, outer_cutoff)
-        for outer_cutoff in model.outer_cutoff.values()
-    ]
-
-    return np.asarray(start_list), np.asarray(stop_list)
-
-
-LOS_MAPPING: dict[type[InterplanetaryDustModel], GetCutoffFn] = {
-    RRM: get_multiple_inner_and_outer_cutoff,
-    Kelsall: get_single_outer_cutoff,
-}

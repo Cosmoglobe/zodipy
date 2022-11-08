@@ -18,7 +18,7 @@ from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_dens_funcs import construct_density_partials
-from zodipy._line_of_sight import LOS_MAPPING
+from zodipy._line_of_sight import get_radial_line_of_sight_cutoff
 from zodipy._sky_coords import get_obs_and_earth_positions
 from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
@@ -404,8 +404,10 @@ class Zodipy:
 
         # Get the integration limits for each zodiacal component (which may be
         # different or the same depending on the model) along all line of sights.
-        start, stop = LOS_MAPPING[type(self.ipd_model)](
-            self.ipd_model, observer_position, unit_vectors
+        start, stop = get_radial_line_of_sight_cutoff(
+            components=self.ipd_model.comps.keys(),
+            unit_vectors=unit_vectors,
+            obs_pos=observer_position,
         )
 
         # Dynamically construct and begin prepopulating the density expressions

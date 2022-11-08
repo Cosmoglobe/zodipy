@@ -3,20 +3,23 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Sequence, Protocol
+from typing import Any, Callable, Protocol, Sequence
 
 import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 
+from zodipy._constants import R_ASTEROID_BELT, R_JUPITER, R_KUIPER_BELT, R_MARS
 from zodipy._ipd_comps import (
     Band,
     BroadBand,
     Cloud,
+    Comet,
     Component,
     Fan,
     Feature,
     FeatureRRM,
+    Interstellar,
     NarrowBand,
     Ring,
     RingRRM,
@@ -189,21 +192,69 @@ def compute_fan_density(
 ) -> npt.NDArray[np.float64]:
     """Density of the fan (see Eq (3). in RRM)."""
 
-    X_cloud = X_helio - X_0
-    R_cloud = np.sqrt(X_cloud[0] ** 2 + X_cloud[1] ** 2 + X_cloud[2] ** 2)
+    X_fan = X_helio - X_0
+    R_fan = np.sqrt(X_fan[0] ** 2 + X_fan[1] ** 2 + X_fan[2] ** 2)
 
-    Z_cloud = (
-        X_cloud[0] * sin_Omega_rad * sin_i_rad
-        - X_cloud[1] * cos_Omega_rad * sin_i_rad
-        + X_cloud[2] * cos_i_rad
+    density = np.zeros_like(X_helio[0])
+    indicies = R_fan < R_MARS
+    x_fan_filtered = X_fan[:, indicies]
+    R_fan_filtered = R_fan[indicies]
+
+    Z_fan = (
+        x_fan_filtered[0] * sin_Omega_rad * sin_i_rad
+        - x_fan_filtered[1] * cos_Omega_rad * sin_i_rad
+        + x_fan_filtered[2] * cos_i_rad
     )
-    sin_beta = Z_cloud / R_cloud
+    sin_beta = Z_fan / R_fan_filtered
     beta = np.arcsin(sin_beta)
+    Z_fan_abs = np.abs(Z_fan)
+    epsilon = np.where(Z_fan_abs < Z_0, 2 - (Z_fan_abs / Z_0), 1)
+    f = np.cos(beta) ** Q * np.exp(-P * np.sin(np.abs(beta)) ** epsilon)
 
-    epsilon = np.where(np.abs(Z_cloud) < Z_0, 2 - np.abs(Z_cloud / Z_0), 1)
-    f = np.cos(beta) ** Q * np.exp(-P * np.sin(np.abs(beta) ** epsilon))
+    density[indicies] = R_fan_filtered**-gamma * f
+    return density
 
-    return R_cloud**-gamma * f
+
+def compute_comet_density(
+    X_helio: npt.NDArray[np.float64],
+    X_0: npt.NDArray[np.float64],
+    sin_Omega_rad: float,
+    cos_Omega_rad: float,
+    sin_i_rad: float,
+    cos_i_rad: float,
+    gamma: float,
+    P: float,
+    amp: float,
+) -> npt.NDArray[np.float64]:
+    """Density of the fan (see Eq (3). in RRM)."""
+
+    X_comet = X_helio - X_0
+    R_comet = np.sqrt(X_comet[0] ** 2 + X_comet[1] ** 2 + X_comet[2] ** 2)
+
+    density = np.zeros_like(X_helio[0])
+    indicies = R_comet >= R_MARS
+
+    x_comet_filtered = X_comet[:, indicies]
+    R_comet_filtered = R_comet[indicies]
+
+    Z_comet = (
+        x_comet_filtered[0] * sin_Omega_rad * sin_i_rad
+        - x_comet_filtered[1] * cos_Omega_rad * sin_i_rad
+        + x_comet_filtered[2] * cos_i_rad
+    )
+    sin_beta = Z_comet / R_comet_filtered
+    beta = np.arcsin(sin_beta)
+    f = np.exp(-P * np.abs(np.sin(beta)))
+
+    density[indicies] = R_comet_filtered**-gamma * f * amp
+    return density
+
+
+def compute_interstellar_density(
+    X_helio: npt.NDArray[np.float64],
+    amp: float,
+) -> npt.NDArray[np.float64]:
+    return np.array([amp])
 
 
 def compute_narrow_band_density(
@@ -224,17 +275,23 @@ def compute_narrow_band_density(
     X_nb = X_helio - X_0
     R_nb = np.sqrt(X_nb[0] ** 2 + X_nb[1] ** 2 + X_nb[2] ** 2)
 
+    density = np.zeros_like(X_helio[0])
+    indicies = np.logical_and(R_nb >= R_MARS, R_nb <= R_JUPITER)
+    x_nb_filtered = X_nb[:, indicies]
+    R_nb_filtered = R_nb[indicies]
+
     Z_nb = (
-        X_nb[0] * sin_Omega_rad * sin_i_rad
-        - X_nb[1] * cos_Omega_rad * sin_i_rad
-        + X_nb[2] * cos_i_rad
+        x_nb_filtered[0] * sin_Omega_rad * sin_i_rad
+        - x_nb_filtered[1] * cos_Omega_rad * sin_i_rad
+        + x_nb_filtered[2] * cos_i_rad
     )
-    sin_beta = Z_nb / R_nb
+    sin_beta = Z_nb / R_nb_filtered
     beta = np.arcsin(sin_beta)
-    f = np.where(
-        np.abs(beta) < beta_nb_rad, np.exp(G * (np.abs(beta) - beta_nb_rad)), 0
-    )
-    return A * (R_nb / r) ** (-gamma) * f
+    beta_abs = np.abs(beta)
+    f = np.where(beta_abs < beta_nb_rad, np.exp(G * (beta_abs - beta_nb_rad)), 0)
+
+    density[indicies] = A * (R_nb_filtered / r) ** (-gamma) * f
+    return density
 
 
 def compute_broad_band_density(
@@ -255,17 +312,23 @@ def compute_broad_band_density(
     X_bb = X_helio - X_0
     R_bb = np.sqrt(X_bb[0] ** 2 + X_bb[1] ** 2 + X_bb[2] ** 2)
 
+    density = np.zeros_like(X_helio[0])
+    indicies = np.logical_and(R_bb >= R_MARS, R_bb <= R_JUPITER)
+    x_bb_filtered = X_bb[:, indicies]
+    R_bb_filtered = R_bb[indicies]
+
     Z_bb = (
-        X_bb[0] * sin_Omega_rad * sin_i_rad
-        - X_bb[1] * cos_Omega_rad * sin_i_rad
-        + X_bb[2] * cos_i_rad
+        x_bb_filtered[0] * sin_Omega_rad * sin_i_rad
+        - x_bb_filtered[1] * cos_Omega_rad * sin_i_rad
+        + x_bb_filtered[2] * cos_i_rad
     )
-    sin_beta = Z_bb / R_bb
+    sin_beta = Z_bb / R_bb_filtered
     beta = np.arcsin(sin_beta)
     f = np.exp(-((beta - beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)) + np.exp(
         -((beta + beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)
     )
-    return A * (R_bb / r) ** (-gamma) * f
+    density[indicies] = A * (R_bb_filtered / r) ** (-gamma) * f
+    return density
 
 
 def compute_ring_density_rmm(
@@ -345,6 +408,8 @@ DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
     Ring: compute_ring_density,
     Feature: compute_feature_density,
     Fan: compute_fan_density,
+    Comet: compute_comet_density,
+    Interstellar: compute_interstellar_density,
     NarrowBand: compute_narrow_band_density,
     BroadBand: compute_broad_band_density,
     RingRRM: compute_ring_density_rmm,
@@ -393,7 +458,6 @@ def construct_density_partials(
         comp_params = {
             key: value for key, value in comp_dict.items() if key in func_params
         }
-
         partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
         partial_density_funcs.append(partial_func)
 

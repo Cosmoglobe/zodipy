@@ -72,7 +72,7 @@ def get_emission_at_step_kelsall(
 
 def get_emission_at_step_rrm(
     r: npt.NDArray[np.float64],
-    start: tuple[npt.NDArray[np.float64]],
+    start: npt.NDArray[np.float64],
     stop: tuple[npt.NDArray[np.float64]],
     gauss_quad_degree: int,
     X_obs: npt.NDArray[np.float64],
@@ -87,16 +87,15 @@ def get_emission_at_step_rrm(
     """RRM has component specific line of sight grids."""
 
     emission = np.zeros((len(density_partials), stop[0].size, gauss_quad_degree))
+
     for idx, (
         get_density_func,
-        start_comp,
         stop_comp,
         T_0_comp,
         delta_comp,
-    ) in enumerate(zip(density_partials, start, stop, T_0, delta)):
+    ) in enumerate(zip(density_partials, stop, T_0, delta)):
         # Convert the quadrature range from [-1, 1] to the true ecliptic positions
-        R_los = ((stop_comp - start_comp) / 2) * r + (stop_comp + start_comp) / 2
-
+        R_los = ((stop_comp - start) / 2) * r + (stop_comp + start) / 2
         X_los = R_los * u_los
         X_helio = X_los + X_obs
         R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)

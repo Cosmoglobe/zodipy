@@ -7,7 +7,8 @@ k_B: float = const.k_B.value
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
-R_MARS = 1.53
+R_MARS = 1.52
+R_EARTH = 1
 R_ASTEROID_BELT = 3.1
 R_JUPITER = 5.2
 R_KUIPER_BELT = 30

@@ -18,7 +18,6 @@ class InterplanetaryDustModel(ABC):
 
 @dataclass
 class Kelsall(InterplanetaryDustModel):
-    outer_cutoff: float
     T_0: float
     delta: float
     emissivities: Mapping[ComponentLabel, Sequence[float]]
@@ -29,8 +28,6 @@ class Kelsall(InterplanetaryDustModel):
 
 @dataclass
 class RRM(InterplanetaryDustModel):
-    inner_cutoff: Mapping[ComponentLabel, float | None]
-    outer_cutoff: Mapping[ComponentLabel, float]
     T_0: Mapping[ComponentLabel, float]
     delta: Mapping[ComponentLabel, float]
     calibration: Sequence[float]

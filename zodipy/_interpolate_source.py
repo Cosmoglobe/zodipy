@@ -81,8 +81,9 @@ def get_source_parameters_rmm(bandpass: Bandpass, model: RRM) -> dict[str, Any]:
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
 
+    calibration = u.Quantity(model.calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)
     calibration = interp1d(
-        x=model.spectrum.value, y=model.calibration, fill_value="extrapolate"
+        x=model.spectrum.value, y=calibration, fill_value="extrapolate"
     )(bandpass.frequencies.value)
 
     if bandpass.frequencies.size > 1:
@@ -90,8 +91,8 @@ def get_source_parameters_rmm(bandpass: Bandpass, model: RRM) -> dict[str, Any]:
 
     return {
         "calibration": calibration,
-        "T_0": tuple(model.T_0.values()),
-        "delta": tuple(model.delta.values()),
+        "T_0": tuple(model.T_0[comp] for comp in model.comps.keys()),
+        "delta": tuple(model.delta[comp] for comp in model.comps.keys()),
     }
 
 

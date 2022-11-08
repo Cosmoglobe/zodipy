@@ -12,7 +12,6 @@ model_registry.register_model(
         phase_coefficients=source_params.PHASE_FUNCTION_DIRBE,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_DIRBE,
-        outer_cutoff=source_params.R_MAX_DIRBE,
     ),
 )
 
@@ -24,7 +23,6 @@ model_registry.register_model(
         emissivities=source_params.EMISSIVITY_PLANCK_13,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_DIRBE,
-        outer_cutoff=source_params.R_MAX_DIRBE,
     ),
 )
 
@@ -36,7 +34,6 @@ model_registry.register_model(
         emissivities=source_params.EMISSIVITY_PLANCK_15,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_DIRBE,
-        outer_cutoff=source_params.R_MAX_DIRBE,
     ),
 )
 
@@ -48,7 +45,6 @@ model_registry.register_model(
         emissivities=source_params.EMISSIVITY_PLANCK_18,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_DIRBE,
-        outer_cutoff=source_params.R_MAX_DIRBE,
     ),
 )
 
@@ -60,7 +56,6 @@ model_registry.register_model(
         emissivities=source_params.EMISSIVITY_ODEGARD,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_DIRBE,
-        outer_cutoff=source_params.R_MAX_DIRBE,
     ),
 )
 
@@ -72,7 +67,5 @@ model_registry.register_model(
         calibration=source_params.CALIBRATION_RRM,
         T_0=source_params.T_0_RRM,
         delta=source_params.DELTA_RMM,
-        outer_cutoff=source_params.R_MAX_RRM,
-        inner_cutoff=source_params.R_MIN_RRM,
     ),
 )
