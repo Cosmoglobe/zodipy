@@ -5,7 +5,15 @@ from typing import Iterable
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._constants import R_ASTEROID_BELT, R_EARTH, R_JUPITER, R_KUIPER_BELT, R_MARS
+from zodipy._constants import (
+    R_ASTEROID_BELT,
+    R_EARTH,
+    R_JUPITER,
+    R_KUIPER_BELT,
+    R_MARS,
+    R_EOS,
+    R_THEMIS,
+)
 from zodipy._ipd_comps import ComponentLabel
 
 # Mapping of components to their inner and outer cutoff. None means that there is no
@@ -20,12 +28,11 @@ COMPONENT_CUTOFFS: dict[ComponentLabel, float] = {
     ComponentLabel.FAN: R_MARS,
     ComponentLabel.COMET: R_KUIPER_BELT,
     ComponentLabel.INTERSTELLAR: R_KUIPER_BELT,
-    ComponentLabel.INNER_NARROW_BAND: R_ASTEROID_BELT,
-    ComponentLabel.OUTER_NARROW_BAND: R_ASTEROID_BELT,
+    ComponentLabel.INNER_NARROW_BAND: R_THEMIS,
+    ComponentLabel.OUTER_NARROW_BAND: R_EOS,
     ComponentLabel.BROAD_BAND: R_ASTEROID_BELT,
     ComponentLabel.RING_RRM: R_JUPITER,
     ComponentLabel.FEATURE_RRM: R_JUPITER,
-    # ComponentLabel.INTERSTELLAR_DUST: R_KUIPER_BELT,
 }
 
 

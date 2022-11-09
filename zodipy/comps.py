@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._ipd_comps import (
+from zodipy._ipd_comps import (
     Band,
     BroadBand,
     Cloud,
@@ -15,6 +15,7 @@ from ._ipd_comps import (
     Ring,
     RingRRM,
 )
+from zodipy._constants import R_THEMIS, R_EOS
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(
@@ -101,8 +102,8 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=1.35,
-        Omega=76,
+        i=1.5,
+        Omega=78,
         P=2.13,
         Q=10.7,
         # P=8,
@@ -111,7 +112,14 @@ RRM: dict[ComponentLabel, Component] = {
         Z_0=0.06,
     ),
     ComponentLabel.COMET: Comet(
-        x_0=0.0, y_0=0.0, z_0=0.0, i=1.35, Omega=76, P=2.5, gamma=1, amp=0.37
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=0,
+        Omega=0,
+        P=2.5,
+        gamma=1,
+        amp=0.37,
     ),
     ComponentLabel.INTERSTELLAR: Interstellar(
         x_0=0.0,
@@ -132,7 +140,7 @@ RRM: dict[ComponentLabel, Component] = {
         gamma=1,
         beta_nb=1.42,  # themis
         G=0.5,
-        r=3.14,
+        r=R_THEMIS,
     ),
     ComponentLabel.OUTER_NARROW_BAND: NarrowBand(
         x_0=0.0,
@@ -143,16 +151,16 @@ RRM: dict[ComponentLabel, Component] = {
         # A=0.039,
         Omega=0,
         gamma=1,
-        beta_nb=10.14,  # eos
-        G=0.16,
-        r=3.02,
+        beta_nb=9.35,  # eos no veritas
+        G=0.12,
+        r=R_EOS,
     ),
     ComponentLabel.BROAD_BAND: BroadBand(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=2.5,
-        Omega=76,
+        i=2.6,
+        Omega=110,
         A=0.051,
         gamma=1,
         beta_bb=9.35,
