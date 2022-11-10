@@ -1,5 +1,6 @@
 import astropy.constants as const
 import astropy.units as u
+import numpy as np
 
 h: float = const.h.value
 c: float = const.c.value
@@ -7,7 +8,9 @@ k_B: float = const.k_B.value
 
 SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
-R_MARS = 1.52
+R_0 = np.finfo(np.float64).eps
+R_MARS = 1.53
+R_VERITAS = 3.17
 R_EOS = 3.02
 R_THEMIS = 3.14
 R_EARTH = 1

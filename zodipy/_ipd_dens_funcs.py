@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Protocol, Sequence
+from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
 import astropy.units as u
 import numpy as np
@@ -24,6 +24,7 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
+from zodipy._ipd_comps import ComponentLabel
 
 """The density functions for the different types of components. Common for all of these 
 is that the first argument will be `X_helio` (the line of sight from the observer towards
@@ -231,29 +232,23 @@ def compute_comet_density(
     X_comet = X_helio - X_0
     R_comet = np.sqrt(X_comet[0] ** 2 + X_comet[1] ** 2 + X_comet[2] ** 2)
 
-    density = np.zeros_like(X_helio[0])
-    indicies = R_comet >= R_MARS
-
-    x_comet_filtered = X_comet[:, indicies]
-    R_comet_filtered = R_comet[indicies]
-
     Z_comet = (
-        x_comet_filtered[0] * sin_Omega_rad * sin_i_rad
-        - x_comet_filtered[1] * cos_Omega_rad * sin_i_rad
-        + x_comet_filtered[2] * cos_i_rad
+        X_comet[0] * sin_Omega_rad * sin_i_rad
+        - X_comet[1] * cos_Omega_rad * sin_i_rad
+        + X_comet[2] * cos_i_rad
     )
-    sin_beta = Z_comet / R_comet_filtered
+    sin_beta = Z_comet / R_comet
     beta = np.arcsin(sin_beta)
     f = np.exp(-P * np.abs(np.sin(beta)))
 
-    density[indicies] = R_comet_filtered**-gamma * f * amp
-    return density
+    return R_comet**-gamma * f * amp
 
 
 def compute_interstellar_density(
     X_helio: npt.NDArray[np.float64],
     amp: float,
 ) -> npt.NDArray[np.float64]:
+
     return np.array([amp])
 
 
@@ -275,23 +270,17 @@ def compute_narrow_band_density(
     X_nb = X_helio - X_0
     R_nb = np.sqrt(X_nb[0] ** 2 + X_nb[1] ** 2 + X_nb[2] ** 2)
 
-    density = np.zeros_like(X_helio[0])
-    indicies = np.logical_and(R_nb >= R_MARS, R_nb <= R_JUPITER)
-    x_nb_filtered = X_nb[:, indicies]
-    R_nb_filtered = R_nb[indicies]
-
     Z_nb = (
-        x_nb_filtered[0] * sin_Omega_rad * sin_i_rad
-        - x_nb_filtered[1] * cos_Omega_rad * sin_i_rad
-        + x_nb_filtered[2] * cos_i_rad
+        X_nb[0] * sin_Omega_rad * sin_i_rad
+        - X_nb[1] * cos_Omega_rad * sin_i_rad
+        + X_nb[2] * cos_i_rad
     )
-    sin_beta = Z_nb / R_nb_filtered
+    sin_beta = Z_nb / R_nb
     beta = np.arcsin(sin_beta)
     beta_abs = np.abs(beta)
     f = np.where(beta_abs < beta_nb_rad, np.exp(G * (beta_abs - beta_nb_rad)), 0)
 
-    density[indicies] = A * (R_nb_filtered / r) ** (-gamma) * f
-    return density
+    return A * (R_nb / r) ** (-gamma) * f
 
 
 def compute_broad_band_density(
@@ -312,23 +301,17 @@ def compute_broad_band_density(
     X_bb = X_helio - X_0
     R_bb = np.sqrt(X_bb[0] ** 2 + X_bb[1] ** 2 + X_bb[2] ** 2)
 
-    density = np.zeros_like(X_helio[0])
-    indicies = np.logical_and(R_bb >= R_MARS, R_bb <= R_JUPITER)
-    x_bb_filtered = X_bb[:, indicies]
-    R_bb_filtered = R_bb[indicies]
-
     Z_bb = (
-        x_bb_filtered[0] * sin_Omega_rad * sin_i_rad
-        - x_bb_filtered[1] * cos_Omega_rad * sin_i_rad
-        + x_bb_filtered[2] * cos_i_rad
+        X_bb[0] * sin_Omega_rad * sin_i_rad
+        - X_bb[1] * cos_Omega_rad * sin_i_rad
+        + X_bb[2] * cos_i_rad
     )
-    sin_beta = Z_bb / R_bb_filtered
+    sin_beta = Z_bb / R_bb
     beta = np.arcsin(sin_beta)
     f = np.exp(-((beta - beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)) + np.exp(
         -((beta + beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)
     )
-    density[indicies] = A * (R_bb_filtered / r) ** (-gamma) * f
-    return density
+    return A * (R_bb / r) ** (-gamma) * f
 
 
 def compute_ring_density_rmm(
@@ -462,3 +445,45 @@ def construct_density_partials(
         partial_density_funcs.append(partial_func)
 
     return tuple(partial_density_funcs)
+
+
+def construct_density_partials_comps(
+    comps: Mapping[ComponentLabel, Component],
+    dynamic_params: dict[str, Any],
+) -> dict[ComponentLabel, ComponentDensityFn]:
+    """
+    Return a tuple of the density expressions above which has been prepopulated with model and
+    configuration parameters, leaving only the `X_helio` argument to be supplied.
+
+    Raises exception for incorrectly defined components or component density functions.
+    """
+
+    partial_density_funcs: dict[ComponentLabel, ComponentDensityFn] = {}
+    for comp_label, comp in comps.items():
+        comp_dict = asdict(comp)
+        func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
+        residual_params = [key for key in func_params if key not in comp_dict.keys()]
+        try:
+            residual_params.remove("X_helio")
+        except ValueError:
+            raise ValueError(
+                "X_helio must be be the first argument to the density function of a component."
+            )
+
+        if residual_params:
+            if residual_params - dynamic_params.keys():
+                raise ValueError(
+                    f"Argument(s) {residual_params} required by the density function "
+                    f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
+                    f"{type(comp)} or by the `computed_parameters` dict."
+                )
+            comp_dict.update(dynamic_params)
+
+        # Remove excess intermediate parameters from the component dict.
+        comp_params = {
+            key: value for key, value in comp_dict.items() if key in func_params
+        }
+        partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
+        partial_density_funcs[comp_label] = partial_func
+
+    return partial_density_funcs

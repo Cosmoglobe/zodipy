@@ -15,7 +15,7 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
-from zodipy._constants import R_THEMIS, R_EOS
+from zodipy._constants import R_THEMIS, R_VERITAS
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(
@@ -115,8 +115,8 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0,
-        Omega=0,
+        i=0,  # DONT KNOW THESE
+        Omega=0,  # DONT KNOW THESE
         P=2.5,
         gamma=1,
         amp=0.37,
@@ -133,10 +133,10 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0,
+        i=1.5,  # DONT KNOW THESE
         A=0.032,
         # A=0.03,
-        Omega=0,
+        Omega=78,  # DONT KNOW THESE
         gamma=1,
         beta_nb=1.42,  # themis
         G=0.5,
@@ -146,14 +146,14 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0,
+        i=1.5,  # DONT KNOW THESE
         A=0.04,
         # A=0.039,
-        Omega=0,
+        Omega=78,  # DONT KNOW THESE
         gamma=1,
         beta_nb=9.35,  # eos no veritas
         G=0.12,
-        r=R_EOS,
+        r=R_VERITAS,
     ),
     ComponentLabel.BROAD_BAND: BroadBand(
         x_0=0.0,

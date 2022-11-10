@@ -21,12 +21,11 @@ def get_obs_and_earth_positions(
     SEMB-L2 is at all times located at a fixed distance from Earth along the vector
     pointing to Earth from the Sun.
     """
-
     earth_position = _get_earth_position(obs_time)
     if obs_pos is None:
         obs_position = _get_observer_position(obs, obs_time, earth_position)
     else:
-        obs_position = obs_pos
+        obs_position = obs_pos.to(u.AU)
 
     obs_position = obs_position.reshape(3, 1, 1)
     earth_position = earth_position.reshape(3, 1, 1)

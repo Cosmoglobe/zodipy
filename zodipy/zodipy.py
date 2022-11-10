@@ -17,8 +17,12 @@ from zodipy._bandpass import validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
-from zodipy._ipd_dens_funcs import construct_density_partials
-from zodipy._line_of_sight import get_radial_line_of_sight_cutoff
+from zodipy._ipd_dens_funcs import (
+    construct_density_partials,
+    construct_density_partials_comps,
+)
+from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
+
 from zodipy._sky_coords import get_obs_and_earth_positions
 from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
@@ -74,7 +78,7 @@ class Zodipy:
         n_proc: int | None = None,
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
-        gauss_quad_degree: int = 100,
+        gauss_quad_degree: int = 50,
         ephemeris: str = "de432s",
     ) -> None:
 
@@ -404,16 +408,14 @@ class Zodipy:
 
         # Get the integration limits for each zodiacal component (which may be
         # different or the same depending on the model) along all line of sights.
-        start, stop = get_radial_line_of_sight_cutoff(
+        start, stop = get_line_of_sight_start_and_stop_distances(
             components=self.ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
             obs_pos=observer_position,
         )
 
-        # Dynamically construct and begin prepopulating the density expressions
-        # for the zodiacal components in the model.
-        density_partials = construct_density_partials(
-            comps=list(self.ipd_model.comps.values()),
+        density_partials = construct_density_partials_comps(
+            comps=self.ipd_model.comps,
             dynamic_params={"X_earth": earth_position},
         )
 
@@ -426,15 +428,12 @@ class Zodipy:
         else:
             freq_value = np.expand_dims(bandpass.frequencies.value, axis=0)
 
-        # Create partial function for the given model emission integrand
-        partial_common_integrand = partial(
+        common_integrand = partial(
             EMISSION_MAPPING[type(self.ipd_model)],
-            gauss_quad_degree=self.gauss_quad_degree,
             X_obs=observer_position,
-            density_partials=density_partials,
             freq=freq_value,
             weights=bandpass.weights,
-            **source_parameters,
+            **source_parameters["common"],
         )
 
         if self.parallel:
@@ -442,12 +441,9 @@ class Zodipy:
             n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
-            stop_chunks = np.array_split(stop, n_proc, axis=-1)
-            if start.size == 1:
-                start_chunks = [start] * n_proc
-            else:
-                start_chunks = np.array_split(start, n_proc, axis=-1)
-
+            integrated_comp_emission = np.zeros(
+                (len(self.ipd_model.comps), unit_vectors.shape[1])
+            )
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=n_proc
             ) as pool:
@@ -455,47 +451,64 @@ class Zodipy:
                 # scheme. Arrays are reshaped to (d, n, p) for broadcasting purposes where
                 # d is the geometrical dimensionality, n is the number of different
                 # pointings, and p is the number of integration points of the quadrature.
-                partial_integrand_chunks = [
-                    partial(
-                        partial_common_integrand,
-                        start=np.expand_dims(start, axis=-1),
-                        stop=np.expand_dims(stop, axis=-1),
-                        u_los=np.expand_dims(unit_vectors, axis=-1),
-                    )
-                    for unit_vectors, start, stop in zip(
-                        unit_vector_chunks, start_chunks, stop_chunks
-                    )
-                ]
 
-                proc_chunks = [
-                    pool.apply_async(
-                        self._integration_scheme.integrate,
-                        args=(partial_integrand, [-1, 1]),
+                for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+                    stop_chunks = np.array_split(stop[comp_label], n_proc, axis=-1)
+                    if start[comp_label].size == 1:
+                        start_chunks = [start[comp_label]] * n_proc
+                    else:
+                        start_chunks = np.array_split(
+                            start[comp_label], n_proc, axis=-1
+                        )
+                    comp_integrands = [
+                        partial(
+                            common_integrand,
+                            u_los=np.expand_dims(unit_vectors, axis=-1),
+                            start=np.expand_dims(start, axis=-1),
+                            stop=np.expand_dims(stop, axis=-1),
+                            get_density_function=density_partials[comp_label],
+                            **source_parameters[comp_label],
+                        )
+                        for unit_vectors, start, stop in zip(
+                            unit_vector_chunks, start_chunks, stop_chunks
+                        )
+                    ]
+
+                    proc_chunks = [
+                        pool.apply_async(
+                            self._integration_scheme.integrate,
+                            args=(comp_integrand, [-1, 1]),
+                        )
+                        for comp_integrand in comp_integrands
+                    ]
+
+                    integrated_comp_emission[idx] += (
+                        np.concatenate([result.get() for result in proc_chunks])
+                        * 0.5
+                        * (stop[comp_label] - start[comp_label])
                     )
-                    for partial_integrand in partial_integrand_chunks
-                ]
-                integrated_comp_emission = np.concatenate(
-                    [result.get() for result in proc_chunks], axis=1
-                )
 
         else:
+            integrated_comp_emission = np.zeros(
+                (len(self.ipd_model.comps), unit_vectors.shape[1])
+            )
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
-            start_expanded = np.expand_dims(start, axis=-1)
-            stop_expanded = np.expand_dims(stop, axis=-1)
 
-            partial_integrand = partial(
-                partial_common_integrand,
-                start=start_expanded,
-                stop=stop_expanded,
-                u_los=unit_vectors_expanded,
-            )
+            for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+                comp_integrand = partial(
+                    common_integrand,
+                    u_los=unit_vectors_expanded,
+                    start=np.expand_dims(start[comp_label], axis=-1),
+                    stop=np.expand_dims(stop[comp_label], axis=-1),
+                    get_density_function=density_partials[comp_label],
+                    **source_parameters[comp_label],
+                )
 
-            integrated_comp_emission = self._integration_scheme.integrate(
-                partial_integrand, [-1, 1]
-            )
-
-        # Convert the integral from [-1, 1] back to [start, stop].
-        integrated_comp_emission *= 0.5 * (stop - start)
+                integrated_comp_emission[idx] = (
+                    self._integration_scheme.integrate(comp_integrand, [-1, 1])
+                    * 0.5
+                    * (stop[comp_label] - start[comp_label])
+                )
 
         emission = np.zeros(
             (

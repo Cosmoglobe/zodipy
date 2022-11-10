@@ -13,37 +13,49 @@ from zodipy._constants import (
     R_MARS,
     R_EOS,
     R_THEMIS,
+    R_0,
 )
 from zodipy._ipd_comps import ComponentLabel
 
-# Mapping of components to their inner and outer cutoff. None means that there is no
-# inner cutoff and that the line of sight starts at the observer.
-COMPONENT_CUTOFFS: dict[ComponentLabel, float] = {
-    ComponentLabel.CLOUD: R_JUPITER,
-    ComponentLabel.BAND1: R_JUPITER,
-    ComponentLabel.BAND2: R_JUPITER,
-    ComponentLabel.BAND3: R_JUPITER,
-    ComponentLabel.RING: R_JUPITER,
-    ComponentLabel.FEATURE: R_JUPITER,
-    ComponentLabel.FAN: R_MARS,
-    ComponentLabel.COMET: R_KUIPER_BELT,
-    ComponentLabel.INTERSTELLAR: R_KUIPER_BELT,
-    ComponentLabel.INNER_NARROW_BAND: R_THEMIS,
-    ComponentLabel.OUTER_NARROW_BAND: R_EOS,
-    ComponentLabel.BROAD_BAND: R_ASTEROID_BELT,
-    ComponentLabel.RING_RRM: R_JUPITER,
-    ComponentLabel.FEATURE_RRM: R_JUPITER,
+DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+    ComponentLabel.CLOUD: (R_0, R_JUPITER),
+    ComponentLabel.BAND1: (R_0, R_JUPITER),
+    ComponentLabel.BAND2: (R_0, R_JUPITER),
+    ComponentLabel.BAND3: (R_0, R_JUPITER),
+    ComponentLabel.RING: (R_EARTH - 0.2, R_EARTH + 0.2),
+    ComponentLabel.FEATURE: (R_EARTH - 0.2, R_EARTH + 0.2),
+}
+
+RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+    ComponentLabel.FAN: (R_0, R_MARS),
+    ComponentLabel.COMET: (R_MARS, R_KUIPER_BELT),
+    ComponentLabel.INTERSTELLAR: (R_0, R_KUIPER_BELT),
+    ComponentLabel.INNER_NARROW_BAND: (R_MARS, R_THEMIS),
+    ComponentLabel.OUTER_NARROW_BAND: (R_MARS, R_EOS),
+    ComponentLabel.BROAD_BAND: (R_MARS, R_ASTEROID_BELT),
+    ComponentLabel.RING_RRM: DIRBE_CUTOFFS[ComponentLabel.RING],
+    ComponentLabel.FEATURE_RRM: DIRBE_CUTOFFS[ComponentLabel.FEATURE],
 }
 
 
-def get_distance_from_obs_to_cutoff(
+COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS}
+
+
+def get_sphere_intersection(
     obs_pos: npt.NDArray[np.float64],
     unit_vectors: npt.NDArray[np.float64],
-    cutoff: float,
+    cutoff: float | np.float64,
 ) -> npt.NDArray[np.float64]:
+    """
+    Given the observer position, return distance from the observer to the
+    intersection between the line of sights and a heliocentric sphere with radius cutoff.
+    """
 
     x, y, z = obs_pos.flatten()
-    r = np.sqrt(x**2 + y**2 + z**2)
+    r_obs = np.sqrt(x**2 + y**2 + z**2)
+
+    if r_obs > cutoff:
+        return np.asarray([np.finfo(float).eps])
 
     u_x, u_y, u_z = unit_vectors
     lon = np.arctan2(u_y, u_x)
@@ -51,33 +63,28 @@ def get_distance_from_obs_to_cutoff(
 
     cos_lat = np.cos(lat)
     b = 2 * (x * cos_lat * np.cos(lon) + y * cos_lat * np.sin(lon))
-    c = -np.abs(r**2 - cutoff**2)
+    c = r_obs**2 - cutoff**2
 
     q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
 
     return np.maximum(q, c / q)
 
 
-def get_radial_line_of_sight_cutoff(
+def get_line_of_sight_start_and_stop_distances(
     components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
     obs_pos: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> tuple[
+    dict[ComponentLabel, npt.NDArray[np.float64]],
+    dict[ComponentLabel, npt.NDArray[np.float64]],
+]:
 
-    start = np.asarray([np.finfo(float).eps])
-    cutoffs = [COMPONENT_CUTOFFS[component] for component in components]
-    if len(set(cutoffs)) == 1:
-        stop = get_distance_from_obs_to_cutoff(
-            obs_pos=obs_pos,
-            unit_vectors=unit_vectors,
-            cutoff=cutoffs[1],
-        )
-    else:
-        stop = np.asarray(
-            [
-                get_distance_from_obs_to_cutoff(obs_pos, unit_vectors, cutoff)
-                for cutoff in cutoffs
-            ]
-        )
-
+    start = {
+        comp: get_sphere_intersection(obs_pos, unit_vectors, COMPONENT_CUTOFFS[comp][0])
+        for comp in components
+    }
+    stop = {
+        comp: get_sphere_intersection(obs_pos, unit_vectors, COMPONENT_CUTOFFS[comp][1])
+        for comp in components
+    }
     return start, stop

@@ -12,7 +12,6 @@ from zodipy.zodipy import Zodipy
 
 from ._strategies import (
     angles,
-    any_obs,
     freq,
     model,
     nside,
@@ -321,6 +320,7 @@ def test_multiprocessing() -> None:
         obs_time=time,
         obs=observer,
     )
+
     emission_binned_ang_parallel = model_parallel.get_binned_emission_ang(
         frequency,
         theta=theta,
@@ -329,7 +329,8 @@ def test_multiprocessing() -> None:
         obs_time=time,
         obs=observer,
     )
-    assert np.array_equal(emission_binned_ang, emission_binned_ang_parallel)
+
+    assert np.allclose(emission_binned_ang.value, emission_binned_ang_parallel.value)
 
 
 @given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())

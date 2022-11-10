@@ -1,6 +1,5 @@
 import astropy.units as u
 
-from zodipy._constants import R_ASTEROID_BELT, R_JUPITER, R_KUIPER_BELT, R_MARS
 from zodipy._ipd_comps import ComponentLabel
 
 T_0_DIRBE = 286
@@ -11,8 +10,7 @@ T_0_RRM = {
     ComponentLabel.COMET: 255,
     ComponentLabel.INNER_NARROW_BAND: 255,
     ComponentLabel.OUTER_NARROW_BAND: 255,
-    ComponentLabel.BROAD_BAND: 295,  # -
-    # ComponentLabel.BROAD_BAND: 255,
+    ComponentLabel.BROAD_BAND: 295,
     ComponentLabel.RING_RRM: T_0_DIRBE,
     ComponentLabel.FEATURE_RRM: T_0_DIRBE,
     ComponentLabel.INTERSTELLAR: 305,
@@ -22,7 +20,6 @@ DELTA_RMM = {
     ComponentLabel.COMET: 0.5,
     ComponentLabel.INNER_NARROW_BAND: 0.5,
     ComponentLabel.OUTER_NARROW_BAND: 0.5,
-    # ComponentLabel.BROAD_BAND: 0.5, # *
     ComponentLabel.BROAD_BAND: 0.4,
     ComponentLabel.RING_RRM: DELTA_DIRBE,
     ComponentLabel.FEATURE_RRM: DELTA_DIRBE,
