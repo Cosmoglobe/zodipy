@@ -11,8 +11,8 @@ T_0_RRM = {
     ComponentLabel.INNER_NARROW_BAND: 255,
     ComponentLabel.OUTER_NARROW_BAND: 255,
     ComponentLabel.BROAD_BAND: 295,
-    ComponentLabel.RING_RRM: T_0_DIRBE,
-    ComponentLabel.FEATURE_RRM: T_0_DIRBE,
+    ComponentLabel.RING_RRM: 255,
+    ComponentLabel.FEATURE_RRM: 255,
     ComponentLabel.INTERSTELLAR: 305,
 }
 DELTA_RMM = {
@@ -21,8 +21,8 @@ DELTA_RMM = {
     ComponentLabel.INNER_NARROW_BAND: 0.5,
     ComponentLabel.OUTER_NARROW_BAND: 0.5,
     ComponentLabel.BROAD_BAND: 0.4,
-    ComponentLabel.RING_RRM: DELTA_DIRBE,
-    ComponentLabel.FEATURE_RRM: DELTA_DIRBE,
+    ComponentLabel.RING_RRM: 0.5,
+    ComponentLabel.FEATURE_RRM: 0.5,
     ComponentLabel.INTERSTELLAR: 0.4,
 }
 

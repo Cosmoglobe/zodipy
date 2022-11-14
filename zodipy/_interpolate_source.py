@@ -91,10 +91,10 @@ def get_source_parameters_rmm(
         bandpass.switch_convention()
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
-    calibration = u.Quantity(model.calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)
     calibration = interp1d(
-        x=model.spectrum.value, y=calibration, fill_value="extrapolate"
+        x=model.spectrum.value, y=model.calibration, fill_value="extrapolate"
     )(bandpass.frequencies.value)
+    calibration = u.Quantity(calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)
 
     if bandpass.frequencies.size > 1:
         calibration = bandpass.integrate(calibration)
@@ -105,7 +105,7 @@ def get_source_parameters_rmm(
         source_parameters[comp_label]["delta"] = model.delta[comp_label]
 
     source_parameters["common"] = {"calibration": calibration}
-
+    print(source_parameters)
     return source_parameters
 
 
