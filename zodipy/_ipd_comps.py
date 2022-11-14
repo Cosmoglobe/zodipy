@@ -166,6 +166,7 @@ class Fan(Component):
     Z_0: float
     Q: float
     P: float
+    R_outer: float
 
 
 @dataclass
@@ -175,6 +176,8 @@ class Comet(Component):
     gamma: float
     P: float
     amp: float
+    R_inner: float
+    R_outer: float
 
 
 @dataclass
@@ -191,7 +194,8 @@ class NarrowBand(Component):
     gamma: float
     A: float
     G: float
-    r: float
+    R_inner: float
+    R_outer: float
     beta_nb: float
     beta_nb_rad: float = field(init=False)
 
@@ -206,7 +210,8 @@ class BroadBand(Component):
 
     gamma: float
     A: float
-    r: float
+    R_inner: float
+    R_outer: float
     beta_bb: float
     sigma_bb: float
     beta_bb_rad: float = field(init=False)

@@ -5,17 +5,10 @@ from typing import Iterable
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._constants import (
-    R_ASTEROID_BELT,
-    R_EARTH,
-    R_JUPITER,
-    R_KUIPER_BELT,
-    R_MARS,
-    R_EOS,
-    R_THEMIS,
-    R_0,
-)
+from zodipy._constants import R_EARTH, R_JUPITER, R_KUIPER_BELT, R_0
+
 from zodipy._ipd_comps import ComponentLabel
+from zodipy.comps import RRM
 
 DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),
@@ -27,12 +20,24 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
 }
 
 RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
-    ComponentLabel.FAN: (R_0, R_MARS),
-    ComponentLabel.COMET: (R_MARS, R_KUIPER_BELT),
+    ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),
+    ComponentLabel.OUTER_NARROW_BAND: (
+        RRM[ComponentLabel.OUTER_NARROW_BAND].R_inner,
+        RRM[ComponentLabel.OUTER_NARROW_BAND].R_outer,
+    ),
+    ComponentLabel.BROAD_BAND: (
+        RRM[ComponentLabel.BROAD_BAND].R_inner,
+        RRM[ComponentLabel.BROAD_BAND].R_outer,
+    ),
+    ComponentLabel.COMET: (
+        RRM[ComponentLabel.COMET].R_inner,
+        RRM[ComponentLabel.COMET].R_outer,
+    ),
     ComponentLabel.INTERSTELLAR: (R_0, R_KUIPER_BELT),
-    ComponentLabel.INNER_NARROW_BAND: (R_MARS, R_THEMIS),
-    ComponentLabel.OUTER_NARROW_BAND: (R_MARS, R_EOS),
-    ComponentLabel.BROAD_BAND: (R_MARS, R_ASTEROID_BELT),
+    ComponentLabel.INNER_NARROW_BAND: (
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_outer,
+    ),
     ComponentLabel.RING_RRM: DIRBE_CUTOFFS[ComponentLabel.RING],
     ComponentLabel.FEATURE_RRM: DIRBE_CUTOFFS[ComponentLabel.FEATURE],
 }

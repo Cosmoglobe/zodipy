@@ -10,7 +10,7 @@ SPECIFIC_INTENSITY_UNITS = u.W / u.Hz / u.m**2 / u.sr
 
 R_0 = np.finfo(np.float64).eps
 R_MARS = 1.53
-R_VERITAS = 3.17
+R_VERITAS = 2.16
 R_EOS = 3.02
 R_THEMIS = 3.14
 R_EARTH = 1
