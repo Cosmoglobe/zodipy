@@ -15,11 +15,7 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
-from zodipy._constants import (
-    R_MARS,
-    R_KUIPER_BELT,
-    R_ASTEROID_BELT,
-)
+from zodipy._constants import R_MARS, R_KUIPER_BELT, R_ASTEROID_BELT, R_JUPITER
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(
@@ -106,70 +102,65 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=1.5,
-        Omega=78,
-        P=2.13,
-        Q=10.7,
-        # P=8,
-        # Q=2.85,
-        gamma=1.3,
-        Z_0=0.06,
+        i=1.5,  # *
+        Omega=78,  # *
+        P=2.13,  # *
+        Q=10.7,  # *
+        gamma=1.3,  # *
+        Z_0=0.06,  # *
         R_outer=R_MARS,
     ),
     ComponentLabel.INNER_NARROW_BAND: NarrowBand(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=1.5,  # DONT KNOW THESE
-        Omega=78,  # DONT KNOW THESE
-        A=0.032,
-        # A=0.03,
-        gamma=1,
+        i=1.5,  # *
+        Omega=78,  # *
+        A=0.032,  # * #AMP1
+        gamma=1,  # *
         beta_nb=1.42,  # themis
-        G=0.5,
-        R_inner=R_MARS,
-        R_outer=R_ASTEROID_BELT,
+        G=0.5,  # *
+        R_inner=R_MARS,  # *
+        R_outer=R_ASTEROID_BELT,  # *
     ),
     ComponentLabel.OUTER_NARROW_BAND: NarrowBand(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=1.5,  # DONT KNOW THESE
-        Omega=78,  # DONT KNOW THESE
-        A=0.04,
-        # A=0.039,
-        gamma=1,
-        # beta_nb=10.14,  # eos
+        i=1.5,  # *
+        Omega=78,  # *
+        A=0.04,  # * #AMP2
+        gamma=1,  # *
         beta_nb=9.35,  # veritas
-        G=0.12,
-        R_inner=R_MARS,
-        R_outer=R_ASTEROID_BELT,
+        G=0.12,  # *
+        R_inner=R_MARS,  # *
+        R_outer=R_ASTEROID_BELT,  # *
     ),
     ComponentLabel.BROAD_BAND: BroadBand(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=2.6,
-        Omega=110,
-        A=0.051,
-        gamma=1,
+        i=2.6,  # *
+        Omega=110,  # *
+        A=0.051,  # *
+        gamma=1,  # *
         beta_bb=9.35,
         # beta_bb=9.3,
         sigma_bb=6,
-        R_inner=R_MARS,
-        R_outer=R_ASTEROID_BELT,
+        R_inner=R_MARS,  # *
+        R_outer=R_ASTEROID_BELT,  # *
     ),
     ComponentLabel.COMET: Comet(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0,  # DONT KNOW THESE
-        Omega=0,  # DONT KNOW THESE
-        P=2.5,
-        gamma=1,
-        amp=0.37,
-        R_inner=R_MARS,
-        R_outer=R_KUIPER_BELT,
+        i=0,  # *
+        Omega=0,  # *
+        P=2.5,  # *
+        gamma=1,  # *
+        amp=0.37,  # *
+        R_inner=R_MARS,  # *
+        R_outer=R_KUIPER_BELT,  # *
     ),
     ComponentLabel.INTERSTELLAR: Interstellar(
         x_0=0.0,

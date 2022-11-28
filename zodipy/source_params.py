@@ -31,6 +31,7 @@ SPECTRUM_DIRBE = u.Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.
 SPECTRUM_IRAS = u.Quantity([12, 25, 60, 100], u.micron)
 
 CALIBRATION_RRM = (2.45, 2.42, 2.24, 1.97)
+OFFSET_RRM = (0.48, -1.32, 0.13, -1.47)
 
 EMISSIVITY_PLANCK_13 = {
     ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),

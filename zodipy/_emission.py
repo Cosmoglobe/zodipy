@@ -90,7 +90,6 @@ def get_comp_emission_at_step_rrm(
         T=temperature,
     )
     emission = blackbody_emission * get_density_function(X_helio)
-
     return emission * calibration
 
 

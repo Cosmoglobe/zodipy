@@ -21,6 +21,10 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
 
 RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
     ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),
+    ComponentLabel.INNER_NARROW_BAND: (
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_outer,
+    ),
     ComponentLabel.OUTER_NARROW_BAND: (
         RRM[ComponentLabel.OUTER_NARROW_BAND].R_inner,
         RRM[ComponentLabel.OUTER_NARROW_BAND].R_outer,
@@ -34,10 +38,6 @@ RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
         RRM[ComponentLabel.COMET].R_outer,
     ),
     ComponentLabel.INTERSTELLAR: (R_0, R_KUIPER_BELT),
-    ComponentLabel.INNER_NARROW_BAND: (
-        RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,
-        RRM[ComponentLabel.INNER_NARROW_BAND].R_outer,
-    ),
     ComponentLabel.RING_RRM: DIRBE_CUTOFFS[ComponentLabel.RING],
     ComponentLabel.FEATURE_RRM: DIRBE_CUTOFFS[ComponentLabel.FEATURE],
 }

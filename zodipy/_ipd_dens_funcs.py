@@ -3,13 +3,10 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
-
-import astropy.units as u
+from typing import Any, Callable, Mapping, Protocol, Sequence
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._constants import R_ASTEROID_BELT, R_JUPITER, R_KUIPER_BELT, R_MARS
 from zodipy._ipd_comps import (
     Band,
     BroadBand,
@@ -179,7 +176,7 @@ def compute_feature_density(
     return n_0 * np.exp(-exp_term)
 
 
-def compute_fan_density(
+def compute_fan_density(  # *
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -211,9 +208,9 @@ def compute_fan_density(
     beta = np.arcsin(sin_beta)
     Z_fan_abs = np.abs(Z_fan)
     epsilon = np.where(Z_fan_abs < Z_0, 2 - (Z_fan_abs / Z_0), 1)
-    f = np.cos(beta) ** Q * np.exp(-P * np.sin(np.abs(beta)) ** epsilon)
+    f = np.cos(beta) ** Q * np.exp(-P * np.sin(np.abs(beta) ** epsilon))
 
-    density[indices] = R_fan_filtered**-gamma * f
+    density[indices] = (R_fan_filtered ** (-gamma)) * f
     return density
 
 
@@ -246,10 +243,9 @@ def compute_comet_density(
         + X_comet_filtered[2] * cos_i_rad
     )
     sin_beta = Z_comet / R_comet_filtered
-    beta = np.arcsin(sin_beta)
-    f = np.exp(-P * np.abs(np.sin(beta)))
+    f = np.exp(-P * np.abs(sin_beta))
 
-    density[indices] = R_comet_filtered**-gamma * f * amp
+    density[indices] = amp * (R_comet_filtered ** (-gamma)) * f
     return density
 
 
@@ -296,7 +292,7 @@ def compute_narrow_band_density(
     beta_abs = np.abs(beta)
     f = np.where(beta_abs < beta_nb_rad, np.exp(G * (beta_abs - beta_nb_rad)), 0)
 
-    density[indices] = (A * (R_nb_filtered / R_outer) ** -gamma) * f
+    density[indices] = A * ((R_nb_filtered / R_outer) ** (-gamma)) * f
     return density
 
 
@@ -334,7 +330,7 @@ def compute_broad_band_density(
     f = np.exp(-((beta - beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)) + np.exp(
         -((beta + beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)
     )
-    density[indices] = A * (R_bb_filtered / R_outer) ** (-gamma) * f
+    density[indices] = A * ((R_bb_filtered / R_outer) ** (-gamma)) * f
     return density
 
 

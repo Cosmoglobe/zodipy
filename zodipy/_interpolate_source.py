@@ -105,7 +105,7 @@ def get_source_parameters_rmm(
         source_parameters[comp_label]["delta"] = model.delta[comp_label]
 
     source_parameters["common"] = {"calibration": calibration}
-    print(source_parameters)
+
     return source_parameters
 
 
