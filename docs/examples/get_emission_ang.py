@@ -18,8 +18,8 @@ emission = model.get_emission_ang(
 )
 
 
-plt.plot(emission)
+plt.plot(theta, emission)
 plt.xlabel("Theta [rad]")
 plt.ylabel("Emission [MJy/sr]")
-# plt.savefig("../img/timestream.png", dpi=300)
+plt.savefig("../img/timestream.png", dpi=300)
 plt.show()

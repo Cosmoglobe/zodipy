@@ -1,8 +1,7 @@
 ## Timestreams
 Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission. 
 Note that since ZodiPy assumes a constant observer position over the input pointing sequence, the output
-will not be *real* timestreams, but for small enough time intervals ($\Delta t$ < 1 day) the error is 
-negligable.
+will not be *real* timestreams, but for small enough time intervals the error is negligible.
 
 
 ### Emission along a meridian
@@ -19,7 +18,7 @@ DIRBE interplanetary dust model.
 !!! note
     ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, 
     the true zodiacal emission signal will move along the ecliptic on the sky by roughly one degree each day. 
-    To account for this effect, the full pointing sequence of an experiment must be chunked into small 
+    To account for this effect, the full pointing sequence of an experiment should be chunked into small 
     subsequences with timescales corresponding to at maximum a day.
 
 
@@ -75,13 +74,11 @@ read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/ab
 Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
 what the emission looks like over some instrument bandpass. ZodiPy will accept a sequence of frequencies to the `freq`
 argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
-Note that the bandpass weights must be given in power units (even if it is normalized), i.e. they must be in units 
-compatible with `Jy/sr`. A top hat
-bandpass is assumed if a sequence of frequencies are used without providing weights.
+Note that the bandpass weights must be in spectral radiance units (Jy/sr), even though the weights them self are unitless. A top hat bandpass is assumed if a sequence of frequencies are used without providing weights.
 ```python hl_lines="32 33"
 {!examples/get_bandpass_integrated_emission.py!}
 ```
-![Generated Bandpass](img/random_bandpass.png)
+![Generated Bandpass](img/bandpass.png)
 ![Center frequency emission](img/center_freq.png)
 ![Bandpass integrated emission](img/bandpass_integrated.png)
 

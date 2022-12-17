@@ -41,7 +41,7 @@ What's going on here:
 - The first argument to the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method, `25 * u.micron`, specifies the wavelength (or frequency) of the simulated observation. Note that we use Astropy units for many of the input arguments.
 - `theta` and `phi` represent the pointing of the observation (co-latitude and longitude). In this example we observe three sky coordinates.
 - `obs_time` represents the time of observation which is used internally to compute the position of the observer and all other required solar system bodies.
-- `obs` represents the observer, and must be an solar system observer supported by the [Astropy ephemeris](https://docs.astropy.org/en/stable/coordinates/solarsystem.html) used internally.
+- `obs` represents the observer, and must be an solar system observer supported by the [Astropy ephemeris](https://docs.astropy.org/en/stable/coordinates/solarsystem.html) used internally. If we wish to be more specific about the observer position, we can use the `obs_pos` keyword instead of `obs`, which takes in a heliocentric cartesian position in units of AU.
 - `lonlat` is a boolean which converts the convention of `theta` and `phi` from co-latitude and longitude to longitude and latitude.
 
 For more information on using ZodiPy, see [the usage section](usage.md).
