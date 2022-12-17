@@ -245,7 +245,7 @@ def compute_comet_density(
     sin_beta = Z_comet / R_comet_filtered
     f = np.exp(-P * np.abs(sin_beta))
 
-    density[indices] = amp * (R_comet_filtered ** (-gamma)) * f
+    density[indices] = amp * ((R_comet_filtered) ** (-gamma)) * f
     return density
 
 
@@ -288,8 +288,8 @@ def compute_narrow_band_density(
     )
 
     sin_beta = Z_nb / R_nb_filtered
-    beta = np.arcsin(sin_beta)
-    beta_abs = np.abs(beta)
+    beta_abs = np.abs(np.arcsin(sin_beta))
+
     f = np.where(beta_abs < beta_nb_rad, np.exp(G * (beta_abs - beta_nb_rad)), 0)
 
     density[indices] = A * ((R_nb_filtered / R_outer) ** (-gamma)) * f
