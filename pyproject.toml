@@ -14,7 +14,7 @@ healpy = "^1.15.0"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
 typing-extensions = "^4.1.1"
-quadpy = "^0.16.13"
+quadpy = "^0.16.17"
 numba = "^0.56.2"
 
 [tool.poetry.dev-dependencies]
