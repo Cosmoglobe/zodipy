@@ -17,10 +17,8 @@ from zodipy._bandpass import validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
-from zodipy._ipd_dens_funcs import (
-    construct_density_partials,
-    construct_density_partials_comps,
-)
+from zodipy._ipd_dens_funcs import construct_density_partials_comps
+from zodipy._ipd_comps import ComponentLabel
 from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
 
 from zodipy._sky_coords import get_obs_and_earth_positions
@@ -99,6 +97,34 @@ class Zodipy:
         """Returns a list of available observers given an ephemeris."""
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
+
+    def get_parameters(self) -> dict:
+        """Returns a dictionary containing the interplanetary dust model parameters."""
+
+        return self.ipd_model.to_dict()
+
+    def update_parameters(self, parameters: dict) -> None:
+        """Updates the interplanetary dust model parameters.
+
+        Args:
+            theta: Dictionary of parameters to update. The keys must be the names of the
+                parameters as defined in the model. To get the parameters dict of an
+                existing model, use `Zodipy("dirbe").ipd_model.to_dict()`.
+
+        """
+
+        _dict = parameters.copy()
+        _dict["comps"] = {}
+        for key, value in parameters.items():
+            if key == "comps":
+                for comp_key, comp_value in value.items():
+                    _dict["comps"][ComponentLabel(comp_key)] = type(
+                        self.ipd_model.comps[ComponentLabel(comp_key)]
+                    )(**comp_value)
+            elif isinstance(value, dict):
+                _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
+
+        self.ipd_model = self.ipd_model.__class__(**_dict)
 
     def get_emission_ang(
         self,

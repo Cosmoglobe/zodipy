@@ -15,6 +15,24 @@ class InterplanetaryDustModel(ABC):
     comps: Mapping[ComponentLabel, Component]
     spectrum: FrequencyOrWavelength
 
+    def to_dict(self) -> dict:
+        _dict = {}
+        for key, value in vars(self).items():
+            if key == "comps":
+                _dict[key] = {}
+                for comp_key, comp_value in value.items():
+                    _dict[key][comp_key.value] = {
+                        k: v
+                        for k, v in vars(comp_value).items()
+                        if comp_value.__dataclass_fields__[k].init
+                    }
+            elif isinstance(value, dict):
+                _dict[key] = {k.value: v for k, v in value.items()}
+            else:
+                _dict[key] = value
+
+        return _dict
+
 
 @dataclass
 class Kelsall(InterplanetaryDustModel):
