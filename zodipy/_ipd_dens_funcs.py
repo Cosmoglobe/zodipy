@@ -278,6 +278,7 @@ def compute_narrow_band_density(
 
     density = np.zeros_like(R_nb)
     indices = np.logical_and(R_nb >= R_inner, R_nb <= R_outer)
+
     X_nb_filtered = X_nb[:, indices]
     R_nb_filtered = R_nb[indices]
 
@@ -290,7 +291,9 @@ def compute_narrow_band_density(
     sin_beta = Z_nb / R_nb_filtered
     beta_abs = np.abs(np.arcsin(sin_beta))
 
-    f = np.where(beta_abs < beta_nb_rad, np.exp(G * (beta_abs - beta_nb_rad)), 0)
+    f = np.where(
+        beta_abs < beta_nb_rad, np.exp(-G * np.rad2deg(beta_nb_rad - beta_abs)), 0
+    )
 
     density[indices] = A * ((R_nb_filtered / R_outer) ** (-gamma)) * f
     return density
