@@ -3,7 +3,7 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Literal, Sequence
+from typing import Literal, Sequence, TypeAlias
 
 import astropy.units as u
 import healpy as hp
@@ -29,6 +29,8 @@ from zodipy.model_registry import model_registry
 
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
+
+ParameterDict: TypeAlias = dict
 
 
 class Zodipy:
@@ -98,18 +100,18 @@ class Zodipy:
 
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
-    def get_parameters(self) -> dict:
+    def get_parameters(self) -> ParameterDict:
         """Returns a dictionary containing the interplanetary dust model parameters."""
 
         return self.ipd_model.to_dict()
 
-    def update_parameters(self, parameters: dict) -> None:
+    def update_parameters(self, parameters: ParameterDict) -> None:
         """Updates the interplanetary dust model parameters.
 
         Args:
-            theta: Dictionary of parameters to update. The keys must be the names of the
-                parameters as defined in the model. To get the parameters dict of an
-                existing model, use `Zodipy("dirbe").ipd_model.to_dict()`.
+            parameters: Dictionary of parameters to update. The keys must be the names
+                of the parameters as defined in the model. To get the parameters dict
+                of an existing model, use `Zodipy("dirbe").get_parameters()`.
 
         """
 
