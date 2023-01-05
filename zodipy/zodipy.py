@@ -3,7 +3,7 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Literal, Sequence, TypeAlias
+from typing import Literal, Sequence
 
 import astropy.units as u
 import healpy as hp
@@ -30,7 +30,7 @@ from zodipy.model_registry import model_registry
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
 
-ParameterDict: TypeAlias = dict
+ParameterDict = dict
 
 
 class Zodipy:
