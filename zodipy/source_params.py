@@ -1,12 +1,37 @@
 import astropy.units as u
 
-from ._ipd_comps import ComponentLabel
+from zodipy._ipd_comps import ComponentLabel
 
-T_0_DIRBE = 286  # K
+T_0_DIRBE = 286
 DELTA_DIRBE = 0.46686259861486573
+
+T_0_RRM = {
+    ComponentLabel.FAN: 255,
+    ComponentLabel.COMET: 255,
+    ComponentLabel.INNER_NARROW_BAND: 255,
+    ComponentLabel.OUTER_NARROW_BAND: 255,
+    ComponentLabel.BROAD_BAND: 295,
+    ComponentLabel.RING_RRM: 255,
+    ComponentLabel.FEATURE_RRM: 255,
+    ComponentLabel.INTERSTELLAR: 305,
+}
+DELTA_RMM = {
+    ComponentLabel.FAN: 0.5,
+    ComponentLabel.COMET: 0.5,
+    ComponentLabel.INNER_NARROW_BAND: 0.5,
+    ComponentLabel.OUTER_NARROW_BAND: 0.5,
+    ComponentLabel.BROAD_BAND: 0.4,
+    ComponentLabel.RING_RRM: 0.5,
+    ComponentLabel.FEATURE_RRM: 0.5,
+    ComponentLabel.INTERSTELLAR: 0.4,
+}
 
 SPECTRUM_PLANCK = u.Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
 SPECTRUM_DIRBE = u.Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
+SPECTRUM_IRAS = u.Quantity([12, 25, 60, 100], u.micron)
+
+CALIBRATION_RRM = (2.45, 2.42, 2.24, 1.97)
+OFFSET_RRM = (0.48, -1.32, 0.13, -1.47)
 
 EMISSIVITY_PLANCK_13 = {
     ComponentLabel.CLOUD: (0.003, -0.014, 0.031, 0.168, 0.223, 0.301),

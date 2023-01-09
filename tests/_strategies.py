@@ -27,6 +27,7 @@ from hypothesis.strategies import (
 )
 
 import zodipy
+from zodipy._line_of_sight import COMPONENT_CUTOFFS
 
 MIN_FREQ = u.Quantity(10, u.GHz)
 MAX_FREQ = u.Quantity(0.1, u.micron).to(u.GHz, equivalencies=u.spectral())
@@ -200,11 +201,16 @@ def obs(draw: DrawFn, model: zodipy.Zodipy, obs_time: Time) -> str:
             )
         return u.Quantity(np.linalg.norm(obs_pos.value), u.AU)
 
-    los_dist_cut = model.los_dist_cut
+    los_dist_cut = min(
+        [COMPONENT_CUTOFFS[comp][1] for comp in model.ipd_model.comps.keys()],
+    )
+    if isinstance(los_dist_cut, dict):
+        los_dist_cut = min(list(los_dist_cut.values()))
+
     obs_list = model.supported_observers
     return draw(
         sampled_from(obs_list).filter(
-            lambda obs: los_dist_cut > get_obs_dist(obs, obs_time)
+            lambda obs: los_dist_cut > get_obs_dist(obs, obs_time).value
         )
     )
 
@@ -218,7 +224,6 @@ MODEL_STRATEGY_MAPPINGS: dict[str, SearchStrategy[Any]] = {
     "model": sampled_from(AVAILABLE_MODELS),
     "gauss_quad_degree": integers(min_value=1, max_value=200),
     "extrapolate": booleans(),
-    "los_dist_cut": quantities(min_value=3, max_value=50, unit=u.AU),
     "solar_cut": quantities(min_value=0, max_value=360, unit=u.deg),
 }
 

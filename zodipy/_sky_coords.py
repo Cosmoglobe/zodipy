@@ -1,13 +1,3 @@
-"""Functions that extract the positions of Solar System bodies using the astropy
-`solar_system_ephemeris` API.
-
-The lagrange point SEMB-L2 is not included in any of the current available
-ephemerides. We implement an approximation to its position, assuming that 
-SEMB-L2 is at all times located at a fixed distance from Earth along the vector 
-pointing to Earth from the Sun.
-"""
-
-
 from typing import Tuple, Union
 
 import astropy.units as u
@@ -16,8 +6,7 @@ import numpy.typing as npt
 from astropy.coordinates import HeliocentricMeanEcliptic, get_body
 from astropy.time import Time
 
-DISTANCE_FROM_EARTH_TO_L2 = u.Quantity(0.009896235034000056, u.AU)
-DISTANCE_TO_JUPITER = u.Quantity(5.2, u.AU)
+from zodipy._constants import DISTANCE_FROM_EARTH_TO_L2
 
 
 @u.quantity_input
@@ -26,13 +15,17 @@ def get_obs_and_earth_positions(
 ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Returns the position of the observer and the Earth in broadcastable shapes
     (3, `n_pointing`, `n_gauss_quad_degree`).
-    """
 
+    The lagrange point SEMB-L2 is not included in any of the current available
+    ephemerides. We implement an approximation to its position, assuming that
+    SEMB-L2 is at all times located at a fixed distance from Earth along the vector
+    pointing to Earth from the Sun.
+    """
     earth_position = _get_earth_position(obs_time)
     if obs_pos is None:
         obs_position = _get_observer_position(obs, obs_time, earth_position)
     else:
-        obs_position = obs_pos
+        obs_position = obs_pos.to(u.AU)
 
     obs_position = obs_position.reshape(3, 1, 1)
     earth_position = earth_position.reshape(3, 1, 1)

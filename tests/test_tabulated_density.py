@@ -34,8 +34,8 @@ def test_tabulated_density(
     grid_array = np.asarray(grid_regular)
     grid = random.choice([grid_array, grid_regular])
 
-    assert tabulate_density(grid, model=model.ipd_model.name).shape == (
-        model.ipd_model.n_comps,
+    assert tabulate_density(grid, model=model.model).shape == (
+        len(model.ipd_model.comps),
         n_grid_points,
         n_grid_points,
         n_grid_points,

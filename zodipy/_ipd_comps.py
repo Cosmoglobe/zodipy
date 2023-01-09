@@ -158,6 +158,81 @@ class Feature(Component):
         self.sigma_theta_rad = np.radians(self.sigma_theta)
 
 
+@dataclass
+class Fan(Component):
+    """RR May Fan component."""
+
+    gamma: float
+    Z_0: float
+    Q: float
+    P: float
+    R_outer: float
+
+
+@dataclass
+class Comet(Component):
+    """RR May cometary component."""
+
+    gamma: float
+    P: float
+    amp: float
+    R_inner: float
+    R_outer: float
+
+
+@dataclass
+class Interstellar(Component):
+    """RR May cometary component."""
+
+    amp: float
+
+
+@dataclass
+class NarrowBand(Component):
+    """RR May narrow band component."""
+
+    gamma: float
+    A: float
+    G: float
+    R_inner: float
+    R_outer: float
+    beta_nb: float
+    beta_nb_rad: float = field(init=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.beta_nb_rad = np.radians(self.beta_nb)
+
+
+@dataclass
+class BroadBand(Component):
+    """RR May broad band component."""
+
+    gamma: float
+    A: float
+    R_inner: float
+    R_outer: float
+    beta_bb: float
+    sigma_bb: float
+    beta_bb_rad: float = field(init=False)
+    sigma_bb_rad: float = field(init=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.beta_bb_rad = np.radians(self.beta_bb)
+        self.sigma_bb_rad = np.radians(self.sigma_bb)
+
+
+@dataclass
+class RingRRM(Ring):
+    A: float
+
+
+@dataclass
+class FeatureRRM(Feature):
+    A: float
+
+
 class ComponentLabel(Enum):
     """Labels representing the components in the DIRBE model."""
 
@@ -167,3 +242,11 @@ class ComponentLabel(Enum):
     BAND3 = "band3"
     RING = "ring"
     FEATURE = "feature"
+    FAN = "fan"
+    COMET = "comet"
+    INTERSTELLAR = "interstellar"
+    INNER_NARROW_BAND = "inner_narrow_band"
+    OUTER_NARROW_BAND = "outer_narrow_band"
+    BROAD_BAND = "broad_band"
+    RING_RRM = "ring_rrm"
+    FEATURE_RRM = "feature_rrm"

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/Cosmoglobe/zodipy"
-version = "0.7.5"
+version = "0.8.0"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -14,8 +14,7 @@ healpy = "^1.15.0"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
 typing-extensions = "^4.1.1"
-quadpy = "^0.16.13"
-numba = "^0.56.2"
+quadpy = "^0.16.17"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -23,16 +22,15 @@ black = "^22.3.0"
 mypy = "^0.910"
 tox = "^3.24.3"
 mkdocs = "^1.2.1"
-mkdocstrings = {version = "^0.15.2", python = ">=3.8,<4.0"}
-mkdocs-material = "^7.1.10"
-Jinja2 = "<3.1.0"
-pygments =">=2.10, <2.12"
-pymdown-extensions = "<9.4"
+pymdown-extensions = "^9.4"
 markdown-include = "^0.6.0"
 pre-commit = "^2.19.0"
 hypothesis = "^6.47.5"
 coverage = "^6.4.1"
 pytest-cov = "^3.0.0"
+mkdocs-material = "^9.0.1"
+mkdocstrings = "^0.19.1"
+mkdocstrings-python = "^0.8.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

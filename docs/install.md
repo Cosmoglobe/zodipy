@@ -18,5 +18,4 @@ ZodiPy has the following dependencies (these are automatically downloaded alongs
 - [jplehem](https://pypi.org/project/jplephem/)
 - [numpy](https://numpy.org)
 - [quadpy](https://pypi.org/project/quadpy/)
-- [numba](https://numba.pydata.org)
 - [typing-extensions](https://pypi.org/project/typing-extensions/>)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-import numba
 import numpy as np
 import numpy.typing as npt
 from numpy.typing import NDArray
@@ -10,7 +9,6 @@ from numpy.typing import NDArray
 from ._constants import c, h, k_B
 
 
-@numba.njit(cache=True, fastmath=True)
 def get_blackbody_emission(
     freq: float | npt.NDArray[np.float64], T: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:
@@ -32,41 +30,6 @@ def get_blackbody_emission(
     term2 = np.expm1(((h * freq) / (k_B * T)))
 
     return term1 / term2
-
-
-@numba.njit(cache=True, fastmath=True)
-def get_bandpass_integrated_blackbody_emission(
-    freq: npt.NDArray[np.float64],
-    weights: npt.NDArray[np.float64],
-    T: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
-    """Returns the blackbody emission integrated over a bandpass.
-
-    Parameters
-    ----------
-    freq
-        Bandpass frequencies [Hz].
-    weights
-        Bandpass weights.
-    T
-        Temperature of the blackbody [K].
-
-    Returns
-    -------
-        Bandpass integrated blackbody emission [W / m^2 Hz sr].
-    """
-
-    n_freqs = freq.size
-    if n_freqs == 1:
-        return get_blackbody_emission(freq, T)
-
-    emission = np.zeros_like(T)
-    for idx in range(1, n_freqs):
-        previous = get_blackbody_emission(freq[idx - 1], T) * weights[idx - 1]
-        current = get_blackbody_emission(freq[idx], T) * weights[idx]
-        emission += (previous + current) * (freq[idx] - freq[idx - 1])
-
-    return emission * 0.5
 
 
 def get_dust_grain_temperature(
