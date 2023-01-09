@@ -315,7 +315,7 @@ python-versions = ">=3.5"
 name = "importlib-metadata"
 version = "6.0.0"
 description = "Read metadata from Python packages"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -364,14 +364,6 @@ numpy = "*"
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[[package]]
-name = "llvmlite"
-version = "0.39.1"
-description = "lightweight wrapper around basic LLVM functionality"
 category = "main"
 optional = false
 python-versions = ">=3.7"
@@ -636,19 +628,6 @@ python-versions = ">=3.7"
 
 [package.dependencies]
 numpy = ">=1.20.0"
-
-[[package]]
-name = "numba"
-version = "0.56.4"
-description = "compiling Python code using LLVM"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-importlib-metadata = {version = "*", markers = "python_version < \"3.9\""}
-llvmlite = ">=0.39.0dev0,<0.40"
-numpy = ">=1.18,<1.24"
 
 [[package]]
 name = "numpy"
@@ -1080,7 +1059,7 @@ python-versions = ">=3.7"
 name = "zipp"
 version = "3.11.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -1091,7 +1070,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8"
-content-hash = "dd95605dbf10f7608984c77508cc2aacde6769a3845ed2a2066258caaf134721"
+content-hash = "344e6d99ddc9bc363351dec0b167d445bba2181797169066e368abae60644fde"
 
 [metadata.files]
 astropy = []
@@ -1143,7 +1122,6 @@ jinja2 = [
 ]
 jplephem = []
 kiwisolver = []
-llvmlite = []
 markdown = [
     {file = "Markdown-3.3.7-py3-none-any.whl", hash = "sha256:f5da449a6e1c989a4cea2631aa8ee67caa5a2ef855d551c88f9e309f4634c621"},
     {file = "Markdown-3.3.7.tar.gz", hash = "sha256:cbb516f16218e643d8e0a95b309f77eb118cb138d39a4f27851e6a63581db874"},
@@ -1248,7 +1226,6 @@ npx = [
     {file = "npx-0.1.1-py3-none-any.whl", hash = "sha256:6ce3d860a5e2d7303b3ba58a55f1a8e68c3040c281de6a59fc560ab09702e0a7"},
     {file = "npx-0.1.1.tar.gz", hash = "sha256:cce26aad91af079a721750a5bdcb5ca7435bf2feef4642afcf580d58cb151bd4"},
 ]
-numba = []
 numpy = []
 orthopy = []
 packaging = []

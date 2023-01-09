@@ -1,8 +1,5 @@
-import warnings
-
 import numpy as np
 import pytest
-from numba.core.errors import NumbaPerformanceWarning
 
 from zodipy._source_funcs import get_blackbody_emission
 
@@ -16,9 +13,7 @@ FREQUENCY = 549e9
 
 def test_blackbody_emission_value():
     """Tests that return value."""
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=NumbaPerformanceWarning)
-        emission = get_blackbody_emission(T=TEMPERATURE, freq=FREQUENCY)
+    emission = get_blackbody_emission(T=TEMPERATURE, freq=FREQUENCY)
     assert emission == pytest.approx(1.73442848898e-15, abs=1e-20)
 
 
