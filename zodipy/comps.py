@@ -15,7 +15,7 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
-from zodipy._constants import R_MARS, R_KUIPER_BELT, R_ASTEROID_BELT, R_JUPITER
+from zodipy._constants import R_MARS, R_KUIPER_BELT, R_ASTEROID_BELT
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(

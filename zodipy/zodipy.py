@@ -13,7 +13,7 @@ import quadpy
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 
-from zodipy._bandpass import validate_and_get_bandpass
+from zodipy._bandpass import validate_and_get_bandpass, get_bandpass_interpolation_table
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
@@ -62,7 +62,7 @@ class Zodipy:
         solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
             Defaults to `np.nan`.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
-            the brightness integral. Default is 100 points.
+            the brightness integral. Default is 50 points.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
             Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
             file. For more information on available ephemeridis, please visit
@@ -447,20 +447,13 @@ class Zodipy:
             dynamic_params={"X_earth": earth_position},
         )
 
-        # Prepare bandpass to be integrated in power units and in frequency convention.
-        if not bandpass.frequencies.unit.is_equivalent(u.Hz):
-            bandpass.switch_convention()
-
-        if bandpass.frequencies.size != 1:
-            freq_value = bandpass.frequencies.value
-        else:
-            freq_value = np.expand_dims(bandpass.frequencies.value, axis=0)
+        # Make table of pre-computed bandpass integrated blackbody emission.
+        bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
 
         common_integrand = partial(
             EMISSION_MAPPING[type(self.ipd_model)],
             X_obs=observer_position,
-            freq=freq_value,
-            weights=bandpass.weights,
+            bp_interpolation_table=bandpass_interpolatation_table,
             **source_parameters["common"],
         )
 

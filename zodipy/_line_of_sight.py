@@ -20,22 +20,22 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
 }
 
 RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
-    ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),
+    ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),  # type: ignore
     ComponentLabel.INNER_NARROW_BAND: (
-        RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,
-        RRM[ComponentLabel.INNER_NARROW_BAND].R_outer,
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,  # type: ignore
+        RRM[ComponentLabel.INNER_NARROW_BAND].R_outer,  # type: ignore
     ),
     ComponentLabel.OUTER_NARROW_BAND: (
-        RRM[ComponentLabel.OUTER_NARROW_BAND].R_inner,
-        RRM[ComponentLabel.OUTER_NARROW_BAND].R_outer,
+        RRM[ComponentLabel.OUTER_NARROW_BAND].R_inner,  # type: ignore
+        RRM[ComponentLabel.OUTER_NARROW_BAND].R_outer,  # type: ignore
     ),
     ComponentLabel.BROAD_BAND: (
-        RRM[ComponentLabel.BROAD_BAND].R_inner,
-        RRM[ComponentLabel.BROAD_BAND].R_outer,
+        RRM[ComponentLabel.BROAD_BAND].R_inner,  # type: ignore
+        RRM[ComponentLabel.BROAD_BAND].R_outer,  # type: ignore
     ),
     ComponentLabel.COMET: (
-        RRM[ComponentLabel.COMET].R_inner,
-        RRM[ComponentLabel.COMET].R_outer,
+        RRM[ComponentLabel.COMET].R_inner,  # type: ignore
+        RRM[ComponentLabel.COMET].R_outer,  # type: ignore
     ),
     ComponentLabel.INTERSTELLAR: (R_0, R_KUIPER_BELT),
     ComponentLabel.RING_RRM: DIRBE_CUTOFFS[ComponentLabel.RING],

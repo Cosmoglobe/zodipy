@@ -16,7 +16,7 @@ class InterplanetaryDustModel(ABC):
     spectrum: FrequencyOrWavelength
 
     def to_dict(self) -> dict:
-        _dict = {}
+        _dict: dict = {}
         for key, value in vars(self).items():
             if key == "comps":
                 _dict[key] = {}
