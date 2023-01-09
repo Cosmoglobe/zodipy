@@ -7,8 +7,7 @@ pip install zodipy
 ```
 
 !!! note
-    ZodiPy supports python versions >=3.8 , <3.11.
-    Support for Python 3.11 is pending `numba` 3.11 support.
+    ZodiPy supports python versions >=3.8.
 
 ## Dependencies
 ZodiPy has the following dependencies (these are automatically downloaded alongside ZodiPy):
