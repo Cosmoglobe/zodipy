@@ -60,7 +60,7 @@ model_registry.register_model(
 )
 
 model_registry.register_model(
-    name="rrm",
+    name="rrm-experimental",
     model=RRM(
         comps=comps.RRM,
         spectrum=source_params.SPECTRUM_IRAS,
