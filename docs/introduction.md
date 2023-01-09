@@ -11,6 +11,7 @@ Currently, ZodiPy supports the following interplanetary dust models:
 **1.25-240 $\boldsymbol{\mu}$m**
 
 - DIRBE ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
+- RRM (experimental version in development) ([Rowan-Robinson and May 2013](https://ui.adsabs.harvard.edu/abs/2013MNRAS.429.2894R/abstract))
 
 **100-857 GHz**
 
