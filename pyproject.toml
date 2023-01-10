@@ -6,6 +6,7 @@ description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0"
+exclude = ["test.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.8"
