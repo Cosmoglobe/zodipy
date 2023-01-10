@@ -3,13 +3,13 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Literal, Sequence
+from typing import Callable, Literal, Sequence
 
 import astropy.units as u
 import healpy as hp
 import numpy as np
 import numpy.typing as npt
-import quadpy
+
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 
@@ -92,7 +92,9 @@ class Zodipy:
         self.ephemeris = ephemeris
 
         self.ipd_model = model_registry.get_model(model)
-        self._integration_scheme = quadpy.c1.gauss_legendre(self.gauss_quad_degree)
+        self.gauss_points, self.gauss_weights = np.polynomial.legendre.leggauss(
+            gauss_quad_degree
+        )
 
     @property
     def supported_observers(self) -> list[str]:
@@ -497,8 +499,12 @@ class Zodipy:
 
                     proc_chunks = [
                         pool.apply_async(
-                            self._integration_scheme.integrate,
-                            args=(comp_integrand, [-1, 1]),
+                            _integrate_gauss_quad,
+                            args=(
+                                comp_integrand,
+                                self.gauss_points,
+                                self.gauss_weights,
+                            ),
                         )
                         for comp_integrand in comp_integrands
                     ]
@@ -526,7 +532,11 @@ class Zodipy:
                 )
 
                 integrated_comp_emission[idx] = (
-                    self._integration_scheme.integrate(comp_integrand, [-1, 1])
+                    _integrate_gauss_quad(
+                        fn=comp_integrand,
+                        points=self.gauss_points,
+                        weights=self.gauss_weights,
+                    )
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
                 )
@@ -568,3 +578,13 @@ class Zodipy:
             repr_str += f"{attribute_name}={attribute!r}, "
 
         return repr_str[:-2] + ")"
+
+
+def _integrate_gauss_quad(
+    fn: Callable[[float], npt.NDArray[np.float64]],
+    points: npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Integrate the emission from a component using Gauss-Legendre quadrature."""
+
+    return np.squeeze(sum(fn(point) * weight for point, weight in zip(points, weights)))

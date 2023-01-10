@@ -15,11 +15,12 @@ from zodipy._constants import (
     MIN_INTERPOLATION_GRID_TEMPERATURE,
     MAX_INTERPOLATION_GRID_TEMPERATURE,
 )
+from zodipy._types import FrequencyOrWavelength
 
 
 @dataclass
 class Bandpass:
-    frequencies: u.Quantity[u.Hz] | u.Quantity[u.micron]
+    frequencies: FrequencyOrWavelength
     weights: npt.NDArray[np.float64]
 
     def integrate(self, quantity: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -41,7 +42,7 @@ class Bandpass:
 
 
 def validate_and_get_bandpass(
-    freq: u.Quantity[u.Hz] | u.Quantity[u.micron],
+    freq: FrequencyOrWavelength,
     weights: Sequence[float] | npt.NDArray[np.floating] | None,
     model: InterplanetaryDustModel,
     extrapolate: bool,
@@ -66,19 +67,14 @@ def get_bandpass_interpolation_table(
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
 
-    freqs = (
-        np.expand_dims(bandpass.frequencies.value, axis=0)
-        if bandpass.frequencies.size == 1
-        else bandpass.frequencies.value
-    )
-    weights = bandpass.weights
-
     integrals = np.zeros(n_points)
     temp_grid = np.linspace(min_temp, max_temp, n_points)
     for idx, temp in enumerate(temp_grid):
-        freq_scaling = get_blackbody_emission(freqs, temp)
+        freq_scaling = get_blackbody_emission(bandpass.frequencies.value, temp)
         integrals[idx] = (
-            np.trapz(freq_scaling * weights, freqs) if freqs.size > 1 else freq_scaling
+            bandpass.integrate(freq_scaling)
+            if bandpass.frequencies.size > 1
+            else freq_scaling
         )
 
     return np.asarray([temp_grid, integrals])

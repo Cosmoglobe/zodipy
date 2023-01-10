@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/Cosmoglobe/zodipy"
-version = "0.8.0"
+version = "0.8.1"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -13,8 +13,6 @@ numpy = "^1.22.3"
 healpy = "^1.15.0"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
-typing-extensions = "^4.1.1"
-quadpy = "^0.16.17"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
