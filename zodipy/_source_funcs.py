@@ -21,11 +21,10 @@ def get_blackbody_emission(
     T
         Temperature of the blackbody [K].
 
-    Returns
+    Returns:
     -------
         Blackbody emission [W / m^2 Hz sr].
     """
-
     term1 = (2 * h * freq**3) / c**2
     term2 = np.expm1(((h * freq) / (k_B * T)))
 
@@ -46,11 +45,10 @@ def get_dust_grain_temperature(
     delta
         Powerlaw index.
 
-    Returns
+    Returns:
     -------
         Dust grain temperature [K].
     """
-
     return T_0 * R**-delta
 
 
@@ -60,9 +58,7 @@ def get_scattering_angle(
     X_los: npt.NDArray[np.float64],
     X_helio: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """
-    Returns the scattering angle between the Sun and a point along the
-    line of sight.
+    """Returns the scattering angle between the Sun and a point along the line of sight.
 
     Parameters
     ----------
@@ -75,11 +71,10 @@ def get_scattering_angle(
     X_helio
         Heliocentric position of point along the line of sight.
 
-    Returns
+    Returns:
     -------
         Scattering angle.
     """
-
     cos_theta = (X_los * X_helio).sum(axis=0) / (R_los * R_helio)
     cos_theta = np.clip(cos_theta, -1, 1)
 
@@ -98,11 +93,10 @@ def get_phase_function(
     coeffs
         Phase function parameters.
 
-    Returns
+    Returns:
     -------
         The Phase funciton.
     """
-
     phase_normalization = _get_phase_normalization(C)
 
     return phase_normalization * (C[0] + C[1] * Theta + np.exp(C[2] * Theta))
@@ -111,7 +105,6 @@ def get_phase_function(
 @lru_cache
 def _get_phase_normalization(C: tuple[float, ...]) -> float:
     """Returns the analyitcal integral for the phase normalization factor N."""
-
     int_term1 = 2 * np.pi
     int_term2 = 2 * C[0]
     int_term3 = np.pi * C[1]

@@ -36,7 +36,6 @@ def kelsall(
     bp_interpolation_table: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
-
     # Convert the quadrature range from [-1, 1] to the true ecliptic positions
     R_los = ((stop - start) / 2) * r + (stop + start) / 2
     X_los = R_los * u_los
@@ -70,7 +69,6 @@ def rrm(
     bp_interpolation_table: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """RRM has component specific line of sight grids."""
-
     # Convert the quadrature range from [-1, 1] to the true ecliptic positions
     R_los = ((stop - start) / 2) * r + (stop + start) / 2
     X_los = R_los * u_los

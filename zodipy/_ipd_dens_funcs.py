@@ -4,6 +4,7 @@ import inspect
 from dataclasses import asdict
 from functools import partial
 from typing import Any, Callable, Mapping, Protocol, Sequence
+
 import numpy as np
 import numpy.typing as npt
 
@@ -13,6 +14,7 @@ from zodipy._ipd_comps import (
     Cloud,
     Comet,
     Component,
+    ComponentLabel,
     Fan,
     Feature,
     FeatureRRM,
@@ -21,7 +23,6 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
-from zodipy._ipd_comps import ComponentLabel
 
 """The density functions for the different types of components. Common for all of these 
 is that the first argument will be `X_helio` (the line of sight from the observer towards
@@ -47,7 +48,6 @@ def compute_cloud_density(
     gamma: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the diffuse cloud (see Eq (6). in K98)."""
-
     X_cloud = X_helio - X_0
     R_cloud = np.sqrt(X_cloud[0] ** 2 + X_cloud[1] ** 2 + X_cloud[2] ** 2)
 
@@ -78,7 +78,6 @@ def compute_band_density(
     delta_r: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the dust bands (see Eq. (8) in K98)."""
-
     X_band = X_helio - X_0
     R_band = np.sqrt(X_band[0] ** 2 + X_band[1] ** 2 + X_band[2] ** 2)
 
@@ -115,7 +114,6 @@ def compute_ring_density(
     sigma_z: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the circum-solar ring (see Eq. (9) in K98)."""
-
     X_ring = X_helio - X_0
     R_ring = np.sqrt(X_ring[0] ** 2 + X_ring[1] ** 2 + X_ring[2] ** 2)
 
@@ -148,7 +146,6 @@ def compute_feature_density(
     sigma_theta_rad: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the Earth-trailing feature (see Eq. (9) in K98)."""
-
     X_feature = X_helio - X_0
     R_feature = np.sqrt(X_feature[0] ** 2 + X_feature[1] ** 2 + X_feature[2] ** 2)
 
@@ -190,7 +187,6 @@ def compute_fan_density(  # *
     R_outer: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the fan (see Eq (3). in RRM)."""
-
     X_fan = X_helio - X_0
     R_fan = np.sqrt(X_fan[0] ** 2 + X_fan[1] ** 2 + X_fan[2] ** 2)
 
@@ -228,7 +224,6 @@ def compute_comet_density(
     R_outer: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the fan (see Eq (3). in RRM)."""
-
     X_comet = X_helio - X_0
     R_comet = np.sqrt(X_comet[0] ** 2 + X_comet[1] ** 2 + X_comet[2] ** 2)
 
@@ -272,7 +267,6 @@ def compute_narrow_band_density(
     R_outer: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the fan (see Eq (4). in RRM)."""
-
     X_nb = X_helio - X_0
     R_nb = np.sqrt(X_nb[0] ** 2 + X_nb[1] ** 2 + X_nb[2] ** 2)
 
@@ -314,7 +308,6 @@ def compute_broad_band_density(
     R_outer: float,
 ) -> npt.NDArray[np.float64]:
     """Density of the fan (see Eq (5). in RRM)."""
-
     X_bb = X_helio - X_0
     R_bb = np.sqrt(X_bb[0] ** 2 + X_bb[1] ** 2 + X_bb[2] ** 2)
 
@@ -350,22 +343,17 @@ def compute_ring_density_rmm(
     sigma_z: float,
     A: float,
 ) -> npt.NDArray[np.float64]:
-    return (
-        A
-        * compute_ring_density(
-            X_helio=X_helio,
-            X_0=X_0,
-            sin_Omega_rad=sin_Omega_rad,
-            cos_Omega_rad=cos_Omega_rad,
-            sin_i_rad=sin_i_rad,
-            cos_i_rad=cos_i_rad,
-            n_0=1,
-            R=R,
-            sigma_r=sigma_r,
-            sigma_z=sigma_z,
-        )
-        # * 1e-6
-        # / (1 * u.cm).to_value(u.AU)
+    return A * compute_ring_density(
+        X_helio=X_helio,
+        X_0=X_0,
+        sin_Omega_rad=sin_Omega_rad,
+        cos_Omega_rad=cos_Omega_rad,
+        sin_i_rad=sin_i_rad,
+        cos_i_rad=cos_i_rad,
+        n_0=n_0,
+        R=R,
+        sigma_r=sigma_r,
+        sigma_z=sigma_z,
     )
 
 
@@ -385,25 +373,20 @@ def compute_feature_density_rmm(
     sigma_theta_rad: float,
     A: float,
 ) -> npt.NDArray[np.float64]:
-    return (
-        A
-        * compute_feature_density(
-            X_helio=X_helio,
-            X_0=X_0,
-            sin_Omega_rad=sin_Omega_rad,
-            cos_Omega_rad=cos_Omega_rad,
-            sin_i_rad=sin_i_rad,
-            cos_i_rad=cos_i_rad,
-            n_0=1,
-            R=R,
-            sigma_r=sigma_r,
-            sigma_z=sigma_z,
-            X_earth=X_earth,
-            sigma_theta_rad=sigma_theta_rad,
-            theta_rad=theta_rad,
-        )
-        # * 1e-6
-        # / (1 * u.cm).to_value(u.AU)
+    return A * compute_feature_density(
+        X_helio=X_helio,
+        X_0=X_0,
+        sin_Omega_rad=sin_Omega_rad,
+        cos_Omega_rad=cos_Omega_rad,
+        sin_i_rad=sin_i_rad,
+        cos_i_rad=cos_i_rad,
+        n_0=n_0,
+        R=R,
+        sigma_r=sigma_r,
+        sigma_z=sigma_z,
+        X_earth=X_earth,
+        sigma_theta_rad=sigma_theta_rad,
+        theta_rad=theta_rad,
     )
 
 
@@ -432,13 +415,12 @@ def construct_density_partials(
     comps: Sequence[Component],
     dynamic_params: dict[str, Any],
 ) -> tuple[ComponentDensityFn, ...]:
-    """
-    Return a tuple of the density expressions above which has been prepopulated with model and
-    configuration parameters, leaving only the `X_helio` argument to be supplied.
+    """Return density partials for the components.
 
+    Return a tuple of the density expressions above which has been prepopulated with
+    model and configuration parameters, leaving only the `X_helio` argument to be supplied.
     Raises exception for incorrectly defined components or component density functions.
     """
-
     partial_density_funcs: list[ComponentDensityFn] = []
     for comp in comps:
         comp_dict = asdict(comp)
@@ -446,10 +428,10 @@ def construct_density_partials(
         residual_params = [key for key in func_params if key not in comp_dict.keys()]
         try:
             residual_params.remove("X_helio")
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "X_helio must be be the first argument to the density function of a component."
-            )
+            ) from err
 
         if residual_params:
             if residual_params - dynamic_params.keys():
@@ -474,13 +456,12 @@ def construct_density_partials_comps(
     comps: Mapping[ComponentLabel, Component],
     dynamic_params: dict[str, Any],
 ) -> dict[ComponentLabel, ComponentDensityFn]:
-    """
+    """Construct density partials for components.
+
     Return a tuple of the density expressions above which has been prepopulated with model and
-    configuration parameters, leaving only the `X_helio` argument to be supplied.
-
-    Raises exception for incorrectly defined components or component density functions.
+    configuration parameters, leaving only the `X_helio` argument to be supplied. Raises exception
+    for incorrectly defined components or component density functions.
     """
-
     partial_density_funcs: dict[ComponentLabel, ComponentDensityFn] = {}
     for comp_label, comp in comps.items():
         comp_dict = asdict(comp)
@@ -488,10 +469,10 @@ def construct_density_partials_comps(
         residual_params = [key for key in func_params if key not in comp_dict.keys()]
         try:
             residual_params.remove("X_helio")
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "X_helio must be be the first argument to the density function of a component."
-            )
+            ) from err
 
         if residual_params:
             if residual_params - dynamic_params.keys():

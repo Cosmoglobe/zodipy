@@ -5,8 +5,7 @@ from typing import Iterable
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._constants import R_EARTH, R_JUPITER, R_KUIPER_BELT, R_0
-
+from zodipy._constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
 from zodipy._ipd_comps import ComponentLabel
 from zodipy.comps import RRM
 
@@ -51,11 +50,11 @@ def get_sphere_intersection(
     unit_vectors: npt.NDArray[np.float64],
     cutoff: float | np.float64,
 ) -> npt.NDArray[np.float64]:
-    """
+    """Get RMAX per pixel.
+
     Given the observer position, return distance from the observer to the
     intersection between the line of sights and a heliocentric sphere with radius cutoff.
     """
-
     x, y, z = obs_pos.flatten()
     r_obs = np.sqrt(x**2 + y**2 + z**2)
 

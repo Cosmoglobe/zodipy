@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from zodipy._constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
 from zodipy._ipd_comps import (
     Band,
     BroadBand,
@@ -15,7 +16,6 @@ from zodipy._ipd_comps import (
     Ring,
     RingRRM,
 )
-from zodipy._constants import R_MARS, R_KUIPER_BELT, R_ASTEROID_BELT
 
 DIRBE: dict[ComponentLabel, Component] = {
     ComponentLabel.CLOUD: Cloud(
@@ -119,7 +119,8 @@ RRM: dict[ComponentLabel, Component] = {
         A=0.032,  # * #AMP1
         gamma=1,  # *
         beta_nb=1.42,  # themis
-        G=0.5,  # *
+        # beta_nb=9.35,  # veritas
+        G=0.12,  # *
         R_inner=R_MARS,  # *
         R_outer=R_ASTEROID_BELT,  # *
     ),
@@ -132,7 +133,8 @@ RRM: dict[ComponentLabel, Component] = {
         A=0.04,  # * #AMP2
         gamma=1,  # *
         beta_nb=9.35,  # veritas
-        G=0.12,  # *
+        # beta_nb=1.42,  # themis
+        G=0.6,  # *
         R_inner=R_MARS,  # *
         R_outer=R_ASTEROID_BELT,  # *
     ),
@@ -174,25 +176,25 @@ RRM: dict[ComponentLabel, Component] = {
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0.48707166006819241,
-        Omega=22.278979678854448,
-        n_0=1.8260527826501675e-08,
-        R=1.0281924326308751,
-        sigma_r=0.025000000372529030,
-        sigma_z=0.054068037356978099,
+        i=0.49,
+        Omega=22.3,
+        n_0=1,
+        R=1.03,
+        sigma_r=0.025,
+        sigma_z=0.054,
     ),
     ComponentLabel.FEATURE_RRM: FeatureRRM(
         A=0.065,
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
-        i=0.48707166006819241,
-        Omega=22.278979678854448,
-        n_0=2.0094267183590947e-08,
-        R=1.0579182694524214,
-        sigma_r=0.10287314662396611,
-        sigma_z=0.091442963768716023,
+        i=0.49,
+        Omega=22.3,
+        n_0=1,
+        R=1.06,
+        sigma_r=0.10,
+        sigma_z=0.091,
         theta=-10.0,
-        sigma_theta=12.115210933938741,
+        sigma_theta=12.1,
     ),
 }

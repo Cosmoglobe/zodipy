@@ -766,6 +766,14 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
+name = "ruff"
+version = "0.0.217"
+description = "An extremely fast Python linter, written in Rust."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "scipy"
 version = "1.9.3"
 description = "Fundamental algorithms for scientific computing in Python"
@@ -916,7 +924,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8"
-content-hash = "bf28e094c4b2fd19361726d6cc4a61f6a5aa5dc8246b5ff07d2e02763a6b8dbc"
+content-hash = "d4ba77eab026fd7cc07def236882da8a68fecd948a0a854da3bff4497481ef68"
 
 [metadata.files]
 astropy = []
@@ -1167,6 +1175,7 @@ requests = [
     {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
     {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
 ]
+ruff = []
 scipy = []
 setuptools-scm = []
 six = [

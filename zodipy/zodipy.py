@@ -9,18 +9,16 @@ import astropy.units as u
 import healpy as hp
 import numpy as np
 import numpy.typing as npt
-
 from astropy.coordinates import solar_system_ephemeris
 from astropy.time import Time
 
-from zodipy._bandpass import validate_and_get_bandpass, get_bandpass_interpolation_table
+from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
-from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._ipd_comps import ComponentLabel
+from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
-
 from zodipy._sky_coords import get_obs_and_earth_positions
 from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
@@ -99,12 +97,10 @@ class Zodipy:
     @property
     def supported_observers(self) -> list[str]:
         """Returns a list of available observers given an ephemeris."""
-
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
     def get_parameters(self) -> ParameterDict:
         """Returns a dictionary containing the interplanetary dust model parameters."""
-
         return self.ipd_model.to_dict()
 
     def update_parameters(self, parameters: ParameterDict) -> None:
@@ -116,7 +112,6 @@ class Zodipy:
                 of an existing model, use `Zodipy("dirbe").get_parameters()`.
 
         """
-
         _dict = parameters.copy()
         _dict["comps"] = {}
         for key, value in parameters.items():
@@ -176,7 +171,6 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-
         theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, indicies = np.unique(
@@ -239,7 +233,6 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-
         pixels = validate_pixels(pixels=pixels, nside=nside)
 
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
@@ -311,7 +304,6 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-
         theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, counts = np.unique(
@@ -379,7 +371,6 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-
         pixels = validate_pixels(pixels=pixels, nside=nside)
 
         unique_pixels, counts = np.unique(pixels, return_counts=True)
@@ -418,7 +409,6 @@ class Zodipy:
         return_comps: bool = False,
     ) -> u.Quantity[u.MJy / u.sr]:
         """Computes the component-wise zodiacal emission."""
-
         bandpass = validate_and_get_bandpass(
             freq=freq,
             weights=weights,
@@ -586,5 +576,4 @@ def _integrate_gauss_quad(
     weights: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Integrate the emission from a component using Gauss-Legendre quadrature."""
-
     return np.squeeze(sum(fn(point) * weight for point, weight in zip(points, weights)))

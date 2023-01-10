@@ -30,6 +30,7 @@ pytest-cov = "^3.0.0"
 mkdocs-material = "^9.0.1"
 mkdocstrings = "^0.19.1"
 mkdocstrings-python = "^0.8.2"
+ruff = "^0.0.217"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -51,3 +52,20 @@ filterwarnings = [
     "ignore::UserWarning",
     "ignore:.*overflow encountered in expm1.*",
 ]
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+select = ["F", "D", "E", "W", "C", "B", "I001"]
+line-length = 100
+ignore = [
+    "B905",
+    "D100",
+    "D107",
+    "D104",
+    "D105",
+]
+
+[tool.ruff.pydocstyle]
+convention = "google"

@@ -14,7 +14,6 @@ def validate_frequencies(
     freq: FrequencyOrWavelength, model: InterplanetaryDustModel, extrapolate: bool
 ) -> None:
     """Validate user inputted frequency."""
-
     if extrapolate:
         return
 
@@ -44,7 +43,6 @@ def validate_and_normalize_weights(
     freq: FrequencyOrWavelength,
 ) -> npt.NDArray[np.float64]:
     """Validate user inputted weights."""
-
     if weights is None and freq.size > 1:
         raise ValueError(
             "Bandpass weights must be specified if more than one frequency is given."
@@ -70,7 +68,6 @@ def validate_ang(
     theta: SkyAngles, phi: SkyAngles, lonlat: bool
 ) -> Tuple[SkyAngles, SkyAngles]:
     """Validate user inputted sky angles."""
-
     theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
     phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
 
@@ -84,7 +81,6 @@ def validate_ang(
 
 def validate_pixels(pixels: Pixels, nside: int) -> Pixels:
     """Validate user inputted pixels."""
-
     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
         raise ValueError("invalid pixel number given nside")
 

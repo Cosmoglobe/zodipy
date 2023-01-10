@@ -28,12 +28,11 @@ def tabulate_density(
     earth_pos
         Position of the Earth in AU.
 
-    Returns
+    Returns:
     -------
     density_grid
         The tabulated zodiacal component densities.
     """
-
     ipd_model = model_registry.get_model(model)
 
     if not isinstance(grid, np.ndarray):

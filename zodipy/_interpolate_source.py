@@ -9,14 +9,15 @@ from scipy.interpolate import interp1d
 
 from zodipy._bandpass import Bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
-from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 from zodipy._ipd_comps import ComponentLabel
+from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 
 InterplanetaryDustModelT = TypeVar(
     "InterplanetaryDustModelT", bound=InterplanetaryDustModel
 )
 
-"""Returns the source parameters for a given bandpass and model. Must match arguments in the emission fns."""
+"""Returns the source parameters for a given bandpass and model. 
+Must match arguments in the emission fns."""
 GetSourceParametersFn = Callable[
     [Bandpass, InterplanetaryDustModelT], Dict[Union[ComponentLabel, str], Any]
 ]

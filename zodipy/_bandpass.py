@@ -7,15 +7,15 @@ import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._ipd_model import InterplanetaryDustModel
-from zodipy._validators import validate_and_normalize_weights, validate_frequencies
-from zodipy._source_funcs import get_blackbody_emission
 from zodipy._constants import (
-    N_INTERPOLATION_POINTS,
-    MIN_INTERPOLATION_GRID_TEMPERATURE,
     MAX_INTERPOLATION_GRID_TEMPERATURE,
+    MIN_INTERPOLATION_GRID_TEMPERATURE,
+    N_INTERPOLATION_POINTS,
 )
+from zodipy._ipd_model import InterplanetaryDustModel
+from zodipy._source_funcs import get_blackbody_emission
 from zodipy._types import FrequencyOrWavelength
+from zodipy._validators import validate_and_normalize_weights, validate_frequencies
 
 
 @dataclass
@@ -25,12 +25,10 @@ class Bandpass:
 
     def integrate(self, quantity: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Integrate a quantity over the bandpass."""
-
         return np.trapz(self.weights * quantity, self.frequencies.value, axis=-1)
 
     def switch_convention(self) -> None:
         """Switched the bandpass from frequency to wavelength or vice versa."""
-
         self.frequencies = self.frequencies.to(
             u.micron if self.frequencies.unit.is_equivalent(u.Hz) else u.Hz,
             equivalencies=u.spectral(),
@@ -48,7 +46,6 @@ def validate_and_get_bandpass(
     extrapolate: bool,
 ) -> Bandpass:
     """Validate user inputted bandpass and return a Bandpass object."""
-
     validate_frequencies(freq, model, extrapolate)
     normalized_weights = validate_and_normalize_weights(weights, freq)
 
@@ -62,7 +59,6 @@ def get_bandpass_interpolation_table(
     max_temp: float = MAX_INTERPOLATION_GRID_TEMPERATURE,
 ) -> npt.NDArray[np.float64]:
     """Pre-compute the bandpass integrated blackbody emission for a grid of temperatures."""
-
     # Prepare bandpass to be integrated in power units and in frequency convention.
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
