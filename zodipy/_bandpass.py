@@ -15,7 +15,7 @@ from zodipy._constants import (
 from zodipy._ipd_model import InterplanetaryDustModel
 from zodipy._source_funcs import get_blackbody_emission
 from zodipy._types import FrequencyOrWavelength
-from zodipy._validators import validate_and_normalize_weights, validate_frequencies
+from zodipy._validators import get_validated_and_normalized_weights, get_validated_freq
 
 
 @dataclass
@@ -46,8 +46,8 @@ def validate_and_get_bandpass(
     extrapolate: bool,
 ) -> Bandpass:
     """Validate user inputted bandpass and return a Bandpass object."""
-    validate_frequencies(freq, model, extrapolate)
-    normalized_weights = validate_and_normalize_weights(weights, freq)
+    freq = get_validated_freq(freq, model, extrapolate)
+    normalized_weights = get_validated_and_normalized_weights(weights, freq)
 
     return Bandpass(freq, normalized_weights)
 
@@ -60,10 +60,9 @@ def get_bandpass_interpolation_table(
 ) -> npt.NDArray[np.float64]:
     """Pre-compute the bandpass integrated blackbody emission for a grid of temperatures."""
     # Prepare bandpass to be integrated in power units and in frequency convention.
+
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
-    else:
-        bandpass.frequencies = bandpass.frequencies.to(u.Hz)
 
     integrals = np.zeros(n_points)
     temp_grid = np.linspace(min_temp, max_temp, n_points)

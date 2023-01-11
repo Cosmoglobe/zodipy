@@ -22,7 +22,7 @@ from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
 from zodipy._sky_coords import get_obs_and_earth_positions
 from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
-from zodipy._validators import validate_ang, validate_pixels
+from zodipy._validators import get_validated_ang, get_validated_pix
 from zodipy.model_registry import model_registry
 
 PLATFORM = platform.system().lower()
@@ -171,7 +171,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
+        theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, indicies = np.unique(
             np.asarray([theta, phi]), return_inverse=True, axis=1
@@ -233,7 +233,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        pixels = validate_pixels(pixels=pixels, nside=nside)
+        pixels = get_validated_pix(pixels=pixels, nside=nside)
 
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         unit_vectors = get_unit_vectors_from_pixels(
@@ -304,7 +304,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        theta, phi = validate_ang(theta=theta, phi=phi, lonlat=lonlat)
+        theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         unique_angles, counts = np.unique(
             np.asarray([theta, phi]), return_counts=True, axis=1
@@ -371,7 +371,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        pixels = validate_pixels(pixels=pixels, nside=nside)
+        pixels = get_validated_pix(pixels=pixels, nside=nside)
 
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         unit_vectors = get_unit_vectors_from_pixels(

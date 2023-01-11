@@ -9,13 +9,22 @@ from ._ipd_model import InterplanetaryDustModel
 from ._types import FrequencyOrWavelength, Pixels, SkyAngles
 
 
-@u.quantity_input(equivalencies=u.spectral())
-def validate_frequencies(
+def get_validated_freq(
     freq: FrequencyOrWavelength, model: InterplanetaryDustModel, extrapolate: bool
-) -> None:
+) -> FrequencyOrWavelength:
     """Validate user inputted frequency."""
+    if not isinstance(freq, u.Quantity):
+        raise TypeError("Frequency must be an astropy Quantity.")
+
+    if freq.unit.is_equivalent(u.Hz):
+        freq = freq.to(u.Hz)
+    elif freq.unit.is_equivalent(u.micron):
+        freq = freq.to(u.micron)
+    else:
+        raise u.UnitsError("Frequency must be in units compatible with Hz or micron.")
+
     if extrapolate:
-        return
+        return freq
 
     freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
     lower_freq_range = model.spectrum.min()
@@ -37,8 +46,10 @@ def validate_frequencies(
             f" {upper_freq_range}] range."
         )
 
+    return freq
 
-def validate_and_normalize_weights(
+
+def get_validated_and_normalized_weights(
     weights: Union[Sequence[float], npt.NDArray[np.floating], None],
     freq: FrequencyOrWavelength,
 ) -> npt.NDArray[np.float64]:
@@ -47,6 +58,7 @@ def validate_and_normalize_weights(
         raise ValueError(
             "Bandpass weights must be specified if more than one frequency is given."
         )
+
     if weights is not None:
         if freq.size != len(weights):
             raise ValueError("Number of frequencies and weights must be the same.")
@@ -64,7 +76,7 @@ def validate_and_normalize_weights(
 
 
 @u.quantity_input(theta=[u.deg, u.rad], phi=[u.deg, u.rad])
-def validate_ang(
+def get_validated_ang(
     theta: SkyAngles, phi: SkyAngles, lonlat: bool
 ) -> Tuple[SkyAngles, SkyAngles]:
     """Validate user inputted sky angles."""
@@ -79,7 +91,7 @@ def validate_ang(
     return theta, phi
 
 
-def validate_pixels(pixels: Pixels, nside: int) -> Pixels:
+def get_validated_pix(pixels: Pixels, nside: int) -> Pixels:
     """Validate user inputted pixels."""
     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
         raise ValueError("invalid pixel number given nside")

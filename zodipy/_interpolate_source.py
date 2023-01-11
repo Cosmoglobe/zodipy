@@ -29,7 +29,13 @@ def get_source_parameters_kelsall_comp(
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
 
-    interpolator = partial(interp1d, x=model.spectrum.value, fill_value="extrapolate")
+    spectrum = (
+        model.spectrum.to_value(u.Hz)
+        if model.spectrum.unit.is_equivalent(u.Hz)
+        else model.spectrum.to_value(u.micron)
+    )
+
+    interpolator = partial(interp1d, x=spectrum, fill_value="extrapolate")
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
     for comp_label in model.comps.keys():
@@ -91,10 +97,16 @@ def get_source_parameters_rmm(
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
 
+    spectrum = (
+        model.spectrum.to_value(u.Hz)
+        if model.spectrum.unit.is_equivalent(u.Hz)
+        else model.spectrum.to_value(u.micron)
+    )
+
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
-    calibration = interp1d(
-        x=model.spectrum.value, y=model.calibration, fill_value="extrapolate"
-    )(bandpass.frequencies.value)
+    calibration = interp1d(x=spectrum, y=model.calibration, fill_value="extrapolate")(
+        bandpass.frequencies.value
+    )
     calibration = u.Quantity(calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)
 
     if bandpass.frequencies.size > 1:

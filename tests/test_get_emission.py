@@ -39,7 +39,6 @@ def test_get_emission_pix(
     observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
     pix = data.draw(pixels(nside))
-
     emission = model.get_emission_pix(
         frequency,
         pixels=pix,
@@ -344,7 +343,6 @@ def test_bandpass_integration(
     data: DataObject,
 ) -> None:
     """Property test for bandpass integrations."""
-
     theta, phi = angles
     model.extrapolate = True
     observer = data.draw(obs(model, time))
