@@ -64,14 +64,14 @@ def get_bandpass_interpolation_table(
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
 
-    integrals = np.zeros(n_points)
-    temp_grid = np.linspace(min_temp, max_temp, n_points)
-    for idx, temp in enumerate(temp_grid):
-        freq_scaling = get_blackbody_emission(bandpass.frequencies.value, temp)
-        integrals[idx] = (
-            bandpass.integrate(freq_scaling)
+    bandpass_integrals = np.zeros(n_points)
+    temperature_grid = np.linspace(min_temp, max_temp, n_points)
+    for idx, temp in enumerate(temperature_grid):
+        blackbody_emission = get_blackbody_emission(bandpass.frequencies.value, temp)
+        bandpass_integrals[idx] = (
+            bandpass.integrate(blackbody_emission)
             if bandpass.frequencies.size > 1
-            else freq_scaling
+            else blackbody_emission
         )
 
-    return np.asarray([temp_grid, integrals])
+    return np.asarray([temperature_grid, bandpass_integrals])
