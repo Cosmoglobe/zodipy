@@ -6,14 +6,14 @@ import healpy as hp
 import numpy as np
 from astropy.time import Time
 
-import zodipy
+from zodipy import Zodipy
 
 nside = 256
 pixels = np.arange(hp.nside2npix(nside))
 obs_time = Time("2020-01-01")
 
-model = zodipy.Zodipy(parallel=False)
-model_parallel = zodipy.Zodipy()
+model = Zodipy()
+model_parallel = Zodipy(parallel=True)
 
 start = time.perf_counter()
 emission = model.get_binned_emission_pix(
@@ -23,7 +23,7 @@ emission = model.get_binned_emission_pix(
     obs_time=obs_time,
 )
 print("Time spent on a single CPU:", round(time.perf_counter() - start, 2), "seconds")
-# > Time spent on a single CPU: 91.76 seconds
+# > Time spent on a single CPU: 35.23 seconds
 
 start = time.perf_counter()
 emission_parallel = model_parallel.get_binned_emission_pix(
@@ -37,6 +37,6 @@ print(
     round(time.perf_counter() - start, 2),
     "seconds",
 )
-# > Time spent on 8 CPUs: 26.87 seconds
+# > Time spent on 8 CPUs: 12.85 seconds
 
 assert np.allclose(emission, emission_parallel)

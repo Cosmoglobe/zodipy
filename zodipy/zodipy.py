@@ -90,7 +90,7 @@ class Zodipy:
         self.ephemeris = ephemeris
 
         self.ipd_model = model_registry.get_model(model)
-        self.gauss_points, self.gauss_weights = np.polynomial.legendre.leggauss(
+        self.gauss_points_and_weights = np.polynomial.legendre.leggauss(
             gauss_quad_degree
         )
 
@@ -490,11 +490,7 @@ class Zodipy:
                     proc_chunks = [
                         pool.apply_async(
                             _integrate_gauss_quad,
-                            args=(
-                                comp_integrand,
-                                self.gauss_points,
-                                self.gauss_weights,
-                            ),
+                            args=(comp_integrand, self.gauss_points_and_weights),
                         )
                         for comp_integrand in comp_integrands
                     ]
@@ -522,11 +518,7 @@ class Zodipy:
                 )
 
                 integrated_comp_emission[idx] = (
-                    _integrate_gauss_quad(
-                        fn=comp_integrand,
-                        points=self.gauss_points,
-                        weights=self.gauss_weights,
-                    )
+                    _integrate_gauss_quad(comp_integrand, self.gauss_points_and_weights)
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
                 )
@@ -572,8 +564,7 @@ class Zodipy:
 
 def _integrate_gauss_quad(
     fn: Callable[[float], npt.NDArray[np.float64]],
-    points: npt.NDArray[np.float64],
-    weights: npt.NDArray[np.float64],
+    points_and_weights: tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]],
 ) -> npt.NDArray[np.float64]:
     """Integrate the emission from a component using Gauss-Legendre quadrature."""
-    return np.squeeze(sum(fn(point) * weight for point, weight in zip(points, weights)))
+    return np.squeeze(sum(fn(x) * w for x, w in zip(*points_and_weights)))

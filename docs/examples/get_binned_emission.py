@@ -21,11 +21,9 @@ hp.mollview(
     binned_emission,
     title="Binned zodiacal emission at 857 GHz",
     unit="MJy/sr",
+    min=0,
     max=1,
-    norm="log",
-    coord="E",
     cmap="afmhot",
 )
-hp.graticule()
-# plt.savefig("../img/binned.png", dpi=300)
+plt.savefig("../img/binned.png", dpi=300)
 plt.show()

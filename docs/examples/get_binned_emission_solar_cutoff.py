@@ -25,6 +25,5 @@ hp.mollview(
     coord="E",
     cmap="afmhot",
 )
-hp.graticule()
-# plt.savefig("../img/binned_solar_cutoff.png", dpi=300)
+plt.savefig("../img/binned_solar_cutoff.png", dpi=300)
 plt.show()

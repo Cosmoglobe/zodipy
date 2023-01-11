@@ -62,6 +62,8 @@ def get_bandpass_interpolation_table(
     # Prepare bandpass to be integrated in power units and in frequency convention.
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
+    else:
+        bandpass.frequencies = bandpass.frequencies.to(u.Hz)
 
     integrals = np.zeros(n_points)
     temp_grid = np.linspace(min_temp, max_temp, n_points)

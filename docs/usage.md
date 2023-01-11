@@ -36,6 +36,19 @@ as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplan
 ![Zodiacal emission map](img/binned.png)
 *Note that the color bar is logarithmic.*
 
+
+### Bandpass integrated emission
+Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
+what the emission looks like over some instrument bandpass. ZodiPy will accept a sequence of frequencies to the `freq`
+argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
+Note that the bandpass weights must be in spectral radiance units (Jy/sr), even though the weights them self are unitless. A top hat bandpass is assumed if a sequence of frequencies are used without providing weights.
+```python hl_lines="11 12 13 31 32"
+{!examples/get_bandpass_integrated_emission.py!}
+```
+![Generated Bandpass](img/bandpass.png)
+![Center frequency emission](img/center_freq.png)
+![Bandpass integrated emission](img/bandpass_integrated.png)
+
 ### Solar cutoff angle
 Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cut` 
 argument to mask all input pointing that looks in towards the sun with an angular distance smaller 
@@ -47,14 +60,13 @@ than the `solar_cut` value.
 ![Zodiacal emission map](img/binned_solar_cutoff.png)
 
 
-### Instantaneous map in Galactic coordinates
-We can make the same map in galactic coordinates by specifying that the input pointing is in galactic coordinates.
+### Non-ecliptic coordinates
+We can specify the coordinate system of the input pointing with the `coord_in` keyword
 
 ```python hl_lines="18"
 {!examples/get_binned_gal_emission.py!}
 ```
 ![Zodiacal emission map galactic](img/binned_gal.png)
-*Note that the color bar is logarithmic.*
 
 
 ### Component-wise maps
@@ -68,19 +80,6 @@ read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/ab
 ```
 ![Component-wise emission maps](img/binned_comp.png)
 *Note that the color for the Cloud component is logarithmic, while the others are linear.*
-
-
-### Bandpass integrated emission
-Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
-what the emission looks like over some instrument bandpass. ZodiPy will accept a sequence of frequencies to the `freq`
-argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
-Note that the bandpass weights must be in spectral radiance units (Jy/sr), even though the weights them self are unitless. A top hat bandpass is assumed if a sequence of frequencies are used without providing weights.
-```python hl_lines="32 33"
-{!examples/get_bandpass_integrated_emission.py!}
-```
-![Generated Bandpass](img/bandpass.png)
-![Center frequency emission](img/center_freq.png)
-![Bandpass integrated emission](img/bandpass_integrated.png)
 
 
 ## Parallelization

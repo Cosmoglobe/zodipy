@@ -64,12 +64,12 @@ def get_source_parameters_kelsall_comp(
         )
 
     if model.solar_irradiance is not None:
-        solar_irradiance = interpolator(y=model.solar_irradiance.value)(
+        solar_irradiance = interpolator(y=model.solar_irradiance)(
             bandpass.frequencies.value
         )
-        solar_irradiance = u.Quantity(
-            solar_irradiance, model.solar_irradiance.unit
-        ).to_value(SPECIFIC_INTENSITY_UNITS, equivalencies=u.spectral())
+        solar_irradiance = u.Quantity(solar_irradiance, "MJy /sr").to_value(
+            SPECIFIC_INTENSITY_UNITS, equivalencies=u.spectral()
+        )
     else:
         solar_irradiance = 0
 

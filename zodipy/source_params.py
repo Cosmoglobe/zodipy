@@ -231,4 +231,4 @@ SOLAR_IRRADIANCE_DIRBE = [
     82999.336,
     42346.605,
     14409.608,
-] * (u.MJy / u.sr)
+]

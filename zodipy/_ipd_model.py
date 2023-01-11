@@ -4,8 +4,6 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import Mapping, Sequence
 
-import astropy.units as u
-
 from zodipy._ipd_comps import Component, ComponentLabel
 from zodipy._types import FrequencyOrWavelength
 
@@ -40,7 +38,7 @@ class Kelsall(InterplanetaryDustModel):
     delta: float
     emissivities: Mapping[ComponentLabel, Sequence[float]]
     albedos: Mapping[ComponentLabel, Sequence[float]] | None = None
-    solar_irradiance: u.Quantity[u.MJy / u.sr] | None = None
+    solar_irradiance: Sequence[float] | None = None  # In units of MJy/sr
     phase_coefficients: Sequence[Sequence[float]] | None = None
 
 

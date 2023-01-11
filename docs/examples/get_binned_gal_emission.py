@@ -13,20 +13,18 @@ binned_emission = model.get_binned_emission_pix(
     857 * u.GHz,
     pixels=np.arange(hp.nside2npix(nside)),
     nside=nside,
-    obs_time=Time("2022-06-14"),
+    obs_time=Time("2022-02-20"),
     obs="earth",
     coord_in="G",  # Coordinates of the input pointing
 )
 
 hp.mollview(
     binned_emission,
-    title="Binned zodiacal emission  at 857 GHz",
+    title="Binned zodiacal emission at 857 GHz",
     unit="MJy/sr",
-    coord="G",
-    max=1,
-    norm="log",
     cmap="afmhot",
+    min=0,
+    max=1,
 )
-hp.graticule(coord="E")
-# plt.savefig("../img/binned_gal.png", dpi=300)
+plt.savefig("../img/binned_gal.png", dpi=300)
 plt.show()
