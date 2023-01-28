@@ -12,7 +12,7 @@ from ._constants import c, h, k_B
 def get_blackbody_emission(
     freq: float | npt.NDArray[np.float64], T: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:
-    """Returns the blackbody emission given a sequence of frequencies and temperatures.
+    """Return the blackbody emission given a sequence of frequencies and temperatures.
 
     Parameters
     ----------
@@ -34,7 +34,7 @@ def get_blackbody_emission(
 def get_dust_grain_temperature(
     R: npt.NDArray[np.float64], T_0: float, delta: float
 ) -> npt.NDArray[np.float64]:
-    """Returns the dust grain temperature given a radial distance from the Sun.
+    """Return the dust grain temperature given a radial distance from the Sun.
 
     Parameters
     ----------
@@ -58,7 +58,7 @@ def get_scattering_angle(
     X_los: npt.NDArray[np.float64],
     X_helio: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Returns the scattering angle between the Sun and a point along the line of sight.
+    """Return the scattering angle between the Sun and a point along the line of sight.
 
     Parameters
     ----------
@@ -84,7 +84,7 @@ def get_scattering_angle(
 def get_phase_function(
     Theta: NDArray[np.float64], C: tuple[float, ...]
 ) -> NDArray[np.float64]:
-    """Returns the phase function.
+    """Return the phase function.
 
     Parameters
     ----------
@@ -104,7 +104,7 @@ def get_phase_function(
 
 @lru_cache
 def _get_phase_normalization(C: tuple[float, ...]) -> float:
-    """Returns the analyitcal integral for the phase normalization factor N."""
+    """Return the analyitcal integral for the phase normalization factor N."""
     int_term1 = 2 * np.pi
     int_term2 = 2 * C[0]
     int_term3 = np.pi * C[1]

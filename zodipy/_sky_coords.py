@@ -13,7 +13,7 @@ from zodipy._constants import DISTANCE_FROM_EARTH_TO_L2
 def get_obs_and_earth_positions(
     obs: str, obs_time: Time, obs_pos: Union[u.Quantity[u.AU], None]
 ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Returns the position of the observer and the Earth (3, `n_pointing`, `n_gauss_quad_degree`).
+    """Return the position of the observer and the Earth (3, `n_pointing`, `n_gauss_quad_degree`).
 
     The lagrange point SEMB-L2 is not included in any of the current available
     ephemerides. We implement an approximation to its position, assuming that
@@ -33,7 +33,7 @@ def get_obs_and_earth_positions(
 
 
 def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:
-    """Returns the position of the Earth given an ephemeris and observation time."""
+    """Return the position of the Earth given an ephemeris and observation time."""
     earth_skycoordinate = get_body("earth", obs_time)
     earth_skycoordinate = earth_skycoordinate.transform_to(HeliocentricMeanEcliptic)
 
@@ -43,7 +43,7 @@ def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:
 def _get_observer_position(
     obs: str, obs_time: Time, earth_pos: u.Quantity[u.AU]
 ) -> u.Quantity[u.AU]:
-    """Returns the position of the Earth and the observer."""
+    """Return the position of the Earth and the observer."""
     if obs.lower() == "semb-l2":
         return _get_sun_earth_moon_barycenter(earth_pos)
 
@@ -58,7 +58,7 @@ def _get_observer_position(
 def _get_sun_earth_moon_barycenter(
     earth_position: u.Quantity[u.AU],
 ) -> u.Quantity[u.AU]:
-    """Returns the approximated position of SEMB-L2 given Earth's position."""
+    """Return the approximated position of SEMB-L2 given Earth's position."""
     r_earth = np.linalg.norm(earth_position)
 
     earth_unit_vector = earth_position / r_earth

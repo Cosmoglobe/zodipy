@@ -14,7 +14,7 @@ from zodipy._source_funcs import (
 )
 
 """
-Function that returns the zodiacal emission at a step along all lines of sight given 
+Function that return the zodiacal emission at a step along all lines of sight given 
 a zodiacal model.
 """
 GetCompEmissionAtStepFn = Callable[..., npt.NDArray[np.float64]]

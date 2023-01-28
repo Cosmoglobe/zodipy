@@ -90,15 +90,15 @@ class Zodipy:
 
     @property
     def supported_observers(self) -> list[str]:
-        """Returns a list of available observers given an ephemeris."""
+        """Return a list of available observers given an ephemeris."""
         return list(solar_system_ephemeris.bodies) + ["semb-l2"]
 
     def get_parameters(self) -> ParameterDict:
-        """Returns a dictionary containing the interplanetary dust model parameters."""
+        """Return a dictionary containing the interplanetary dust model parameters."""
         return self.ipd_model.to_dict()
 
     def update_parameters(self, parameters: ParameterDict) -> None:
-        """Updates the interplanetary dust model parameters.
+        """Update the interplanetary dust model parameters.
 
         Args:
             parameters: Dictionary of parameters to update. The keys must be the names
@@ -132,7 +132,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated zodiacal emission given angles on the sky.
+        """Return the simulated zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`.
@@ -200,7 +200,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated zodiacal emission given pixel numbers.
+        """Return the simulated zodiacal emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`.
@@ -263,7 +263,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned zodiacal emission given angles on the sky.
+        """Return the simulated binned zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`. The emission is binned to a HEALPix map with
@@ -337,7 +337,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned zodiacal Emission given pixel numbers.
+        """Return the simulated binned zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`. The emission is binned to a HEALPix map with resolution given by
@@ -402,7 +402,7 @@ class Zodipy:
         nside: int | None = None,
         return_comps: bool = False,
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Computes the component-wise zodiacal emission."""
+        """Compute the component-wise zodiacal emission."""
         bandpass = validate_and_get_bandpass(
             freq=freq,
             weights=weights,

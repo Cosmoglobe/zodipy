@@ -17,7 +17,7 @@ def tabulate_density(
     model: str = "DIRBE",
     earth_pos: u.Quantity[u.AU] = DEFAULT_EARTH_POS,
 ) -> npt.NDArray[np.float64]:
-    """Returns the tabulated densities of the zodiacal components on a provided grid.
+    """Return the tabulated densities of the zodiacal components on a provided grid.
 
     Parameters
     ----------
