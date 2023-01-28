@@ -4,33 +4,39 @@ from zodipy._ipd_comps import ComponentLabel
 
 T_0_DIRBE = 286
 DELTA_DIRBE = 0.46686259861486573
+T_LARGE_GRAINS = 255
+T_SMALL_GRAINS = 305
+DELTA_LARGE_GRAINS = 0.5
+DELTA_SMALL_GRAINS = 0.4
 
 T_0_RRM = {
-    ComponentLabel.FAN: 255,
-    ComponentLabel.COMET: 255,
-    ComponentLabel.INNER_NARROW_BAND: 255,
-    ComponentLabel.OUTER_NARROW_BAND: 255,
-    ComponentLabel.BROAD_BAND: 295,
-    ComponentLabel.RING_RRM: 255,
-    ComponentLabel.FEATURE_RRM: 255,
-    ComponentLabel.INTERSTELLAR: 305,
+    ComponentLabel.FAN: T_LARGE_GRAINS,
+    ComponentLabel.COMET: T_LARGE_GRAINS,
+    ComponentLabel.INNER_NARROW_BAND: T_LARGE_GRAINS,
+    ComponentLabel.OUTER_NARROW_BAND: T_LARGE_GRAINS,
+    ComponentLabel.RING_RRM: T_LARGE_GRAINS,
+    ComponentLabel.FEATURE_RRM: T_LARGE_GRAINS,
+    ComponentLabel.BROAD_BAND: T_LARGE_GRAINS,
+    ComponentLabel.INTERSTELLAR: T_SMALL_GRAINS,
 }
 DELTA_RMM = {
-    ComponentLabel.FAN: 0.5,
-    ComponentLabel.COMET: 0.5,
-    ComponentLabel.INNER_NARROW_BAND: 0.5,
-    ComponentLabel.OUTER_NARROW_BAND: 0.5,
-    ComponentLabel.BROAD_BAND: 0.4,
-    ComponentLabel.RING_RRM: 0.5,
-    ComponentLabel.FEATURE_RRM: 0.5,
-    ComponentLabel.INTERSTELLAR: 0.4,
+    ComponentLabel.FAN: DELTA_LARGE_GRAINS,
+    ComponentLabel.COMET: DELTA_LARGE_GRAINS,
+    ComponentLabel.INNER_NARROW_BAND: DELTA_LARGE_GRAINS,
+    ComponentLabel.OUTER_NARROW_BAND: DELTA_LARGE_GRAINS,
+    ComponentLabel.RING_RRM: DELTA_LARGE_GRAINS,
+    ComponentLabel.FEATURE_RRM: DELTA_LARGE_GRAINS,
+    ComponentLabel.BROAD_BAND: DELTA_LARGE_GRAINS,
+    ComponentLabel.INTERSTELLAR: DELTA_SMALL_GRAINS,
 }
 
 SPECTRUM_PLANCK = u.Quantity([100.0, 143.0, 217.0, 353.0, 545.0, 857.0], u.GHz)
 SPECTRUM_DIRBE = u.Quantity([1.25, 2.2, 3.5, 4.9, 12, 25, 60, 100, 140, 240], u.micron)
 SPECTRUM_IRAS = u.Quantity([12, 25, 60, 100], u.micron)
 
-CALIBRATION_RRM = (2.45, 2.42, 2.24, 1.97)
+#! TODO: Figure out calibration and source evaluation for rrm-experimental
+# CALIBRATION_RRM = (2.45, 2.42, 2.24, 1.97)
+CALIBRATION_RRM = (1, 1, 1, 1)
 OFFSET_RRM = (0.48, -1.32, 0.13, -1.47)
 
 EMISSIVITY_PLANCK_13 = {

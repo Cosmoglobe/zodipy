@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from zodipy._constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
+from zodipy._constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS, R_NARROW_BANDS
 from zodipy._ipd_comps import (
     Band,
     BroadBand,
@@ -110,17 +110,32 @@ RRM: dict[ComponentLabel, Component] = {
         Z_0=0.06,  # *
         R_outer=R_MARS,
     ),
+    ComponentLabel.COMET: Comet(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=1.5,  # *
+        Omega=78,  # *
+        P=2.5,  # *
+        gamma=1,  # *
+        Z_0=0.06,
+        amp=0.37,  # *
+        R_inner=R_MARS,  # *
+        R_outer=R_KUIPER_BELT,  # *
+    ),
     ComponentLabel.INNER_NARROW_BAND: NarrowBand(
         x_0=0.0,
         y_0=0.0,
         z_0=0.0,
         i=1.5,  # *
         Omega=78,  # *
-        A=0.032,  # * #AMP1
+        A=0.04,  # * #AMP1
+        # A=0.032,  # * #AMP1
         gamma=1,  # *
-        beta_nb=1.42,  # themis
-        # beta_nb=9.35,  # veritas
+        # beta_nb=1.42,  # themis
+        beta_nb=9.35,  # veritas
         G=0.12,  # *
+        # G=0.12,  # *
         R_inner=R_MARS,  # *
         R_outer=R_ASTEROID_BELT,  # *
     ),
@@ -130,10 +145,11 @@ RRM: dict[ComponentLabel, Component] = {
         z_0=0.0,
         i=1.5,  # *
         Omega=78,  # *
-        A=0.04,  # * #AMP2
+        A=0.032,  # * #AMP2
+        # A=0.04,  # * #AMP2
         gamma=1,  # *
-        beta_nb=9.35,  # veritas
-        # beta_nb=1.42,  # themis
+        # beta_nb=9.35,  # veritas
+        beta_nb=1.42,  # themis
         G=0.6,  # *
         R_inner=R_MARS,  # *
         R_outer=R_ASTEROID_BELT,  # *
@@ -147,21 +163,9 @@ RRM: dict[ComponentLabel, Component] = {
         A=0.051,  # *
         gamma=1,  # *
         beta_bb=9.3,
-        sigma_bb=6,
+        sigma_bb=5,
         R_inner=R_MARS,  # *
         R_outer=R_ASTEROID_BELT,  # *
-    ),
-    ComponentLabel.COMET: Comet(
-        x_0=0.0,
-        y_0=0.0,
-        z_0=0.0,
-        i=1.5,  # *
-        Omega=78,  # *
-        P=2.5,  # *
-        gamma=1,  # *
-        amp=0.37,  # *
-        R_inner=R_MARS,  # *
-        R_outer=R_KUIPER_BELT,  # *
     ),
     ComponentLabel.INTERSTELLAR: Interstellar(
         x_0=0.0,

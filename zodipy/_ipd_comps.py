@@ -174,6 +174,7 @@ class Comet(Component):
     """RR May cometary component."""
 
     gamma: float
+    Z_0: float
     P: float
     amp: float
     R_inner: float
@@ -197,11 +198,6 @@ class NarrowBand(Component):
     R_inner: float
     R_outer: float
     beta_nb: float
-    beta_nb_rad: float = field(init=False)
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        self.beta_nb_rad = np.radians(self.beta_nb)
 
 
 @dataclass
@@ -214,13 +210,6 @@ class BroadBand(Component):
     R_outer: float
     beta_bb: float
     sigma_bb: float
-    beta_bb_rad: float = field(init=False)
-    sigma_bb_rad: float = field(init=False)
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        self.beta_bb_rad = np.radians(self.beta_bb)
-        self.sigma_bb_rad = np.radians(self.sigma_bb)
 
 
 @dataclass

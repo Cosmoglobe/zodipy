@@ -218,6 +218,7 @@ def compute_comet_density(
     sin_i_rad: float,
     cos_i_rad: float,
     gamma: float,
+    Z_0: float,
     P: float,
     amp: float,
     R_inner: float,
@@ -238,9 +239,12 @@ def compute_comet_density(
         + X_comet_filtered[2] * cos_i_rad
     )
     sin_beta = Z_comet / R_comet_filtered
-    f = np.exp(-P * np.abs(sin_beta))
+    beta = np.arcsin(sin_beta)
+    Z_fan_abs = np.abs(Z_comet)
+    epsilon = np.where(Z_fan_abs < Z_0, 2 - (Z_fan_abs / Z_0), 1)
+    f = np.exp(-P * np.sin(np.abs(beta) ** epsilon))
 
-    density[indices] = amp * ((R_comet_filtered) ** (-gamma)) * f
+    density[indices] = amp * (R_comet_filtered ** (-gamma)) * f
     return density
 
 
@@ -259,7 +263,7 @@ def compute_narrow_band_density(
     cos_Omega_rad: float,
     sin_i_rad: float,
     cos_i_rad: float,
-    beta_nb_rad: float,
+    beta_nb: float,
     G: float,
     gamma: float,
     A: float,
@@ -283,13 +287,12 @@ def compute_narrow_band_density(
     )
 
     sin_beta = Z_nb / R_nb_filtered
-    beta_abs = np.abs(np.arcsin(sin_beta))
+    beta_abs = np.abs(np.rad2deg(np.arcsin(sin_beta)))
 
-    f = np.where(
-        beta_abs < beta_nb_rad, np.exp(-G * np.rad2deg(beta_nb_rad - beta_abs)), 0
-    )
+    f = np.where(beta_abs < beta_nb, np.exp(G * (beta_abs - beta_nb)), 0)
 
     density[indices] = A * ((R_nb_filtered / R_outer) ** (-gamma)) * f
+
     return density
 
 
@@ -300,8 +303,8 @@ def compute_broad_band_density(
     cos_Omega_rad: float,
     sin_i_rad: float,
     cos_i_rad: float,
-    beta_bb_rad: float,
-    sigma_bb_rad: float,
+    beta_bb: float,
+    sigma_bb: float,
     gamma: float,
     A: float,
     R_inner: float,
@@ -322,9 +325,10 @@ def compute_broad_band_density(
         + X_bb_filtered[2] * cos_i_rad
     )
     sin_beta = Z_bb / R_bb_filtered
-    beta = np.arcsin(sin_beta)
-    f = np.exp(-((beta - beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)) + np.exp(
-        -((beta + beta_bb_rad) ** 2) / (2 * sigma_bb_rad**2)
+    beta = np.rad2deg(np.arcsin(sin_beta))
+
+    f = np.exp(-0.5 * ((beta - beta_bb) / sigma_bb) ** 2) + np.exp(
+        -0.5 * ((beta + beta_bb) / sigma_bb) ** 2
     )
     density[indices] = A * ((R_bb_filtered / R_outer) ** (-gamma)) * f
     return density
