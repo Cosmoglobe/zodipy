@@ -75,7 +75,6 @@ class Zodipy:
         parallel: bool = False,
         n_proc: int | None = None,
     ) -> None:
-        """Initialize the Zodipy interface."""
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
@@ -539,7 +538,6 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
     def __repr__(self) -> str:
-        """Return a string representation of the class."""
         repr_str = f"{self.__class__.__name__}("
         for attribute_name, attribute in self.__dict__.items():
             if attribute_name.startswith("_"):
