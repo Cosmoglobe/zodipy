@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
-import numpy.typing as npt
 
 from zodipy._constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
 from zodipy._ipd_comps import ComponentLabel
 from zodipy.comps import RRM
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
 
 DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),
@@ -53,7 +56,8 @@ def get_sphere_intersection(
     """Get RMAX per pixel.
 
     Given the observer position, return distance from the observer to the
-    intersection between the line of sights and a heliocentric sphere with radius cutoff.
+    intersection between the line-of-sights and a heliocentric sphere with radius `cutoff`.
+
     """
     x, y, z = obs_pos.flatten()
     r_obs = np.sqrt(x**2 + y**2 + z**2)
@@ -82,7 +86,7 @@ def get_line_of_sight_start_and_stop_distances(
     dict[ComponentLabel, npt.NDArray[np.float64]],
     dict[ComponentLabel, npt.NDArray[np.float64]],
 ]:
-
+    """Get the start and stop distances for each component."""
     start = {
         comp: get_sphere_intersection(obs_pos, unit_vectors, COMPONENT_CUTOFFS[comp][0])
         for comp in components

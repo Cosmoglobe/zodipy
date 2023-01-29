@@ -26,17 +26,13 @@ def get_obs_and_earth_positions(
     else:
         obs_position = obs_pos.to(u.AU)
 
-    obs_position = obs_position.reshape(3, 1, 1)
-    earth_position = earth_position.reshape(3, 1, 1)
-
-    return obs_position.value, earth_position.value
+    return obs_position.reshape(3, 1, 1).value, earth_position.reshape(3, 1, 1).value
 
 
 def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:
     """Return the position of the Earth given an ephemeris and observation time."""
     earth_skycoordinate = get_body("earth", obs_time)
     earth_skycoordinate = earth_skycoordinate.transform_to(HeliocentricMeanEcliptic)
-
     return earth_skycoordinate.cartesian.xyz.to(u.AU)
 
 
@@ -60,7 +56,6 @@ def _get_sun_earth_moon_barycenter(
 ) -> u.Quantity[u.AU]:
     """Return the approximated position of SEMB-L2 given Earth's position."""
     r_earth = np.linalg.norm(earth_position)
-
     earth_unit_vector = earth_position / r_earth
     semb_l2_length = r_earth + DISTANCE_FROM_EARTH_TO_L2
 

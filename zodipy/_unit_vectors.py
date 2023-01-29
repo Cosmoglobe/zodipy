@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
-import astropy.units as u
 import healpy as hp
 import numpy as np
-import numpy.typing as npt
+
+if TYPE_CHECKING:
+    import astropy.units as u
+    import numpy.typing as npt
 
 
 def get_unit_vectors_from_pixels(
@@ -13,7 +15,6 @@ def get_unit_vectors_from_pixels(
 ) -> npt.NDArray[np.float64]:
     """Return ecliptic unit vectors from HEALPix pixels representing some pointing."""
     unit_vectors = np.asarray(hp.pix2vec(nside, pixels))
-
     return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))
 
 
@@ -25,5 +26,4 @@ def get_unit_vectors_from_ang(
 ) -> npt.NDArray[np.float64]:
     """Return ecliptic unit vectors from sky angles representing some pointing."""
     unit_vectors = np.asarray(hp.ang2vec(theta, phi, lonlat=lonlat)).transpose()
-
     return np.asarray(hp.Rotator(coord=[coord_in, "E"])(unit_vectors))

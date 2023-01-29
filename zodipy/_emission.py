@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._ipd_dens_funcs import ComponentDensityFn
 from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 from zodipy._source_funcs import (
     get_dust_grain_temperature,
     get_phase_function,
     get_scattering_angle,
 )
+
+if TYPE_CHECKING:
+
+    from zodipy._ipd_dens_funcs import ComponentDensityFn
 
 """
 Function that return the zodiacal emission at a step along all lines of sight given 
@@ -68,7 +71,7 @@ def rrm(
     calibration: np.float64,
     bp_interpolation_table: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """RRM has component specific line of sight grids."""
+    """RRM is implented with component specific line-of-sight grids."""
     # Convert the quadrature range from [-1, 1] to the true ecliptic positions
     R_los = ((stop - start) / 2) * r + (stop + start) / 2
     X_los = R_los * u_los

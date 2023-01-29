@@ -3,14 +3,12 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Callable, Literal, Sequence
+from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 import astropy.units as u
 import healpy as hp
 import numpy as np
-import numpy.typing as npt
 from astropy.coordinates import solar_system_ephemeris
-from astropy.time import Time
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
@@ -20,15 +18,19 @@ from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
 from zodipy._sky_coords import get_obs_and_earth_positions
-from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from zodipy._validators import get_validated_ang, get_validated_pix
 from zodipy.model_registry import model_registry
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from astropy.time import Time
+
+    from zodipy._types import FrequencyOrWavelength, ParameterDict, Pixels, SkyAngles
+
+
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
-
-ParameterDict = dict
 
 
 class Zodipy:
@@ -37,7 +39,7 @@ class Zodipy:
     This class provides methods for simulating zodiacal emission given observer pointing
     either in sky angles or through HEALPix pixels.
 
-    Attributes:
+    Args:
         model (str): Name of the interplanetary dust model to use in the simulations.
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
@@ -73,7 +75,7 @@ class Zodipy:
         parallel: bool = False,
         n_proc: int | None = None,
     ) -> None:
-
+        """Initialize the Zodipy interface."""
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
@@ -83,19 +85,19 @@ class Zodipy:
         self.parallel = parallel
         self.n_proc = n_proc
 
-        self.ipd_model = model_registry.get_model(model)
-        self.gauss_points_and_weights = np.polynomial.legendre.leggauss(
+        self._ipd_model = model_registry.get_model(model)
+        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(
             gauss_quad_degree
         )
 
     @property
     def supported_observers(self) -> list[str]:
         """Return a list of available observers given an ephemeris."""
-        return list(solar_system_ephemeris.bodies) + ["semb-l2"]
+        return [*list(solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> ParameterDict:
         """Return a dictionary containing the interplanetary dust model parameters."""
-        return self.ipd_model.to_dict()
+        return self._ipd_model.to_dict()
 
     def update_parameters(self, parameters: ParameterDict) -> None:
         """Update the interplanetary dust model parameters.
@@ -112,12 +114,12 @@ class Zodipy:
             if key == "comps":
                 for comp_key, comp_value in value.items():
                     _dict["comps"][ComponentLabel(comp_key)] = type(
-                        self.ipd_model.comps[ComponentLabel(comp_key)]
+                        self._ipd_model.comps[ComponentLabel(comp_key)]
                     )(**comp_value)
             elif isinstance(value, dict):
                 _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
 
-        self.ipd_model = self.ipd_model.__class__(**_dict)
+        self._ipd_model = self._ipd_model.__class__(**_dict)
 
     def get_emission_ang(
         self,
@@ -406,14 +408,14 @@ class Zodipy:
         bandpass = validate_and_get_bandpass(
             freq=freq,
             weights=weights,
-            model=self.ipd_model,
+            model=self._ipd_model,
             extrapolate=self.extrapolate,
         )
 
         # Get model parameters, some of which have been interpolated to the given
         # frequency or bandpass.
-        source_parameters = SOURCE_PARAMS_MAPPING[type(self.ipd_model)](
-            bandpass, self.ipd_model
+        source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
+            bandpass, self._ipd_model
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
@@ -423,13 +425,13 @@ class Zodipy:
         # Get the integration limits for each zodiacal component (which may be
         # different or the same depending on the model) along all line of sights.
         start, stop = get_line_of_sight_start_and_stop_distances(
-            components=self.ipd_model.comps.keys(),
+            components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
             obs_pos=observer_position,
         )
 
         density_partials = construct_density_partials_comps(
-            comps=self.ipd_model.comps,
+            comps=self._ipd_model.comps,
             dynamic_params={"X_earth": earth_position},
         )
 
@@ -437,7 +439,7 @@ class Zodipy:
         bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
 
         common_integrand = partial(
-            EMISSION_MAPPING[type(self.ipd_model)],
+            EMISSION_MAPPING[type(self._ipd_model)],
             X_obs=observer_position,
             bp_interpolation_table=bandpass_interpolatation_table,
             **source_parameters["common"],
@@ -448,12 +450,12 @@ class Zodipy:
 
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
             integrated_comp_emission = np.zeros(
-                (len(self.ipd_model.comps), unit_vectors.shape[1])
+                (len(self._ipd_model.comps), unit_vectors.shape[1])
             )
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=n_proc
             ) as pool:
-                for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+                for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], n_proc, axis=-1)
                     if start[comp_label].size == 1:
                         start_chunks = [start[comp_label]] * n_proc
@@ -478,7 +480,7 @@ class Zodipy:
                     proc_chunks = [
                         pool.apply_async(
                             _integrate_gauss_quad,
-                            args=(comp_integrand, *self.gauss_points_and_weights),
+                            args=(comp_integrand, *self._gauss_points_and_weights),
                         )
                         for comp_integrand in comp_integrands
                     ]
@@ -491,11 +493,11 @@ class Zodipy:
 
         else:
             integrated_comp_emission = np.zeros(
-                (len(self.ipd_model.comps), unit_vectors.shape[1])
+                (len(self._ipd_model.comps), unit_vectors.shape[1])
             )
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
-            for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+            for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
                 comp_integrand = partial(
                     common_integrand,
                     u_los=unit_vectors_expanded,
@@ -507,7 +509,7 @@ class Zodipy:
 
                 integrated_comp_emission[idx] = (
                     _integrate_gauss_quad(
-                        comp_integrand, *self.gauss_points_and_weights
+                        comp_integrand, *self._gauss_points_and_weights
                     )
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
@@ -515,7 +517,7 @@ class Zodipy:
 
         emission = np.zeros(
             (
-                len(self.ipd_model.comps),
+                len(self._ipd_model.comps),
                 hp.nside2npix(nside) if binned else indicies.size,
             )
         )
@@ -537,6 +539,7 @@ class Zodipy:
         return emission if return_comps else emission.sum(axis=0)
 
     def __repr__(self) -> str:
+        """Return a string representation of the class."""
         repr_str = f"{self.__class__.__name__}("
         for attribute_name, attribute in self.__dict__.items():
             if attribute_name.startswith("_"):
@@ -551,5 +554,5 @@ def _integrate_gauss_quad(
     points: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Integrate the emission from a component using Gauss-Legendre quadrature."""
+    """Integrate a function using Gauss-Legendre quadrature."""
     return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))

@@ -56,14 +56,42 @@ filterwarnings = [
 profile = "black"
 
 [tool.ruff]
-select = ["F", "D", "E", "W", "C", "B", "I001"]
+select = [
+    "F", 
+    "D", 
+    "F", 
+    "E", 
+    "W", 
+    "C", 
+    "B", 
+    "I", 
+    "YTT", 
+    "ANN", 
+    "S", 
+    "BLE", 
+    "A", 
+    "C4", 
+    "EM", 
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "Q",
+    "RET",
+    "SIM",
+    "PLR",
+    "PLW",
+    "TRY",
+    "RUF",
+]
 line-length = 100
 ignore = [
     "B905",
     "D100",
-    "D107",
     "D104",
-    "D105",
+    "ANN101"
 ]
 
 [tool.ruff.pydocstyle]

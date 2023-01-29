@@ -127,13 +127,13 @@ def freq(
             .map(partial(u.Quantity, unit=u.GHz))
         )
 
-    min_freq = model.ipd_model.spectrum[0]
-    max_freq = model.ipd_model.spectrum[-1]
+    min_freq = model._ipd_model.spectrum[0]
+    max_freq = model._ipd_model.spectrum[-1]
     freq_range = np.geomspace(np.log(min_freq.value), np.log(max_freq.value), N_FREQS)
     freq_strategy = (
         sampled_from(freq_range.tolist())
         .map(np.exp)
-        .map(partial(u.Quantity, unit=model.ipd_model.spectrum.unit))
+        .map(partial(u.Quantity, unit=model._ipd_model.spectrum.unit))
     )
 
     return np.clip(draw(freq_strategy), min_freq, max_freq)
@@ -202,7 +202,7 @@ def obs(draw: DrawFn, model: zodipy.Zodipy, obs_time: Time) -> str:
         return u.Quantity(np.linalg.norm(obs_pos.value), u.AU)
 
     los_dist_cut = min(
-        [COMPONENT_CUTOFFS[comp][1] for comp in model.ipd_model.comps.keys()],
+        [COMPONENT_CUTOFFS[comp][1] for comp in model._ipd_model.comps.keys()],
     )
     if isinstance(los_dist_cut, dict):
         los_dist_cut = min(list(los_dist_cut.values()))

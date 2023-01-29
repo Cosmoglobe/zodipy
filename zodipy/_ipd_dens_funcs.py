@@ -6,7 +6,7 @@ from functools import partial
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 import numpy as np
-import numpy.typing as npt
+import numpy.typing as npt  # type: ignore
 
 from zodipy._ipd_comps import (
     Band,
@@ -24,12 +24,14 @@ from zodipy._ipd_comps import (
     RingRRM,
 )
 
-"""The density functions for the different types of components. Common for all of these 
-is that the first argument will be `X_helio` (the line of sight from the observer towards
-a point on the sky) and the remaining arguments will be parameters that are set by the
-`Component` subclasses. These arguments are unpacked automatically, so for a 
-ComputeDensityFunc to work, the mapped `Component` class must have all the parameters as 
-instance variables. 
+"""The density functions for the different types of components. 
+
+Common for all of these is that the first argument will be `X_helio` (the line 
+of sight from the observer towards a point on the sky) and the remaining arguments 
+will be parameters that are set by the `Component` subclasses. These arguments are 
+unpacked automatically, so for a `ComputeDensityFunc` to work, the mapped `Component` 
+class must have all the parameters as instance variables. 
+
 """
 ComputeDensityFunc = Callable[..., npt.NDArray[np.float64]]
 
@@ -429,17 +431,17 @@ def construct_density_partials(
         try:
             residual_params.remove("X_helio")
         except ValueError as err:
-            raise ValueError(
-                "X_helio must be be the first argument to the density function of a component."
-            ) from err
+            msg = "X_helio must be be the first argument to the density function of a component."
+            raise ValueError(msg) from err
 
         if residual_params:
             if residual_params - dynamic_params.keys():
-                raise ValueError(
+                msg = (
                     f"Argument(s) {residual_params} required by the density function "
                     f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
                     f"{type(comp)} or by the `computed_parameters` dict."
                 )
+                raise ValueError(msg)
             comp_dict.update(dynamic_params)
 
         # Remove excess intermediate parameters from the component dict.
@@ -458,9 +460,10 @@ def construct_density_partials_comps(
 ) -> dict[ComponentLabel, ComponentDensityFn]:
     """Construct density partials for components.
 
-    Return a tuple of the density expressions above which has been prepopulated with model and
-    configuration parameters, leaving only the `X_helio` argument to be supplied. Raises exception
-    for incorrectly defined components or component density functions.
+    Return a tuple of the density expressions above which has been prepopulated with
+    model and configuration parameters, leaving only the `X_helio` argument to be supplied.
+    Raises exception for incorrectly defined components or component density functions.
+
     """
     partial_density_funcs: dict[ComponentLabel, ComponentDensityFn] = {}
     for comp_label, comp in comps.items():
@@ -470,17 +473,17 @@ def construct_density_partials_comps(
         try:
             residual_params.remove("X_helio")
         except ValueError as err:
-            raise ValueError(
-                "X_helio must be be the first argument to the density function of a component."
-            ) from err
+            msg = "X_helio must be be the first argument to the density function of a component."
+            raise ValueError(msg) from err
 
         if residual_params:
             if residual_params - dynamic_params.keys():
-                raise ValueError(
+                msg = (
                     f"Argument(s) {residual_params} required by the density function "
                     f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
                     f"{type(comp)} or by the `computed_parameters` dict."
                 )
+                raise ValueError(msg)
             comp_dict.update(dynamic_params)
 
         # Remove excess intermediate parameters from the component dict.
