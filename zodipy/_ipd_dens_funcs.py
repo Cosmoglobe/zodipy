@@ -254,7 +254,6 @@ def compute_interstellar_density(
     X_helio: npt.NDArray[np.float64],
     amp: float,
 ) -> npt.NDArray[np.float64]:
-
     return np.array([amp])
 
 

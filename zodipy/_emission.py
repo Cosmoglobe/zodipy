@@ -13,7 +13,6 @@ from zodipy._source_funcs import (
 )
 
 if TYPE_CHECKING:
-
     from zodipy._ipd_dens_funcs import ComponentDensityFn
 
 """
