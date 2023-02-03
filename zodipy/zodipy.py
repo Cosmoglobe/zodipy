@@ -3,14 +3,12 @@ from __future__ import annotations
 import multiprocessing
 import platform
 from functools import partial
-from typing import Callable, Literal, Sequence
+from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 import astropy.units as u
 import healpy as hp
 import numpy as np
-import numpy.typing as npt
 from astropy.coordinates import solar_system_ephemeris
-from astropy.time import Time
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
@@ -20,91 +18,88 @@ from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
 from zodipy._sky_coords import get_obs_and_earth_positions
-from zodipy._types import FrequencyOrWavelength, Pixels, SkyAngles
 from zodipy._unit_vectors import get_unit_vectors_from_ang, get_unit_vectors_from_pixels
 from zodipy._validators import get_validated_ang, get_validated_pix
 from zodipy.model_registry import model_registry
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from astropy.time import Time
+
+    from zodipy._types import FrequencyOrWavelength, ParameterDict, Pixels, SkyAngles
+
+
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
-
-ParameterDict = dict
 
 
 class Zodipy:
     """Interface for simulating zodiacal emission.
 
-    Sets up the simulation configuration and provides methods for simulating the zodiacal
-    emission that a solar system observer is predicted to see given an interplanetary dust
-    model.
+    This class provides methods for simulating zodiacal emission given observer pointing
+    either in sky angles or through HEALPix pixels.
 
-    Attributes:
+    Args:
         model (str): Name of the interplanetary dust model to use in the simulations.
             Defaults to DIRBE.
+        gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
+            the line-of-sight integral in the simulations. Default is 50 points.
         extrapolate (bool): If `True` all spectral quantities in the selected model are
-            linearly extrapolated to the requested frequency/wavelength. If `False`, an
+            extrapolated to the requested frequencies or wavelengths. If `False`, an
             exception is raised on requested frequencies/wavelengths outside of the
             valid model range. Default is `False`.
-        parallel (bool): If `True`, input pointing sequences will be split among all
-            available cores on the machine, and the emission will be computed in parallel.
-            This is useful for large pointing chunks. Default is `False`.
-        n_proc (int): Number of cores to use when parallel computation. Defaults is None,
-            which will use all available cores.
-        solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
-            for all the pointing with angular distance between the sun smaller than
-            `solar_cutoff` are set to `np.nan`. This is due to the model singularity of the
-            diffuse cloud component at the heliocentric origin. Such a cutoff may be
-            useful when using simulated pointing, but actual scanning strategies are
-            unlikely to look directly at the sun. This feature is turned of by setting this
-            argument to `None`. Defaults to 5 degrees.
-        solar_cut_fill_value (float): Fill value for the masked solar cut pointing.
-            Defaults to `np.nan`.
-        gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
-            the brightness integral. Default is 50 points.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
-            Earth. Defaults to 'de432s' which requires downloading (and caching) a ~10MB
+            Earth. Defaults to 'de432s', which requires downloading (and caching) a ~10MB
             file. For more information on available ephemeridis, please visit
             https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+        solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
+            for all the pointing with angular distance between the sun smaller than
+            `solar_cutoff` are masked. Defaults to `None`.
+        solar_cut_fill_value (float): Fill value for pixels masked with `solar_cut`.
+            Defaults to `np.nan`.
+        parallel (bool): If `True`, input pointing will be split among several cores, and
+            the emission will be computed in parallel. Default is `False`.
+        n_proc (int): Number of cores to use when `parallel` is `True`. Defaults is `None`,
+            which uses all available cores.
 
     """
 
     def __init__(
         self,
         model: str = "dirbe",
+        gauss_quad_degree: int = 50,
         extrapolate: bool = False,
-        parallel: bool = False,
-        n_proc: int | None = None,
+        ephemeris: str = "de432s",
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
-        gauss_quad_degree: int = 50,
-        ephemeris: str = "de432s",
+        parallel: bool = False,
+        n_proc: int | None = None,
     ) -> None:
-
         self.model = model
+        self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
-        self.parallel = parallel
-        self.n_proc = n_proc
+        self.ephemeris = ephemeris
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
-        self.gauss_quad_degree = gauss_quad_degree
-        self.ephemeris = ephemeris
+        self.parallel = parallel
+        self.n_proc = n_proc
 
-        self.ipd_model = model_registry.get_model(model)
-        self.gauss_points_and_weights = np.polynomial.legendre.leggauss(
+        self._ipd_model = model_registry.get_model(model)
+        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(
             gauss_quad_degree
         )
 
     @property
     def supported_observers(self) -> list[str]:
-        """Returns a list of available observers given an ephemeris."""
-        return list(solar_system_ephemeris.bodies) + ["semb-l2"]
+        """Return a list of available observers given an ephemeris."""
+        return [*list(solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> ParameterDict:
-        """Returns a dictionary containing the interplanetary dust model parameters."""
-        return self.ipd_model.to_dict()
+        """Return a dictionary containing the interplanetary dust model parameters."""
+        return self._ipd_model.to_dict()
 
     def update_parameters(self, parameters: ParameterDict) -> None:
-        """Updates the interplanetary dust model parameters.
+        """Update the interplanetary dust model parameters.
 
         Args:
             parameters: Dictionary of parameters to update. The keys must be the names
@@ -118,12 +113,12 @@ class Zodipy:
             if key == "comps":
                 for comp_key, comp_value in value.items():
                     _dict["comps"][ComponentLabel(comp_key)] = type(
-                        self.ipd_model.comps[ComponentLabel(comp_key)]
+                        self._ipd_model.comps[ComponentLabel(comp_key)]
                     )(**comp_value)
             elif isinstance(value, dict):
                 _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
 
-        self.ipd_model = self.ipd_model.__class__(**_dict)
+        self._ipd_model = self._ipd_model.__class__(**_dict)
 
     def get_emission_ang(
         self,
@@ -138,7 +133,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated zodiacal emission given angles on the sky.
+        """Return the simulated zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`.
@@ -206,7 +201,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated zodiacal emission given pixel numbers.
+        """Return the simulated zodiacal emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`.
@@ -269,7 +264,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned zodiacal emission given angles on the sky.
+        """Return the simulated binned zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
         the sky given by `theta` and `phi`. The emission is binned to a HEALPix map with
@@ -343,7 +338,7 @@ class Zodipy:
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Returns the simulated binned zodiacal Emission given pixel numbers.
+        """Return the simulated binned zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
         given by `nside`. The emission is binned to a HEALPix map with resolution given by
@@ -408,18 +403,18 @@ class Zodipy:
         nside: int | None = None,
         return_comps: bool = False,
     ) -> u.Quantity[u.MJy / u.sr]:
-        """Computes the component-wise zodiacal emission."""
+        """Compute the component-wise zodiacal emission."""
         bandpass = validate_and_get_bandpass(
             freq=freq,
             weights=weights,
-            model=self.ipd_model,
+            model=self._ipd_model,
             extrapolate=self.extrapolate,
         )
 
         # Get model parameters, some of which have been interpolated to the given
         # frequency or bandpass.
-        source_parameters = SOURCE_PARAMS_MAPPING[type(self.ipd_model)](
-            bandpass, self.ipd_model
+        source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
+            bandpass, self._ipd_model
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
@@ -429,13 +424,13 @@ class Zodipy:
         # Get the integration limits for each zodiacal component (which may be
         # different or the same depending on the model) along all line of sights.
         start, stop = get_line_of_sight_start_and_stop_distances(
-            components=self.ipd_model.comps.keys(),
+            components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
             obs_pos=observer_position,
         )
 
         density_partials = construct_density_partials_comps(
-            comps=self.ipd_model.comps,
+            comps=self._ipd_model.comps,
             dynamic_params={"X_earth": earth_position},
         )
 
@@ -443,29 +438,23 @@ class Zodipy:
         bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
 
         common_integrand = partial(
-            EMISSION_MAPPING[type(self.ipd_model)],
+            EMISSION_MAPPING[type(self._ipd_model)],
             X_obs=observer_position,
             bp_interpolation_table=bandpass_interpolatation_table,
             **source_parameters["common"],
         )
 
         if self.parallel:
-            # Distribute pointing to cores.
             n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
             integrated_comp_emission = np.zeros(
-                (len(self.ipd_model.comps), unit_vectors.shape[1])
+                (len(self._ipd_model.comps), unit_vectors.shape[1])
             )
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=n_proc
             ) as pool:
-                # Create a partial functions that will be passed to the quadpy integration
-                # scheme. Arrays are reshaped to (d, n, p) for broadcasting purposes where
-                # d is the geometrical dimensionality, n is the number of different
-                # pointings, and p is the number of integration points of the quadrature.
-
-                for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+                for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], n_proc, axis=-1)
                     if start[comp_label].size == 1:
                         start_chunks = [start[comp_label]] * n_proc
@@ -490,7 +479,7 @@ class Zodipy:
                     proc_chunks = [
                         pool.apply_async(
                             _integrate_gauss_quad,
-                            args=(comp_integrand, self.gauss_points_and_weights),
+                            args=(comp_integrand, *self._gauss_points_and_weights),
                         )
                         for comp_integrand in comp_integrands
                     ]
@@ -503,11 +492,11 @@ class Zodipy:
 
         else:
             integrated_comp_emission = np.zeros(
-                (len(self.ipd_model.comps), unit_vectors.shape[1])
+                (len(self._ipd_model.comps), unit_vectors.shape[1])
             )
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
-            for idx, comp_label in enumerate(self.ipd_model.comps.keys()):
+            for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
                 comp_integrand = partial(
                     common_integrand,
                     u_los=unit_vectors_expanded,
@@ -518,14 +507,16 @@ class Zodipy:
                 )
 
                 integrated_comp_emission[idx] = (
-                    _integrate_gauss_quad(comp_integrand, self.gauss_points_and_weights)
+                    _integrate_gauss_quad(
+                        comp_integrand, *self._gauss_points_and_weights
+                    )
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
                 )
 
         emission = np.zeros(
             (
-                len(self.ipd_model.comps),
+                len(self._ipd_model.comps),
                 hp.nside2npix(nside) if binned else indicies.size,
             )
         )
@@ -535,12 +526,6 @@ class Zodipy:
             emission = integrated_comp_emission[:, indicies]
 
         if self.solar_cut is not None:
-            # The observer position is aquired in geocentric coordinates before being
-            # rotated to ecliptic coordinates. This means that we can find the
-            # heliocentric origin in this coordinate system by simply taking the negative
-            # of the observer position. Emission from unit_vectors with an angular distance
-            # (between the pointing and the sun) smaller than the specified `solar_cutoff`
-            # value is masked with the `solar_cutoff_fill_value`.
             ang_dist = hp.rotator.angdist(-observer_position.flatten(), unit_vectors)
             solar_mask = ang_dist < self.solar_cut.value
             if binned and pixels is not None:
@@ -564,7 +549,8 @@ class Zodipy:
 
 def _integrate_gauss_quad(
     fn: Callable[[float], npt.NDArray[np.float64]],
-    points_and_weights: tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]],
+    points: npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Integrate the emission from a component using Gauss-Legendre quadrature."""
-    return np.squeeze(sum(fn(x) * w for x, w in zip(*points_and_weights)))
+    """Integrate a function using Gauss-Legendre quadrature."""
+    return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))

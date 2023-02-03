@@ -3,27 +3,25 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 @dataclass
 class Component(ABC):
     """Base class for storing common model parameters for zodiacal components.
 
-    Parameters
-    ----------
-    x_0
-        x-offset from the Sun in heliocentric ecliptic coordinates [AU].
-    y_0
-        y-offset from the Sun in heliocentric ecliptic coordinates [AU].
-    z_0
-        z-offset from the Sun in heliocentric ecliptic coordinates [AU].
-    i
-        Inclination with respect to the ecliptic plane [deg].
-    Omega
-        Ascending node [deg].
+    Args:
+        x_0: x-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        y_0: y-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        z_0: z-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        i: Inclination with respect to the ecliptic plane [deg].
+        Omega: Ascending node [deg].
+
     """
 
     x_0: float
@@ -50,18 +48,13 @@ class Component(ABC):
 class Cloud(Component):
     """DIRBE diffuse cloud.
 
-    Parameters
-    ----------
-    n_0
-        Density at 1 AU.
-    alpha
-        Radial power-law exponent.
-    beta
-       Vertical shape parameter.
-    gamma
-        Vertical power-law exponent.
-    mu
-        Widening parameter for the modified fan.
+    Args:
+        n_0: Density at 1 AU.
+        alpha: Radial power-law exponent.
+        beta: Vertical shape parameter.
+        gamma: Vertical power-law exponent.
+        mu: Widening parameter for the modified fan.
+
     """
 
     n_0: float
@@ -75,18 +68,13 @@ class Cloud(Component):
 class Band(Component):
     """DIRBE asteroidal dust band.
 
-    Parameters
-    ----------
-    n_0
-        Density at 3 AU.
-    delta_zeta
-        Shape parameter [deg].
-    v
-        Shape parameter.
-    p
-        Shape parameter.
-    delta_r
-        Inner radial cutoff.
+    Args:
+        n_0: Density at 3 AU.
+        delta_zeta: Shape parameter [deg].
+        v: Shape parameter.
+        p: Shape parameter.
+        delta_r: Inner radial cutoff.
+
     """
 
     n_0: float
@@ -105,16 +93,12 @@ class Band(Component):
 class Ring(Component):
     """DIRBE circum-solar ring (excluding the Earth-trailing Feature).
 
-    Parameters
-    ----------
-    n_0
-        Density at 1 AU.
-    R
-        Radius of the peak density.
-    sigma_r
-        Radial dispersion.
-    sigma_z
-        Vertical dispersion.
+    Args:
+        n_0: Density at 1 AU.
+        R: Radius of the peak density.
+        sigma_r: Radial dispersion.
+        sigma_z: Vertical dispersion.
+
     """
 
     n_0: float
@@ -127,20 +111,14 @@ class Ring(Component):
 class Feature(Component):
     """DIRBE Earth-trailing Feature.
 
-    Parameters
-    ----------
-    n_0
-        Density at 1 AU.
-    R
-        Radius of the peak density.
-    sigma_r
-        Radial dispersion.
-    sigma_z
-        Vertical dispersion.
-    theta
-        Longitude with respect to Earth [deg].
-    sigma_theta
-        Longitude dispersion [deg].
+    Args:
+        n_0: Density at 1 AU.
+        R: Radius of the peak density.
+        sigma_r: Radial dispersion.
+        sigma_z: Vertical dispersion.
+        theta: Longitude with respect to Earth [deg].
+        sigma_theta: Longitude dispersion [deg].
+
     """
 
     n_0: float
@@ -160,8 +138,6 @@ class Feature(Component):
 
 @dataclass
 class Fan(Component):
-    """RR May Fan component."""
-
     gamma: float
     Z_0: float
     Q: float
@@ -171,8 +147,6 @@ class Fan(Component):
 
 @dataclass
 class Comet(Component):
-    """RR May cometary component."""
-
     gamma: float
     Z_0: float
     P: float
@@ -183,15 +157,11 @@ class Comet(Component):
 
 @dataclass
 class Interstellar(Component):
-    """RR May cometary component."""
-
     amp: float
 
 
 @dataclass
 class NarrowBand(Component):
-    """RR May narrow band component."""
-
     gamma: float
     A: float
     G: float
@@ -202,8 +172,6 @@ class NarrowBand(Component):
 
 @dataclass
 class BroadBand(Component):
-    """RR May broad band component."""
-
     gamma: float
     A: float
     R_inner: float

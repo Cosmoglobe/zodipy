@@ -20,25 +20,25 @@ def test_validate_frequencies(model: Zodipy) -> None:
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value,
-            model=model.ipd_model,
+            model=model._ipd_model,
             extrapolate=model.extrapolate,
         )
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=25,
-            model=model.ipd_model,
+            model=model._ipd_model,
             extrapolate=model.extrapolate,
         )
     with pytest.raises(u.UnitsError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value * u.g,
-            model=model.ipd_model,
+            model=model._ipd_model,
             extrapolate=model.extrapolate,
         )
     with pytest.raises(u.UnitsError):
         get_validated_freq(
             freq=25 * u.g,
-            model=model.ipd_model,
+            model=model._ipd_model,
             extrapolate=model.extrapolate,
         )
 

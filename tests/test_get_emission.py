@@ -143,8 +143,8 @@ def test_invalid_freq(
     observer = data.draw(obs(model, time))
     pix = data.draw(pixels(nside))
 
-    freq = data.draw(random_freq(unit=model.ipd_model.spectrum.unit))
-    if not (model.ipd_model.spectrum[0] <= freq <= model.ipd_model.spectrum[-1]):
+    freq = data.draw(random_freq(unit=model._ipd_model.spectrum.unit))
+    if not (model._ipd_model.spectrum[0] <= freq <= model._ipd_model.spectrum[-1]):
         with pytest.raises(ValueError):
             model.get_emission_pix(
                 freq,

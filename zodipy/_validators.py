@@ -14,14 +14,16 @@ def get_validated_freq(
 ) -> FrequencyOrWavelength:
     """Validate user inputted frequency."""
     if not isinstance(freq, u.Quantity):
-        raise TypeError("Frequency must be an astropy Quantity.")
+        msg = "Frequency must be an astropy Quantity."
+        raise TypeError(msg)
 
     if freq.unit.is_equivalent(u.Hz):
         freq = freq.to(u.Hz)
     elif freq.unit.is_equivalent(u.micron):
         freq = freq.to(u.micron)
     else:
-        raise u.UnitsError("Frequency must be in units compatible with Hz or micron.")
+        msg = "Frequency must be in units compatible with Hz or micron."
+        raise u.UnitsError(msg)
 
     if extrapolate:
         return freq
@@ -41,10 +43,11 @@ def get_validated_freq(
         )
 
     if not freq_is_in_range:
-        raise ValueError(
+        msg = (
             f"Model is only valid in the [{lower_freq_range},"
             f" {upper_freq_range}] range."
         )
+        raise ValueError(msg)
 
     return freq
 
@@ -55,15 +58,16 @@ def get_validated_and_normalized_weights(
 ) -> npt.NDArray[np.float64]:
     """Validate user inputted weights."""
     if weights is None and freq.size > 1:
-        raise ValueError(
-            "Bandpass weights must be specified if more than one frequency is given."
-        )
+        msg = "Bandpass weights must be specified if more than one frequency is given."
+        raise ValueError(msg)
 
     if weights is not None:
         if freq.size != len(weights):
-            raise ValueError("Number of frequencies and weights must be the same.")
-        elif np.any(np.diff(freq) < 0):
-            raise ValueError("Bandpass frequencies must be strictly increasing.")
+            msg = "Number of frequencies and weights must be the same."
+            raise ValueError(msg)
+        if np.any(np.diff(freq) < 0):
+            msg = "Bandpass frequencies must be strictly increasing."
+            raise ValueError(msg)
 
         normalized_weights = np.asarray(weights, dtype=np.float64)
     else:
@@ -94,9 +98,10 @@ def get_validated_ang(
 def get_validated_pix(pixels: Pixels, nside: int) -> Pixels:
     """Validate user inputted pixels."""
     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
-        raise ValueError("invalid pixel number given nside")
+        msg = "invalid pixel number given nside"
+        raise ValueError(msg)
 
     if np.ndim(pixels) == 0:
-        pixels = np.expand_dims(pixels, axis=0)
+        return np.expand_dims(pixels, axis=0)
 
     return pixels

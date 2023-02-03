@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import astropy.units as u
 import numpy as np
-import numpy.typing as npt
 
 from zodipy._constants import (
     MAX_INTERPOLATION_GRID_TEMPERATURE,
     MIN_INTERPOLATION_GRID_TEMPERATURE,
     N_INTERPOLATION_POINTS,
 )
-from zodipy._ipd_model import InterplanetaryDustModel
 from zodipy._source_funcs import get_blackbody_emission
-from zodipy._types import FrequencyOrWavelength
 from zodipy._validators import get_validated_and_normalized_weights, get_validated_freq
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from zodipy._ipd_model import InterplanetaryDustModel
+    from zodipy._types import FrequencyOrWavelength
 
 
 @dataclass
@@ -28,7 +31,7 @@ class Bandpass:
         return np.trapz(self.weights * quantity, self.frequencies.value, axis=-1)
 
     def switch_convention(self) -> None:
-        """Switched the bandpass from frequency to wavelength or vice versa."""
+        """Switch the bandpass from frequency to wavelength or the other way around."""
         self.frequencies = self.frequencies.to(
             u.micron if self.frequencies.unit.is_equivalent(u.Hz) else u.Hz,
             equivalencies=u.spectral(),
@@ -45,7 +48,7 @@ def validate_and_get_bandpass(
     model: InterplanetaryDustModel,
     extrapolate: bool,
 ) -> Bandpass:
-    """Validate user inputted bandpass and return a Bandpass object."""
+    """Validate bandpass and return a `Bandpass`."""
     freq = get_validated_freq(freq, model, extrapolate)
     normalized_weights = get_validated_and_normalized_weights(weights, freq)
 
@@ -59,8 +62,6 @@ def get_bandpass_interpolation_table(
     max_temp: float = MAX_INTERPOLATION_GRID_TEMPERATURE,
 ) -> npt.NDArray[np.float64]:
     """Pre-compute the bandpass integrated blackbody emission for a grid of temperatures."""
-    # Prepare bandpass to be integrated in power units and in frequency convention.
-
     if not bandpass.frequencies.unit.is_equivalent(u.Hz):
         bandpass.switch_convention()
 

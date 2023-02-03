@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import astropy.units as u
 import numpy as np
-import numpy.typing as npt
 
 from zodipy._ipd_dens_funcs import construct_density_partials
 from zodipy.model_registry import model_registry
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 DEFAULT_EARTH_POS = u.Quantity([1, 0, 0], u.AU)
 
@@ -17,21 +19,16 @@ def tabulate_density(
     model: str = "DIRBE",
     earth_pos: u.Quantity[u.AU] = DEFAULT_EARTH_POS,
 ) -> npt.NDArray[np.float64]:
-    """Returns the tabulated densities of the zodiacal components on a provided grid.
+    """Return the tabulated densities of the zodiacal components for a given grid.
 
-    Parameters
-    ----------
-    grid
-        A cartesian mesh grid (x, y, z).
-    model
-        Name of interplanetary dust model supported by ZodiPy.
-    earth_pos
-        Position of the Earth in AU.
+    Args:
+        grid: A cartesian mesh grid (x, y, z).
+        model: Name of interplanetary dust model supported by ZodiPy.
+        earth_pos: Position of the Earth in AU.
 
     Returns:
-    -------
-    density_grid
-        The tabulated zodiacal component densities.
+        density_grid: The tabulated zodiacal component densities.
+
     """
     ipd_model = model_registry.get_model(model)
 

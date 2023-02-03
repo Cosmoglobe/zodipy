@@ -16,7 +16,7 @@ InterplanetaryDustModelT = TypeVar(
     "InterplanetaryDustModelT", bound=InterplanetaryDustModel
 )
 
-"""Returns the source parameters for a given bandpass and model. 
+"""Return the source parameters for a given bandpass and model. 
 Must match arguments in the emission fns."""
 GetSourceParametersFn = Callable[
     [Bandpass, InterplanetaryDustModelT], Dict[Union[ComponentLabel, str], Any]
@@ -38,7 +38,7 @@ def get_source_parameters_kelsall_comp(
     interpolator = partial(interp1d, x=spectrum, fill_value="extrapolate")
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
-    for comp_label in model.comps.keys():
+    for comp_label in model.comps:
         source_parameters[comp_label] = {}
         emissivity = interpolator(y=model.emissivities[comp_label])(
             bandpass.frequencies.value
@@ -112,7 +112,7 @@ def get_source_parameters_rmm(
     if bandpass.frequencies.size > 1:
         calibration = bandpass.integrate(calibration)
 
-    for comp_label in model.comps.keys():
+    for comp_label in model.comps:
         source_parameters[comp_label] = {}
         source_parameters[comp_label]["T_0"] = model.T_0[comp_label]
         source_parameters[comp_label]["delta"] = model.delta[comp_label]
