@@ -45,18 +45,18 @@ class Zodipy:
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the line-of-sight integral in the simulations. Default is 50 points.
-        interp_kind (str): Interpolation kind used to interpolate the model. Defaults to
-            'linear'. For more information on available interpolation methods, please
-            visit
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html
+        interp_kind (str): Interpolation kind used to interpolate relevant model parameters.
+            Defaults to 'linear'. For more information on available interpolation methods,
+            please visit the [Scipy documentation](
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html).
         extrapolate (bool): If `True` all spectral quantities in the selected model are
             extrapolated to the requested frequencies or wavelengths. If `False`, an
             exception is raised on requested frequencies/wavelengths outside of the
             valid model range. Default is `False`.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
             Earth. Defaults to 'de432s', which requires downloading (and caching) a ~10MB
-            file. For more information on available ephemeridis, please visit
-            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+            file. For more information on available ephemeridis, please visit the [Astropy
+            documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
             for all the pointing with angular distance between the sun smaller than
             `solar_cutoff` are masked. Defaults to `None`.
