@@ -5,7 +5,6 @@ from typing import Any, Callable, Dict, TypeVar, Union
 
 import astropy.units as u
 import numpy as np
-from scipy.interpolate import interp1d
 
 from zodipy._bandpass import Bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
@@ -19,12 +18,13 @@ InterplanetaryDustModelT = TypeVar(
 """Return the source parameters for a given bandpass and model. 
 Must match arguments in the emission fns."""
 GetSourceParametersFn = Callable[
-    [Bandpass, InterplanetaryDustModelT], Dict[Union[ComponentLabel, str], Any]
+    [Bandpass, InterplanetaryDustModelT, Callable],
+    Dict[Union[ComponentLabel, str], Any],
 ]
 
 
 def get_source_parameters_kelsall_comp(
-    bandpass: Bandpass, model: Kelsall
+    bandpass: Bandpass, model: Kelsall, interpolator: Callable
 ) -> dict[ComponentLabel | str, dict[str, Any]]:
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
@@ -35,7 +35,7 @@ def get_source_parameters_kelsall_comp(
         else model.spectrum.to_value(u.micron)
     )
 
-    interpolator = partial(interp1d, x=spectrum, fill_value="extrapolate")
+    interpolator = partial(interpolator, x=spectrum)
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
     for comp_label in model.comps:
@@ -92,7 +92,7 @@ def get_source_parameters_kelsall_comp(
 
 
 def get_source_parameters_rmm(
-    bandpass: Bandpass, model: RRM
+    bandpass: Bandpass, model: RRM, interpolator: Callable
 ) -> dict[ComponentLabel | str, dict[str, Any]]:
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
@@ -104,7 +104,7 @@ def get_source_parameters_rmm(
     )
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
-    calibration = interp1d(x=spectrum, y=model.calibration, fill_value="extrapolate")(
+    calibration = interpolator(x=spectrum, y=model.calibration)(
         bandpass.frequencies.value
     )
     calibration = u.Quantity(calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)

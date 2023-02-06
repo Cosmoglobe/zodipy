@@ -1,4 +1,5 @@
 import astropy.units as u
+from astropy.time import Time
 import numpy as np
 import pytest
 from hypothesis import given
@@ -13,6 +14,7 @@ from ._strategies import model, random_freq, weights
 BANDPASS_FREQUENCIES = np.linspace(95, 105, 11) * u.GHz
 BANDPASS_WAVELENGTHS = np.linspace(20, 25, 11) * u.micron
 BANDPASS_WEIGHTS = np.array([2, 3, 5, 9, 11, 12, 11, 9, 5, 3, 2])
+OBS_TIME = Time("2021-01-01T00:00:00")
 
 
 @given(model(extrapolate=False))
@@ -102,3 +104,36 @@ def test_validate_weights_shape() -> None:
     )
     assert weights.size == 1
     assert weights == np.array([1.0], dtype=np.float64)
+
+
+def test_extrapolate_raises_error() -> None:
+    with pytest.raises(ValueError):
+        model = Zodipy("dirbe")
+        model.get_emission_pix(
+            400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
+        )
+
+    model = Zodipy("dirbe", extrapolate=True)
+    model.get_emission_pix(
+        400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
+    )
+
+
+def test_interp_kind() -> None:
+    model = Zodipy("dirbe", interp_kind="linear")
+    linear = model.get_emission_pix(
+        27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
+    )
+
+    model = Zodipy("dirbe", interp_kind="quadratic")
+    quadratic = model.get_emission_pix(
+        27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
+    )
+
+    assert not np.allclose(linear, quadratic)
+
+    with pytest.raises(NotImplementedError):
+        model = Zodipy("dirbe", interp_kind="sdfs")
+        model.get_emission_pix(
+            27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
+        )
