@@ -332,7 +332,14 @@ def test_multiprocessing() -> None:
     assert np.allclose(emission_binned_ang.value, emission_binned_ang_parallel.value)
 
 
-@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@given(
+    model(extrapolate=True),
+    time(),
+    nside(),
+    angles(),
+    random_freq(bandpass=True),
+    data(),
+)
 @settings(deadline=None)
 def test_bandpass_integration(
     model: Zodipy,
@@ -344,7 +351,6 @@ def test_bandpass_integration(
 ) -> None:
     """Property test for bandpass integrations."""
     theta, phi = angles
-    model.extrapolate = True
     observer = data.draw(obs(model, time))
     bp_weights = data.draw(weights(freqs))
     emission_binned = model.get_binned_emission_ang(
@@ -359,7 +365,14 @@ def test_bandpass_integration(
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-@given(model(), time(), nside(), angles(), random_freq(bandpass=True), data())
+@given(
+    model(extrapolate=True),
+    time(),
+    nside(),
+    angles(),
+    random_freq(bandpass=True),
+    data(),
+)
 @settings(deadline=None)
 def test_weights(
     model: Zodipy,
@@ -372,7 +385,6 @@ def test_weights(
     """Property test for bandpass weights."""
 
     theta, phi = angles
-    model.extrapolate = True
     observer = data.draw(obs(model, time))
     bp_weights = data.draw(weights(freqs))
 

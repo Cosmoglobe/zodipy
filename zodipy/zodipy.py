@@ -9,6 +9,7 @@ import astropy.units as u
 import healpy as hp
 import numpy as np
 from astropy.coordinates import solar_system_ephemeris
+from scipy.interpolate import interp1d
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
@@ -44,14 +45,18 @@ class Zodipy:
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the line-of-sight integral in the simulations. Default is 50 points.
+        interp_kind (str): Interpolation kind used to interpolate relevant model parameters.
+            Defaults to 'linear'. For more information on available interpolation methods,
+            please visit the [Scipy documentation](
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html).
         extrapolate (bool): If `True` all spectral quantities in the selected model are
             extrapolated to the requested frequencies or wavelengths. If `False`, an
             exception is raised on requested frequencies/wavelengths outside of the
             valid model range. Default is `False`.
         ephemeris (str): Ephemeris used to compute the positions of the observer and the
             Earth. Defaults to 'de432s', which requires downloading (and caching) a ~10MB
-            file. For more information on available ephemeridis, please visit
-            https://docs.astropy.org/en/stable/coordinates/solarsystem.html
+            file. For more information on available ephemeridis, please visit the [Astropy
+            documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
         solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
             for all the pointing with angular distance between the sun smaller than
             `solar_cutoff` are masked. Defaults to `None`.
@@ -69,6 +74,7 @@ class Zodipy:
         model: str = "dirbe",
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
+        interp_kind: str = "linear",
         ephemeris: str = "de432s",
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
@@ -78,12 +84,18 @@ class Zodipy:
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
+        self.interp_kind = interp_kind
         self.ephemeris = ephemeris
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
         self.parallel = parallel
         self.n_proc = n_proc
 
+        self._interpolator = partial(
+            interp1d,
+            kind=self.interp_kind,
+            fill_value="extrapolate" if self.extrapolate else np.nan,
+        )
         self._ipd_model = model_registry.get_model(model)
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(
             gauss_quad_degree
@@ -414,7 +426,7 @@ class Zodipy:
         # Get model parameters, some of which have been interpolated to the given
         # frequency or bandpass.
         source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
-            bandpass, self._ipd_model
+            bandpass, self._ipd_model, self._interpolator
         )
 
         observer_position, earth_position = get_obs_and_earth_positions(
