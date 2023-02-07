@@ -3,15 +3,17 @@ run-name: ${{ github.actor }} is deploying the documentation to gh-pages.
 on:
   push:
     branches:
+      - main
       - action
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
+          python-version: 3.10
 
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1.3.3
