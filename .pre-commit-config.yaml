@@ -12,3 +12,8 @@ repos:
     - id: check-yaml
       langauge_version: python3
 
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: 'v0.0.241'
+    hooks:
+      - id: ruff
