@@ -19,7 +19,7 @@ def test_get_model_raises_error() -> None:
 
 def test_register_model() -> None:
     DIRBE_model = model_registry.get_model("DIRBE")
-    DIRBE_model.T_0 += 200
+    DIRBE_model.T_0 += 250
     model_registry.register_model("metins_model", DIRBE_model)
 
 
