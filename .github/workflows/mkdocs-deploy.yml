@@ -2,14 +2,27 @@ name: mkdocs-deploy
 on:
   push:
     branches:
-      - main
+      - action
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          python-version: 3.x
-      - run: pip install mkdocs
-      - run: mkdocs gh-deploy --force --clean --verbose
+          python-version: '3.10'
+
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1.3.3
+        with:
+          version: 1.2.2
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        
+      - name: Deploy docs to gh-pages
+        run: |
+          source $VENV
+          mkdocs gh-deploy --clean --verbose

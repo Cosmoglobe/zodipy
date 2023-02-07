@@ -14,7 +14,7 @@ build
 .eggs
 .cache
 htmlcov
-**.coverage**
+.coverage
 coverage.xml
 UNKNOWN.egg-info
 docs/_build/
