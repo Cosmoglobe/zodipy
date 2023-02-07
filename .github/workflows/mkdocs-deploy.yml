@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is deploying the documentation to gh-pages.
 on:
   push:
     branches:
-      - actions
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
