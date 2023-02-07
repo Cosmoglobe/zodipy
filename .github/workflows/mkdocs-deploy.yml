@@ -1,4 +1,5 @@
 name: mkdocs-deploy
+run-name: ${{ github.actor }} is deploying the documentation to gh-pages.
 on:
   push:
     branches:
