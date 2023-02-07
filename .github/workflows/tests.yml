@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --extras "dev"
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: Format check with black
         run: |
@@ -46,7 +46,7 @@ jobs:
         run: |
           source $VENV
           pytest tests -v --cov=./zodipy --cov-report=xml:./coverage.xml --cov-report term-missing
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
