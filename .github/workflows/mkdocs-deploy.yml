@@ -27,4 +27,4 @@ jobs:
       - name: Deploy docs to gh-pages
         run: |
           source $VENV
-          mkdocs gh-deploy --clean --verbose
+          mkdocs gh-deploy --force --clean --verbose
