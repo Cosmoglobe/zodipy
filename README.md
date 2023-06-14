@@ -6,6 +6,7 @@
 ![Tests](https://github.com/MetinSa/zodipy/actions/workflows/tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Cosmoglobe/zodipy/branch/main/graph/badge.svg?token=VZP9L79EUJ)](https://codecov.io/gh/Cosmoglobe/zodipy)
 [![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green)](https://arxiv.org/abs/2205.12962)
+<a href="https://ascl.net/2306.012"><img src="https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255" alt="ascl:2306.012" /></a>
 ---
 
 
