@@ -15,7 +15,7 @@ InterplanetaryDustModelT = TypeVar(
     "InterplanetaryDustModelT", bound=InterplanetaryDustModel
 )
 
-"""Return the source parameters for a given bandpass and model. 
+"""Return the source parameters for a given bandpass and model.
 Must match arguments in the emission fns."""
 GetSourceParametersFn = Callable[
     [Bandpass, InterplanetaryDustModelT, Callable],

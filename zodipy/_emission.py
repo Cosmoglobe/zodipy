@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from zodipy._ipd_dens_funcs import ComponentDensityFn
 
 """
-Function that return the zodiacal emission at a step along all lines of sight given 
+Function that return the zodiacal emission at a step along all lines of sight given
 a zodiacal model.
 """
 GetCompEmissionAtStepFn = Callable[..., npt.NDArray[np.float64]]
