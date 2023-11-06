@@ -27,11 +27,6 @@ jobs:
         run: poetry install
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
-      - name: Format check with black
-        run: |
-          source $VENV
-          black --check ./zodipy
-
       - name: Typecheck with mypy
         run: |
           source $VENV
@@ -41,6 +36,11 @@ jobs:
         run: |
           source $VENV
           ruff ./zodipy
+
+      - name: Check formating with ruff
+        run: |
+          source $VENV
+          ruff format --check ./zodipy
 
       - name: Test with pytest
         run: |

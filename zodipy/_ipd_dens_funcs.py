@@ -447,9 +447,7 @@ def construct_density_partials(
             comp_dict.update(dynamic_params)
 
         # Remove excess intermediate parameters from the component dict.
-        comp_params = {
-            key: value for key, value in comp_dict.items() if key in func_params
-        }
+        comp_params = {key: value for key, value in comp_dict.items() if key in func_params}
         partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
         partial_density_funcs.append(partial_func)
 
@@ -489,9 +487,7 @@ def construct_density_partials_comps(
             comp_dict.update(dynamic_params)
 
         # Remove excess intermediate parameters from the component dict.
-        comp_params = {
-            key: value for key, value in comp_dict.items() if key in func_params
-        }
+        comp_params = {key: value for key, value in comp_dict.items() if key in func_params}
         partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
         partial_density_funcs[comp_label] = partial_func
 

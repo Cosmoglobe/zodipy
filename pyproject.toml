@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/Cosmoglobe/zodipy"
-version = "0.8.4"
+version = "0.8.5"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -17,7 +17,6 @@ jplephem = "^2.17"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.1"
-black = "^23.1.0"
 mypy = "^1.0"
 mkdocs = "^1.2.1"
 pymdown-extensions = "^9.4"
@@ -50,9 +49,6 @@ filterwarnings = [
     "ignore::UserWarning",
     "ignore:.*overflow encountered in expm1.*",
 ]
-
-[tool.isort]
-profile = "black"
 
 [tool.ruff]
 select = [
@@ -94,6 +90,7 @@ ignore = [
     "D107",
     "ANN101",
     "PLR0913",
+    "ISC001"
 ]
 exclude = ["tests/*"]
 

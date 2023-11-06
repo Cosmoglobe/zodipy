@@ -44,9 +44,7 @@ def _get_observer_position(
         return _get_sun_earth_moon_barycenter(earth_pos)
 
     observer_skycoordinate = get_body(obs, obs_time)
-    observer_skycoordinate = observer_skycoordinate.transform_to(
-        HeliocentricMeanEcliptic
-    )
+    observer_skycoordinate = observer_skycoordinate.transform_to(HeliocentricMeanEcliptic)
 
     return observer_skycoordinate.cartesian.xyz.to(u.AU)
 

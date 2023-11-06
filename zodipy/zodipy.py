@@ -97,9 +97,7 @@ class Zodipy:
             fill_value="extrapolate" if self.extrapolate else np.nan,
         )
         self._ipd_model = model_registry.get_model(model)
-        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(
-            gauss_quad_degree
-        )
+        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
 
     @property
     def supported_observers(self) -> list[str]:
@@ -180,9 +178,7 @@ class Zodipy:
         """
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
-        unique_angles, indicies = np.unique(
-            np.asarray([theta, phi]), return_inverse=True, axis=1
-        )
+        unique_angles, indicies = np.unique(np.asarray([theta, phi]), return_inverse=True, axis=1)
         unit_vectors = get_unit_vectors_from_ang(
             coord_in=coord_in,
             theta=unique_angles[0],
@@ -313,9 +309,7 @@ class Zodipy:
         """
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
-        unique_angles, counts = np.unique(
-            np.asarray([theta, phi]), return_counts=True, axis=1
-        )
+        unique_angles, counts = np.unique(np.asarray([theta, phi]), return_counts=True, axis=1)
         unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
         unit_vectors = get_unit_vectors_from_ang(
             coord_in=coord_in,
@@ -460,20 +454,14 @@ class Zodipy:
             n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
 
             unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
-            integrated_comp_emission = np.zeros(
-                (len(self._ipd_model.comps), unit_vectors.shape[1])
-            )
-            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
-                processes=n_proc
-            ) as pool:
+            integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
+            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(processes=n_proc) as pool:
                 for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], n_proc, axis=-1)
                     if start[comp_label].size == 1:
                         start_chunks = [start[comp_label]] * n_proc
                     else:
-                        start_chunks = np.array_split(
-                            start[comp_label], n_proc, axis=-1
-                        )
+                        start_chunks = np.array_split(start[comp_label], n_proc, axis=-1)
                     comp_integrands = [
                         partial(
                             common_integrand,
@@ -503,9 +491,7 @@ class Zodipy:
                     )
 
         else:
-            integrated_comp_emission = np.zeros(
-                (len(self._ipd_model.comps), unit_vectors.shape[1])
-            )
+            integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
             for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
@@ -519,9 +505,7 @@ class Zodipy:
                 )
 
                 integrated_comp_emission[idx] = (
-                    _integrate_gauss_quad(
-                        comp_integrand, *self._gauss_points_and_weights
-                    )
+                    _integrate_gauss_quad(comp_integrand, *self._gauss_points_and_weights)
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
                 )

@@ -33,9 +33,7 @@ def get_validated_freq(
     upper_freq_range = model.spectrum.max()
 
     if freq_in_spectrum_units.isscalar:
-        freq_is_in_range = (
-            lower_freq_range <= freq_in_spectrum_units <= upper_freq_range
-        )
+        freq_is_in_range = lower_freq_range <= freq_in_spectrum_units <= upper_freq_range
     else:
         freq_is_in_range = all(
             lower_freq_range.value <= nu <= upper_freq_range.value and nu
@@ -43,10 +41,7 @@ def get_validated_freq(
         )
 
     if not freq_is_in_range:
-        msg = (
-            f"Model is only valid in the [{lower_freq_range},"
-            f" {upper_freq_range}] range."
-        )
+        msg = f"Model is only valid in the [{lower_freq_range}," f" {upper_freq_range}] range."
         raise ValueError(msg)
 
     return freq

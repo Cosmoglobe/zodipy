@@ -67,9 +67,7 @@ class RRM(InterplanetaryDustModel):
 class InterplanetaryDustModelRegistry:
     """Container for registered models."""
 
-    _registry: dict[str, InterplanetaryDustModel] = field(
-        init=False, default_factory=dict
-    )
+    _registry: dict[str, InterplanetaryDustModel] = field(init=False, default_factory=dict)
 
     @property
     def models(self) -> list[str]:

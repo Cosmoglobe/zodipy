@@ -11,9 +11,7 @@ from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 
-InterplanetaryDustModelT = TypeVar(
-    "InterplanetaryDustModelT", bound=InterplanetaryDustModel
-)
+InterplanetaryDustModelT = TypeVar("InterplanetaryDustModelT", bound=InterplanetaryDustModel)
 
 """Return the source parameters for a given bandpass and model.
 Must match arguments in the emission fns."""
@@ -40,13 +38,9 @@ def get_source_parameters_kelsall_comp(
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
     for comp_label in model.comps:
         source_parameters[comp_label] = {}
-        emissivity = interpolator(y=model.emissivities[comp_label])(
-            bandpass.frequencies.value
-        )
+        emissivity = interpolator(y=model.emissivities[comp_label])(bandpass.frequencies.value)
         if model.albedos is not None:
-            albedo = interpolator(y=model.albedos[comp_label])(
-                bandpass.frequencies.value
-            )
+            albedo = interpolator(y=model.albedos[comp_label])(bandpass.frequencies.value)
         else:
             albedo = 0
 
@@ -65,14 +59,10 @@ def get_source_parameters_kelsall_comp(
             bandpass.frequencies.value
         )
     else:
-        phase_coefficients = np.repeat(
-            np.zeros((3, 1)), repeats=bandpass.frequencies.size, axis=-1
-        )
+        phase_coefficients = np.repeat(np.zeros((3, 1)), repeats=bandpass.frequencies.size, axis=-1)
 
     if model.solar_irradiance is not None:
-        solar_irradiance = interpolator(y=model.solar_irradiance)(
-            bandpass.frequencies.value
-        )
+        solar_irradiance = interpolator(y=model.solar_irradiance)(bandpass.frequencies.value)
         solar_irradiance = u.Quantity(solar_irradiance, "MJy /sr").to_value(
             SPECIFIC_INTENSITY_UNITS, equivalencies=u.spectral()
         )
@@ -104,9 +94,7 @@ def get_source_parameters_rmm(
     )
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
-    calibration = interpolator(x=spectrum, y=model.calibration)(
-        bandpass.frequencies.value
-    )
+    calibration = interpolator(x=spectrum, y=model.calibration)(bandpass.frequencies.value)
     calibration = u.Quantity(calibration, u.MJy / u.AU).to_value(u.Jy / u.cm)
 
     if bandpass.frequencies.size > 1:
