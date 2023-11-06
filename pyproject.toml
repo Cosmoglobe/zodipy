@@ -29,7 +29,7 @@ pytest-cov = "^4.0.0"
 mkdocs-material = "^9.0.1"
 mkdocstrings = "^0.19.1"
 mkdocstrings-python = "^0.8.2"
-ruff = "^0.0.236"
+ruff = "^0.1.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -93,6 +93,7 @@ ignore = [
     "D105",
     "D107",
     "ANN101",
+    "PLR0913",
 ]
 exclude = ["tests/*"]
 

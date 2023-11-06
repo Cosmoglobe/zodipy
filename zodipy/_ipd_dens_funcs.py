@@ -24,13 +24,13 @@ from zodipy._ipd_comps import (
     RingRRM,
 )
 
-"""The density functions for the different types of components. 
+"""The density functions for the different types of components.
 
-Common for all of these is that the first argument will be `X_helio` (the line 
-of sight from the observer towards a point on the sky) and the remaining arguments 
-will be parameters that are set by the `Component` subclasses. These arguments are 
-unpacked automatically, so for a `ComputeDensityFunc` to work, the mapped `Component` 
-class must have all the parameters as instance variables. 
+Common for all of these is that the first argument will be `X_helio` (the line
+of sight from the observer towards a point on the sky) and the remaining arguments
+will be parameters that are set by the `Component` subclasses. These arguments are
+unpacked automatically, so for a `ComputeDensityFunc` to work, the mapped `Component`
+class must have all the parameters as instance variables.
 
 """
 ComputeDensityFunc = Callable[..., npt.NDArray[np.float64]]
@@ -163,8 +163,7 @@ def compute_feature_density(
     )
 
     delta_theta = theta_comp - theta_rad
-    delta_theta = np.where(delta_theta < -np.pi, +2 * np.pi, delta_theta)
-    delta_theta = np.where(delta_theta > np.pi, -2 * np.pi, delta_theta)
+    delta_theta = (delta_theta + np.pi) % (2 * np.pi) - np.pi
 
     # Differs from eq 9 in K98 by a factor of 1/2 in the first and last
     # term. See Planck 2013 XIV, section 4.1.3.
@@ -430,7 +429,7 @@ def construct_density_partials(
     for comp in comps:
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
-        residual_params = [key for key in func_params if key not in comp_dict.keys()]
+        residual_params = [key for key in func_params if key not in comp_dict]
         try:
             residual_params.remove("X_helio")
         except ValueError as err:
@@ -472,7 +471,7 @@ def construct_density_partials_comps(
     for comp_label, comp in comps.items():
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
-        residual_params = [key for key in func_params if key not in comp_dict.keys()]
+        residual_params = [key for key in func_params if key not in comp_dict]
         try:
             residual_params.remove("X_helio")
         except ValueError as err:
