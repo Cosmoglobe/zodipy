@@ -12,9 +12,7 @@ successful. These are some of the many ways to contribute:
 * :people_holding_hands: Community engagement and outreach
 
 If you get stuck at any point you can create an
-[issue](https://github.com/GenericMappingTools/pygmt/issues) on GitHub
-or contact us at one of the channels mentioned
-in the [Contributing Guide](https://www.pygmt.org/dev/contributing.html).
+[issue](https://github.com/Cosmoglobe/zodipy/issues) on GitHub.
 
 For more information on contributing to open source projects,
 [GitHub's own guide](https://opensource.guide/how-to-contribute)
