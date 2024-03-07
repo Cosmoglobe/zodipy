@@ -1,14 +1,14 @@
 
 <img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%">
 
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat-square)](http://www.astropy.org/)
 [![PyPI](https://img.shields.io/pypi/v/zodipy.svg?logo=python&style=flat-square)](https://pypi.org/project/zodipy)
 [![Actions Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/Zodipy/tests.yml?branch=main&logo=github&style=flat-square)](https://github.com/Cosmoglobe/Zodipy/actions)
-![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&style=flat-square&logo=codecov)
+[![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&style=flat-square&logo=codecov)](https://app.codecov.io/gh/Cosmoglobe/zodipy)
 [![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2205.12962)
 [![ascl:2306.012](https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255&style=flat-square)](https://ascl.net/2306.012)
-[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat-square)](http://www.astropy.org/)
 
-ZodiPy simulates zodiacal emission in intensity for arbitrary solar system observers in the form of timestreams or HEALPix maps.
+ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/), which simulates the zodiacal light in intensity that an arbitrary solar system observer is predicted to see given an interplanetary dust model and a scanning strategy, either in the form of timestreams or HEALPix maps.
 ![ZodiPy Logo](img/zodipy_map.png)
 
 
