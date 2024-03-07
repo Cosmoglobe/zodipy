@@ -11,7 +11,7 @@
 ---
 
 
-ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/) Python package, which simulates the zodiacal light in intensity that an arbitrary solar system observer is predicted to see given an interplanetary dust model and a scanning strategy, either in the form of timestreams or HEALPix maps.
+ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/) package, which simulates the zodiacal light in intensity that an arbitrary solar system observer is predicted to see given an interplanetary dust model and a scanning strategy, either in the form of timestreams or HEALPix maps.
 
 ![plot](docs/img/zodipy_map.png)
 
