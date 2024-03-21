@@ -64,7 +64,7 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if yo
 Contributing developers will need to download the following additional dependencies:
 - pytest
 - pytest-cov
-- hypothesis
+- hypothesis (<=6.47.5)
 - coverage
 - ruff
 - mypy
@@ -99,8 +99,8 @@ Note that developers using Python 3.12 will need to upgrade their pip versions w
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
 
 - [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the root of the repository. 
-- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff` in the command line in the root of the repository. 
-- [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy` in the root of the repository.
+- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff zodipy/` in the command line in the root of the repository. 
+- [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy/` in the root of the repository.
 
 Remeber to add tests when implementing new features to maintain a high code coverage.
 
