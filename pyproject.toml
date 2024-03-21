@@ -1,12 +1,28 @@
 [tool.poetry]
 name = "zodipy"
 homepage = "https://github.com/Cosmoglobe/zodipy"
-version = "0.8.5"
+version = "0.8.6"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0"
 exclude = ["test.py"]
+requires-python = ">=3.8"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = [
+    "astronomy",
+    "astrophysics",
+    "cosmology",
+    "space",
+    "science",
+]
+
 
 [tool.poetry.dependencies]
 python = ">=3.8"
