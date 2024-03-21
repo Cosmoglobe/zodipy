@@ -245,15 +245,14 @@ def test_invalid_pixel(
             obs=observer,
         )
 
-
 def test_multiprocessing() -> None:
     """
     Testing that model with multiprocessing enabled returns the same value as
     without multiprocessing.
     """
 
-    model = Zodipy(parallel=False)
-    model_parallel = Zodipy(parallel=True)
+    model = Zodipy()
+    model_parallel = Zodipy(n_proc=4)
 
     observer = "earth"
     time = Time("2020-01-01")
@@ -331,6 +330,35 @@ def test_multiprocessing() -> None:
 
     assert np.allclose(emission_binned_ang.value, emission_binned_ang_parallel.value)
 
+def test_inner_radial_cutoff_multiprocessing() -> None:
+    """
+    Testing that model with inner radial cutoffs can be parallelized.
+    """
+
+    model = Zodipy("RRM-experimental")
+    model_parallel = Zodipy("RRM-experimental", n_proc=4)
+
+    observer = "earth"
+    time = Time("2020-01-01")
+    frequency = 78 * u.micron
+    nside = 32
+    pix = np.random.randint(0, hp.nside2npix(nside), size=1000)
+
+    emission_pix = model.get_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    emission_pix_parallel = model_parallel.get_emission_pix(
+        frequency,
+        pixels=pix,
+        nside=nside,
+        obs_time=time,
+        obs=observer,
+    )
+    assert np.allclose(emission_pix, emission_pix_parallel)
 
 @given(
     model(extrapolate=True),

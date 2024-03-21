@@ -83,7 +83,7 @@ read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/ab
 
 
 ## Parallelization
-If you are not using ZodiPy in an already parallelized environment **and** are working with large pointing sequences, setting `parallel=True` when initializing `Zodipy` will improve the performance. ZodiPy will then automatically distribute the pointing to all available CPU's, given by `multiprocessing.cpu_count()` or to `n_proc` if this argument is provided.
+If you are not using ZodiPy in an already parallelized environment, you may specify the number of cores used by ZodiPy through the `n_proc` keyword. By default `n_proc` is set to 1. For values of `n_proc` > 1, the line-of-sight calculations are parallelized using the `multiprocessing` module.
 
 ```python hl_lines="15 16"
 {!examples/get_parallel_emission.py!}
@@ -102,7 +102,7 @@ If you are not using ZodiPy in an already parallelized environment **and** are w
 !!! warning "Using ZodiPy in parallelized environments"
     If ZodiPy is used in a parallelized environment one may have to specifically set the environment variable 
     `OMP_NUM_THREADS=1` to avoid oversubscription. This is due automatic parallelization in third party libraries such as `healpy` where for instance the `hp.Rotator` object automatically parallelizes rotation of unit vectors.
-    This means that when using ZodiPy with pointing in a coordinate system other than ecliptic, even if `Zodipy` is initialized with `parallel=False`, `healpy` will under the hood automatically distribute the pointing to available CPU's.
+    This means that when using ZodiPy with pointing in a coordinate system other than ecliptic, even if `Zodipy` is initialized with `n_proc`=1, `healpy` will under the hood automatically distribute the pointing to available CPU's.
 
 
 ## Visualizing the interplanetary dust distribution of a model

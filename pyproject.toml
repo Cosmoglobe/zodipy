@@ -94,7 +94,7 @@ ignore = [
     "PLR0913",
     "ISC001"
 ]
-exclude = ["tests/*"]
+exclude = ["tests/*", "docs/*"]
 
 [tool.ruff.pydocstyle]
 convention = "google"
