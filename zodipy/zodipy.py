@@ -62,10 +62,8 @@ class Zodipy:
             `solar_cutoff` are masked. Defaults to `None`.
         solar_cut_fill_value (float): Fill value for pixels masked with `solar_cut`.
             Defaults to `np.nan`.
-        parallel (bool): If `True`, input pointing will be split among several cores, and
-            the emission will be computed in parallel. Default is `False`.
-        n_proc (int): Number of cores to use when `parallel` is `True`. Defaults is `None`,
-            which uses all available cores.
+        n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
+            integrals are parallelized using the `multiprocessing` module. Defaults to 1.
 
     """
 
@@ -78,8 +76,7 @@ class Zodipy:
         ephemeris: str = "de432s",
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
-        parallel: bool = False,
-        n_proc: int | None = None,
+        n_proc: int = 1,
     ) -> None:
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
@@ -88,7 +85,6 @@ class Zodipy:
         self.ephemeris = ephemeris
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
-        self.parallel = parallel
         self.n_proc = n_proc
 
         self._interpolator = partial(
@@ -450,18 +446,18 @@ class Zodipy:
             **source_parameters["common"],
         )
 
-        if self.parallel:
-            n_proc = multiprocessing.cpu_count() if self.n_proc is None else self.n_proc
-
-            unit_vector_chunks = np.array_split(unit_vectors, n_proc, axis=-1)
+        if self.n_proc > 1:
+            unit_vector_chunks = np.array_split(unit_vectors, self.n_proc, axis=-1)
             integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
-            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(processes=n_proc) as pool:
+            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
+                processes=self.n_proc
+            ) as pool:
                 for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
-                    stop_chunks = np.array_split(stop[comp_label], n_proc, axis=-1)
+                    stop_chunks = np.array_split(stop[comp_label], self.n_proc, axis=-1)
                     if start[comp_label].size == 1:
-                        start_chunks = [start[comp_label]] * n_proc
+                        start_chunks = [start[comp_label]] * self.n_proc
                     else:
-                        start_chunks = np.array_split(start[comp_label], n_proc, axis=-1)
+                        start_chunks = np.array_split(start[comp_label], self.n_proc, axis=-1)
                     comp_integrands = [
                         partial(
                             common_integrand,

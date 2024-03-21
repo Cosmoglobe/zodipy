@@ -236,5 +236,5 @@ def model(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodipy:
             strategies.pop(key)
 
     return draw(
-        builds(partial(zodipy.Zodipy, parallel=False, **static_params), **strategies)
+        builds(partial(zodipy.Zodipy, **static_params), **strategies)
     )
