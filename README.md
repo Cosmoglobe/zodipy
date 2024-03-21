@@ -53,8 +53,15 @@ print(emission)
 #> [15.35392831 15.35495051 15.35616009] MJy / sr
 ```
 
+# Scientific paper and citation
+For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
+- [Cosmoglobe: Simulating zodiacal emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
+
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if you have used ZodiPy in your work and want to cite the software.
+
+
 # For developers
-Contributing developers will need the download the following additional dependencies:
+Contributing developers will need to download the following additional dependencies:
 - pytest
 - pytest-cov
 - hypothesis
@@ -80,31 +87,26 @@ poetry install
 in a virtual environment from the repository root. This will read the `pyproject.toml` file in the repository and install all dependencies. 
 
 ## pip
-Developers not using Poetry can install ZodiPy in a virtual environment with all dependencies with pip by running
+Developers not using Poetry can install ZodiPy in a virtual environment with all dependencies by first cloning or forking the repository and then running 
 ```
 pip install -r requirements-dev.txt
 ```
-from the repositry root. This will read and download all the dependencies from the `requirements-dev.txt` file in the repositry. 
+from the repositry root. This will read and download all the dependencies from the `requirements-dev.txt` file in the repository. 
 
 Note that developers using Python 3.12 will need to upgrade their pip versions with `python3 -m pip install --upgrade pip` before being able to install ZodiPy. This is due to known incompatibilities between older pip versions and Python 3.12
 
 ## Tests and formatting
-The following tools should be run from the root of the repository and producing no errors. These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first
+The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
 
-- [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the repository root. 
-- [ruff](https://github.com/astral-sh/ruff): Formating linting is done with `ruff` by simply running `ruff` in the command line in the repository root. 
+- [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the root of the repository. 
+- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff` in the command line in the root of the repository. 
 - [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy` in the root of the repository.
 
 Remeber to add tests when implementing new features to maintain a high code coverage.
 
 ## Documentation
-We use [MkDocs](https://www.mkdocs.org/) to create our documentation. Documentation is automatically built and uploaded as part of the github CI. New features should be documented by adding content to the `docs/` folder at the appropriate places.
+We use [MkDocs](https://www.mkdocs.org/) to create our documentation. The documentation is automatically built and uploaded as part of the github CI. New features should be documented by adding content to the `docs/` folder where necessary.
 
-# Scientific paper and citation
-For an overview of the ZodiPy model approach and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
-- [Cosmoglobe: Simulating zodiacal emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
-
-See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if you have used ZodiPy in your work and want to cite the software.
 
 # Funding
 This work has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreements No 776282 (COMPET-4; BeyondPlanck), 772253 (ERC; bits2cosmology) and 819478 (ERC; Cosmoglobe).
