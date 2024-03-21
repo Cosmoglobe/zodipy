@@ -252,8 +252,8 @@ def test_multiprocessing() -> None:
     without multiprocessing.
     """
 
-    model = Zodipy(parallel=False)
-    model_parallel = Zodipy(parallel=True)
+    model = Zodipy()
+    model_parallel = Zodipy(n_proc=4)
 
     observer = "earth"
     time = Time("2020-01-01")
