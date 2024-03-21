@@ -15,4 +15,4 @@ repos:
 
 hooks:
   - id: poetry-export
-    args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
+    args: ["--dev", "-f", "requirements.txt", "-o", "requirements-dev.txt"]
