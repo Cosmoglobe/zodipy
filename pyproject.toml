@@ -7,11 +7,11 @@ authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0"
 exclude = ["test.py"]
-requires-python = ">=3.8"
 classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Scientific/Engineering :: Physics",
 ]
