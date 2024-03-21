@@ -28,3 +28,7 @@ The goal is to maintain a diverse community that's pleasant for everyone.
 **Please be considerate and respectful of others**. Everyone must abide by our
 [Code of Conduct](https://github.com/Cosmoglobe/zodipy/blob/main/CODE_OF_CONDUCT.md)
 and we encourage all to read it carefully.
+
+## For developers
+
+Contributers should read the "For developers" section in the project README, which describes the installation and testing steps required during development.
