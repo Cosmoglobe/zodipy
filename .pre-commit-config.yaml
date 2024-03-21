@@ -12,3 +12,7 @@ repos:
     hooks:
       - id: ruff
       - id: ruff-format
+
+hooks:
+  - id: poetry-export
+    args: ["--dev", "-f", "requirements.txt", "-o", "requirements-dev.txt"]

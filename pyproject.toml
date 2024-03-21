@@ -38,7 +38,6 @@ mkdocs = "^1.5.3"
 pymdown-extensions = "^9.4"
 markdown-include = "^0.6.0"
 pre-commit = "^2.19.0"
-hypothesis = "^6.47.5"
 coverage = "^7.1.0"
 pytest-cov = "^4.0.0"
 mkdocs-material = "^9.0.1"
@@ -46,6 +45,7 @@ mkdocstrings = "^0.23.0"
 mkdocstrings-python = "^1.7.3"
 ruff = "^0.1.4"
 markdown = "<3.4.0"
+hypothesis = "<=6.47.5"
 
 
 [build-system]
