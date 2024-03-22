@@ -45,7 +45,7 @@ mkdocstrings = "^0.23.0"
 mkdocstrings-python = "^1.7.3"
 ruff = "^0.1.4"
 markdown = "<3.4.0"
-hypothesis = "6.99.11"
+hypothesis = "^6.99.11"
 
 
 [build-system]
