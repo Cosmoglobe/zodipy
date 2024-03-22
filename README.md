@@ -64,7 +64,7 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if yo
 Contributing developers will need to download the following additional dependencies:
 - pytest
 - pytest-cov
-- hypothesis (<=6.47.5)
+- hypothesis
 - coverage
 - ruff
 - mypy
