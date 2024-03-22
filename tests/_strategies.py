@@ -86,7 +86,7 @@ def pixels(draw: DrawFn, nside: int) -> int | list[int] | npt.NDArray[np.integer
 
     shape = draw(integers(min_value=1, max_value=npix - 1))
 
-    list_stategy = lists(pixel_strategy, min_size=shape, max_size=shape)
+    list_stategy = lists(pixel_strategy, min_size=1)
     array_strategy = arrays(dtype=int, shape=shape, elements=pixel_strategy)
 
     return draw(one_of(pixel_strategy, list_stategy, array_strategy))
