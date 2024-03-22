@@ -24,7 +24,7 @@ See the [documentation](https://cosmoglobe.github.io/zodipy/) for more informati
 ZodiPy is installed using `pip install zodipy`.
 
 # Dependencies
-ZodiPy supports all Python versions >= 3.8, and has the following dependencies:
+ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
 - [Astropy](https://www.astropy.org/) (>=5.0.1)
 - [NumPy](https://numpy.org/)
 - [healpy](https://healpy.readthedocs.io/en/latest/)
