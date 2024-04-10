@@ -16,3 +16,4 @@ ZodiPy has the following dependencies (these are automatically downloaded alongs
 - [astropy](https://www.astropy.org) (>= 5.0.1)
 - [healpy](https://healpy.readthedocs.io/en/latest/)
 - [jplehem](https://pypi.org/project/jplephem/)
+- [scipy](https://scipy.org/)
