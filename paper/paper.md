@@ -23,6 +23,7 @@ bibliography: paper.bib
 # aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
+
 # Summary
 `ZodiPy` is an Astropy-affiliated Python package for zodiacal light simulations. 
 Its purpose is to provide the astrophysics and cosmology communities with an 
