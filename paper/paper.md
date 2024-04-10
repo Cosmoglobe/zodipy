@@ -51,8 +51,9 @@ high-quality tools and open-source projects and communities, such as the Astropy
 project [@astropy]. The lack of a general-purpose zodiacal light tool in this space 
 was the primary motivation behind the development of the `ZodiPy` package.
 
-`ZodiPy` can be used to simulate zodiacal light for arbitrary Solar system observers, meaning that researchers no longer have to spend time developing their own tools from scratch. 
-To use `ZodiPy`, the user is required to provide the following data: 
+`ZodiPy` can be used to simulate zodiacal light for arbitrary Solar system observers, 
+meaning that researchers no longer have to spend time developing their own tools from 
+scratch. To use `ZodiPy`, the user is required to provide the following data: 
 
 1) A sequence of pointings, either in ecliptic or galactic coordinates. These can 
 be specified  as angles on the sky or as HEALPix [@Gorski2005] pixel indices.
