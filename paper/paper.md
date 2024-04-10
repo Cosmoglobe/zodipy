@@ -27,15 +27,15 @@ bibliography: paper.bib
 `ZodiPy` is an Astropy-affiliated Python package for zodiacal light simulations. 
 Its purpose is to provide the astrophysics and cosmology communities with an 
 accessible and easy-to-use Python interface to existing zodiacal light models, 
-assisting in the analysis of astrophysical data and enabling quick and easy 
+assisting in the analysis of infrared astrophysical data and enabling quick and easy 
 zodiacal light forecasting for future experiments. `ZodiPy` implements the 
-[@Kelsall1998] and the [@Planck2014] interplanetary dust models, which allows for
+[@Kelsall1998] and the [@Planck2014] interplanetary dust models, which allow for
 zodiacal light simulations between $1.25-240\mu$m and $30-857$GHz, respectively, 
-with the possibility to extrapolate the models to other frequencies. 
+with the possibility of extrapolating the models to other frequencies.
 
 # Statement of need
 Zodiacal light is the main source of diffuse radiation observed in the infrared 
-sky between $1-100\mu$m. The light is the result of scattering and re-emission of 
+sky between $1-100\mu$m. The light comes from scattering and re-emission of 
 sunlight by dust grains in the interplanetary medium. Zodiacal light is one of the 
 most challenging foregrounds to model in cosmological studies of the Extragalactic 
 Background Light (EBL) in the infrared sky, primarily due to its seasonal nature. 
@@ -44,31 +44,36 @@ Traditionally, observers of the infrared sky have had to build their own zodiaca
 light tools (see the
 [LAMBDA foreground models page](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html) 
 for a list of existing tools). However, these programs are either 
-only usable for the specific experiments for which the tool was made, or unaccessible 
-as they require the use of licensed programing languages or unpractical web 
-interfaces. Much of modern astronomy and cosmology is done in Python due to the wide 
-range of available high quality tools and open source projects and communities, such as 
-the Astropy project [@astropy]. The lack of a general purpose zodiacal light tool 
-in this space was the main motivation behind the development of the `ZodiPy` package.
+only usable for specific experiments or otherwise difficult to access by requiring 
+licensed programming languages or web  interfaces. Many modern astronomy and 
+cosmology pipelines are built in Python due to the wide range of available 
+high-quality tools and open-source projects and communities, such as the Astropy 
+project [@astropy]. The lack of a general-purpose zodiacal light tool in this space 
+was the primary motivation behind the development of the `ZodiPy` package.
 
-When using `ZodiPy`, the user is required to provide the following data: 
+`ZodiPy` can be used to simulate zodiacal light for arbitrary Solar system observers, meaning that researchers no longer have to spend time developing their own tools from scratch. 
+To use `ZodiPy`, the user is required to provide the following data: 
 
-1) A set of observations, in either ecliptic or galactic coordinates, in the form of 
-angular sky coordinates or as HEALPIx [@Gorski2005] pixel indices.
-2) A center frequency or a bandpass.
-3) The time of observation. 
-4) The heliocentric position of the observer, although this may be omitted if the 
-observer is located at the position of a major solar system object, such as on Earth 
-or at the Sun-Earth-Moon barycenter L2. In this case the position is queried directly 
-through the `astropy.coordinates` solar system ephemeridis. 
+1) A sequence of pointings, either in ecliptic or galactic coordinates. These can 
+be specified  as angles on the sky or as HEALPix [@Gorski2005] pixel indices.
+2) A center frequency or an instrument bandpass.
+3) The time of observation, which corresponds to the pointing sequence. 
+4) The heliocentric ecliptic position of the observer. If the observer is located 
+at a major solar system object, such as the Earth or the Sun-Earth-Moon barycenter 
+L2, the position is instead queried through the `astropy.coordinates` Solar system 
+ephemerides. 
 
-This information is then used to evaluate a sequence of line-of-sight integrals through 
-a three-dimensional model of the interplanetary dust distribution. For more details 
-about the implementation and the models used we refer to the following paper on `ZodiPy`
-[@San2022].
+The predicted zodiacal light is then obtained by evaluating a sequence of 
+line-of-sight integrals from the position of the observer and through a 
+model of the three-dimensional interplanetary dust distribution. For 
+implementation details and examples of how to apply `ZodiPy` to a real-world 
+dataset, see[@San2022].
 
-`ZodiPy` has been used by several research projects[@2023arXiv230617219A; 
-@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024] with applications ranging from assistance in determining the observational fields of the coming NASA Roman Space Telescope, to model data obtained aboard the Hayabusa2 JAXA satellite. 
+`ZodiPy` has been rapidly adopted by the astronomy community, and the package has 
+already been used by several research projects[@2023arXiv230617219A; 
+@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024] with applications 
+ranging from assisting the coming NASA Roman Space Telescope in determining its 
+observational fields to modeling data obtained aboard the Hayabusa2 JAXA satellite. 
 
 # Acknowledgements
 The work to develop `ZodiPy`  has received funding from the European Union’s Horizon 
@@ -76,7 +81,7 @@ The work to develop `ZodiPy`  has received funding from the European Union’s H
 (ERC; Cosmoglobe) and 772253 (ERC;bits2cosmology).
 
 This project relies on the following Python packages: Astropy [@astropy], NumPy 
-[@numpy2011; @numpy2020], healpy [@Zonca2019], SciPy [@scipy2020], jplephem 
+[@numpy2011; @numpy2020], healpy [@Zonca2019], SciPy [@scipy2020], and jplephem 
 [@2011ascl.soft12014R].
 
 # References
