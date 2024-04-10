@@ -172,3 +172,5 @@ settings.json
 #files
 test.py
 context.py
+
+*.pdf
