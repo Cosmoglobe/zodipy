@@ -30,7 +30,7 @@ Its purpose is to provide the astrophysics and cosmology communities with an
 accessible and easy-to-use Python interface to existing zodiacal light models, 
 assisting in the analysis of infrared astrophysical data and enabling quick and easy 
 zodiacal light forecasting for future experiments. `ZodiPy` implements the 
-[@Kelsall1998] and the [@Planck2014] interplanetary dust models, which allow for
+@Kelsall1998 and the @Planck2014 interplanetary dust models, which allow for
 zodiacal light simulations between $1.25-240\mu$m and $30-857$GHz, respectively, 
 with the possibility of extrapolating the models to other frequencies.
 
