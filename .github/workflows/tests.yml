@@ -11,14 +11,14 @@ jobs:
         os: [ubuntu-latest]
         python-versions: ['3.9', '3.10', '3.11', '3.12']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install and configure Poetry
-        uses: snok/install-poetry@v1.3.3
+        uses: snok/install-poetry@v1.3.4
         with:
           version: 1.2.2
           virtualenvs-in-project: true
@@ -48,7 +48,7 @@ jobs:
           pytest tests -v --cov=./zodipy --cov-report=xml:./coverage.xml --cov-report term-missing
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: coverage.xml
           fail_ci_if_error: false
