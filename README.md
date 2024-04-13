@@ -62,7 +62,7 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if yo
 
 
 # For developers
-Contributing developers will need to download the following additional dependencies to test, lint and build documentation locally:
+Contributing developers will need to download the following additional dependencies to test, lint, format and build documentation locally:
 - pytest
 - pytest-cov
 - hypothesis
@@ -96,11 +96,11 @@ from the repositry root. This will read and download all the dependencies from t
 
 Note that developers using Python 3.12 will need to upgrade their pip versions with `python3 -m pip install --upgrade pip` before being able to install ZodiPy. This is due to known incompatibilities between older pip versions and Python 3.12
 
-## Tests and formatting
+## Tests, linting and formatting
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
 
 - [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the root of the repository. 
-- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff check zodipy/` in the command line in the root of the repository. 
+- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff check zodipy/` and `ruff format zodipy/` in the command line in the root of the repository. 
 - [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy/` in the root of the repository.
 
 Remeber to add tests when implementing new features to maintain a high code coverage.
