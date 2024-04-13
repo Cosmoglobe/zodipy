@@ -7,7 +7,7 @@ pip install zodipy
 ```
 
 !!! note
-    ZodiPy supports python versions >=3.8.
+    ZodiPy supports python versions >=3.9.
 
 ## Dependencies
 ZodiPy has the following dependencies (these are automatically downloaded alongside ZodiPy):

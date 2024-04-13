@@ -411,8 +411,7 @@ DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
 
 
 class ComponentDensityFn(Protocol):
-    def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        ...
+    def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]: ...
 
 
 def construct_density_partials(
