@@ -2,12 +2,12 @@
 <img src="docs/img/zodipy_logo.png" width="350">
 
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat-square)](http://www.astropy.org/)
-[![PyPI](https://img.shields.io/pypi/v/zodipy.svg?logo=python&style=flat-square)](https://pypi.org/project/zodipy)
-[![Actions Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/Zodipy/tests.yml?branch=main&logo=github&style=flat-square)](https://github.com/Cosmoglobe/Zodipy/actions)
-[![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&style=flat-square&logo=codecov)](https://app.codecov.io/gh/Cosmoglobe/zodipy)
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-Active-success?style=flat-square)](https://www.repostatus.org/#active)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/zodipy/mkdocs-deploy.yml?branch=main&style=flat-square&logo=github&label=docs)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/zodipy?style=flat-square)
+[![PyPI](https://img.shields.io/pypi/v/zodipy.svg?logo=python&style=flat-square)](https://pypi.org/project/zodipy)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-Active-success?style=flat-square)](https://www.repostatus.org/#active)
+[![Actions Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/Zodipy/tests.yml?branch=main&logo=github&style=flat-square)](https://github.com/Cosmoglobe/Zodipy/actions)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/zodipy/mkdocs-deploy.yml?branch=main&style=flat-square&logo=github&label=docs)
+[![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&style=flat-square&logo=codecov)](https://app.codecov.io/gh/Cosmoglobe/zodipy)
 [![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2205.12962)
 [![ascl:2306.012](https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255&style=flat-square)](https://ascl.net/2306.012)
 ---
@@ -62,7 +62,7 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib) if yo
 
 
 # For developers
-Contributing developers will need to download the following additional dependencies:
+Contributing developers will need to download the following additional dependencies to test, lint and build documentation locally:
 - pytest
 - pytest-cov
 - hypothesis
@@ -100,13 +100,13 @@ Note that developers using Python 3.12 will need to upgrade their pip versions w
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
 
 - [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the root of the repository. 
-- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff zodipy/` in the command line in the root of the repository. 
+- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff check zodipy/` in the command line in the root of the repository. 
 - [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy/` in the root of the repository.
 
 Remeber to add tests when implementing new features to maintain a high code coverage.
 
 ## Documentation
-We use [MkDocs](https://www.mkdocs.org/) to create our documentation. The documentation is automatically built and uploaded as part of the github CI. New features should be documented by adding content to the `docs/` folder where necessary.
+We use [MkDocs](https://www.mkdocs.org/) to create our documentation. The documentation is built locally with `mkdocs build` from the repository root, and served with `mkdocs serve`.
 
 
 # Funding
