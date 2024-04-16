@@ -73,12 +73,6 @@ dataset, see @San2022.
 
 `ZodiPy` has been rapidly adopted by the astronomy community, and the package has 
 already been used by several research projects (see @2023arXiv230617219A; 
-@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024), for instance in
-assisting the coming NASA Roman Space Telescope in determining its observational 
-fields, or to modeling data obtained aboard the Hayabusa2 JAXA satellite. 
-
-`ZodiPy` has been rapidly adopted by the astronomy community, and the package has 
-already been used by several research projects (see @2023arXiv230617219A; 
 @2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024), for instance, 
 in assisting the coming NASA Roman Space Telescope in determining its observational 
 fields or modeling the data obtained aboard the Hayabusa2 JAXA satellite. 
