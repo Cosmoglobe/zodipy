@@ -46,7 +46,7 @@ light tools (see the
 [LAMBDA foreground models page](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html) 
 for a list of existing tools). However, these programs are either 
 only usable for specific experiments or otherwise difficult to access by requiring 
-licensed programming languages or the use of web interfaces. Modern astronomy and 
+licensed programming languages or usage of web interfaces. Modern astronomy and 
 cosmology pipelines are commonly built in Python due to the wide range of available 
 high-quality tools and open-source projects and communities, such as the Astropy 
 project [@astropy]. The lack of a general-purpose zodiacal light tool in this space 
@@ -76,6 +76,12 @@ already been used by several research projects (see @2023arXiv230617219A;
 @2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024), for instance in
 assisting the coming NASA Roman Space Telescope in determining its observational 
 fields, or to modeling data obtained aboard the Hayabusa2 JAXA satellite. 
+
+`ZodiPy` has been rapidly adopted by the astronomy community, and the package has 
+already been used by several research projects (see @2023arXiv230617219A; 
+@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024), for instance, 
+in assisting the coming NASA Roman Space Telescope in determining its observational 
+fields or modeling the data obtained aboard the Hayabusa2 JAXA satellite. 
 
 # Acknowledgements
 This work has received funding from the European Union’s Horizon 2020 research and 
