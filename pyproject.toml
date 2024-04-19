@@ -1,12 +1,10 @@
 [tool.poetry]
 name = "zodipy"
-homepage = "https://github.com/Cosmoglobe/zodipy"
 version = "0.9.0"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
 license = "GPL-3.0-or-later"
-exclude = ["test.py"]
 classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
@@ -22,7 +20,11 @@ keywords = [
     "space",
     "science",
 ]
+exclude = ["test.py"]
 
+[tool.poetry.urls]
+documentation = "https://cosmoglobe.github.io/zodipy/"
+repository = "https://github.com/cosmoglobe/zodipy"
 
 [tool.poetry.dependencies]
 python = ">=3.9"
@@ -47,7 +49,6 @@ mkdocstrings-python = "^1.7.3"
 ruff = "^0.3.7"
 markdown = "<3.4.0"
 hypothesis = "^6.99.11"
-
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -114,6 +115,7 @@ lint.ignore = [
 ]
 # exclude = ["docs/*"]
 lint.pydocstyle.convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
 "docs/*" = ["INP001", "T201", "S101"]
