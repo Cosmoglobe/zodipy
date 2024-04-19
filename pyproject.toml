@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zodipy"
-version = "0.9.1"
+version = "0.9.2"
 description = "Software for simulating zodiacal emission"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"

@@ -11,6 +11,7 @@
 [![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2205.12962)
 [![ascl:2306.012](https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255&style=flat-square)](https://ascl.net/2306.012)
 [![pyOpenSci](https://tinyurl.com/y22nb8up)](https://github.com/pyOpenSci/software-review/issues/161)
+[![DOI](https://zenodo.org/badge/394929213.svg)](https://zenodo.org/doi/10.5281/zenodo.10999611)
 ---
 
 
