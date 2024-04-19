@@ -38,7 +38,7 @@ emission_bandpass_integrated = model.get_binned_emission_pix(
 
 hp.mollview(
     emission_central_freq,
-    title=f"Center frequency",
+    title="Center frequency",
     unit="MJy/sr",
     cmap="afmhot",
     norm="log",

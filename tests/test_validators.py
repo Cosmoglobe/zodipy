@@ -1,7 +1,7 @@
 import astropy.units as u
-from astropy.time import Time
 import numpy as np
 import pytest
+from astropy.time import Time
 from hypothesis import given
 from hypothesis.strategies import DataObject, data
 
@@ -19,6 +19,7 @@ OBS_TIME = Time("2021-01-01T00:00:00")
 
 @given(model(extrapolate=False))
 def test_validate_frequencies(model: Zodipy) -> None:
+    """Tests that the frequencies are validated."""
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value,
@@ -47,6 +48,7 @@ def test_validate_frequencies(model: Zodipy) -> None:
 
 @given(random_freq(bandpass=True), data())
 def test_validate_weights(freq: FrequencyOrWavelength, data: DataObject) -> None:
+    """Tests that the bandpass weights are validated."""
     bp_weights = data.draw(weights(freq))
     bp_weights = get_validated_and_normalized_weights(
         weights=bp_weights,
@@ -62,6 +64,7 @@ def test_validate_weights(freq: FrequencyOrWavelength, data: DataObject) -> None
 
 
 def test_validate_weights_numbers() -> None:
+    """Tests that the bandpass weights are normalized."""
     get_validated_and_normalized_weights(
         weights=None,
         freq=BANDPASS_FREQUENCIES[0],
@@ -84,6 +87,7 @@ def test_validate_weights_numbers() -> None:
 
 
 def test_validate_weights_strictly_increasing() -> None:
+    """Tests that an error is raised if a bandpass is not strictly increasing."""
     with pytest.raises(ValueError):
         get_validated_and_normalized_weights(
             weights=BANDPASS_WEIGHTS,
@@ -92,6 +96,7 @@ def test_validate_weights_strictly_increasing() -> None:
 
 
 def test_validate_weights_shape() -> None:
+    """Tests that the bandpass weights have the correct shape."""
     weights = get_validated_and_normalized_weights(
         weights=BANDPASS_WEIGHTS,
         freq=BANDPASS_FREQUENCIES,
@@ -107,33 +112,25 @@ def test_validate_weights_shape() -> None:
 
 
 def test_extrapolate_raises_error() -> None:
+    """Tests that an error is correctly raised when extrapolation is not allowed."""
     with pytest.raises(ValueError):
         model = Zodipy("dirbe")
-        model.get_emission_pix(
-            400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
-        )
+        model.get_emission_pix(400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
     model = Zodipy("dirbe", extrapolate=True)
-    model.get_emission_pix(
-        400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
-    )
+    model.get_emission_pix(400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
 def test_interp_kind() -> None:
+    """Tests that the interpolation kind can be passed in."""
     model = Zodipy("dirbe", interp_kind="linear")
-    linear = model.get_emission_pix(
-        27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
-    )
+    linear = model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
     model = Zodipy("dirbe", interp_kind="quadratic")
-    quadratic = model.get_emission_pix(
-        27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
-    )
+    quadratic = model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
     assert not np.allclose(linear, quadratic)
 
     with pytest.raises(NotImplementedError):
         model = Zodipy("dirbe", interp_kind="sdfs")
-        model.get_emission_pix(
-            27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME
-        )
+        model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)

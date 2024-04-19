@@ -109,7 +109,11 @@ lint.ignore = [
     "D107",
     "ANN101",
     "PLR0913",
-    "ISC001"
+    "ISC001",
+    "S311",
 ]
-exclude = ["tests/*", "docs/*"]
+# exclude = ["docs/*"]
 lint.pydocstyle.convention = "google"
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+"docs/*" = ["INP001", "T201", "S101"]

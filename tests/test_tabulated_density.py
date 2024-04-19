@@ -4,7 +4,7 @@ import numpy as np
 from hypothesis import given, settings
 from hypothesis.strategies import floats, integers
 
-from zodipy import tabulate_density, model_registry
+from zodipy import model_registry, tabulate_density
 from zodipy.zodipy import Zodipy
 
 from ._strategies import model
@@ -43,6 +43,7 @@ def test_tabulated_density(
 
 
 def test_tabulated_density_str_model() -> None:
+    """Tests that the tabulated density runs."""
     x = np.linspace(-5, -5, 100)
     y = np.linspace(-5, 5, 100)
     z = np.linspace(-2, 2, 100)

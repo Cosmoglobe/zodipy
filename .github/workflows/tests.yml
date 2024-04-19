@@ -32,15 +32,15 @@ jobs:
           source $VENV
           mypy ./zodipy
 
-      - name: Lint with ruff
+      - name: Check linting with ruff
         run: |
           source $VENV
-          ruff ./zodipy
+          ruff check
 
       - name: Check formating with ruff
         run: |
           source $VENV
-          ruff format --check ./zodipy
+          ruff format --check
 
       - name: Test with pytest
         run: |

@@ -32,9 +32,7 @@ from zodipy._line_of_sight import COMPONENT_CUTOFFS
 MIN_FREQ = u.Quantity(10, u.GHz)
 MAX_FREQ = u.Quantity(0.1, u.micron).to(u.GHz, equivalencies=u.spectral())
 N_FREQS = 1000
-FREQ_LOG_RANGE = np.geomspace(
-    np.log(MIN_FREQ.value), np.log(MAX_FREQ.value), N_FREQS
-).tolist()
+FREQ_LOG_RANGE = np.geomspace(np.log(MIN_FREQ.value), np.log(MAX_FREQ.value), N_FREQS).tolist()
 
 MIN_DATE = datetime.datetime(year=1900, month=1, day=1)
 MAX_DATE = datetime.datetime(year=2100, month=1, day=1)
@@ -74,9 +72,7 @@ def time(draw: DrawFn) -> Time:
 
 @composite
 def nside(draw: Callable[[SearchStrategy[int]], int]) -> int:
-    return draw(
-        integers(min_value=MIN_NSIDE_EXP, max_value=MAX_NSIDE_EXP).map(partial(pow, 2))
-    )
+    return draw(integers(min_value=MIN_NSIDE_EXP, max_value=MAX_NSIDE_EXP).map(partial(pow, 2)))
 
 
 @composite
@@ -93,9 +89,7 @@ def pixels(draw: DrawFn, nside: int) -> int | list[int] | npt.NDArray[np.integer
 
 
 @composite
-def angles(
-    draw: DrawFn, lonlat: bool = False
-) -> tuple[u.Quantity[u.deg], u.Quantity[u.deg]]:
+def angles(draw: DrawFn, lonlat: bool = False) -> tuple[u.Quantity[u.deg], u.Quantity[u.deg]]:
     if lonlat:
         theta_strategy = floats(min_value=0, max_value=360)
         phi_strategy = floats(min_value=-90, max_value=90)
@@ -105,9 +99,9 @@ def angles(
 
     shape = draw(integers(min_value=1, max_value=MAX_ANGELS_LEN))
 
-    theta_array_strategy = arrays(
-        dtype=float, shape=shape, elements=theta_strategy
-    ).map(partial(u.Quantity, unit=u.deg))
+    theta_array_strategy = arrays(dtype=float, shape=shape, elements=theta_strategy).map(
+        partial(u.Quantity, unit=u.deg)
+    )
     phi_array_strategy = arrays(dtype=float, shape=shape, elements=phi_strategy).map(
         partial(u.Quantity, unit=u.deg)
     )
@@ -116,16 +110,9 @@ def angles(
 
 
 @composite
-def freq(
-    draw: DrawFn, model: zodipy.Zodipy
-) -> u.Quantity[u.GHz] | u.Quantity[u.micron]:
-
+def freq(draw: DrawFn, model: zodipy.Zodipy) -> u.Quantity[u.GHz] | u.Quantity[u.micron]:
     if model.extrapolate:
-        return draw(
-            sampled_from(FREQ_LOG_RANGE)
-            .map(np.exp)
-            .map(partial(u.Quantity, unit=u.GHz))
-        )
+        return draw(sampled_from(FREQ_LOG_RANGE).map(np.exp).map(partial(u.Quantity, unit=u.GHz)))
 
     min_freq = model._ipd_model.spectrum[0]
     max_freq = model._ipd_model.spectrum[-1]
@@ -140,9 +127,7 @@ def freq(
 
 
 @composite
-def random_freq(
-    draw: DrawFn, unit: u.Unit | None = None, bandpass: bool = False
-) -> u.Quantity:
+def random_freq(draw: DrawFn, unit: u.Unit | None = None, bandpass: bool = False) -> u.Quantity:
     random_freq = draw(
         sampled_from(FREQ_LOG_RANGE).map(np.exp).map(partial(u.Quantity, unit=u.GHz))
     )
@@ -156,10 +141,9 @@ def random_freq(
     if bandpass:
         shape = draw(integers(min_value=2, max_value=100))
         sigma = draw(floats(min_value=0.1, max_value=0.3))
-        freq_range = np.linspace(
+        return np.linspace(
             random_freq - random_freq * sigma, random_freq + random_freq * sigma, shape
         )
-        return freq_range
 
     return random_freq
 
@@ -178,9 +162,7 @@ def weights(
     list_stategy = lists(weights_strategy, min_size=freqs.size, max_size=freqs.size)
     array_strategy = arrays(dtype=float, shape=freqs.size, elements=weights_strategy)
 
-    return draw(
-        one_of(list_stategy, array_strategy).map(partial(normalize_array, freqs=freqs))
-    )
+    return draw(one_of(list_stategy, array_strategy).map(partial(normalize_array, freqs=freqs)))
 
 
 @composite
@@ -188,30 +170,22 @@ def obs(draw: DrawFn, model: zodipy.Zodipy, obs_time: Time) -> str:
     def get_obs_dist(obs: str, obs_time: Time) -> u.Quantity[u.AU]:
         if obs == "semb-l2":
             obs_pos = (
-                get_body("earth", obs_time)
-                .transform_to(HeliocentricMeanEcliptic)
-                .cartesian.xyz
+                get_body("earth", obs_time).transform_to(HeliocentricMeanEcliptic).cartesian.xyz
             )
             obs_pos += 0.01 * u.AU
         else:
-            obs_pos = (
-                get_body(obs, obs_time)
-                .transform_to(HeliocentricMeanEcliptic)
-                .cartesian.xyz
-            )
+            obs_pos = get_body(obs, obs_time).transform_to(HeliocentricMeanEcliptic).cartesian.xyz
         return u.Quantity(np.linalg.norm(obs_pos.value), u.AU)
 
     los_dist_cut = min(
-        [COMPONENT_CUTOFFS[comp][1] for comp in model._ipd_model.comps.keys()],
+        [COMPONENT_CUTOFFS[comp][1] for comp in model._ipd_model.comps],
     )
     if isinstance(los_dist_cut, dict):
         los_dist_cut = min(list(los_dist_cut.values()))
 
     obs_list = model.supported_observers
     return draw(
-        sampled_from(obs_list).filter(
-            lambda obs: los_dist_cut > get_obs_dist(obs, obs_time).value
-        )
+        sampled_from(obs_list).filter(lambda obs: los_dist_cut > get_obs_dist(obs, obs_time).value)
     )
 
 
@@ -231,10 +205,8 @@ MODEL_STRATEGY_MAPPINGS: dict[str, SearchStrategy[Any]] = {
 @composite
 def model(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodipy:
     strategies = MODEL_STRATEGY_MAPPINGS.copy()
-    for key in static_params.keys():
+    for key in static_params:
         if key in strategies:
             strategies.pop(key)
 
-    return draw(
-        builds(partial(zodipy.Zodipy, **static_params), **strategies)
-    )
+    return draw(builds(partial(zodipy.Zodipy, **static_params), **strategies))

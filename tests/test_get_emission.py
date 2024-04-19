@@ -35,7 +35,6 @@ def test_get_emission_pix(
     data: DataObject,
 ) -> None:
     """Property test for get_emission_pix."""
-
     observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
     pix = data.draw(pixels(nside))
@@ -58,7 +57,6 @@ def test_get_binned_emission_pix(
     data: DataObject,
 ) -> None:
     """Property test for get_binned_emission_pix."""
-
     observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
     pix = data.draw(pixels(nside))
@@ -82,7 +80,6 @@ def test_get_emission_ang(
     data: DataObject,
 ) -> None:
     """Property test for get_emission_ang."""
-
     theta, phi = angles
 
     observer = data.draw(obs(model, time))
@@ -108,7 +105,6 @@ def test_get_binned_emission_ang(
     data: DataObject,
 ) -> None:
     """Property test for get_binned_emission_pix."""
-
     theta, phi = angles
 
     observer = data.draw(obs(model, time))
@@ -134,11 +130,7 @@ def test_invalid_freq(
     nside: int,
     data: DataObject,
 ) -> None:
-    """
-    Property test checking for unsupported spectral range in models where extrapolation is
-    set to False.
-    """
-
+    """Property test checking for unsupported spectral range."""
     theta, phi = angles
     observer = data.draw(obs(model, time))
     pix = data.draw(pixels(nside))
@@ -186,23 +178,20 @@ def test_invalid_freq(
 
 
 def test_compare_to_dirbe_idl() -> None:
-    """
-    Tests that ZodiPy is able to reproduce tabulated emission from the DIRBE Zoidacal Light
+    """Tests that ZodiPy reproduces the DIRBE software.
+
+    Zodipy should be able to reproduce the tabulated emission from the DIRBE Zoidacal Light
     Prediction Software with a maximum difference of 0.1%.
     """
-
     model = Zodipy("dirbe")
-    for freq, tabulated_emission in TABULATED_DIRBE_EMISSION.items():
-        freq *= u.micron
+    for frequency, tabulated_emission in TABULATED_DIRBE_EMISSION.items():
         for idx, (day, lon, lat) in enumerate(zip(DAYS, LON, LAT)):
             time = DIRBE_START_DAY + TimeDelta(day - 1, format="jd")
-            lon *= u.deg
-            lat *= u.deg
 
             emission = model.get_emission_ang(
-                freq,
-                theta=lon,
-                phi=lat,
+                frequency * u.micron,
+                theta=lon * u.deg,
+                phi=lat * u.deg,
                 lonlat=True,
                 obs="earth",
                 obs_time=time,
@@ -219,10 +208,7 @@ def test_invalid_pixel(
     random_integer: int,
     data: DataObject,
 ) -> None:
-    """
-    Tests that an error is raised when an invalid pixel is passed to get_emission_pix.
-    """
-
+    """Tests that an error is raised when an invalid pixel is passed to get_emission_pix."""
     frequency = data.draw(freq(model))
     observer = data.draw(obs(model, time))
     npix = hp.nside2npix(nside)
@@ -245,12 +231,13 @@ def test_invalid_pixel(
             obs=observer,
         )
 
+
 def test_multiprocessing() -> None:
-    """
-    Testing that model with multiprocessing enabled returns the same value as
+    """Tests multiprocessing with for zodipy.
+
+    Tests that model with multiprocessing enabled returns the same value as
     without multiprocessing.
     """
-
     model = Zodipy()
     model_parallel = Zodipy(n_proc=4)
 
@@ -330,11 +317,9 @@ def test_multiprocessing() -> None:
 
     assert np.allclose(emission_binned_ang.value, emission_binned_ang_parallel.value)
 
-def test_inner_radial_cutoff_multiprocessing() -> None:
-    """
-    Testing that model with inner radial cutoffs can be parallelized.
-    """
 
+def test_inner_radial_cutoff_multiprocessing() -> None:
+    """Testing that model with inner radial cutoffs can be parallelized."""
     model = Zodipy("RRM-experimental")
     model_parallel = Zodipy("RRM-experimental", n_proc=4)
 
@@ -359,6 +344,7 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
         obs=observer,
     )
     assert np.allclose(emission_pix, emission_pix_parallel)
+
 
 @given(
     model(extrapolate=True),
@@ -411,7 +397,6 @@ def test_weights(
     data: DataObject,
 ) -> None:
     """Property test for bandpass weights."""
-
     theta, phi = angles
     observer = data.draw(obs(model, time))
     bp_weights = data.draw(weights(freqs))
@@ -428,16 +413,14 @@ def test_weights(
 
 
 def test_custom_weights() -> None:
+    """Tests bandpass integration with custom weights."""
     model = Zodipy()
     time = Time("2020-01-01")
     nside = 32
     pix = np.arange(hp.nside2npix(nside))
     central_freq = 25
     sigma_freq = 3
-    freqs = (
-        np.linspace(central_freq - sigma_freq, central_freq + sigma_freq, 100)
-        * u.micron
-    )
+    freqs = np.linspace(central_freq - sigma_freq, central_freq + sigma_freq, 100) * u.micron
     weights = np.random.randn(len(freqs))
     weights /= np.trapz(weights, freqs.value)
 
@@ -452,6 +435,7 @@ def test_custom_weights() -> None:
 
 
 def test_custom_obs_pos() -> None:
+    """Tests a user specified observer position."""
     model = Zodipy()
     time = Time("2020-01-01")
     nside = 64
