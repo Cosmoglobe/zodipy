@@ -9,10 +9,9 @@ tags:
 authors:
   - name: Metin San
     orcid: 0000-0003-4648-8729
-    equal-contrib: true
     affiliation: "1"
 affiliations:
- - name: Metin San, PhD. Fellow, University of Oslo, Norway
+ - name: University of Oslo, Norway
    index: 1
 date: 10 April 2024
 bibliography: paper.bib
@@ -72,15 +71,15 @@ implementation details and examples of how to apply `ZodiPy` to a real-world
 dataset, see @San2022.
 
 `ZodiPy` has been rapidly adopted by the astronomy community, and the package has 
-already been used by several research projects (see @2023arXiv230617219A; 
-@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024), for instance, 
+already been used by several research projects [see @2023arXiv230617219A; 
+@2023arXiv230617226R; @Tsumura2023; @Avitan2023; @Hanzawa2024], for instance, 
 in assisting the coming NASA Roman Space Telescope in determining its observational 
 fields or modeling the data obtained aboard the Hayabusa2 JAXA satellite. 
 
 # Acknowledgements
 This work has received funding from the European Union’s Horizon 2020 research and 
 innovation programme under grant agreement numbers 819478 (ERC; Cosmoglobe) and 
-772253 (ERC;bits2cosmology).
+772253 (ERC; bits2cosmology).
 
 This project uses the following Python packages: Astropy [@astropy], NumPy 
 [@numpy2011; @numpy2020], healpy [@Zonca2019], SciPy [@scipy2020], and jplephem 
