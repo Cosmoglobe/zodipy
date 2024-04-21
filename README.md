@@ -46,7 +46,7 @@ print(emission)
 ```
 
 ## Related scientific papers
-See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/dev/CITATION.bib)
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION.bib)
 - [Cosmoglobe: Simulating zodiacal emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
 - [ZodiPy: A Python package for zodiacal light simulations (San 2024)](https://joss.theoj.org/papers/10.21105/joss.06648#). 
 
