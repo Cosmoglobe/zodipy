@@ -1,15 +1,18 @@
 
 <img src="img/zodipy_logo.png" alt="ZodiPy logo" width="50%">
 
-[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat-square)](http://www.astropy.org/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/zodipy?style=flat-square)
-[![PyPI](https://img.shields.io/pypi/v/zodipy.svg?logo=python&style=flat-square)](https://pypi.org/project/zodipy)
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-Active-success?style=flat-square)](https://www.repostatus.org/#active)
-[![Actions Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/Zodipy/tests.yml?branch=main&logo=github&style=flat-square)](https://github.com/Cosmoglobe/Zodipy/actions)
+[![astropy](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg)](http://www.astropy.org/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/zodipy)
+[![PyPI](https://img.shields.io/pypi/v/zodipy.svg?logo=python)](https://pypi.org/project/zodipy)
+[![Actions Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/Zodipy/tests.yml?branch=main&logo=github)](https://github.com/Cosmoglobe/Zodipy/actions)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Cosmoglobe/zodipy/mkdocs-deploy.yml?branch=main&style=flat-square&logo=github&label=docs)
-[![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&style=flat-square&logo=codecov)](https://app.codecov.io/gh/Cosmoglobe/zodipy)
-[![arXiv Paper](https://img.shields.io/badge/arXiv-2205.12962-green?style=flat-square&logo=arxiv)](https://arxiv.org/abs/2205.12962)
-[![ascl:2306.012](https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255&style=flat-square)](https://ascl.net/2306.012)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-Active-success)](https://www.repostatus.org/#active)
+[![Codecov](https://img.shields.io/codecov/c/github/Cosmoglobe/zodipy?token=VZP9L79EUJ&logo=codecov)](https://app.codecov.io/gh/Cosmoglobe/zodipy)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![pyOpenSci](https://tinyurl.com/y22nb8up)](https://github.com/pyOpenSci/software-review/issues/161)
+[![ascl:2306.012](https://img.shields.io/badge/ascl-2306.012-blue.svg?colorB=262255)](https://ascl.net/2306.012)
+[![DOI](https://zenodo.org/badge/394929213.svg)](https://zenodo.org/doi/10.5281/zenodo.10999611)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06648/status.svg)](https://doi.org/10.21105/joss.06648)
 
 ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
 ![ZodiPy Logo](img/zodipy_map.png)
