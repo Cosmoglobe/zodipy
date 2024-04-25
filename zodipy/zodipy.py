@@ -6,9 +6,10 @@ from functools import partial
 from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
 import astropy.units as u
+import astropy_healpix as ahpx
 import healpy as hp
 import numpy as np
-from astropy.coordinates import solar_system_ephemeris
+from astropy.coordinates import SkyCoord, solar_system_ephemeris
 from scipy.interpolate import interp1d
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
@@ -57,11 +58,6 @@ class Zodipy:
             Earth. Defaults to 'de432s', which requires downloading (and caching) a ~10MB
             file. For more information on available ephemeridis, please visit the [Astropy
             documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
-        solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
-            for all the pointing with angular distance between the sun smaller than
-            `solar_cutoff` are masked. Defaults to `None`.
-        solar_cut_fill_value (float): Fill value for pixels masked with `solar_cut`.
-            Defaults to `np.nan`.
         n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
             integrals are parallelized using the `multiprocessing` module. Defaults to 1.
 
@@ -74,8 +70,6 @@ class Zodipy:
         extrapolate: bool = False,
         interp_kind: str = "linear",
         ephemeris: str = "de432s",
-        solar_cut: u.Quantity[u.deg] | None = None,
-        solar_cut_fill_value: float = np.nan,
         n_proc: int = 1,
     ) -> None:
         self.model = model
@@ -83,8 +77,6 @@ class Zodipy:
         self.extrapolate = extrapolate
         self.interp_kind = interp_kind
         self.ephemeris = ephemeris
-        self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
-        self.solar_cut_fill_value = solar_cut_fill_value
         self.n_proc = n_proc
 
         self._interpolator = partial(
@@ -232,8 +224,8 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+        # healpix = ahpx.HEALPix(nside=nside, order="ring")
         pixels = get_validated_pix(pixels=pixels, nside=nside)
-
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         unit_vectors = get_unit_vectors_from_pixels(
             coord_in=coord_in,
@@ -250,7 +242,6 @@ class Zodipy:
             unit_vectors=unit_vectors,
             indicies=indicies,
             pixels=unique_pixels,
-            nside=nside,
             return_comps=return_comps,
         )
 
@@ -267,6 +258,7 @@ class Zodipy:
         lonlat: bool = False,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
+        solar_cut: u.Quantity[u.deg] | None = None,
     ) -> u.Quantity[u.MJy / u.sr]:
         """Return the simulated binned zodiacal emission given angles on the sky.
 
@@ -298,13 +290,16 @@ class Zodipy:
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
+            solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
+                for all the pointing with angular distance between the sun smaller than
+                `solar_cutoff` are masked. Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+        healpix = ahpx.HEALPix(nside=nside, order="ring")
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
-
         unique_angles, counts = np.unique(np.asarray([theta, phi]), return_counts=True, axis=1)
         unique_pixels = hp.ang2pix(nside, *unique_angles, lonlat=lonlat)
         unit_vectors = get_unit_vectors_from_ang(
@@ -313,7 +308,7 @@ class Zodipy:
             phi=unique_angles[1],
             lonlat=lonlat,
         )
-
+        solcar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         return self._compute_emission(
             freq=freq,
             weights=weights,
@@ -322,10 +317,10 @@ class Zodipy:
             obs_pos=obs_pos,
             unit_vectors=unit_vectors,
             indicies=counts,
-            binned=True,
             pixels=unique_pixels,
-            nside=nside,
+            healpix=healpix,
             return_comps=return_comps,
+            solar_cut=solcar_cut,
         )
 
     def get_binned_emission_pix(
@@ -339,6 +334,7 @@ class Zodipy:
         weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
         return_comps: bool = False,
         coord_in: Literal["E", "G", "C"] = "E",
+        solar_cut: u.Quantity[u.deg] | None = None,
     ) -> u.Quantity[u.MJy / u.sr]:
         """Return the simulated binned zodiacal Emission given pixel numbers.
 
@@ -363,11 +359,15 @@ class Zodipy:
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
+            solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
+            for all the pointing with angular distance between the sun smaller than
+            `solar_cutoff` are masked. Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+        healpix = ahpx.HEALPix(nside=nside, order="ring")
         pixels = get_validated_pix(pixels=pixels, nside=nside)
 
         unique_pixels, counts = np.unique(pixels, return_counts=True)
@@ -376,7 +376,7 @@ class Zodipy:
             pixels=unique_pixels,
             nside=nside,
         )
-
+        solcar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         return self._compute_emission(
             freq=freq,
             weights=weights,
@@ -385,10 +385,10 @@ class Zodipy:
             obs_pos=obs_pos,
             unit_vectors=unit_vectors,
             indicies=counts,
-            binned=True,
             pixels=unique_pixels,
-            nside=nside,
+            healpix=healpix,
             return_comps=return_comps,
+            solar_cut=solcar_cut,
         )
 
     def _compute_emission(
@@ -399,11 +399,11 @@ class Zodipy:
         obs_time: Time,
         unit_vectors: npt.NDArray[np.float64],
         indicies: npt.NDArray[np.int64],
-        binned: bool = False,
         obs_pos: u.Quantity[u.AU] | None = None,
         pixels: npt.NDArray[np.int64] | None = None,
-        nside: int | None = None,
+        healpix: ahpx.HEALPix | None = None,
         return_comps: bool = False,
+        solar_cut: u.Quantity[u.rad] | None = None,
     ) -> u.Quantity[u.MJy / u.sr]:
         """Compute the component-wise zodiacal emission."""
         bandpass = validate_and_get_bandpass(
@@ -506,24 +506,26 @@ class Zodipy:
                     * (stop[comp_label] - start[comp_label])
                 )
 
-        emission = np.zeros(
-            (
-                len(self._ipd_model.comps),
-                hp.nside2npix(nside) if binned else indicies.size,
-            )
-        )
-        if binned:
+        # Output is requested to be binned
+        if healpix:
+            emission = np.zeros((len(self._ipd_model.comps), healpix.npix))
             emission[:, pixels] = integrated_comp_emission
-        else:
-            emission = integrated_comp_emission[:, indicies]
+            if solar_cut is not None:
+                x, y, z = observer_position.flatten() * u.AU
+                coord = SkyCoord(
+                    x=x, y=y, z=z, representation_type="cartesian", frame="heliocentricmeanecliptic"
+                )
+                lon, lat = coord.spherical.lon, coord.spherical.lat
+                lon += 180 * u.deg
+                solar_mask = healpix.cone_search_lonlat(lon, lat, solar_cut)
+                if pixels is not None:
+                    emission[:, pixels[solar_mask]] = np.nan
+                else:
+                    emission[:, solar_mask[indicies]] = np.nan
 
-        if self.solar_cut is not None:
-            ang_dist = hp.rotator.angdist(-observer_position.flatten(), unit_vectors)
-            solar_mask = ang_dist < self.solar_cut.value
-            if binned and pixels is not None:
-                emission[:, pixels[solar_mask]] = self.solar_cut_fill_value
-            else:
-                emission[:, solar_mask[indicies]] = self.solar_cut_fill_value
+        else:
+            emission = np.zeros((len(self._ipd_model.comps), indicies.size))
+            emission = integrated_comp_emission[:, indicies]
 
         emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
 
