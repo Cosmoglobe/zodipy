@@ -1,18 +1,15 @@
-from typing import Tuple, Union
-
+import astropy.coordinates as coords
 import astropy.units as u
 import numpy as np
-import numpy.typing as npt
-from astropy.coordinates import HeliocentricMeanEcliptic, get_body
 from astropy.time import Time
 
 from zodipy._constants import DISTANCE_FROM_EARTH_TO_L2
+from zodipy._types import NumpyArray
 
 
-@u.quantity_input
 def get_obs_and_earth_positions(
-    obs: str, obs_time: Time, obs_pos: Union[u.Quantity[u.AU], None]
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    obs_pos: u.Quantity[u.AU] | str, obs_time: Time
+) -> tuple[NumpyArray, NumpyArray]:
     """Return the position of the observer and the Earth (3, `n_pointing`, `n_gauss_quad_degree`).
 
     The lagrange point SEMB-L2 is not included in any of the current available
@@ -21,18 +18,24 @@ def get_obs_and_earth_positions(
     pointing to Earth from the Sun.
     """
     earth_position = _get_earth_position(obs_time)
-    if obs_pos is None:
-        obs_position = _get_observer_position(obs, obs_time, earth_position)
+    if isinstance(obs_pos, str):
+        obs_position = _get_observer_position(obs_pos, obs_time, earth_position)
     else:
-        obs_position = obs_pos.to(u.AU)
+        try:
+            obs_position = obs_pos.to(u.AU)
+        except AttributeError:
+            msg = (
+                "Observer position must be a string or an astropy Quantity with units of distance."
+            )
+            raise TypeError(msg) from AttributeError
 
     return obs_position.reshape(3, 1, 1).value, earth_position.reshape(3, 1, 1).value
 
 
 def _get_earth_position(obs_time: Time) -> u.Quantity[u.AU]:
     """Return the position of the Earth given an ephemeris and observation time."""
-    earth_skycoordinate = get_body("earth", obs_time)
-    earth_skycoordinate = earth_skycoordinate.transform_to(HeliocentricMeanEcliptic)
+    earth_skycoordinate = coords.get_body("earth", obs_time)
+    earth_skycoordinate = earth_skycoordinate.transform_to(coords.HeliocentricMeanEcliptic)
     return earth_skycoordinate.cartesian.xyz.to(u.AU)
 
 
@@ -43,8 +46,8 @@ def _get_observer_position(
     if obs.lower() == "semb-l2":
         return _get_sun_earth_moon_barycenter(earth_pos)
 
-    observer_skycoordinate = get_body(obs, obs_time)
-    observer_skycoordinate = observer_skycoordinate.transform_to(HeliocentricMeanEcliptic)
+    observer_skycoordinate = coords.get_body(obs, obs_time)
+    observer_skycoordinate = observer_skycoordinate.transform_to(coords.HeliocentricMeanEcliptic)
 
     return observer_skycoordinate.cartesian.xyz.to(u.AU)
 

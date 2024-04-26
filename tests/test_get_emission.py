@@ -1,33 +1,55 @@
 from __future__ import annotations
 
+import astropy.coordinates as coords
 import astropy.units as u
 import healpy as hp
 import numpy as np
 import pytest
 from astropy.time import Time, TimeDelta
 from hypothesis import given, settings
-from hypothesis.strategies import DataObject, booleans, data, integers
+from hypothesis.strategies import DataObject, booleans, data
 
 from zodipy.zodipy import Zodipy
 
 from ._strategies import (
     angles,
-    freq,
-    model,
-    nside,
-    obs,
+    freqs,
+    nsides,
+    obs_positions,
     pixels,
     quantities,
-    random_freq,
-    time,
+    random_freqs,
+    sky_coords,
+    times,
     weights,
+    zodipy_models,
 )
 from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 
 DIRBE_START_DAY = Time("1990-01-01")
 
 
-@given(model(), time(), nside(), data())
+@given(zodipy_models(), times(), sky_coords(), data())
+@settings(deadline=None)
+def test_get_emission_skycoord(
+    model: Zodipy,
+    time: Time,
+    coordinates: coords.SkyCoord,
+    data: DataObject,
+) -> None:
+    """Property test for get_emission_skycoord."""
+    observer = data.draw(obs_positions(model, time))
+    frequency = data.draw(freqs(model))
+    emission = model.get_emission_skycoord(
+        coordinates,
+        freq=frequency,
+        obs_time=time,
+        obs_pos=observer,
+    )
+    assert emission.size == 1
+
+
+@given(zodipy_models(), times(), nsides(), data())
 @settings(deadline=None)
 def test_get_emission_pix(
     model: Zodipy,
@@ -36,20 +58,20 @@ def test_get_emission_pix(
     data: DataObject,
 ) -> None:
     """Property test for get_emission_pix."""
-    observer = data.draw(obs(model, time))
-    frequency = data.draw(freq(model))
+    observer = data.draw(obs_positions(model, time))
+    frequency = data.draw(freqs(model))
     pix = data.draw(pixels(nside))
     emission = model.get_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert np.size(emission) == np.size(pix)
 
 
-@given(model(), time(), nside(), data())
+@given(zodipy_models(), times(), nsides(), data())
 @settings(deadline=None)
 def test_get_binned_emission_pix(
     model: Zodipy,
@@ -58,22 +80,22 @@ def test_get_binned_emission_pix(
     data: DataObject,
 ) -> None:
     """Property test for get_binned_emission_pix."""
-    observer = data.draw(obs(model, time))
-    frequency = data.draw(freq(model))
+    observer = data.draw(obs_positions(model, time))
+    frequency = data.draw(freqs(model))
     pix = data.draw(pixels(nside))
     cut_solar = data.draw(booleans())
     emission_binned = model.get_binned_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
         solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-@given(model(), time(), angles(), data())
+@given(zodipy_models(), times(), angles(), data())
 @settings(deadline=None)
 def test_get_emission_ang(
     model: Zodipy,
@@ -84,20 +106,20 @@ def test_get_emission_ang(
     """Property test for get_emission_ang."""
     theta, phi = angles
 
-    observer = data.draw(obs(model, time))
-    frequency = data.draw(freq(model))
+    observer = data.draw(obs_positions(model, time))
+    frequency = data.draw(freqs(model))
 
     emission = model.get_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert emission.size == theta.size == phi.size
 
 
-@given(model(), time(), nside(), angles(), data())
+@given(zodipy_models(), times(), nsides(), angles(), data())
 @settings(deadline=None)
 def test_get_binned_emission_ang(
     model: Zodipy,
@@ -109,21 +131,21 @@ def test_get_binned_emission_ang(
     """Property test for get_binned_emission_pix."""
     theta, phi = angles
 
-    observer = data.draw(obs(model, time))
-    frequency = data.draw(freq(model))
+    observer = data.draw(obs_positions(model, time))
+    frequency = data.draw(freqs(model))
 
     emission_binned = model.get_binned_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-@given(model(extrapolate=False), time(), angles(lonlat=True), nside(), data())
+@given(zodipy_models(extrapolate=False), times(), angles(lonlat=True), nsides(), data())
 @settings(deadline=None)
 def test_invalid_freq(
     model: Zodipy,
@@ -134,47 +156,47 @@ def test_invalid_freq(
 ) -> None:
     """Property test checking for unsupported spectral range."""
     theta, phi = angles
-    observer = data.draw(obs(model, time))
+    observer = data.draw(obs_positions(model, time))
     pix = data.draw(pixels(nside))
 
-    freq = data.draw(random_freq(unit=model._ipd_model.spectrum.unit))
+    freq = data.draw(random_freqs(unit=model._ipd_model.spectrum.unit))
     if not (model._ipd_model.spectrum[0] <= freq <= model._ipd_model.spectrum[-1]):
         with pytest.raises(ValueError):
             model.get_emission_pix(
-                freq,
-                pixels=pix,
+                pix,
+                freq=freq,
                 nside=nside,
                 obs_time=time,
-                obs=observer,
+                obs_pos=observer,
             )
 
         with pytest.raises(ValueError):
             model.get_emission_ang(
-                freq,
-                theta=theta,
-                phi=phi,
+                theta,
+                phi,
+                freq=freq,
                 obs_time=time,
-                obs=observer,
+                obs_pos=observer,
                 lonlat=True,
             )
 
         with pytest.raises(ValueError):
             model.get_binned_emission_pix(
-                freq,
-                pixels=pix,
+                pix,
                 nside=nside,
+                freq=freq,
                 obs_time=time,
-                obs=observer,
+                obs_pos=observer,
             )
 
         with pytest.raises(ValueError):
             model.get_binned_emission_ang(
-                freq,
-                theta=theta,
-                phi=phi,
+                theta,
+                phi,
                 nside=nside,
+                freq=freq,
                 obs_time=time,
-                obs=observer,
+                obs_pos=observer,
                 lonlat=True,
             )
 
@@ -191,47 +213,14 @@ def test_compare_to_dirbe_idl() -> None:
             time = DIRBE_START_DAY + TimeDelta(day - 1, format="jd")
 
             emission = model.get_emission_ang(
-                frequency * u.micron,
-                theta=lon * u.deg,
-                phi=lat * u.deg,
+                lon * u.deg,
+                lat * u.deg,
+                freq=frequency * u.micron,
                 lonlat=True,
-                obs="earth",
+                obs_pos="earth",
                 obs_time=time,
             )
             assert emission.value == pytest.approx(tabulated_emission[idx], rel=0.01)
-
-
-@given(model(), time(), nside(), integers(min_value=1, max_value=100), data())
-@settings(max_examples=10, deadline=None)
-def test_invalid_pixel(
-    model: Zodipy,
-    time: Time,
-    nside: int,
-    random_integer: int,
-    data: DataObject,
-) -> None:
-    """Tests that an error is raised when an invalid pixel is passed to get_emission_pix."""
-    frequency = data.draw(freq(model))
-    observer = data.draw(obs(model, time))
-    npix = hp.nside2npix(nside)
-
-    with pytest.raises(ValueError):
-        model.get_emission_pix(
-            frequency,
-            pixels=npix + random_integer,
-            nside=nside,
-            obs_time=time,
-            obs=observer,
-        )
-
-    with pytest.raises(ValueError):
-        model.get_emission_pix(
-            frequency,
-            pixels=-random_integer,
-            nside=nside,
-            obs_time=time,
-            obs=observer,
-        )
 
 
 def test_multiprocessing() -> None:
@@ -252,69 +241,69 @@ def test_multiprocessing() -> None:
     phi = np.random.uniform(0, 360, size=1000) * u.deg
 
     emission_pix = model.get_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     emission_pix_parallel = model_parallel.get_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert np.allclose(emission_pix, emission_pix_parallel)
 
     emission_binned_pix = model.get_binned_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     emission_binned_pix_parallel = model_parallel.get_binned_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert np.allclose(emission_binned_pix, emission_binned_pix_parallel)
 
     emission_ang = model.get_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     emission_ang_parallel = model_parallel.get_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert np.allclose(emission_ang, emission_ang_parallel)
 
     emission_binned_ang = model.get_binned_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
+        freq=frequency,
         nside=nside,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
 
     emission_binned_ang_parallel = model_parallel.get_binned_emission_ang(
-        frequency,
-        theta=theta,
-        phi=phi,
+        theta,
+        phi,
+        freq=frequency,
         nside=nside,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
 
     assert np.allclose(emission_binned_ang.value, emission_binned_ang_parallel.value)
@@ -332,28 +321,28 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
     pix = np.random.randint(0, hp.nside2npix(nside), size=1000)
 
     emission_pix = model.get_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     emission_pix_parallel = model_parallel.get_emission_pix(
-        frequency,
-        pixels=pix,
+        pix,
         nside=nside,
+        freq=frequency,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert np.allclose(emission_pix, emission_pix_parallel)
 
 
 @given(
-    model(extrapolate=True),
-    time(),
-    nside(),
+    zodipy_models(extrapolate=True),
+    times(),
+    nsides(),
     angles(),
-    random_freq(bandpass=True),
+    random_freqs(bandpass=True),
     data(),
 )
 @settings(deadline=None)
@@ -367,26 +356,26 @@ def test_bandpass_integration(
 ) -> None:
     """Property test for bandpass integrations."""
     theta, phi = angles
-    observer = data.draw(obs(model, time))
+    observer = data.draw(obs_positions(model, time))
     bp_weights = data.draw(weights(freqs))
     emission_binned = model.get_binned_emission_ang(
-        freqs,
+        theta,
+        phi,
+        freq=freqs,
         weights=bp_weights,
-        theta=theta,
-        phi=phi,
         nside=nside,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
 @given(
-    model(extrapolate=True),
-    time(),
-    nside(),
+    zodipy_models(extrapolate=True),
+    times(),
+    nsides(),
     angles(),
-    random_freq(bandpass=True),
+    random_freqs(bandpass=True),
     data(),
 )
 @settings(deadline=None)
@@ -400,17 +389,17 @@ def test_weights(
 ) -> None:
     """Property test for bandpass weights."""
     theta, phi = angles
-    observer = data.draw(obs(model, time))
+    observer = data.draw(obs_positions(model, time))
     bp_weights = data.draw(weights(freqs))
 
     model.get_binned_emission_ang(
-        freqs,
+        theta,
+        phi,
         weights=bp_weights,
-        theta=theta,
-        phi=phi,
+        freq=freqs,
         nside=nside,
         obs_time=time,
-        obs=observer,
+        obs_pos=observer,
     )
 
 
@@ -427,12 +416,12 @@ def test_custom_weights() -> None:
     weights /= np.trapz(weights, freqs.value)
 
     model.get_emission_pix(
+        pix,
         freq=freqs,
         weights=weights,
-        pixels=pix,
         nside=nside,
         obs_time=time,
-        obs="earth",
+        obs_pos="earth",
     )
 
 
@@ -444,16 +433,16 @@ def test_custom_obs_pos() -> None:
     pix = np.arange(hp.nside2npix(nside))
 
     model.get_emission_pix(
+        pix,
         freq=234 * u.micron,
-        pixels=pix,
         nside=nside,
         obs_time=time,
         obs_pos=[0.1, 0.2, 1] * u.AU,
     )
 
     model.get_emission_pix(
+        pix,
         freq=234 * u.micron,
-        pixels=pix,
         nside=nside,
         obs_time=time,
         obs_pos=[2, 0.1, 4] * u.AU,
@@ -461,8 +450,8 @@ def test_custom_obs_pos() -> None:
 
     with pytest.raises(TypeError):
         model.get_emission_pix(
+            pix,
             freq=234 * u.micron,
-            pixels=pix,
             nside=nside,
             obs_time=time,
             obs_pos=[2, 0.1, 4],
@@ -470,8 +459,8 @@ def test_custom_obs_pos() -> None:
 
     with pytest.raises(u.UnitsError):
         model.get_emission_pix(
+            pix,
             freq=234 * u.micron,
-            pixels=pix,
             nside=nside,
             obs_time=time,
             obs_pos=[2, 0.1, 4] * u.s,

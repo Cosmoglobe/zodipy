@@ -1,12 +1,13 @@
 from typing import Sequence, Tuple, Union
 
 import astropy.units as u
-import healpy as hp
+
+# import healpy as hp
 import numpy as np
 import numpy.typing as npt
 
 from ._ipd_model import InterplanetaryDustModel
-from ._types import FrequencyOrWavelength, Pixels, SkyAngles
+from ._types import FrequencyOrWavelength, SkyAngles
 
 
 def get_validated_freq(
@@ -90,13 +91,13 @@ def get_validated_ang(
     return theta, phi
 
 
-def get_validated_pix(pixels: Pixels, nside: int) -> Pixels:
-    """Validate user inputted pixels."""
-    if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
-        msg = "invalid pixel number given nside"
-        raise ValueError(msg)
+# def get_validated_pix(pixels: Pixels, nside: int) -> Pixels:
+#     """Validate user inputted pixels."""
+#     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
+#         msg = "invalid pixel number given nside"
+#         raise ValueError(msg)
 
-    if np.ndim(pixels) == 0:
-        return np.expand_dims(pixels, axis=0)
+#     if np.ndim(pixels) == 0:
+#         return np.expand_dims(pixels, axis=0)
 
-    return pixels
+#     return pixels

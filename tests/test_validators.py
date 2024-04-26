@@ -9,7 +9,7 @@ from zodipy._types import FrequencyOrWavelength
 from zodipy._validators import get_validated_and_normalized_weights, get_validated_freq
 from zodipy.zodipy import Zodipy
 
-from ._strategies import model, random_freq, weights
+from ._strategies import random_freqs, weights, zodipy_models
 
 BANDPASS_FREQUENCIES = np.linspace(95, 105, 11) * u.GHz
 BANDPASS_WAVELENGTHS = np.linspace(20, 25, 11) * u.micron
@@ -17,7 +17,7 @@ BANDPASS_WEIGHTS = np.array([2, 3, 5, 9, 11, 12, 11, 9, 5, 3, 2])
 OBS_TIME = Time("2021-01-01T00:00:00")
 
 
-@given(model(extrapolate=False))
+@given(zodipy_models(extrapolate=False))
 def test_validate_frequencies(model: Zodipy) -> None:
     """Tests that the frequencies are validated."""
     with pytest.raises(TypeError):
@@ -46,7 +46,7 @@ def test_validate_frequencies(model: Zodipy) -> None:
         )
 
 
-@given(random_freq(bandpass=True), data())
+@given(random_freqs(bandpass=True), data())
 def test_validate_weights(freq: FrequencyOrWavelength, data: DataObject) -> None:
     """Tests that the bandpass weights are validated."""
     bp_weights = data.draw(weights(freq))
@@ -115,22 +115,22 @@ def test_extrapolate_raises_error() -> None:
     """Tests that an error is correctly raised when extrapolation is not allowed."""
     with pytest.raises(ValueError):
         model = Zodipy("dirbe")
-        model.get_emission_pix(400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+        model.get_emission_pix([1, 4, 5], freq=400 * u.micron, nside=32, obs_time=OBS_TIME)
 
     model = Zodipy("dirbe", extrapolate=True)
-    model.get_emission_pix(400 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+    model.get_emission_pix([1, 4, 5], freq=400 * u.micron, nside=32, obs_time=OBS_TIME)
 
 
 def test_interp_kind() -> None:
     """Tests that the interpolation kind can be passed in."""
     model = Zodipy("dirbe", interp_kind="linear")
-    linear = model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+    linear = model.get_emission_pix([1, 4, 5], freq=27 * u.micron, nside=32, obs_time=OBS_TIME)
 
     model = Zodipy("dirbe", interp_kind="quadratic")
-    quadratic = model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+    quadratic = model.get_emission_pix([1, 4, 5], freq=27 * u.micron, nside=32, obs_time=OBS_TIME)
 
     assert not np.allclose(linear, quadratic)
 
     with pytest.raises(NotImplementedError):
         model = Zodipy("dirbe", interp_kind="sdfs")
-        model.get_emission_pix(27 * u.micron, pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+        model.get_emission_pix(pixels=[1, 4, 5], freq=27 * u.micron, nside=32, obs_time=OBS_TIME)

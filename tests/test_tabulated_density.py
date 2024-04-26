@@ -7,11 +7,11 @@ from hypothesis.strategies import floats, integers
 from zodipy import model_registry, tabulate_density
 from zodipy.zodipy import Zodipy
 
-from ._strategies import model
+from ._strategies import zodipy_models
 
 
 @given(
-    model(),
+    zodipy_models(),
     integers(min_value=10, max_value=200),
     floats(min_value=2, max_value=10),
     floats(min_value=2, max_value=10),

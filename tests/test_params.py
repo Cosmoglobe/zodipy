@@ -4,16 +4,16 @@ from hypothesis import given
 
 from zodipy.zodipy import Zodipy
 
-from ._strategies import model
+from ._strategies import zodipy_models
 
 
-@given(model())
+@given(zodipy_models())
 def test_get_parameters(model: Zodipy) -> None:
     """Tests that the parameters are returned as a dictionary."""
     assert isinstance(model.get_parameters(), dict)
 
 
-@given(model())
+@given(zodipy_models())
 def test_update_model(model: Zodipy) -> None:
     """Tests that the model can be updated."""
     parameters = model.get_parameters()
