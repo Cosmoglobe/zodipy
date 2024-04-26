@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from astropy.time import Time, TimeDelta
 from hypothesis import given, settings
-from hypothesis.strategies import DataObject, data, integers
+from hypothesis.strategies import DataObject, booleans, data, integers
 
 from zodipy.zodipy import Zodipy
 
@@ -17,6 +17,7 @@ from ._strategies import (
     nside,
     obs,
     pixels,
+    quantities,
     random_freq,
     time,
     weights,
@@ -60,13 +61,14 @@ def test_get_binned_emission_pix(
     observer = data.draw(obs(model, time))
     frequency = data.draw(freq(model))
     pix = data.draw(pixels(nside))
-
+    cut_solar = data.draw(booleans())
     emission_binned = model.get_binned_emission_pix(
         frequency,
         pixels=pix,
         nside=nside,
         obs_time=time,
         obs=observer,
+        solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 

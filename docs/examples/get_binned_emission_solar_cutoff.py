@@ -6,7 +6,7 @@ from astropy.time import Time
 
 from zodipy import Zodipy
 
-model = Zodipy("dirbe", solar_cut=60 * u.deg)
+model = Zodipy("dirbe")
 nside = 256
 
 binned_emission = model.get_binned_emission_pix(
@@ -15,6 +15,7 @@ binned_emission = model.get_binned_emission_pix(
     nside=nside,
     obs_time=Time("2020-01-01"),
     obs="earth",
+    solar_cut=60 * u.deg,
 )
 
 hp.mollview(

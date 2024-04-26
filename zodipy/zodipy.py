@@ -5,11 +5,11 @@ import platform
 from functools import partial
 from typing import TYPE_CHECKING, Callable, Literal, Sequence
 
+import astropy.coordinates as coords
 import astropy.units as u
 import astropy_healpix as ahpx
 import healpy as hp
 import numpy as np
-from astropy.coordinates import SkyCoord, solar_system_ephemeris
 from scipy.interpolate import interp1d
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
@@ -90,7 +90,7 @@ class Zodipy:
     @property
     def supported_observers(self) -> list[str]:
         """Return a list of available observers given an ephemeris."""
-        return [*list(solar_system_ephemeris.bodies), "semb-l2"]
+        return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> ParameterDict:
         """Return a dictionary containing the interplanetary dust model parameters."""
@@ -308,7 +308,6 @@ class Zodipy:
             phi=unique_angles[1],
             lonlat=lonlat,
         )
-        solcar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         return self._compute_emission(
             freq=freq,
             weights=weights,
@@ -320,7 +319,7 @@ class Zodipy:
             pixels=unique_pixels,
             healpix=healpix,
             return_comps=return_comps,
-            solar_cut=solcar_cut,
+            solar_cut=solar_cut,
         )
 
     def get_binned_emission_pix(
@@ -376,7 +375,6 @@ class Zodipy:
             pixels=unique_pixels,
             nside=nside,
         )
-        solcar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         return self._compute_emission(
             freq=freq,
             weights=weights,
@@ -388,7 +386,7 @@ class Zodipy:
             pixels=unique_pixels,
             healpix=healpix,
             return_comps=return_comps,
-            solar_cut=solcar_cut,
+            solar_cut=solar_cut,
         )
 
     def _compute_emission(
@@ -511,13 +509,22 @@ class Zodipy:
             emission = np.zeros((len(self._ipd_model.comps), healpix.npix))
             emission[:, pixels] = integrated_comp_emission
             if solar_cut is not None:
-                x, y, z = observer_position.flatten() * u.AU
-                coord = SkyCoord(
-                    x=x, y=y, z=z, representation_type="cartesian", frame="heliocentricmeanecliptic"
+                observer_coords = coords.SkyCoord(
+                    *(observer_position.flatten() * u.AU),
+                    representation_type="cartesian",
+                    frame=coords.HeliocentricTrueEcliptic,
                 )
-                lon, lat = coord.spherical.lon, coord.spherical.lat
-                lon += 180 * u.deg
-                solar_mask = healpix.cone_search_lonlat(lon, lat, solar_cut)
+                sun_coords = observer_coords.copy()
+                sun_lon = sun_coords.spherical.lon
+                sun_lon += 180 * u.deg
+
+                pointing_angles = coords.SkyCoord(
+                    *unit_vectors,
+                    representation_type="cartesian",
+                    frame=coords.HeliocentricTrueEcliptic,
+                )
+                angular_distance = pointing_angles.separation(sun_coords)
+                solar_mask = angular_distance < solar_cut
                 if pixels is not None:
                     emission[:, pixels[solar_mask]] = np.nan
                 else:
