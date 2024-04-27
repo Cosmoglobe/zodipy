@@ -1,3 +1,5 @@
+from multiprocessing import cpu_count
+
 import astropy.units as u
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -15,16 +17,15 @@ weights = np.array([2, 3, 5, 9, 11, 11.5, 11, 9, 5, 3, 2])
 plt.plot(freqs, weights)
 plt.xlabel("Frequency [GHz]")
 plt.ylabel("Weights")
-plt.savefig("../img/bandpass.png", dpi=300)
 
-model = Zodipy(model="planck18")
+model = Zodipy(model="planck18", n_proc=cpu_count())
 
 emission_central_freq = model.get_binned_emission_pix(
     freq=center_freq,
     pixels=np.arange(hp.nside2npix(nside)),
     nside=nside,
     obs_time=Time("2022-03-10"),
-    obs="SEMB-L2",
+    obs_pos="SEMB-L2",
 )
 
 emission_bandpass_integrated = model.get_binned_emission_pix(
@@ -33,7 +34,7 @@ emission_bandpass_integrated = model.get_binned_emission_pix(
     pixels=np.arange(hp.nside2npix(nside)),
     nside=nside,
     obs_time=Time("2022-03-10"),
-    obs="SEMB-L2",
+    obs_pos="SEMB-L2",
 )
 
 hp.mollview(
@@ -43,7 +44,6 @@ hp.mollview(
     cmap="afmhot",
     norm="log",
 )
-plt.savefig("../img/center_freq.png", dpi=300)
 
 hp.mollview(
     emission_bandpass_integrated,
@@ -52,5 +52,4 @@ hp.mollview(
     cmap="afmhot",
     norm="log",
 )
-plt.savefig("../img/bandpass_integrated.png", dpi=300)
 plt.show()

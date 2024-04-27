@@ -46,7 +46,7 @@ def test_get_emission_skycoord(
         obs_time=time,
         obs_pos=observer,
     )
-    assert emission.size == 1
+    assert emission.size == coordinates.size
 
 
 @given(zodipy_models(), times(), nsides(), data())

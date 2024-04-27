@@ -3,31 +3,28 @@ from __future__ import annotations
 import functools
 import multiprocessing
 import platform
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING, Callable
 
-import astropy.coordinates as coords
-import astropy.units as u
 import astropy_healpix as hp
 import numpy as np
+from astropy import coordinates as coords
+from astropy import units
 from scipy import interpolate
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
+from zodipy._coords import get_earth_skycoord, get_obs_skycoord
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
-from zodipy._sky_coords import get_obs_and_earth_positions
 from zodipy._validators import get_validated_ang
 from zodipy.model_registry import model_registry
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from astropy.time import Time
-
-    from zodipy._types import FrequencyOrWavelength, ParameterDict, Pixels, SkyAngles
-
+    from astropy import time
 
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
@@ -90,11 +87,11 @@ class Zodipy:
         """Return a list of available observers given an ephemeris."""
         return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
 
-    def get_parameters(self) -> ParameterDict:
+    def get_parameters(self) -> dict:
         """Return a dictionary containing the interplanetary dust model parameters."""
         return self._ipd_model.to_dict()
 
-    def update_parameters(self, parameters: ParameterDict) -> None:
+    def update_parameters(self, parameters: dict) -> None:
         """Update the interplanetary dust model parameters.
 
         Args:
@@ -120,12 +117,12 @@ class Zodipy:
         self,
         coord: coords.SkyCoord,
         *,
-        obs_time: Time,
-        freq: FrequencyOrWavelength,
-        obs_pos: u.Quantity[u.AU] | str = "earth",
-        weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
+        obs_time: time.Time,
+        freq: units.Quantity,
+        obs_pos: units.Quantity | str = "earth",
+        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
-    ) -> u.Quantity[u.MJy / u.sr]:
+    ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal light for observations in an Astropy `SkyCoord` object.
 
         The pointing, for which to compute the emission, is specified in form of angles on
@@ -136,13 +133,13 @@ class Zodipy:
                 object must have a frame attribute representing the coordinate frame of the
                 input pointing, for example `astropy.coordinates.Galactic`. The frame must
                 be convertible to `BarycentricMeanEcliptic`.
-            obs_time: Time of observation.
+            obs_time: Time of observation. This should be a single observational time.
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                Defaults to 'earth'.
+                This should correspond to a single position. Defaults to 'earth'.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -156,7 +153,7 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
-        coord = coords.SkyCoord(unique_lon * u.deg, unique_lat * u.deg, frame=coord.frame)
+        coord = coords.SkyCoord(unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame)
 
         return self._compute_emission(
             freq=freq,
@@ -170,17 +167,17 @@ class Zodipy:
 
     def get_emission_ang(
         self,
-        theta: SkyAngles,
-        phi: SkyAngles,
+        theta: units.Quantity,
+        phi: units.Quantity,
         *,
-        freq: FrequencyOrWavelength,
-        obs_time: Time,
-        obs_pos: u.Quantity[u.AU] | str = "earth",
+        freq: units.Quantity,
+        obs_time: time.Time,
+        obs_pos: units.Quantity | str = "earth",
         frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
-        weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
+        weights: npt.ArrayLike | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
-    ) -> u.Quantity[u.MJy / u.sr]:
+    ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
@@ -188,18 +185,18 @@ class Zodipy:
 
         Args:
             theta: Angular co-latitude coordinate of a point, or a sequence of points, on
-                the celestial sphere. Must be in the range [0, π] rad. Units must be either
-                radians or degrees.
+                the celestial sphere. Must be in the range [0, π] rad. Units must be compatible
+                with degrees.
             phi: Angular longitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, 2π] rad. Units must be either
-                radians or degrees.
+                celestial sphere. Must be in the range [0, 2π] rad. Units must be compatible
+                with degrees.
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
-            obs_time: Time of observation.
+            obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                Defaults to 'earth'.
+                This should correspond to a single position. Defaults to 'earth'.
             frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
                 Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
                 alternatives are `Galactic` and `ICRS`.
@@ -214,8 +211,6 @@ class Zodipy:
 
         """
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
-        if not lonlat:
-            theta, phi = phi, (np.pi / 2) * u.rad - theta
 
         (theta, phi), indicies = np.unique(np.stack([theta, phi]), return_inverse=True, axis=1)
         coordinates = coords.SkyCoord(
@@ -236,16 +231,16 @@ class Zodipy:
 
     def get_emission_pix(
         self,
-        pixels: Pixels,
+        pixels: npt.ArrayLike,
         *,
         nside: int,
-        freq: FrequencyOrWavelength,
-        obs_time: Time,
-        obs_pos: u.Quantity[u.AU] | str = "earth",
+        freq: units.Quantity,
+        obs_time: time.Time,
+        obs_pos: units.Quantity | str = "earth",
         frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
-        weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
+        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
-    ) -> u.Quantity[u.MJy / u.sr]:
+    ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
@@ -257,10 +252,10 @@ class Zodipy:
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
-            obs_time: Time of observation.
+            obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                Defaults to 'earth'.
+                This should correspond to a single position. Defaults to 'earth'.
             frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
                 Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
                 alternatives are `Galactic` and `ICRS`.
@@ -273,7 +268,6 @@ class Zodipy:
 
         """
         healpix = hp.HEALPix(nside=nside, order="ring", frame=frame)
-
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
 
@@ -289,19 +283,19 @@ class Zodipy:
 
     def get_binned_emission_ang(
         self,
-        theta: SkyAngles,
-        phi: SkyAngles,
+        theta: units.Quantity,
+        phi: units.Quantity,
         *,
         nside: int,
-        freq: FrequencyOrWavelength,
-        obs_time: Time,
-        obs_pos: u.Quantity[u.AU] | str = "earth",
+        freq: units.Quantity,
+        obs_time: time.Time,
+        obs_pos: units.Quantity[units.AU] | str = "earth",
         frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
-        weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
+        weights: npt.ArrayLike | None = None,
         lonlat: bool = False,
         return_comps: bool = False,
-        solar_cut: u.Quantity[u.deg] | None = None,
-    ) -> u.Quantity[u.MJy / u.sr]:
+        solar_cut: units.Quantity | None = None,
+    ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated binned zodiacal emission given angles on the sky.
 
         The pointing, for which to compute the emission, is specified in form of angles on
@@ -319,10 +313,10 @@ class Zodipy:
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
-            obs_time: Time of observation.
+            obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                Defaults to 'earth'.
+                This should correspond to a single position. Defaults to 'earth'.
             frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
                 Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
                 alternatives are `Galactic` and `ICRS`.
@@ -331,19 +325,14 @@ class Zodipy:
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
-                for all the pointing with angular distance between the sun smaller than
-                `solar_cutoff` are masked. Defaults to `None`.
+            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
+                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
-
-        if not lonlat:
-            theta, phi = phi, (np.pi / 2) * u.rad - theta
-
         healpix = hp.HEALPix(nside, order="ring", frame=frame)
         (theta, phi), counts = np.unique(np.vstack([theta, phi]), return_counts=True, axis=1)
         coordinates = coords.SkyCoord(
@@ -366,17 +355,17 @@ class Zodipy:
 
     def get_binned_emission_pix(
         self,
-        pixels: Pixels,
+        pixels: npt.ArrayLike,
         *,
         nside: int,
-        freq: FrequencyOrWavelength,
-        obs_time: Time,
-        obs_pos: u.Quantity[u.AU] | str = "earth",
-        frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
-        weights: Sequence[float] | npt.NDArray[np.floating] | None = None,
+        freq: units.Quantity,
+        obs_time: time.Time,
+        obs_pos: units.Quantity | str = "earth",
+        frame: type[coords.BaseCoordinateFrame] | str = coords.BarycentricMeanEcliptic,
+        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
-        solar_cut: u.Quantity[u.deg] | None = None,
-    ) -> u.Quantity[u.MJy / u.sr]:
+        solar_cut: units.Quantity | None = None,
+    ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated binned zodiacal Emission given pixel numbers.
 
         The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
@@ -389,19 +378,18 @@ class Zodipy:
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
-            obs_time: Time of observation.
+            obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                Defaults to 'earth'.
+                This should correspond to a single position. Defaults to 'earth'.
             frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
                 Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
                 alternatives are `Galactic` and `ICRS`.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
-            solar_cut (u.Quantity[u.deg]): Cutoff angle from the sun in degrees. The emission
-                for all the pointing with angular distance between the sun smaller than
-                `solar_cutoff` are masked. Defaults to `None`.
+            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
+                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
@@ -425,17 +413,17 @@ class Zodipy:
 
     def _compute_emission(
         self,
-        freq: FrequencyOrWavelength,
-        weights: Sequence[float] | npt.NDArray[np.floating] | None,
-        obs_time: Time,
-        obs_pos: u.Quantity[u.AU] | str,
+        freq: units.Quantity,
+        weights: npt.ArrayLike | None,
+        obs_time: time.Time,
+        obs_pos: units.Quantity | str,
         coordinates: coords.SkyCoord,
-        indicies: npt.NDArray[np.int64],
+        indicies: npt.NDArray,
         healpix: hp.HEALPix | None = None,
         return_comps: bool = False,
-        solar_cut: u.Quantity[u.rad] | None = None,
-    ) -> u.Quantity[u.MJy / u.sr]:
-        """Compute the component-wise zodiacal emission."""
+        solar_cut: units.Quantity | None = None,
+    ) -> units.Quantity[units.MJy / units.sr]:
+        """Compute the zodiacal light for a given configuration."""
         bandpass = validate_and_get_bandpass(
             freq=freq,
             weights=weights,
@@ -449,7 +437,8 @@ class Zodipy:
             bandpass, self._ipd_model, self._interpolator
         )
 
-        observer_position, earth_position = get_obs_and_earth_positions(obs_pos, obs_time)
+        earth_skycoord = get_earth_skycoord(obs_time)
+        obs_skycoord = get_obs_skycoord(obs_pos, obs_time, earth_skycoord)
 
         # Rotate to ecliptic coordinates to evaluate zodiacal light model
         coordinates = coordinates.transform_to(coords.BarycentricMeanEcliptic)
@@ -460,25 +449,28 @@ class Zodipy:
         start, stop = get_line_of_sight_start_and_stop_distances(
             components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
-            obs_pos=observer_position,
+            obs_pos=obs_skycoord.cartesian.xyz.value,
         )
 
         density_partials = construct_density_partials_comps(
             comps=self._ipd_model.comps,
-            dynamic_params={"X_earth": earth_position},
+            dynamic_params={
+                "X_earth": earth_skycoord.cartesian.xyz.value[:, np.newaxis, np.newaxis]
+            },
         )
 
-        # Make table of pre-computed bandpass integrated blackbody emission.
         bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
 
         common_integrand = functools.partial(
             EMISSION_MAPPING[type(self._ipd_model)],
-            X_obs=observer_position,
+            X_obs=obs_skycoord.cartesian.xyz.value[:, np.newaxis, np.newaxis],
             bp_interpolation_table=bandpass_interpolatation_table,
             **source_parameters["common"],
         )
 
-        if self.n_proc > 1:
+        # Parallelize the line-of-sight integrals if more than one processor is used and the
+        # number of unique observations is greater than the number of processors.
+        if self.n_proc > 1 and unit_vectors.shape[-1] > self.n_proc:
             unit_vector_chunks = np.array_split(unit_vectors, self.n_proc, axis=-1)
             integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
@@ -540,25 +532,16 @@ class Zodipy:
 
         # Output is requested to be binned
         if healpix:
-            pixels = healpix.skycoord_to_healpix(coordinates)
             emission = np.zeros((len(self._ipd_model.comps), healpix.npix))
+            pixels = healpix.skycoord_to_healpix(coordinates)
             emission[:, pixels] = integrated_comp_emission
             if solar_cut is not None:
-                observer_coords = coords.SkyCoord(
-                    *(observer_position.flatten() * u.AU),
-                    representation_type="cartesian",
+                sun_skycoord = coords.SkyCoord(
+                    obs_skycoord.spherical.lon + 180 * units.deg,
+                    obs_skycoord.spherical.lat,
                     frame=coords.BarycentricMeanEcliptic,
                 )
-                sun_coords = observer_coords.copy()
-                sun_lon = sun_coords.spherical.lon
-                sun_lon += 180 * u.deg
-
-                pointing_angles = coords.SkyCoord(
-                    *unit_vectors,
-                    representation_type="cartesian",
-                    frame=coords.BarycentricMeanEcliptic,
-                )
-                angular_distance = pointing_angles.separation(sun_coords)
+                angular_distance = coordinates.separation(sun_skycoord)
                 solar_mask = angular_distance < solar_cut
                 emission[:, pixels[solar_mask]] = np.nan
 
@@ -566,7 +549,7 @@ class Zodipy:
             emission = np.zeros((len(self._ipd_model.comps), indicies.size))
             emission = integrated_comp_emission[:, indicies]
 
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(u.MJy / u.sr)
+        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 

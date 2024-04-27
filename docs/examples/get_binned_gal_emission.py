@@ -1,3 +1,5 @@
+from multiprocessing import cpu_count
+
 import astropy.units as u
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -6,16 +8,16 @@ from astropy.time import Time
 
 from zodipy import Zodipy
 
-model = Zodipy("planck18")
+model = Zodipy("planck18", n_proc=cpu_count())
 nside = 256
 
 binned_emission = model.get_binned_emission_pix(
-    857 * u.GHz,
-    pixels=np.arange(hp.nside2npix(nside)),
+    np.arange(hp.nside2npix(nside)),
+    freq=857 * u.GHz,
     nside=nside,
     obs_time=Time("2022-02-20"),
-    obs="earth",
-    coord_in="G",  # Coordinates of the input pointing
+    obs_pos="earth",
+    frame="galactic",  # Coordinates of the input pointing
 )
 
 hp.mollview(
@@ -26,5 +28,4 @@ hp.mollview(
     min=0,
     max=1,
 )
-plt.savefig("../img/binned_gal.png", dpi=300)
 plt.show()

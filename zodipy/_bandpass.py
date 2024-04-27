@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import astropy.units as u
 import numpy as np
@@ -44,7 +44,7 @@ class Bandpass:
 
 def validate_and_get_bandpass(
     freq: FrequencyOrWavelength,
-    weights: Sequence[float] | npt.NDArray[np.floating] | None,
+    weights: npt.ArrayLike | None,
     model: InterplanetaryDustModel,
     extrapolate: bool,
 ) -> Bandpass:

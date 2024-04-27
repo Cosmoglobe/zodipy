@@ -7,9 +7,10 @@ from typing import Any, Callable, Sequence
 
 import astropy.coordinates as coords
 import astropy.units as u
-import healpy as hp
+import astropy_healpix as hp
 import numpy as np
 import numpy.typing as npt
+from astropy import time
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import (
     DrawFn,
@@ -65,8 +66,8 @@ def quantities(
 
 
 @composite
-def times(draw: DrawFn) -> times.Time:
-    return draw(datetimes(min_value=MIN_DATE, max_value=MAX_DATE).map(times.Time))
+def times(draw: DrawFn) -> time.Time:
+    return draw(datetimes(min_value=MIN_DATE, max_value=MAX_DATE).map(time.Time))
 
 
 @composite
@@ -76,7 +77,18 @@ def nsides(draw: Callable[[SearchStrategy[int]], int]) -> int:
 
 @composite
 def frames(draw: DrawFn) -> type[coords.BaseCoordinateFrame]:
-    return draw(sampled_from([coords.ICRS, coords.Galactic, coords.HeliocentricMeanEcliptic]))
+    return draw(
+        sampled_from(
+            [
+                coords.BarycentricTrueEcliptic,
+                coords.ICRS,
+                coords.Galactic,
+                "galactic",
+                "barycentrictrueecliptic",
+                "icrs",
+            ]
+        )
+    )
 
 
 @composite
@@ -100,10 +112,10 @@ def sky_coords(draw: DrawFn) -> coords.SkyCoord:
 
 @composite
 def pixels(draw: DrawFn, nside: int) -> int | list[int] | npt.NDArray[np.integer]:
-    npix = hp.nside2npix(nside)
-    pixel_strategy = integers(min_value=0, max_value=npix - 1)
+    healpix = hp.HEALPix(nside=nside)
+    pixel_strategy = integers(min_value=0, max_value=healpix.npix - 1)
 
-    shape = draw(integers(min_value=1, max_value=npix - 1))
+    shape = draw(integers(min_value=1, max_value=healpix.npix - 1))
 
     list_stategy = lists(pixel_strategy, min_size=1)
     array_strategy = arrays(dtype=int, shape=shape, elements=pixel_strategy)
@@ -189,8 +201,8 @@ def weights(
 
 
 @composite
-def obs_positions(draw: DrawFn, model: zodipy.Zodipy, obs_time: times.Time) -> str:
-    def get_obs_dist(obs: str, obs_time: times.Time) -> u.Quantity[u.AU]:
+def obs_positions(draw: DrawFn, model: zodipy.Zodipy, obs_time: time.Time) -> str:
+    def get_obs_dist(obs: str, obs_time: time.Time) -> u.Quantity[u.AU]:
         if obs == "semb-l2":
             obs_pos = (
                 coords.get_body("earth", obs_time)

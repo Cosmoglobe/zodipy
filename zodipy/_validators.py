@@ -1,8 +1,6 @@
-from typing import Sequence, Tuple, Union
+from typing import Tuple
 
 import astropy.units as u
-
-# import healpy as hp
 import numpy as np
 import numpy.typing as npt
 
@@ -49,7 +47,7 @@ def get_validated_freq(
 
 
 def get_validated_and_normalized_weights(
-    weights: Union[Sequence[float], npt.NDArray[np.floating], None],
+    weights: npt.ArrayLike | None,
     freq: FrequencyOrWavelength,
 ) -> npt.NDArray[np.float64]:
     """Validate user inputted weights."""
@@ -58,14 +56,14 @@ def get_validated_and_normalized_weights(
         raise ValueError(msg)
 
     if weights is not None:
-        if freq.size != len(weights):
+        normalized_weights = np.asarray(weights, dtype=np.float64)
+        if freq.size != len(normalized_weights):
             msg = "Number of frequencies and weights must be the same."
             raise ValueError(msg)
         if np.any(np.diff(freq) < 0):
             msg = "Bandpass frequencies must be strictly increasing."
             raise ValueError(msg)
 
-        normalized_weights = np.asarray(weights, dtype=np.float64)
     else:
         normalized_weights = np.array([1], dtype=np.float64)
 
@@ -79,7 +77,7 @@ def get_validated_and_normalized_weights(
 def get_validated_ang(
     theta: SkyAngles, phi: SkyAngles, lonlat: bool
 ) -> Tuple[SkyAngles, SkyAngles]:
-    """Validate user inputted sky angles."""
+    """Validate user inputted sky angles and make sure it adheres to the healpy convention."""
     theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
     phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
 
@@ -88,16 +86,7 @@ def get_validated_ang(
     if phi.isscalar:
         phi = u.Quantity([phi])
 
+    if not lonlat:
+        theta, phi = phi, (np.pi / 2) * u.rad - theta
+
     return theta, phi
-
-
-# def get_validated_pix(pixels: Pixels, nside: int) -> Pixels:
-#     """Validate user inputted pixels."""
-#     if (np.max(pixels) > hp.nside2npix(nside)) or (np.min(pixels) < 0):
-#         msg = "invalid pixel number given nside"
-#         raise ValueError(msg)
-
-#     if np.ndim(pixels) == 0:
-#         return np.expand_dims(pixels, axis=0)
-
-#     return pixels

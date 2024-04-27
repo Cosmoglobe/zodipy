@@ -1,0 +1,52 @@
+import astropy.coordinates as coords
+from astropy import time, units
+
+from zodipy._constants import DISTANCE_FROM_EARTH_TO_SEMB_L2
+
+__all__ = ["get_earth_skycoord", "get_obs_skycoord"]
+
+
+def get_sun_earth_moon_barycenter_skycoord(
+    earth_skycoord: coords.SkyCoord,
+) -> coords.SkyCoord:
+    """Return a SkyCoord of the heliocentric position of the SEMB-L2 point.
+
+    Note that this is an approximate position, as the SEMB-L2 point is not included in
+    any of the current available ephemerides. We assume that SEMB-L2 is at all times
+    located at a fixed distance from Earth along the vector pointing to Earth from the Sun.
+    """
+    earth_distance = earth_skycoord.cartesian.norm()
+    SEMB_L2_distance = earth_distance + DISTANCE_FROM_EARTH_TO_SEMB_L2
+    earth_unit_vector = earth_skycoord.cartesian.xyz / earth_distance
+
+    return coords.SkyCoord(
+        *earth_unit_vector * SEMB_L2_distance,
+        frame=coords.HeliocentricMeanEcliptic,
+        representation_type="cartesian",
+    )
+
+
+def get_earth_skycoord(obs_time: time.Time) -> coords.SkyCoord:
+    """Return the sky coordinates of the Earth in the heliocentric frame."""
+    return coords.get_body("earth", obs_time).transform_to(coords.HeliocentricMeanEcliptic)
+
+
+def get_obs_skycoord(
+    obs_pos: units.Quantity | str,
+    obs_time: time.Time,
+    earth_skycoord: coords.SkyCoord,
+) -> coords.SkyCoord:
+    """Return the sky coordinates of the observer in the heliocentric frame."""
+    if isinstance(obs_pos, str):
+        if obs_pos.lower() == "semb-l2":
+            return get_sun_earth_moon_barycenter_skycoord(earth_skycoord)
+        return coords.get_body(obs_pos, obs_time).transform_to(coords.HeliocentricMeanEcliptic)
+    try:
+        return coords.SkyCoord(
+            *obs_pos.to(units.AU),
+            frame=coords.HeliocentricMeanEcliptic,
+            representation_type="cartesian",
+        )
+    except AttributeError:
+        msg = "Observer position (`obs_pos`) must be a string or an astropy Quantity."
+        raise TypeError(msg) from AttributeError

@@ -1,3 +1,5 @@
+from multiprocessing import cpu_count
+
 import astropy.units as u
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -6,15 +8,15 @@ from astropy.time import Time
 
 from zodipy import Zodipy
 
-model = Zodipy("dirbe")
+model = Zodipy("dirbe", n_proc=cpu_count())
 nside = 256
 
 binned_emission = model.get_binned_emission_pix(
-    25 * u.micron,
-    pixels=np.arange(hp.nside2npix(nside)),
+    np.arange(hp.nside2npix(nside)),
     nside=nside,
+    freq=25 * u.micron,
     obs_time=Time("2020-01-01"),
-    obs="earth",
+    obs_pos="earth",
     solar_cut=60 * u.deg,
 )
 
@@ -26,5 +28,4 @@ hp.mollview(
     coord="E",
     cmap="afmhot",
 )
-plt.savefig("../img/binned_solar_cutoff.png", dpi=300)
 plt.show()
