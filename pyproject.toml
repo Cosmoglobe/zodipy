@@ -29,7 +29,6 @@ repository = "https://github.com/cosmoglobe/zodipy"
 [tool.poetry.dependencies]
 python = ">=3.9"
 numpy = "^1.26.4"
-healpy = "^1.16.6"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
 scipy = "^1.13.0"
@@ -50,6 +49,7 @@ mkdocstrings-python = "^1.7.3"
 ruff = "^0.3.7"
 markdown = "<3.4.0"
 hypothesis = "^6.99.11"
+healpy = "^1.16.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
