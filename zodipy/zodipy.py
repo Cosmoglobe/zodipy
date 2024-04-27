@@ -18,7 +18,7 @@ from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
-from zodipy._line_of_sight import get_line_of_sight_start_and_stop_distances
+from zodipy._line_of_sight import get_line_of_sight_range
 from zodipy._validators import get_validated_ang
 from zodipy.model_registry import model_registry
 
@@ -136,9 +136,9 @@ class Zodipy:
                 must be strictly increasing.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
 
         Returns:
@@ -151,7 +151,10 @@ class Zodipy:
             axis=1,
         )
         coord = coords.SkyCoord(
-            unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame, obstime=coord.obstime
+            unique_lon * units.deg,
+            unique_lat * units.deg,
+            frame=coord.frame,
+            obstime=coord.obstime,
         )
 
         return self._compute_emission(
@@ -195,9 +198,9 @@ class Zodipy:
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
@@ -248,9 +251,9 @@ class Zodipy:
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
@@ -302,9 +305,9 @@ class Zodipy:
                 must be strictly increasing.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
                 distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
@@ -319,7 +322,10 @@ class Zodipy:
             axis=1,
         )
         coord = coords.SkyCoord(
-            unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame, obstime=coord.obstime
+            unique_lon * units.deg,
+            unique_lat * units.deg,
+            frame=coord.frame,
+            obstime=coord.obstime,
         )
         healpix = hp.HEALPix(nside, order="ring", frame=coord.frame)
         return self._compute_emission(
@@ -343,7 +349,7 @@ class Zodipy:
         nside: int,
         freq: units.Quantity,
         obs_time: time.Time,
-        obs_pos: units.Quantity[units.AU] | str = "earth",
+        obs_pos: units.Quantity | str = "earth",
         coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
@@ -367,9 +373,9 @@ class Zodipy:
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
@@ -432,9 +438,9 @@ class Zodipy:
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
-                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
-                This should correspond to a single position. Defaults to 'earth'.
+            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
+                correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
@@ -499,7 +505,7 @@ class Zodipy:
 
         # Get the integration limits for each zodiacal component (which may be
         # different or the same depending on the model) along all line of sights.
-        start, stop = get_line_of_sight_start_and_stop_distances(
+        start, stop = get_line_of_sight_range(
             components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
             obs_pos=obs_skycoord.cartesian.xyz.value,

@@ -57,8 +57,8 @@ ZodiPy is installed using `pip install zodipy`.
 ## Dependencies
 ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
 - [Astropy](https://www.astropy.org/) (>=5.0.1)
+- [Astropy-healpix](https://astropy-healpix.readthedocs.io/en/latest/)
 - [NumPy](https://numpy.org/)
-- [healpy](https://healpy.readthedocs.io/en/latest/)
 - [jplephem](https://pypi.org/project/jplephem/)
 - [SciPy](https://scipy.org/)
 
@@ -67,6 +67,7 @@ Contributing developers will need to download the following additional dependenc
 - pytest
 - pytest-cov
 - hypothesis
+- healpy
 - coverage
 - ruff
 - mypy

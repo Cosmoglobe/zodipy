@@ -11,8 +11,9 @@ from zodipy.comps import RRM
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from zodipy._types import Float
 
-DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+DIRBE_CUTOFFS: dict[ComponentLabel, tuple[Float, Float]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),
     ComponentLabel.BAND1: (R_0, R_JUPITER),
     ComponentLabel.BAND2: (R_0, R_JUPITER),
@@ -21,7 +22,7 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
     ComponentLabel.FEATURE: (R_EARTH - 0.2, R_EARTH + 0.2),
 }
 
-RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+RRM_CUTOFFS: dict[ComponentLabel, tuple[Float, Float]] = {
     ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),  # type: ignore
     ComponentLabel.INNER_NARROW_BAND: (
         RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,  # type: ignore
@@ -78,7 +79,7 @@ def get_sphere_intersection(
     return np.maximum(q, c / q)
 
 
-def get_line_of_sight_start_and_stop_distances(
+def get_line_of_sight_range(
     components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
     obs_pos: npt.NDArray[np.float64],
