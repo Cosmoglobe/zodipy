@@ -53,6 +53,33 @@ test = ["pytest (>=7.0)", "pytest-astropy (>=0.10)", "pytest-astropy-header (>=0
 test-all = ["astropy[test]", "coverage[toml]", "ipython (>=4.2)", "objgraph", "sgp4 (>=2.3)", "skyfield (>=1.20)"]
 
 [[package]]
+name = "astropy-healpix"
+version = "1.0.3"
+description = "BSD-licensed HEALPix for Astropy"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "astropy_healpix-1.0.3-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:1a523b4bda2618a94efad12b60431c28c0f5ef4b5afb890d21a858aef2ed779a"},
+    {file = "astropy_healpix-1.0.3-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:fa34adecf7f5168d65cda05d40db95d4a1aad3e6b66f43489ed4aac471f76496"},
+    {file = "astropy_healpix-1.0.3-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6a7d2163421ba66e06ed40b7ce7ce89fea60a342d035974c98c2c06c6cf187e9"},
+    {file = "astropy_healpix-1.0.3-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a5b03a5b18c28ab7ac030a22157cfcd8ff951db7fc751e29e854c17d3da52537"},
+    {file = "astropy_healpix-1.0.3-cp39-abi3-win32.whl", hash = "sha256:ec083f48e091baa5ce97c2e96e94b9fc8921a8c370768a92ac14e86fa3465248"},
+    {file = "astropy_healpix-1.0.3-cp39-abi3-win_amd64.whl", hash = "sha256:e8c32aabfa1fa7d6fd629e3918680cd0585656cfca6ec0c5dafe9e1c7a304508"},
+    {file = "astropy_healpix-1.0.3-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:cce4687deb102d1e9dc40f381fcd33027cd9bd0ca7955aa0d70e464128c6914e"},
+    {file = "astropy_healpix-1.0.3-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f4d4e3e86d8d010eb50bd31ca0ba438c1b50cdc9ed251da97665a7821880206e"},
+    {file = "astropy_healpix-1.0.3-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:59b1dd358c5bcd6196213845c007cee4920b2e1936234374afc7d8cfd6506cfc"},
+    {file = "astropy_healpix-1.0.3.tar.gz", hash = "sha256:de5d2a7ec97b167045066971f25a150d1e4061f07159be23649634db36e79746"},
+]
+
+[package.dependencies]
+astropy = ">=3"
+numpy = ">=1.19"
+
+[package.extras]
+docs = ["matplotlib", "sphinx-astropy"]
+test = ["hypothesis", "pytest-astropy"]
+
+[[package]]
 name = "astropy-iers-data"
 version = "0.2024.4.8.0.32.4"
 description = "IERS Earth Rotation and Leap Second tables for the astropy core package"
@@ -1894,4 +1921,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "e8cbfe076ced3accc312f14cb6b0b4a45bc46cd36b87c1027074b45dce5f6ea7"
+content-hash = "1ac6ed62ac4175c6cac380f70fb5d8338489432afd21906921799ecc9eeff4fc"
