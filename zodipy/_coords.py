@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 import astropy.coordinates as coords
 from astropy import time, units
 
 from zodipy._constants import DISTANCE_FROM_EARTH_TO_SEMB_L2
 
-__all__ = ["get_earth_skycoord", "get_obs_skycoord"]
+__all__ = ["get_earth_skycoord", "get_obs_skycoord", "get_frame_from_string"]
 
 
-def get_sun_earth_moon_barycenter_skycoord(
-    earth_skycoord: coords.SkyCoord,
-) -> coords.SkyCoord:
+def get_sun_earth_moon_barycenter_skycoord(earth_skycoord: coords.SkyCoord) -> coords.SkyCoord:
     """Return a SkyCoord of the heliocentric position of the SEMB-L2 point.
 
     Note that this is an approximate position, as the SEMB-L2 point is not included in
@@ -32,15 +32,14 @@ def get_earth_skycoord(obs_time: time.Time) -> coords.SkyCoord:
 
 
 def get_obs_skycoord(
-    obs_pos: units.Quantity | str,
-    obs_time: time.Time,
-    earth_skycoord: coords.SkyCoord,
+    obs_pos: units.Quantity | str, obs_time: time.Time, earth_skycoord: coords.SkyCoord
 ) -> coords.SkyCoord:
     """Return the sky coordinates of the observer in the heliocentric frame."""
     if isinstance(obs_pos, str):
         if obs_pos.lower() == "semb-l2":
             return get_sun_earth_moon_barycenter_skycoord(earth_skycoord)
         return coords.get_body(obs_pos, obs_time).transform_to(coords.HeliocentricMeanEcliptic)
+
     try:
         return coords.SkyCoord(
             *obs_pos.to(units.AU),
@@ -50,3 +49,19 @@ def get_obs_skycoord(
     except AttributeError:
         msg = "Observer position (`obs_pos`) must be a string or an astropy Quantity."
         raise TypeError(msg) from AttributeError
+
+
+def get_frame_from_string(frame_literal: int) -> type[coords.BaseCoordinateFrame]:
+    """Return the appropriate astropy coordinate frame class from a string literal."""
+    if frame_literal == "E":
+        return coords.BarycentricMeanEcliptic
+    if frame_literal == "G":
+        return coords.Galactic
+    if frame_literal == "C":
+        return coords.ICRS
+
+    msg = (
+        f"Invalid frame literal: {frame_literal}. Must be one of 'E' (Ecliptic),"
+        "'G' (Galactic), or 'C' (Celestial)."
+    )
+    raise ValueError(msg)

@@ -1,4 +1,4 @@
-from typing import Tuple
+from __future__ import annotations
 
 import astropy.units as u
 import numpy as np
@@ -73,10 +73,9 @@ def get_validated_and_normalized_weights(
     return normalized_weights
 
 
-@u.quantity_input(theta=[u.deg, u.rad], phi=[u.deg, u.rad])
 def get_validated_ang(
     theta: SkyAngles, phi: SkyAngles, lonlat: bool
-) -> Tuple[SkyAngles, SkyAngles]:
+) -> tuple[SkyAngles, SkyAngles]:
     """Validate user inputted sky angles and make sure it adheres to the healpy convention."""
     theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
     phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
