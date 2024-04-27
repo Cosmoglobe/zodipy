@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import astropy.coordinates as coords
 import astropy.units as u
 import healpy as hp
@@ -13,6 +15,7 @@ from zodipy.zodipy import Zodipy
 
 from ._strategies import (
     angles,
+    coords_in,
     freqs,
     nsides,
     obs_positions,
@@ -29,33 +32,55 @@ from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 DIRBE_START_DAY = Time("1990-01-01")
 
 
-@given(zodipy_models(), times(), sky_coords(), data())
+@given(zodipy_models(), sky_coords(), data())
 @settings(deadline=None)
 def test_get_emission_skycoord(
     model: Zodipy,
-    time: Time,
     coordinates: coords.SkyCoord,
     data: DataObject,
 ) -> None:
     """Property test for get_emission_skycoord."""
-    observer = data.draw(obs_positions(model, time))
+    observer = data.draw(obs_positions(model, coordinates.obstime))
     frequency = data.draw(freqs(model))
     emission = model.get_emission_skycoord(
         coordinates,
         freq=frequency,
-        obs_time=time,
         obs_pos=observer,
     )
     assert emission.size == coordinates.size
 
 
-@given(zodipy_models(), times(), nsides(), data())
+@given(zodipy_models(), sky_coords(), nsides(), data())
+@settings(deadline=None)
+def test_get_binned_skycoord(
+    model: Zodipy,
+    coordinates: coords.SkyCoord,
+    nside: int,
+    data: DataObject,
+) -> None:
+    """Property test for get_binned_emission_pix."""
+    observer = data.draw(obs_positions(model, coordinates.obstime))
+    frequency = data.draw(freqs(model))
+    cut_solar = data.draw(booleans())
+
+    emission_binned = model.get_binned_emission_skycoord(
+        coordinates,
+        freq=frequency,
+        obs_pos=observer,
+        nside=nside,
+        solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
+    )
+    assert emission_binned.shape == (hp.nside2npix(nside),)
+
+
+@given(zodipy_models(), times(), nsides(), data(), coords_in())
 @settings(deadline=None)
 def test_get_emission_pix(
     model: Zodipy,
     time: Time,
     nside: int,
     data: DataObject,
+    coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_emission_pix."""
     observer = data.draw(obs_positions(model, time))
@@ -67,17 +92,19 @@ def test_get_emission_pix(
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
+        coord_in=coord_in,
     )
     assert np.size(emission) == np.size(pix)
 
 
-@given(zodipy_models(), times(), nsides(), data())
+@given(zodipy_models(), times(), nsides(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_pix(
     model: Zodipy,
     time: Time,
     nside: int,
     data: DataObject,
+    coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_binned_emission_pix."""
     observer = data.draw(obs_positions(model, time))
@@ -91,17 +118,19 @@ def test_get_binned_emission_pix(
         obs_time=time,
         obs_pos=observer,
         solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
+        coord_in=coord_in,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 
 
-@given(zodipy_models(), times(), angles(), data())
+@given(zodipy_models(), times(), angles(), data(), coords_in())
 @settings(deadline=None)
 def test_get_emission_ang(
     model: Zodipy,
     time: Time,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     data: DataObject,
+    coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_emission_ang."""
     theta, phi = angles
@@ -115,11 +144,12 @@ def test_get_emission_ang(
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
+        coord_in=coord_in,
     )
     assert emission.size == theta.size == phi.size
 
 
-@given(zodipy_models(), times(), nsides(), angles(), data())
+@given(zodipy_models(), times(), nsides(), angles(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_ang(
     model: Zodipy,
@@ -127,12 +157,14 @@ def test_get_binned_emission_ang(
     nside: int,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     data: DataObject,
+    coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_binned_emission_pix."""
     theta, phi = angles
 
     observer = data.draw(obs_positions(model, time))
     frequency = data.draw(freqs(model))
+    cut_solar = data.draw(booleans())
 
     emission_binned = model.get_binned_emission_ang(
         theta,
@@ -141,6 +173,8 @@ def test_get_binned_emission_ang(
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
+        coord_in=coord_in,
+        solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
     )
     assert emission_binned.shape == (hp.nside2npix(nside),)
 

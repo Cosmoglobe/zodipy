@@ -92,10 +92,15 @@ def frames(draw: DrawFn) -> type[coords.BaseCoordinateFrame]:
 
 
 @composite
+def coords_in(draw: DrawFn) -> str:
+    return draw(sampled_from(["E", "G", "C"]))
+
+
+@composite
 def sky_coords(draw: DrawFn) -> coords.SkyCoord:
     theta_strategy = floats(min_value=0, max_value=360)
     phi_strategy = floats(min_value=-90, max_value=90)
-
+    obs_time = draw(times())
     shape = draw(integers(min_value=1, max_value=MAX_ANGELS_LEN))
 
     theta_array_strategy = arrays(dtype=float, shape=shape, elements=theta_strategy).map(
@@ -107,7 +112,7 @@ def sky_coords(draw: DrawFn) -> coords.SkyCoord:
     frame = draw(frames())
     lon = draw(theta_array_strategy)
     lat = draw(phi_array_strategy)
-    return coords.SkyCoord(lon, lat, frame=frame)
+    return coords.SkyCoord(lon, lat, frame=frame, obstime=obs_time)
 
 
 @composite

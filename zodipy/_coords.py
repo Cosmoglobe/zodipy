@@ -51,7 +51,7 @@ def get_obs_skycoord(
         raise TypeError(msg) from AttributeError
 
 
-def get_frame_from_string(frame_literal: int) -> type[coords.BaseCoordinateFrame]:
+def get_frame_from_string(frame_literal: str) -> type[coords.BaseCoordinateFrame]:
     """Return the appropriate astropy coordinate frame class from a string literal."""
     if frame_literal == "E":
         return coords.BarycentricMeanEcliptic

@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import multiprocessing
 import platform
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Literal
 
 import astropy_healpix as hp
 import numpy as np
@@ -13,7 +13,7 @@ from scipy import interpolate
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
-from zodipy._coords import get_earth_skycoord, get_obs_skycoord
+from zodipy._coords import get_earth_skycoord, get_frame_from_string, get_obs_skycoord
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_comps import ComponentLabel
@@ -117,31 +117,28 @@ class Zodipy:
         self,
         coord: coords.SkyCoord,
         *,
-        obs_time: time.Time,
         freq: units.Quantity,
-        obs_pos: units.Quantity | str = "earth",
         weights: npt.ArrayLike | None = None,
+        obs_pos: units.Quantity | str = "earth",
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated zodiacal light for observations in an Astropy `SkyCoord` object.
-
-        The pointing, for which to compute the emission, is specified in form of angles on
-        the sky given by `theta` and `phi`.
+        """Return the simulated zodiacal light for all observations in a `SkyCoord` object.
 
         Args:
-            coord: Astropy `SkyCoord` object representing the pointing on the sky. This
-                object must have a frame attribute representing the coordinate frame of the
-                input pointing, for example `astropy.coordinates.Galactic`. The frame must
-                be convertible to `BarycentricMeanEcliptic`.
-            obs_time: Time of observation. This should be a single observational time.
+            coord: `astropy.coordinates.SkyCoord` object representing the observations for which to
+                simulate the zodiacal light. The `frame` and `obstime` attributes of the `SkyCoord`
+                object must be set. The `obstime` attribute should correspond to a single
+                observational time for which the zodiacal light is assumed to be stationary.
+                Additionally, the frame must be convertible to
+                `astropy.coordinates.BarycentricMeanEcliptic`.
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
+                are assumed to be given in spectral radiance units (Jy/sr).
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
                 This should correspond to a single position. Defaults to 'earth'.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
 
         Returns:
@@ -153,13 +150,15 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
-        coord = coords.SkyCoord(unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame)
+        coord = coords.SkyCoord(
+            unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame, obstime=coord.obstime
+        )
 
         return self._compute_emission(
             freq=freq,
             weights=weights,
-            obs_time=obs_time,
             obs_pos=obs_pos,
+            obs_time=coord.obstime,
             coordinates=coord,
             indicies=indicies,
             return_comps=return_comps,
@@ -170,12 +169,12 @@ class Zodipy:
         theta: units.Quantity,
         phi: units.Quantity,
         *,
+        lonlat: bool = False,
         freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
-        frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
+        coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
-        lonlat: bool = False,
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal emission given angles on the sky.
@@ -190,6 +189,8 @@ class Zodipy:
             phi: Angular longitude coordinate of a point, or a sequence of points, on the
                 celestial sphere. Must be in the range [0, 2π] rad. Units must be compatible
                 with degrees.
+            lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
+                latitude, otherwise, they are co-latitude and longitude.
             freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
                 a bandpass over which to evaluate the zodiacal emission. The frequencies
                 must be strictly increasing.
@@ -197,13 +198,10 @@ class Zodipy:
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
                 This should correspond to a single position. Defaults to 'earth'.
-            frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
-                Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
-                alternatives are `Galactic` and `ICRS`.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
-            lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
-                latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
 
         Returns:
@@ -213,11 +211,8 @@ class Zodipy:
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         (theta, phi), indicies = np.unique(np.stack([theta, phi]), return_inverse=True, axis=1)
-        coordinates = coords.SkyCoord(
-            theta,
-            phi,
-            frame=frame,
-        )
+        frame = get_frame_from_string(coord_in)
+        coordinates = coords.SkyCoord(theta, phi, frame=frame)
 
         return self._compute_emission(
             freq=freq,
@@ -237,7 +232,7 @@ class Zodipy:
         freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
-        frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
+        coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
@@ -256,9 +251,8 @@ class Zodipy:
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
                 This should correspond to a single position. Defaults to 'earth'.
-            frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
-                Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
-                alternatives are `Galactic` and `ICRS`.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -267,6 +261,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+        frame = get_frame_from_string(coord_in)
         healpix = hp.HEALPix(nside=nside, order="ring", frame=frame)
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
@@ -281,18 +276,76 @@ class Zodipy:
             return_comps=return_comps,
         )
 
+    def get_binned_emission_skycoord(
+        self,
+        coord: coords.SkyCoord,
+        *,
+        nside: int,
+        freq: units.Quantity,
+        weights: npt.ArrayLike | None = None,
+        obs_pos: units.Quantity | str = "earth",
+        return_comps: bool = False,
+        solar_cut: units.Quantity | None = None,
+    ) -> units.Quantity[units.MJy / units.sr]:
+        """Return the simulated binned zodiacal light for all observations in a `SkyCoord` object.
+
+        Args:
+            coord: `astropy.coordinates.SkyCoord` object representing the observations for which to
+                simulate the zodiacal light. The `frame` and `obstime` attributes of the `SkyCoord`
+                object must be set. The `obstime` attribute should correspond to a single
+                observational time for which the zodiacal light is assumed to be stationary.
+                Additionally, the frame must be convertible to
+                `astropy.coordinates.BarycentricMeanEcliptic`.
+            nside: HEALPix resolution parameter of the pixels and the binned map.
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission. The frequencies
+                must be strictly increasing.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
+                are assumed to be given in spectral radiance units (Jy/sr).
+            obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
+                representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
+                This should correspond to a single position. Defaults to 'earth'.
+            return_comps: If True, the emission is returned component-wise. Defaults to False.
+            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
+                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
+
+        Returns:
+            emission: Simulated zodiacal light in units of 'MJy/sr'.
+
+        """
+        (unique_lon, unique_lat), indicies = np.unique(
+            np.vstack([coord.spherical.lon.value, coord.spherical.lat.value]),
+            return_inverse=True,
+            axis=1,
+        )
+        coord = coords.SkyCoord(
+            unique_lon * units.deg, unique_lat * units.deg, frame=coord.frame, obstime=coord.obstime
+        )
+        healpix = hp.HEALPix(nside, order="ring", frame=coord.frame)
+        return self._compute_emission(
+            freq=freq,
+            weights=weights,
+            obs_pos=obs_pos,
+            obs_time=coord.obstime,
+            coordinates=coord,
+            indicies=indicies,
+            healpix=healpix,
+            return_comps=return_comps,
+            solar_cut=solar_cut,
+        )
+
     def get_binned_emission_ang(
         self,
         theta: units.Quantity,
         phi: units.Quantity,
         *,
+        lonlat: bool = False,
         nside: int,
         freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity[units.AU] | str = "earth",
-        frame: type[coords.BaseCoordinateFrame] = coords.BarycentricMeanEcliptic,
+        coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
-        lonlat: bool = False,
         return_comps: bool = False,
         solar_cut: units.Quantity | None = None,
     ) -> units.Quantity[units.MJy / units.sr]:
@@ -317,9 +370,8 @@ class Zodipy:
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
                 This should correspond to a single position. Defaults to 'earth'.
-            frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
-                Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
-                alternatives are `Galactic` and `ICRS`.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
@@ -333,6 +385,7 @@ class Zodipy:
 
         """
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
+        frame = get_frame_from_string(coord_in)
         healpix = hp.HEALPix(nside, order="ring", frame=frame)
         (theta, phi), counts = np.unique(np.vstack([theta, phi]), return_counts=True, axis=1)
         coordinates = coords.SkyCoord(
@@ -361,7 +414,7 @@ class Zodipy:
         freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
-        frame: type[coords.BaseCoordinateFrame] | str = coords.BarycentricMeanEcliptic,
+        coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
         solar_cut: units.Quantity | None = None,
@@ -382,9 +435,8 @@ class Zodipy:
             obs_pos: The heliocentric ecliptic position of the observer in AU, or a string
                 representing an observer in the `astropy.coordinates.solar_system_ephemeris`.
                 This should correspond to a single position. Defaults to 'earth'.
-            frame: Astropy coordinate frame representing the coordinate frame of the input pointing.
-                Default is `BarycentricMeanEcliptic`, corresponding to ecliptic coordinates. Other
-                alternatives are `Galactic` and `ICRS`.
+            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
+                coordinates) by default.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -395,6 +447,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
+        frame = get_frame_from_string(coord_in)
         healpix = hp.HEALPix(nside=nside, order="ring", frame=frame)
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
