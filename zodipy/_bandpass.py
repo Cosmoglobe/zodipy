@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import astropy.units as u
 import numpy as np
+from astropy import units
 
 from zodipy._constants import (
     MAX_INTERPOLATION_GRID_TEMPERATURE,
@@ -18,12 +18,11 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from zodipy._ipd_model import InterplanetaryDustModel
-    from zodipy._types import FrequencyOrWavelength
 
 
 @dataclass
 class Bandpass:
-    frequencies: FrequencyOrWavelength
+    frequencies: units.Quantity
     weights: npt.NDArray[np.float64]
 
     def integrate(self, quantity: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -33,8 +32,8 @@ class Bandpass:
     def switch_convention(self) -> None:
         """Switch the bandpass from frequency to wavelength or the other way around."""
         self.frequencies = self.frequencies.to(
-            u.micron if self.frequencies.unit.is_equivalent(u.Hz) else u.Hz,
-            equivalencies=u.spectral(),
+            units.micron if self.frequencies.unit.is_equivalent(units.Hz) else units.Hz,
+            equivalencies=units.spectral(),
         )
         if self.frequencies.size > 1:
             self.frequencies = np.flip(self.frequencies)
@@ -43,7 +42,7 @@ class Bandpass:
 
 
 def validate_and_get_bandpass(
-    freq: FrequencyOrWavelength,
+    freq: units.Quantity,
     weights: npt.ArrayLike | None,
     model: InterplanetaryDustModel,
     extrapolate: bool,
@@ -62,7 +61,7 @@ def get_bandpass_interpolation_table(
     max_temp: float = MAX_INTERPOLATION_GRID_TEMPERATURE,
 ) -> npt.NDArray[np.float64]:
     """Pre-compute the bandpass integrated blackbody emission for a grid of temperatures."""
-    if not bandpass.frequencies.unit.is_equivalent(u.Hz):
+    if not bandpass.frequencies.unit.is_equivalent(units.Hz):
         bandpass.switch_convention()
 
     bandpass_integrals = np.zeros(n_points)

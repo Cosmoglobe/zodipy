@@ -136,3 +136,28 @@ def test_interp_kind() -> None:
         model.get_emission_pix(
             pixels=[1, 4, 5], freq=27 * units.micron, nside=32, obs_time=OBS_TIME
         )
+
+
+def test_wrong_frame() -> None:
+    """Tests that an error is correctly raised when an incorrect frame is passed in."""
+    model = Zodipy()
+    with pytest.raises(ValueError):
+        model.get_emission_pix(
+            [1, 4, 5],
+            nside=32,
+            freq=27 * units.micron,
+            obs_time=OBS_TIME,
+            coord_in="not a valid frame",
+        )
+
+
+def test_non_quantity_ang_raises_error() -> None:
+    """Tests that an error is correctly raised if the user inputed angles are not Quantities."""
+    model = Zodipy()
+    with pytest.raises(TypeError):
+        model.get_emission_ang(
+            32,
+            12,
+            freq=27 * units.micron,
+            obs_time=OBS_TIME,
+        )

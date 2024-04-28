@@ -5,8 +5,9 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Mapping, Sequence
 
 if TYPE_CHECKING:
+    from astropy import units
+
     from zodipy._ipd_comps import Component, ComponentLabel
-    from zodipy._types import FrequencyOrWavelength
 
 
 @dataclass
@@ -20,7 +21,7 @@ class InterplanetaryDustModel(ABC):
     """
 
     comps: Mapping[ComponentLabel, Component]
-    spectrum: FrequencyOrWavelength
+    spectrum: units.Quantity
 
     def to_dict(self) -> dict:
         """Return a dictionary representation of the model."""
