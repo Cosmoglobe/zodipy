@@ -1,33 +1,32 @@
 from __future__ import annotations
 
-import astropy.units as u
 import numpy as np
 import numpy.typing as npt
+from astropy import units
 
 from ._ipd_model import InterplanetaryDustModel
-from ._types import FrequencyOrWavelength, SkyAngles
 
 
 def get_validated_freq(
-    freq: FrequencyOrWavelength, model: InterplanetaryDustModel, extrapolate: bool
-) -> FrequencyOrWavelength:
+    freq: units.Quantity, model: InterplanetaryDustModel, extrapolate: bool
+) -> units.Quantity:
     """Validate user inputted frequency."""
-    if not isinstance(freq, u.Quantity):
+    if not isinstance(freq, units.Quantity):
         msg = "Frequency must be an astropy Quantity."
         raise TypeError(msg)
 
-    if freq.unit.is_equivalent(u.Hz):
-        freq = freq.to(u.Hz)
-    elif freq.unit.is_equivalent(u.micron):
-        freq = freq.to(u.micron)
+    if freq.unit.is_equivalent(units.Hz):
+        freq = freq.to(units.Hz)
+    elif freq.unit.is_equivalent(units.micron):
+        freq = freq.to(units.micron)
     else:
         msg = "Frequency must be in units compatible with Hz or micron."
-        raise u.UnitsError(msg)
+        raise units.UnitsError(msg)
 
     if extrapolate:
         return freq
 
-    freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=u.spectral())
+    freq_in_spectrum_units = freq.to(model.spectrum.unit, equivalencies=units.spectral())
     lower_freq_range = model.spectrum.min()
     upper_freq_range = model.spectrum.max()
 
@@ -48,7 +47,7 @@ def get_validated_freq(
 
 def get_validated_and_normalized_weights(
     weights: npt.ArrayLike | None,
-    freq: FrequencyOrWavelength,
+    freq: units.Quantity,
 ) -> npt.NDArray[np.float64]:
     """Validate user inputted weights."""
     if weights is None and freq.size > 1:
@@ -74,18 +73,22 @@ def get_validated_and_normalized_weights(
 
 
 def get_validated_ang(
-    theta: SkyAngles, phi: SkyAngles, lonlat: bool
-) -> tuple[SkyAngles, SkyAngles]:
+    theta: units.Quantity, phi: units.Quantity, lonlat: bool
+) -> tuple[units.Quantity, units.Quantity]:
     """Validate user inputted sky angles and make sure it adheres to the healpy convention."""
-    theta = theta.to(u.deg) if lonlat else theta.to(u.rad)
-    phi = phi.to(u.deg) if lonlat else phi.to(u.rad)
+    try:
+        theta = theta.to(units.deg) if lonlat else theta.to(units.rad)
+        phi = phi.to(units.deg) if lonlat else phi.to(units.rad)
+    except AttributeError:
+        msg = "Sky angles `theta` and `phi` must be astropy Quantities."
+        raise TypeError(msg) from AttributeError
 
     if theta.isscalar:
-        theta = u.Quantity([theta])
+        theta = np.expand_dims(theta, axis=0)
     if phi.isscalar:
-        phi = u.Quantity([phi])
+        phi = np.expand_dims(phi, axis=0)
 
     if not lonlat:
-        theta, phi = phi, (np.pi / 2) * u.rad - theta
+        theta, phi = phi, (np.pi / 2) * units.rad - theta
 
     return theta, phi

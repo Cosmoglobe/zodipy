@@ -150,18 +150,18 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
+        obs_time = coord.obstime
         coord = coords.SkyCoord(
             unique_lon * units.deg,
             unique_lat * units.deg,
             frame=coord.frame,
-            obstime=coord.obstime,
         )
 
         return self._compute_emission(
             freq=freq,
             weights=weights,
             obs_pos=obs_pos,
-            obs_time=coord.obstime,
+            obs_time=obs_time,
             coordinates=coord,
             indicies=indicies,
             return_comps=return_comps,
@@ -238,6 +238,7 @@ class Zodipy:
         coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
+        order: Literal["ring", "nested"] = "ring",
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal emission given pixel numbers.
 
@@ -259,13 +260,14 @@ class Zodipy:
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
+            order: Order of the HEALPix grid.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
         frame = get_frame_from_string(coord_in)
-        healpix = hp.HEALPix(nside=nside, order="ring", frame=frame)
+        healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
 
@@ -288,6 +290,7 @@ class Zodipy:
         weights: npt.ArrayLike | None = None,
         obs_pos: units.Quantity | str = "earth",
         return_comps: bool = False,
+        order: Literal["ring", "nested"] = "ring",
         solar_cut: units.Quantity | None = None,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated binned zodiacal light for all observations in a `SkyCoord` object.
@@ -309,6 +312,7 @@ class Zodipy:
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
+            order: Order of the HEALPix grid.
             solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
                 distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
 
@@ -321,18 +325,18 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
+        obs_time = coord.obstime
         coord = coords.SkyCoord(
             unique_lon * units.deg,
             unique_lat * units.deg,
             frame=coord.frame,
-            obstime=coord.obstime,
         )
-        healpix = hp.HEALPix(nside, order="ring", frame=coord.frame)
+        healpix = hp.HEALPix(nside, order=order, frame=coord.frame)
         return self._compute_emission(
             freq=freq,
             weights=weights,
             obs_pos=obs_pos,
-            obs_time=coord.obstime,
+            obs_time=obs_time,
             coordinates=coord,
             indicies=indicies,
             healpix=healpix,
@@ -353,6 +357,7 @@ class Zodipy:
         coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
+        order: Literal["ring", "nested"] = "ring",
         solar_cut: units.Quantity | None = None,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated binned zodiacal emission given angles on the sky.
@@ -383,6 +388,7 @@ class Zodipy:
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
+            order: Order of the HEALPix grid.
             solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
                 distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
 
@@ -390,9 +396,9 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
+        theta, phi = get_validated_ang(theta, phi, lonlat=lonlat)
         frame = get_frame_from_string(coord_in)
-        healpix = hp.HEALPix(nside, order="ring", frame=frame)
+        healpix = hp.HEALPix(nside, order=order, frame=frame)
         (theta, phi), counts = np.unique(np.vstack([theta, phi]), return_counts=True, axis=1)
         coordinates = coords.SkyCoord(
             theta,
@@ -423,6 +429,7 @@ class Zodipy:
         coord_in: Literal["E", "G", "C"] = "E",
         weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
+        order: Literal["ring", "nested"] = "ring",
         solar_cut: units.Quantity | None = None,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated binned zodiacal Emission given pixel numbers.
@@ -446,6 +453,7 @@ class Zodipy:
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
                 are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
+            order: Order of the HEALPix grid.
             solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
                 distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
 
@@ -454,7 +462,7 @@ class Zodipy:
 
         """
         frame = get_frame_from_string(coord_in)
-        healpix = hp.HEALPix(nside=nside, order="ring", frame=frame)
+        healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
 

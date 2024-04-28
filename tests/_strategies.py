@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from functools import partial
 from math import log2
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Literal, Sequence
 
 import astropy.coordinates as coords
 import astropy.units as u
@@ -71,8 +71,9 @@ def times(draw: DrawFn) -> time.Time:
 
 
 @composite
-def nsides(draw: Callable[[SearchStrategy[int]], int]) -> int:
-    return draw(integers(min_value=MIN_NSIDE_EXP, max_value=MAX_NSIDE_EXP).map(partial(pow, 2)))
+def healpixes(draw: DrawFn, order: Literal["ring", "nested"] = "ring") -> hp.HEALPix:
+    nside = draw(integers(min_value=MIN_NSIDE_EXP, max_value=MAX_NSIDE_EXP).map(partial(pow, 2)))
+    return hp.HEALPix(nside=nside, order=order)
 
 
 @composite

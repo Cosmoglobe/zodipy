@@ -4,7 +4,7 @@ from typing import Literal
 
 import astropy.coordinates as coords
 import astropy.units as u
-import healpy as hp
+import astropy_healpix as hp
 import numpy as np
 import pytest
 from astropy.time import Time, TimeDelta
@@ -17,7 +17,7 @@ from ._strategies import (
     angles,
     coords_in,
     freqs,
-    nsides,
+    healpixes,
     obs_positions,
     pixels,
     quantities,
@@ -50,12 +50,12 @@ def test_get_emission_skycoord(
     assert emission.size == coordinates.size
 
 
-@given(zodipy_models(), sky_coords(), nsides(), data())
+@given(zodipy_models(), sky_coords(), healpixes(), data())
 @settings(deadline=None)
 def test_get_binned_skycoord(
     model: Zodipy,
     coordinates: coords.SkyCoord,
-    nside: int,
+    healpix: hp.HEALPix,
     data: DataObject,
 ) -> None:
     """Property test for get_binned_emission_pix."""
@@ -67,28 +67,28 @@ def test_get_binned_skycoord(
         coordinates,
         freq=frequency,
         obs_pos=observer,
-        nside=nside,
+        nside=healpix.nside,
         solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
     )
-    assert emission_binned.shape == (hp.nside2npix(nside),)
+    assert emission_binned.shape == (healpix.npix,)
 
 
-@given(zodipy_models(), times(), nsides(), data(), coords_in())
+@given(zodipy_models(), times(), healpixes(), data(), coords_in())
 @settings(deadline=None)
 def test_get_emission_pix(
     model: Zodipy,
     time: Time,
-    nside: int,
+    healpix: hp.HEALPix,
     data: DataObject,
     coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_emission_pix."""
     observer = data.draw(obs_positions(model, time))
     frequency = data.draw(freqs(model))
-    pix = data.draw(pixels(nside))
+    pix = data.draw(pixels(healpix.nside))
     emission = model.get_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
@@ -97,30 +97,30 @@ def test_get_emission_pix(
     assert np.size(emission) == np.size(pix)
 
 
-@given(zodipy_models(), times(), nsides(), data(), coords_in())
+@given(zodipy_models(), times(), healpixes(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_pix(
     model: Zodipy,
     time: Time,
-    nside: int,
+    healpix: hp.HEALPix,
     data: DataObject,
     coord_in: Literal["E", "G", "C"],
 ) -> None:
     """Property test for get_binned_emission_pix."""
     observer = data.draw(obs_positions(model, time))
     frequency = data.draw(freqs(model))
-    pix = data.draw(pixels(nside))
+    pix = data.draw(pixels(healpix.nside))
     cut_solar = data.draw(booleans())
     emission_binned = model.get_binned_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
         solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
         coord_in=coord_in,
     )
-    assert emission_binned.shape == (hp.nside2npix(nside),)
+    assert emission_binned.shape == (healpix.npix,)
 
 
 @given(zodipy_models(), times(), angles(), data(), coords_in())
@@ -149,12 +149,12 @@ def test_get_emission_ang(
     assert emission.size == theta.size == phi.size
 
 
-@given(zodipy_models(), times(), nsides(), angles(), data(), coords_in())
+@given(zodipy_models(), times(), healpixes(), angles(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_ang(
     model: Zodipy,
     time: Time,
-    nside: int,
+    healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     data: DataObject,
     coord_in: Literal["E", "G", "C"],
@@ -169,29 +169,29 @@ def test_get_binned_emission_ang(
     emission_binned = model.get_binned_emission_ang(
         theta,
         phi,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
         coord_in=coord_in,
         solar_cut=data.draw(quantities(20, 50, u.deg)) if cut_solar else None,
     )
-    assert emission_binned.shape == (hp.nside2npix(nside),)
+    assert emission_binned.shape == (healpix.npix,)
 
 
-@given(zodipy_models(extrapolate=False), times(), angles(lonlat=True), nsides(), data())
+@given(zodipy_models(extrapolate=False), times(), angles(lonlat=True), healpixes(), data())
 @settings(deadline=None)
 def test_invalid_freq(
     model: Zodipy,
     time: Time,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
-    nside: int,
+    healpix: hp.HEALPix,
     data: DataObject,
 ) -> None:
     """Property test checking for unsupported spectral range."""
     theta, phi = angles
     observer = data.draw(obs_positions(model, time))
-    pix = data.draw(pixels(nside))
+    pix = data.draw(pixels(healpix.nside))
 
     freq = data.draw(random_freqs(unit=model._ipd_model.spectrum.unit))
     if not (model._ipd_model.spectrum[0] <= freq <= model._ipd_model.spectrum[-1]):
@@ -199,7 +199,7 @@ def test_invalid_freq(
             model.get_emission_pix(
                 pix,
                 freq=freq,
-                nside=nside,
+                nside=healpix.nside,
                 obs_time=time,
                 obs_pos=observer,
             )
@@ -217,7 +217,7 @@ def test_invalid_freq(
         with pytest.raises(ValueError):
             model.get_binned_emission_pix(
                 pix,
-                nside=nside,
+                nside=healpix.nside,
                 freq=freq,
                 obs_time=time,
                 obs_pos=observer,
@@ -227,7 +227,7 @@ def test_invalid_freq(
             model.get_binned_emission_ang(
                 theta,
                 phi,
-                nside=nside,
+                nside=healpix.nside,
                 freq=freq,
                 obs_time=time,
                 obs_pos=observer,
@@ -269,21 +269,21 @@ def test_multiprocessing() -> None:
     observer = "earth"
     time = Time("2020-01-01")
     frequency = 78 * u.micron
-    nside = 32
-    pix = np.random.randint(0, hp.nside2npix(nside), size=1000)
+    healpix = hp.HEALPix(32)
+    pix = np.random.randint(0, healpix.npix, size=1000)
     theta = np.random.uniform(0, 180, size=1000) * u.deg
     phi = np.random.uniform(0, 360, size=1000) * u.deg
 
     emission_pix = model.get_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
     )
     emission_pix_parallel = model_parallel.get_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
@@ -292,14 +292,14 @@ def test_multiprocessing() -> None:
 
     emission_binned_pix = model.get_binned_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
     )
     emission_binned_pix_parallel = model_parallel.get_binned_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
@@ -326,7 +326,7 @@ def test_multiprocessing() -> None:
         theta,
         phi,
         freq=frequency,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=observer,
     )
@@ -335,7 +335,7 @@ def test_multiprocessing() -> None:
         theta,
         phi,
         freq=frequency,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=observer,
     )
@@ -351,19 +351,19 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
     observer = "earth"
     time = Time("2020-01-01")
     frequency = 78 * u.micron
-    nside = 32
-    pix = np.random.randint(0, hp.nside2npix(nside), size=1000)
+    healpix = hp.HEALPix(32)
+    pix = np.random.randint(0, healpix.npix, size=1000)
 
     emission_pix = model.get_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
     )
     emission_pix_parallel = model_parallel.get_emission_pix(
         pix,
-        nside=nside,
+        nside=healpix.nside,
         freq=frequency,
         obs_time=time,
         obs_pos=observer,
@@ -374,7 +374,7 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
 @given(
     zodipy_models(extrapolate=True),
     times(),
-    nsides(),
+    healpixes(),
     angles(),
     random_freqs(bandpass=True),
     data(),
@@ -383,7 +383,7 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
 def test_bandpass_integration(
     model: Zodipy,
     time: Time,
-    nside: int,
+    healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
     data: DataObject,
@@ -397,17 +397,17 @@ def test_bandpass_integration(
         phi,
         freq=freqs,
         weights=bp_weights,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=observer,
     )
-    assert emission_binned.shape == (hp.nside2npix(nside),)
+    assert emission_binned.shape == (healpix.npix,)
 
 
 @given(
     zodipy_models(extrapolate=True),
     times(),
-    nsides(),
+    healpixes(),
     angles(),
     random_freqs(bandpass=True),
     data(),
@@ -416,7 +416,7 @@ def test_bandpass_integration(
 def test_weights(
     model: Zodipy,
     time: Time,
-    nside: int,
+    healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     freqs: u.Quantity[u.Hz] | u.Quantity[u.micron],
     data: DataObject,
@@ -431,7 +431,7 @@ def test_weights(
         phi,
         weights=bp_weights,
         freq=freqs,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=observer,
     )
@@ -441,8 +441,8 @@ def test_custom_weights() -> None:
     """Tests bandpass integration with custom weights."""
     model = Zodipy()
     time = Time("2020-01-01")
-    nside = 32
-    pix = np.arange(hp.nside2npix(nside))
+    healpix = hp.HEALPix(64)
+    pix = np.arange(healpix.npix)
     central_freq = 25
     sigma_freq = 3
     freqs = np.linspace(central_freq - sigma_freq, central_freq + sigma_freq, 100) * u.micron
@@ -453,7 +453,7 @@ def test_custom_weights() -> None:
         pix,
         freq=freqs,
         weights=weights,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos="earth",
     )
@@ -463,13 +463,13 @@ def test_custom_obs_pos() -> None:
     """Tests a user specified observer position."""
     model = Zodipy()
     time = Time("2020-01-01")
-    nside = 64
-    pix = np.arange(hp.nside2npix(nside))
+    healpix = hp.HEALPix(64)
+    pix = np.arange(healpix.npix)
 
     model.get_emission_pix(
         pix,
         freq=234 * u.micron,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=[0.1, 0.2, 1] * u.AU,
     )
@@ -477,7 +477,7 @@ def test_custom_obs_pos() -> None:
     model.get_emission_pix(
         pix,
         freq=234 * u.micron,
-        nside=nside,
+        nside=healpix.nside,
         obs_time=time,
         obs_pos=[2, 0.1, 4] * u.AU,
     )
@@ -486,7 +486,7 @@ def test_custom_obs_pos() -> None:
         model.get_emission_pix(
             pix,
             freq=234 * u.micron,
-            nside=nside,
+            nside=healpix.nside,
             obs_time=time,
             obs_pos=[2, 0.1, 4],
         )
@@ -495,7 +495,91 @@ def test_custom_obs_pos() -> None:
         model.get_emission_pix(
             pix,
             freq=234 * u.micron,
-            nside=nside,
+            nside=healpix.nside,
             obs_time=time,
             obs_pos=[2, 0.1, 4] * u.s,
         )
+
+
+def test_pixel_ordering() -> None:
+    """Tests that the pixel related functions work for both healpix orderings."""
+    model = Zodipy()
+    time = Time("2020-01-01")
+
+    healpix_ring = hp.HEALPix(32)
+    healpix_nested = hp.HEALPix(32)
+
+    pix_ring = np.arange(healpix_ring.npix)
+    lon, lat = healpix_ring.healpix_to_lonlat(pix_ring)
+    lon = u.Quantity(lon)
+    lat = u.Quantity(lat)
+    pix_nested = healpix_nested.lonlat_to_healpix(lon, lat)
+
+    model.get_emission_pix(
+        pix_ring,
+        freq=234 * u.micron,
+        nside=healpix_ring.nside,
+        obs_time=time,
+        order="ring",
+    )
+    model.get_emission_pix(
+        pix_nested,
+        freq=234 * u.micron,
+        nside=healpix_nested.nside,
+        obs_time=time,
+        order="nested",
+    )
+
+    model.get_binned_emission_pix(
+        pix_ring,
+        freq=234 * u.micron,
+        nside=healpix_ring.nside,
+        obs_time=time,
+        order="ring",
+    )
+    model.get_binned_emission_pix(
+        pix_nested,
+        freq=234 * u.micron,
+        nside=healpix_nested.nside,
+        obs_time=time,
+        order="nested",
+    )
+
+    model.get_binned_emission_ang(
+        lon,
+        lat,
+        lonlat=True,
+        freq=234 * u.micron,
+        nside=healpix_ring.nside,
+        obs_time=time,
+        order="ring",
+    )
+    model.get_binned_emission_ang(
+        lon,
+        lat,
+        lonlat=True,
+        freq=234 * u.micron,
+        nside=healpix_nested.nside,
+        obs_time=time,
+        order="nested",
+    )
+
+    sky_coord = coords.SkyCoord(
+        lon,
+        lat,
+        frame=coords.BarycentricMeanEcliptic,
+        obstime=time,
+    )
+
+    model.get_binned_emission_skycoord(
+        sky_coord,
+        freq=234 * u.micron,
+        nside=healpix_ring.nside,
+        order="ring",
+    )
+    model.get_binned_emission_skycoord(
+        sky_coord,
+        freq=234 * u.micron,
+        nside=healpix_nested.nside,
+        order="nested",
+    )
