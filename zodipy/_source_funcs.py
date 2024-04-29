@@ -5,28 +5,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ._constants import c, h, k_B
-
 if TYPE_CHECKING:
     import numpy.typing as npt
-
-
-def get_blackbody_emission(
-    freq: float | npt.NDArray[np.float64], T: npt.NDArray[np.float64]
-) -> npt.NDArray[np.float64]:
-    """Return the blackbody emission given a sequence of frequencies and temperatures.
-
-    Args:
-        freq: Frequency [Hz].
-        T: Temperature of the blackbody [K].
-
-    Returns:
-        Blackbody emission [W / m^2 Hz sr].
-
-    """
-    term1 = (2 * h * freq**3) / c**2
-    term2 = np.expm1((h * freq) / (k_B * T))
-    return term1 / term2
 
 
 def get_dust_grain_temperature(

@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from astropy import units
+from astropy.modeling.physical_models import BlackBody
 
 from zodipy._constants import (
     MAX_INTERPOLATION_GRID_TEMPERATURE,
     MIN_INTERPOLATION_GRID_TEMPERATURE,
     N_INTERPOLATION_POINTS,
+    SPECIFIC_INTENSITY_UNITS,
 )
-from zodipy._source_funcs import get_blackbody_emission
 from zodipy._validators import get_validated_and_normalized_weights, get_validated_freq
 
 if TYPE_CHECKING:
@@ -40,6 +41,11 @@ class Bandpass:
             self.weights = np.flip(self.weights)
             self.weights /= np.trapz(self.weights, self.frequencies.value)
 
+    @property
+    def is_center_frequency(self) -> bool:
+        """Return True if the bandpass is centered around a single frequency."""
+        return self.frequencies.isscalar
+
 
 def validate_and_get_bandpass(
     freq: units.Quantity,
@@ -64,14 +70,17 @@ def get_bandpass_interpolation_table(
     if not bandpass.frequencies.unit.is_equivalent(units.Hz):
         bandpass.switch_convention()
 
-    bandpass_integrals = np.zeros(n_points)
-    temperature_grid = np.linspace(min_temp, max_temp, n_points)
-    for idx, temp in enumerate(temperature_grid):
-        blackbody_emission = get_blackbody_emission(bandpass.frequencies.value, temp)
-        bandpass_integrals[idx] = (
-            bandpass.integrate(blackbody_emission)
-            if bandpass.frequencies.size > 1
-            else blackbody_emission
-        )
+    temperature_grid = np.linspace(min_temp, max_temp, n_points) * units.K
+    blackbody = BlackBody(temperature_grid)
 
-    return np.asarray([temperature_grid, bandpass_integrals])
+    if bandpass.is_center_frequency:
+        blackbody_emission = blackbody(bandpass.frequencies)
+        return np.asarray([temperature_grid, blackbody_emission.to_value(SPECIFIC_INTENSITY_UNITS)])
+
+    blackbody_emission = blackbody(bandpass.frequencies[:, np.newaxis])
+    integrated_blackbody_emission = np.trapz(
+        (bandpass.weights / (1 * units.Hz)) * blackbody_emission.transpose(), bandpass.frequencies
+    )
+    return np.asarray(
+        [temperature_grid, integrated_blackbody_emission.to_value(SPECIFIC_INTENSITY_UNITS)]
+    )

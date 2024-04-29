@@ -30,7 +30,7 @@ from zodipy._line_of_sight import COMPONENT_CUTOFFS
 from zodipy.model_registry import model_registry
 
 MIN_FREQ = u.Quantity(10, u.GHz)
-MAX_FREQ = u.Quantity(0.1, u.micron).to(u.GHz, equivalencies=u.spectral())
+MAX_FREQ = u.Quantity(0.6, u.micron).to(u.GHz, equivalencies=u.spectral())
 N_FREQS = 1000
 FREQ_LOG_RANGE = np.geomspace(np.log(MIN_FREQ.value), np.log(MAX_FREQ.value), N_FREQS).tolist()
 
