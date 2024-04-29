@@ -26,23 +26,30 @@ def get_sun_earth_moon_barycenter_skycoord(earth_skycoord: coords.SkyCoord) -> c
     )
 
 
-def get_earth_skycoord(obs_time: time.Time) -> coords.SkyCoord:
+def get_earth_skycoord(obs_time: time.Time, ephemeris: str) -> coords.SkyCoord:
     """Return the sky coordinates of the Earth in the heliocentric frame."""
-    return coords.get_body("earth", obs_time).transform_to(coords.HeliocentricMeanEcliptic)
+    return coords.get_body("earth", obs_time, ephemeris=ephemeris).transform_to(
+        coords.HeliocentricMeanEcliptic
+    )
 
 
 def get_obs_skycoord(
-    obs_pos: units.Quantity | str, obs_time: time.Time, earth_skycoord: coords.SkyCoord
+    obs_pos: units.Quantity | str,
+    obs_time: time.Time,
+    earth_skycoord: coords.SkyCoord,
+    ephemeris: str,
 ) -> coords.SkyCoord:
     """Return the sky coordinates of the observer in the heliocentric frame."""
     if isinstance(obs_pos, str):
         if obs_pos.lower() == "semb-l2":
             return get_sun_earth_moon_barycenter_skycoord(earth_skycoord)
-        return coords.get_body(obs_pos, obs_time).transform_to(coords.HeliocentricMeanEcliptic)
+        return coords.get_body(obs_pos, obs_time, ephemeris=ephemeris).transform_to(
+            coords.HeliocentricMeanEcliptic
+        )
 
     try:
         return coords.SkyCoord(
-            *obs_pos.to(units.AU),
+            *obs_pos,
             frame=coords.HeliocentricMeanEcliptic,
             representation_type="cartesian",
         )

@@ -37,6 +37,11 @@ class Zodipy:
     either in sky angles or through HEALPix pixels.
 
     Args:
+        freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+            a bandpass over which to evaluate the zodiacal emission. The frequencies
+            must be strictly increasing.
+        weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
+            are assumed to be given in spectral radiance units (Jy/sr).
         model (str): Name of the interplanetary dust model to use in the simulations.
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
@@ -60,27 +65,39 @@ class Zodipy:
 
     def __init__(
         self,
+        freq: units.Quantity,
+        weights: npt.ArrayLike | None = None,
         model: str = "dirbe",
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
         interp_kind: str = "linear",
-        ephemeris: str = "de432s",
+        ephemeris: str = "builtin",
         n_proc: int = 1,
     ) -> None:
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
-        self.interp_kind = interp_kind
         self.ephemeris = ephemeris
         self.n_proc = n_proc
 
         self._interpolator = functools.partial(
             interpolate.interp1d,
-            kind=self.interp_kind,
+            kind=interp_kind,
             fill_value="extrapolate" if self.extrapolate else np.nan,
         )
         self._ipd_model = model_registry.get_model(model)
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
+
+        bandpass = validate_and_get_bandpass(
+            freq=freq,
+            weights=weights,
+            model=self._ipd_model,
+            extrapolate=self.extrapolate,
+        )
+        self.bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
+        self.source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
+            bandpass, self._ipd_model, self._interpolator
+        )
 
     @property
     def supported_observers(self) -> list[str]:
@@ -117,8 +134,6 @@ class Zodipy:
         self,
         coord: coords.SkyCoord,
         *,
-        freq: units.Quantity,
-        weights: npt.ArrayLike | None = None,
         obs_pos: units.Quantity | str = "earth",
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
@@ -131,11 +146,6 @@ class Zodipy:
                 observational time for which the zodiacal light is assumed to be stationary.
                 Additionally, the frame must be convertible to
                 `astropy.coordinates.BarycentricMeanEcliptic`.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
@@ -158,8 +168,6 @@ class Zodipy:
         )
 
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_pos=obs_pos,
             obs_time=obs_time,
             coordinates=coord,
@@ -173,11 +181,9 @@ class Zodipy:
         phi: units.Quantity,
         *,
         lonlat: bool = False,
-        freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
         coord_in: Literal["E", "G", "C"] = "E",
-        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal emission given angles on the sky.
@@ -194,17 +200,12 @@ class Zodipy:
                 with degrees.
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
 
         Returns:
@@ -218,8 +219,6 @@ class Zodipy:
         coordinates = coords.SkyCoord(theta, phi, frame=frame)
 
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_time=obs_time,
             obs_pos=obs_pos,
             coordinates=coordinates,
@@ -232,11 +231,9 @@ class Zodipy:
         pixels: npt.ArrayLike,
         *,
         nside: int,
-        freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
         coord_in: Literal["E", "G", "C"] = "E",
-        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
         order: Literal["ring", "nested"] = "ring",
     ) -> units.Quantity[units.MJy / units.sr]:
@@ -248,17 +245,12 @@ class Zodipy:
         Args:
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             order: Order of the HEALPix grid.
 
@@ -272,8 +264,6 @@ class Zodipy:
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
 
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_time=obs_time,
             obs_pos=obs_pos,
             coordinates=coordinates,
@@ -286,8 +276,6 @@ class Zodipy:
         coord: coords.SkyCoord,
         *,
         nside: int,
-        freq: units.Quantity,
-        weights: npt.ArrayLike | None = None,
         obs_pos: units.Quantity | str = "earth",
         return_comps: bool = False,
         order: Literal["ring", "nested"] = "ring",
@@ -303,11 +291,6 @@ class Zodipy:
                 Additionally, the frame must be convertible to
                 `astropy.coordinates.BarycentricMeanEcliptic`.
             nside: HEALPix resolution parameter of the pixels and the binned map.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
@@ -333,8 +316,6 @@ class Zodipy:
         )
         healpix = hp.HEALPix(nside, order=order, frame=coord.frame)
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_pos=obs_pos,
             obs_time=obs_time,
             coordinates=coord,
@@ -351,11 +332,9 @@ class Zodipy:
         *,
         lonlat: bool = False,
         nside: int,
-        freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
         coord_in: Literal["E", "G", "C"] = "E",
-        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
         order: Literal["ring", "nested"] = "ring",
         solar_cut: units.Quantity | None = None,
@@ -374,17 +353,12 @@ class Zodipy:
                 celestial sphere. Must be in the range [0, 2π] rad. Units must be either
                 radians or degrees.
             nside: HEALPix resolution parameter of the pixels and the binned map.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -407,8 +381,6 @@ class Zodipy:
         )
 
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_time=obs_time,
             obs_pos=obs_pos,
             coordinates=coordinates,
@@ -423,11 +395,9 @@ class Zodipy:
         pixels: npt.ArrayLike,
         *,
         nside: int,
-        freq: units.Quantity,
         obs_time: time.Time,
         obs_pos: units.Quantity | str = "earth",
         coord_in: Literal["E", "G", "C"] = "E",
-        weights: npt.ArrayLike | None = None,
         return_comps: bool = False,
         order: Literal["ring", "nested"] = "ring",
         solar_cut: units.Quantity | None = None,
@@ -441,17 +411,12 @@ class Zodipy:
         Args:
             pixels: HEALPix pixel indicies representing points on the celestial sphere.
             nside: HEALPix resolution parameter of the pixels and the binned map.
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
             obs_time: Time of observation. This should be a single observational time.
             obs_pos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
                 coordinates) by default.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             order: Order of the HEALPix grid.
             solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
@@ -467,8 +432,6 @@ class Zodipy:
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
 
         return self._compute_emission(
-            freq=freq,
-            weights=weights,
             obs_time=obs_time,
             obs_pos=obs_pos,
             coordinates=coordinates,
@@ -480,8 +443,6 @@ class Zodipy:
 
     def _compute_emission(
         self,
-        freq: units.Quantity,
-        weights: npt.ArrayLike | None,
         obs_time: time.Time,
         obs_pos: units.Quantity | str,
         coordinates: coords.SkyCoord,
@@ -491,21 +452,8 @@ class Zodipy:
         solar_cut: units.Quantity | None = None,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Compute the zodiacal light for a given configuration."""
-        bandpass = validate_and_get_bandpass(
-            freq=freq,
-            weights=weights,
-            model=self._ipd_model,
-            extrapolate=self.extrapolate,
-        )
-
-        # Get model parameters, some of which have been interpolated to the given
-        # frequency or bandpass.
-        source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
-            bandpass, self._ipd_model, self._interpolator
-        )
-
-        earth_skycoord = get_earth_skycoord(obs_time)
-        obs_skycoord = get_obs_skycoord(obs_pos, obs_time, earth_skycoord)
+        earth_skycoord = get_earth_skycoord(obs_time, ephemeris=self.ephemeris)
+        obs_skycoord = get_obs_skycoord(obs_pos, obs_time, earth_skycoord, ephemeris=self.ephemeris)
 
         # Rotate to ecliptic coordinates to evaluate zodiacal light model
         coordinates = coordinates.transform_to(coords.BarycentricMeanEcliptic)
@@ -516,23 +464,23 @@ class Zodipy:
         start, stop = get_line_of_sight_range(
             components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
-            obs_pos=obs_skycoord.cartesian.xyz.value,
+            obs_pos=obs_skycoord.cartesian.xyz.to_value(units.AU),
         )
 
         density_partials = construct_density_partials_comps(
             comps=self._ipd_model.comps,
             dynamic_params={
-                "X_earth": earth_skycoord.cartesian.xyz.value[:, np.newaxis, np.newaxis]
+                "X_earth": earth_skycoord.cartesian.xyz.to_value(units.AU)[
+                    :, np.newaxis, np.newaxis
+                ]
             },
         )
 
-        bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
-
         common_integrand = functools.partial(
             EMISSION_MAPPING[type(self._ipd_model)],
-            X_obs=obs_skycoord.cartesian.xyz.value[:, np.newaxis, np.newaxis],
-            bp_interpolation_table=bandpass_interpolatation_table,
-            **source_parameters["common"],
+            X_obs=obs_skycoord.cartesian.xyz.to_value(units.AU)[:, np.newaxis, np.newaxis],
+            bp_interpolation_table=self.bandpass_interpolatation_table,
+            **self.source_parameters["common"],
         )
 
         # Parallelize the line-of-sight integrals if more than one processor is used and the
@@ -556,7 +504,7 @@ class Zodipy:
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
                             get_density_function=density_partials[comp_label],
-                            **source_parameters[comp_label],
+                            **self.source_parameters[comp_label],
                         )
                         for unit_vectors, start, stop in zip(
                             unit_vector_chunks, start_chunks, stop_chunks
@@ -588,7 +536,7 @@ class Zodipy:
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
                     get_density_function=density_partials[comp_label],
-                    **source_parameters[comp_label],
+                    **self.source_parameters[comp_label],
                 )
 
                 integrated_comp_emission[idx] = (
