@@ -256,7 +256,7 @@ def zodipy_models(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodip
         w = draw(weights(frequencies))
     else:
         frequencies = static_params.pop(
-            "freq", draw(freqs(min=min_freq, max=max_freq, extrapolate=extrapolate))
+            "freq", draw(freqs(min_freq=min_freq, max_freq=max_freq, extrapolate=extrapolate))
         )
         w = None
 
