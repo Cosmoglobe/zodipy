@@ -11,8 +11,7 @@ from zodipy.comps import RRM
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-
-DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floating]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),
     ComponentLabel.BAND1: (R_0, R_JUPITER),
     ComponentLabel.BAND2: (R_0, R_JUPITER),
@@ -21,7 +20,7 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
     ComponentLabel.FEATURE: (R_EARTH - 0.2, R_EARTH + 0.2),
 }
 
-RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float]] = {
+RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floating]] = {
     ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),  # type: ignore
     ComponentLabel.INNER_NARROW_BAND: (
         RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,  # type: ignore
@@ -53,12 +52,7 @@ def get_sphere_intersection(
     unit_vectors: npt.NDArray[np.float64],
     cutoff: float | np.float64,
 ) -> npt.NDArray[np.float64]:
-    """Get RMAX per pixel.
-
-    Given the observer position, return distance from the observer to the
-    intersection between the line-of-sights and a heliocentric sphere with radius `cutoff`.
-
-    """
+    """Returns the distance from the observer to a heliocentric sphere with radius `cutoff`."""
     x, y, z = obs_pos.flatten()
     r_obs = np.sqrt(x**2 + y**2 + z**2)
 
@@ -78,7 +72,7 @@ def get_sphere_intersection(
     return np.maximum(q, c / q)
 
 
-def get_line_of_sight_start_and_stop_distances(
+def get_line_of_sight_range(
     components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
     obs_pos: npt.NDArray[np.float64],
@@ -86,7 +80,7 @@ def get_line_of_sight_start_and_stop_distances(
     dict[ComponentLabel, npt.NDArray[np.float64]],
     dict[ComponentLabel, npt.NDArray[np.float64]],
 ]:
-    """Get the start and stop distances for each component."""
+    """Return the component-wise start- and end-point of each line of sight."""
     start = {
         comp: get_sphere_intersection(obs_pos, unit_vectors, COMPONENT_CUTOFFS[comp][0])
         for comp in components

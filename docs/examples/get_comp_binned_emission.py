@@ -1,3 +1,5 @@
+from multiprocessing import cpu_count
+
 import astropy.units as u
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -6,15 +8,15 @@ from astropy.time import Time
 
 from zodipy import Zodipy
 
-model = Zodipy("dirbe")
+model = Zodipy("dirbe", n_proc=cpu_count())
 nside = 256
 
 binned_emission = model.get_binned_emission_pix(
-    25 * u.micron,
-    pixels=np.arange(hp.nside2npix(nside)),
+    np.arange(hp.nside2npix(nside)),
+    freq=25 * u.micron,
     nside=nside,
     obs_time=Time("2022-01-01"),
-    obs="earth",
+    obs_pos="earth",
     return_comps=True,
 )
 fig = plt.figure(figsize=(8, 6.5), constrained_layout=True)
@@ -29,5 +31,4 @@ for idx, binned_comp_emission in enumerate(binned_emission):
         sub=(3, 2, idx + 1),
         fig=fig,
     )
-# plt.savefig("../img/binned_comp.png", dpi=300)
 plt.show()

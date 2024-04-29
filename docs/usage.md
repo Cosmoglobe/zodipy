@@ -49,10 +49,9 @@ Note that the bandpass weights must be in spectral radiance units (Jy/sr), even 
 ![Center frequency emission](img/center_freq.png)
 ![Bandpass integrated emission](img/bandpass_integrated.png)
 
-### Solar cutoff angle
-Few experiments look directly in towards the Sun. We can initialize `Zodipy` with the `solar_cut` 
-argument to mask all input pointing that looks in towards the sun with an angular distance smaller 
-than the `solar_cut` value.
+### Solar cutoff
+In the case where the user wishes to bin a set of observations into a HEALPix map, using the `*_binned_*` API functions,
+a solar cutoff angle can be specified to mask out the all pixels closer to the Sun by some angle given by `solar_cut`
 
 ```python hl_lines="9"
 {!examples/get_binned_emission_solar_cutoff.py!}

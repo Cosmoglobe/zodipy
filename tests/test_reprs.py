@@ -2,10 +2,10 @@ from hypothesis import given
 
 from zodipy.zodipy import Zodipy
 
-from ._strategies import model
+from ._strategies import zodipy_models
 
 
-@given(model())
+@given(zodipy_models())
 def test_ipd_model_repr(model: Zodipy) -> None:
     """Tests that the IPD model has a userfriendly repr."""
     repr(model)

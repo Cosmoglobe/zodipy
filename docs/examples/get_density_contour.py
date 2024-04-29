@@ -26,5 +26,4 @@ plt.pcolormesh(
 plt.title("Cross section of the interplanetary dust density (yz-plane)")
 plt.xlabel("x [AU]")
 plt.ylabel("z [AU]")
-# plt.savefig("../img/density_grid.png", dpi=300)
 plt.show()
