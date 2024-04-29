@@ -46,18 +46,18 @@ class Zodipy:
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the line-of-sight integral in the simulations. Default is 50 points.
-        interp_kind (str): Interpolation kind used to interpolate relevant model parameters.
-            Defaults to 'linear'. For more information on available interpolation methods,
-            please visit the [Scipy documentation](
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html).
+        interp_kind (str): Interpolation kind used in `scipy.interpolate.interp1d` to interpolate
+            spectral paramters (see [Scipy documentation](
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html)).
+            Defaults to 'linear'.
         extrapolate (bool): If `True` all spectral quantities in the selected model are
             extrapolated to the requested frequencies or wavelengths. If `False`, an
             exception is raised on requested frequencies/wavelengths outside of the
             valid model range. Default is `False`.
-        ephemeris (str): Ephemeris used to compute the positions of the observer and the
-            Earth. Defaults to 'de432s', which requires downloading (and caching) a ~10MB
-            file. For more information on available ephemeridis, please visit the [Astropy
-            documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
+        ephemeris (str): Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to compute
+            the positions of the observer and the Earth. Defaults to 'builtin'. See the
+            [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
+            for available ephemerides.
         n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
             integrals are parallelized using the `multiprocessing` module. Defaults to 1.
 
@@ -99,37 +99,6 @@ class Zodipy:
             bandpass, self._ipd_model, self._interpolator
         )
 
-    @property
-    def supported_observers(self) -> list[str]:
-        """Return a list of available observers given an ephemeris."""
-        return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
-
-    def get_parameters(self) -> dict:
-        """Return a dictionary containing the interplanetary dust model parameters."""
-        return self._ipd_model.to_dict()
-
-    def update_parameters(self, parameters: dict) -> None:
-        """Update the interplanetary dust model parameters.
-
-        Args:
-            parameters: Dictionary of parameters to update. The keys must be the names
-                of the parameters as defined in the model. To get the parameters dict
-                of an existing model, use `Zodipy("dirbe").get_parameters()`.
-
-        """
-        _dict = parameters.copy()
-        _dict["comps"] = {}
-        for key, value in parameters.items():
-            if key == "comps":
-                for comp_key, comp_value in value.items():
-                    _dict["comps"][ComponentLabel(comp_key)] = type(
-                        self._ipd_model.comps[ComponentLabel(comp_key)]
-                    )(**comp_value)
-            elif isinstance(value, dict):
-                _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
-
-        self._ipd_model = self._ipd_model.__class__(**_dict)
-
     def get_emission_skycoord(
         self,
         coord: coords.SkyCoord,
@@ -160,10 +129,16 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
+
         obs_time = coord.obstime
+        if obs_time is None:
+            msg = "The `obstime` attribute of the `SkyCoord` object must be set."
+            raise ValueError(msg)
+
         coord = coords.SkyCoord(
-            unique_lon * units.deg,
-            unique_lat * units.deg,
+            unique_lon,
+            unique_lat,
+            unit=units.deg,
             frame=coord.frame,
         )
 
@@ -296,8 +271,8 @@ class Zodipy:
                 correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             order: Order of the HEALPix grid.
-            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
-                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
+            solar_cut: Angular distance around the Sun for which all pointing are discarded.
+                Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
@@ -308,10 +283,16 @@ class Zodipy:
             return_inverse=True,
             axis=1,
         )
+
         obs_time = coord.obstime
+        if obs_time is None:
+            msg = "The `obstime` attribute of the `SkyCoord` object must be set."
+            raise ValueError(msg)
+
         coord = coords.SkyCoord(
-            unique_lon * units.deg,
-            unique_lat * units.deg,
+            unique_lon,
+            unique_lat,
+            unit=units.deg,
             frame=coord.frame,
         )
         healpix = hp.HEALPix(nside, order=order, frame=coord.frame)
@@ -363,8 +344,8 @@ class Zodipy:
                 latitude, otherwise, they are co-latitude and longitude.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             order: Order of the HEALPix grid.
-            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
-                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
+            solar_cut: Angular distance around the Sun for which all pointing are discarded.
+                Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
@@ -419,8 +400,8 @@ class Zodipy:
                 coordinates) by default.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
             order: Order of the HEALPix grid.
-            solar_cut: Cutoff angle from the sun. The emission for all the pointing with angular
-                distance between the sun smaller than `solar_cut` are masked. Defaults to `None`.
+            solar_cut: Angular distance around the Sun for which all pointing are discarded.
+                Defaults to `None`.
 
         Returns:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
@@ -457,6 +438,18 @@ class Zodipy:
 
         # Rotate to ecliptic coordinates to evaluate zodiacal light model
         coordinates = coordinates.transform_to(coords.BarycentricMeanEcliptic)
+
+        # For binned emission, remove all coordinates within the solar cut
+        if healpix is not None and solar_cut is not None:
+            sun_skycoord = coords.SkyCoord(
+                obs_skycoord.spherical.lon + 180 * units.deg,
+                obs_skycoord.spherical.lat,
+                frame=coords.BarycentricMeanEcliptic,
+            )
+            angular_distance = coordinates.separation(sun_skycoord)
+            solar_mask = angular_distance < solar_cut
+            coordinates = coordinates[~solar_mask]
+
         unit_vectors = coordinates.cartesian.xyz.value
 
         # Get the integration limits for each zodiacal component (which may be
@@ -550,16 +543,6 @@ class Zodipy:
             emission = np.zeros((len(self._ipd_model.comps), healpix.npix))
             pixels = healpix.skycoord_to_healpix(coordinates)
             emission[:, pixels] = integrated_comp_emission
-            if solar_cut is not None:
-                sun_skycoord = coords.SkyCoord(
-                    obs_skycoord.spherical.lon + 180 * units.deg,
-                    obs_skycoord.spherical.lat,
-                    frame=coords.BarycentricMeanEcliptic,
-                )
-                angular_distance = coordinates.separation(sun_skycoord)
-                solar_mask = angular_distance < solar_cut
-                emission[:, pixels[solar_mask]] = np.nan
-
         else:
             emission = np.zeros((len(self._ipd_model.comps), indicies.size))
             emission = integrated_comp_emission[:, indicies]
@@ -567,6 +550,37 @@ class Zodipy:
         emission = (emission << SPECIFIC_INTENSITY_UNITS).to(units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
+
+    @property
+    def supported_observers(self) -> list[str]:
+        """Return a list of available observers given an ephemeris."""
+        return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
+
+    def get_parameters(self) -> dict:
+        """Return a dictionary containing the interplanetary dust model parameters."""
+        return self._ipd_model.to_dict()
+
+    def update_parameters(self, parameters: dict) -> None:
+        """Update the interplanetary dust model parameters.
+
+        Args:
+            parameters: Dictionary of parameters to update. The keys must be the names
+                of the parameters as defined in the model. To get the parameters dict
+                of an existing model, use `Zodipy("dirbe").get_parameters()`.
+
+        """
+        _dict = parameters.copy()
+        _dict["comps"] = {}
+        for key, value in parameters.items():
+            if key == "comps":
+                for comp_key, comp_value in value.items():
+                    _dict["comps"][ComponentLabel(comp_key)] = type(
+                        self._ipd_model.comps[ComponentLabel(comp_key)]
+                    )(**comp_value)
+            elif isinstance(value, dict):
+                _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
+
+        self._ipd_model = self._ipd_model.__class__(**_dict)
 
     def __repr__(self) -> str:
         repr_str = f"{self.__class__.__name__}("
