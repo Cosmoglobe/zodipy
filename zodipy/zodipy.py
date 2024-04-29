@@ -9,7 +9,7 @@ import astropy.units as u
 import healpy as hp
 import numpy as np
 from astropy.coordinates import solar_system_ephemeris
-from scipy.interpolate import interp1d
+from scipy.interpolate import CubicSpline
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
@@ -45,10 +45,6 @@ class Zodipy:
             Defaults to DIRBE.
         gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
             the line-of-sight integral in the simulations. Default is 50 points.
-        interp_kind (str): Interpolation kind used to interpolate relevant model parameters.
-            Defaults to 'linear'. For more information on available interpolation methods,
-            please visit the [Scipy documentation](
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html).
         extrapolate (bool): If `True` all spectral quantities in the selected model are
             extrapolated to the requested frequencies or wavelengths. If `False`, an
             exception is raised on requested frequencies/wavelengths outside of the
@@ -72,7 +68,6 @@ class Zodipy:
         model: str = "dirbe",
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
-        interp_kind: str = "linear",
         ephemeris: str = "de432s",
         solar_cut: u.Quantity[u.deg] | None = None,
         solar_cut_fill_value: float = np.nan,
@@ -81,16 +76,15 @@ class Zodipy:
         self.model = model
         self.gauss_quad_degree = gauss_quad_degree
         self.extrapolate = extrapolate
-        self.interp_kind = interp_kind
         self.ephemeris = ephemeris
         self.solar_cut = solar_cut.to(u.rad) if solar_cut is not None else solar_cut
         self.solar_cut_fill_value = solar_cut_fill_value
         self.n_proc = n_proc
 
         self._interpolator = partial(
-            interp1d,
-            kind=self.interp_kind,
-            fill_value="extrapolate" if self.extrapolate else np.nan,
+            CubicSpline,
+            extrapolate=True,
+            bc_type="natural",
         )
         self._ipd_model = model_registry.get_model(model)
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)

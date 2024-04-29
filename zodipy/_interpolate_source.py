@@ -27,13 +27,13 @@ def get_source_parameters_kelsall_comp(
     if not bandpass.frequencies.unit.is_equivalent(model.spectrum.unit):
         bandpass.switch_convention()
 
-    spectrum = (
+    center_freqs = (
         model.spectrum.to_value(u.Hz)
         if model.spectrum.unit.is_equivalent(u.Hz)
         else model.spectrum.to_value(u.micron)
     )
 
-    interpolator = partial(interpolator, x=spectrum)
+    interpolator = partial(interpolator, x=center_freqs)
 
     source_parameters: dict[ComponentLabel | str, dict[str, Any]] = {}
     for comp_label in model.comps:
@@ -52,11 +52,11 @@ def get_source_parameters_kelsall_comp(
         source_parameters[comp_label]["albedo"] = albedo
 
     if model.phase_coefficients is not None:
-        phase_coefficients = interpolator(y=np.asarray(model.phase_coefficients))(
-            bandpass.frequencies.value
-        )
-        phase_coefficients = interpolator(y=np.asarray(model.phase_coefficients))(
-            bandpass.frequencies.value
+        phase_coefficients = np.array(
+            [
+                interpolator(y=np.asarray(model.phase_coefficients[i]))(bandpass.frequencies.value)
+                for i in range(len(model.phase_coefficients))
+            ]
         )
     else:
         phase_coefficients = np.repeat(np.zeros((3, 1)), repeats=bandpass.frequencies.size, axis=-1)
