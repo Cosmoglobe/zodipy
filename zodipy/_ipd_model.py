@@ -42,6 +42,10 @@ class InterplanetaryDustModel(ABC):
 
         return _dict
 
+    @property
+    def ncomps(self) -> int:
+        return len(self.comps)
+
 
 @dataclass
 class Kelsall(InterplanetaryDustModel):

@@ -11,7 +11,7 @@ from ._strategies import zodipy_models
 
 
 @given(
-    zodipy_models(),
+    zodipy_models(model="DIRBE"),
     integers(min_value=10, max_value=200),
     floats(min_value=2, max_value=10),
     floats(min_value=2, max_value=10),
@@ -34,7 +34,7 @@ def test_tabulated_density(
     grid_array = np.asarray(grid_regular)
     grid = random.choice([grid_array, grid_regular])
 
-    assert tabulate_density(grid, model=model.model).shape == (
+    assert tabulate_density(grid, model="DIRBE").shape == (
         len(model._ipd_model.comps),
         n_grid_points,
         n_grid_points,

@@ -22,25 +22,25 @@ def test_validate_frequencies(model: Zodipy) -> None:
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value,
             model=model._ipd_model,
-            extrapolate=model.extrapolate,
+            extrapolate=False,
         )
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=25,
             model=model._ipd_model,
-            extrapolate=model.extrapolate,
+            extrapolate=False,
         )
     with pytest.raises(units.UnitsError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value * units.g,
             model=model._ipd_model,
-            extrapolate=model.extrapolate,
+            extrapolate=False,
         )
     with pytest.raises(units.UnitsError):
         get_validated_freq(
             freq=25 * units.g,
             model=model._ipd_model,
-            extrapolate=model.extrapolate,
+            extrapolate=False,
         )
 
 
@@ -112,40 +112,35 @@ def test_validate_weights_shape() -> None:
 def test_extrapolate_raises_error() -> None:
     """Tests that an error is correctly raised when extrapolation is not allowed."""
     with pytest.raises(ValueError):
-        model = Zodipy("dirbe")
-        model.get_emission_pix([1, 4, 5], freq=400 * units.micron, nside=32, obs_time=OBS_TIME)
+        model = Zodipy(freq=400 * units.micron, model="dirbe")
+        model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
-    model = Zodipy("dirbe", extrapolate=True)
-    model.get_emission_pix([1, 4, 5], freq=400 * units.micron, nside=32, obs_time=OBS_TIME)
+    model = Zodipy(freq=400 * units.micron, model="dirbe", extrapolate=True)
+    model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
 def test_interp_kind() -> None:
     """Tests that the interpolation kind can be passed in."""
-    model = Zodipy("dirbe", interp_kind="linear")
-    linear = model.get_emission_pix([1, 4, 5], freq=27 * units.micron, nside=32, obs_time=OBS_TIME)
+    model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="linear")
+    linear = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
-    model = Zodipy("dirbe", interp_kind="quadratic")
-    quadratic = model.get_emission_pix(
-        [1, 4, 5], freq=27 * units.micron, nside=32, obs_time=OBS_TIME
-    )
+    model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="quadratic")
+    quadratic = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
     assert not np.allclose(linear, quadratic)
 
     with pytest.raises(NotImplementedError):
-        model = Zodipy("dirbe", interp_kind="sdfs")
-        model.get_emission_pix(
-            pixels=[1, 4, 5], freq=27 * units.micron, nside=32, obs_time=OBS_TIME
-        )
+        model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="sdfs")
+        model.get_emission_pix(pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
 def test_wrong_frame() -> None:
     """Tests that an error is correctly raised when an incorrect frame is passed in."""
-    model = Zodipy()
+    model = Zodipy(freq=27 * units.micron)
     with pytest.raises(ValueError):
         model.get_emission_pix(
             [1, 4, 5],
             nside=32,
-            freq=27 * units.micron,
             obs_time=OBS_TIME,
             coord_in="not a valid frame",
         )
@@ -153,11 +148,10 @@ def test_wrong_frame() -> None:
 
 def test_non_quantity_ang_raises_error() -> None:
     """Tests that an error is correctly raised if the user inputed angles are not Quantities."""
-    model = Zodipy()
+    model = Zodipy(freq=27 * units.micron)
     with pytest.raises(TypeError):
         model.get_emission_ang(
             32,
             12,
-            freq=27 * units.micron,
             obs_time=OBS_TIME,
         )

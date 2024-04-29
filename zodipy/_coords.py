@@ -5,7 +5,7 @@ from astropy import time, units
 
 from zodipy._constants import DISTANCE_FROM_EARTH_TO_SEMB_L2
 
-__all__ = ["get_earth_skycoord", "get_obs_skycoord", "get_frame_from_string"]
+__all__ = ["get_earth_skycoord", "get_obs_skycoord", "string_to_coordinate_frame"]
 
 
 def get_sun_earth_moon_barycenter_skycoord(earth_skycoord: coords.SkyCoord) -> coords.SkyCoord:
@@ -58,7 +58,7 @@ def get_obs_skycoord(
         raise TypeError(msg) from AttributeError
 
 
-def get_frame_from_string(frame_literal: str) -> type[coords.BaseCoordinateFrame]:
+def string_to_coordinate_frame(frame_literal: str) -> type[coords.BaseCoordinateFrame]:
     """Return the appropriate astropy coordinate frame class from a string literal."""
     if frame_literal == "E":
         return coords.BarycentricMeanEcliptic

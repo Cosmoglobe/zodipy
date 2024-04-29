@@ -13,7 +13,7 @@ from scipy import interpolate
 
 from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
 from zodipy._constants import SPECIFIC_INTENSITY_UNITS
-from zodipy._coords import get_earth_skycoord, get_frame_from_string, get_obs_skycoord
+from zodipy._coords import get_earth_skycoord, get_obs_skycoord, string_to_coordinate_frame
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_comps import ComponentLabel
@@ -31,36 +31,12 @@ SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
 
 
 class Zodipy:
-    """Interface for simulating zodiacal emission.
+    """Main interface to ZodiPy.
 
-    This class provides methods for simulating zodiacal emission given observer pointing
-    either in sky angles or through HEALPix pixels.
-
-    Args:
-        freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-            a bandpass over which to evaluate the zodiacal emission. The frequencies
-            must be strictly increasing.
-        weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-            are assumed to be given in spectral radiance units (Jy/sr).
-        model (str): Name of the interplanetary dust model to use in the simulations.
-            Defaults to DIRBE.
-        gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
-            the line-of-sight integral in the simulations. Default is 50 points.
-        interp_kind (str): Interpolation kind used in `scipy.interpolate.interp1d` to interpolate
-            spectral paramters (see [Scipy documentation](
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html)).
-            Defaults to 'linear'.
-        extrapolate (bool): If `True` all spectral quantities in the selected model are
-            extrapolated to the requested frequencies or wavelengths. If `False`, an
-            exception is raised on requested frequencies/wavelengths outside of the
-            valid model range. Default is `False`.
-        ephemeris (str): Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to compute
-            the positions of the observer and the Earth. Defaults to 'builtin'. See the
-            [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
-            for available ephemerides.
-        n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
-            integrals are parallelized using the `multiprocessing` module. Defaults to 1.
-
+    The zodiacal light simulations are configured by specifying a bandpass (`freq`, `weights`)
+    or a delta/center frequency (`freq`), and a string representation of a built in interplanetary
+    dust model (`model`). See https://cosmoglobe.github.io/zodipy/introduction/ for a list of
+    available models.
     """
 
     def __init__(
@@ -74,16 +50,40 @@ class Zodipy:
         ephemeris: str = "builtin",
         n_proc: int = 1,
     ) -> None:
-        self.model = model
-        self.gauss_quad_degree = gauss_quad_degree
-        self.extrapolate = extrapolate
+        """Initialize the Zodipy interface.
+
+        Args:
+            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
+                a bandpass over which to evaluate the zodiacal emission. The frequencies
+                must be strictly increasing.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
+                are assumed to be given in spectral radiance units (Jy/sr).
+            model (str): Name of the interplanetary dust model to use in the simulations.
+                Defaults to DIRBE.
+            gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
+                the line-of-sight integral in the simulations. Default is 50 points.
+            interp_kind (str): Interpolation kind used in `scipy.interpolate.interp1d` to
+                interpolate spectral paramters (see [Scipy documentation](
+                https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html)).
+                Defaults to 'linear'.
+            extrapolate (bool): If `True` all spectral quantities in the selected model are
+                extrapolated to the requested frequencies or wavelengths. If `False`, an
+                exception is raised on requested frequencies/wavelengths outside of the
+                valid model range. Default is `False`.
+            ephemeris (str): Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to
+                compute the positions of the observer and the Earth. Defaults to 'builtin'. See the
+                [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
+                for available ephemerides.
+            n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
+                integrals are parallelized using the `multiprocessing` module. Defaults to 1.
+        """
         self.ephemeris = ephemeris
         self.n_proc = n_proc
 
         self._interpolator = functools.partial(
             interpolate.interp1d,
             kind=interp_kind,
-            fill_value="extrapolate" if self.extrapolate else np.nan,
+            fill_value="extrapolate" if extrapolate else np.nan,
         )
         self._ipd_model = model_registry.get_model(model)
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
@@ -92,10 +92,10 @@ class Zodipy:
             freq=freq,
             weights=weights,
             model=self._ipd_model,
-            extrapolate=self.extrapolate,
+            extrapolate=extrapolate,
         )
-        self.bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
-        self.source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
+        self._bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
+        self._source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
             bandpass, self._ipd_model, self._interpolator
         )
 
@@ -190,7 +190,7 @@ class Zodipy:
         theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
 
         (theta, phi), indicies = np.unique(np.stack([theta, phi]), return_inverse=True, axis=1)
-        frame = get_frame_from_string(coord_in)
+        frame = string_to_coordinate_frame(coord_in)
         coordinates = coords.SkyCoord(theta, phi, frame=frame)
 
         return self._compute_emission(
@@ -233,7 +233,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        frame = get_frame_from_string(coord_in)
+        frame = string_to_coordinate_frame(coord_in)
         healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
         unique_pixels, indicies = np.unique(pixels, return_inverse=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
@@ -352,7 +352,7 @@ class Zodipy:
 
         """
         theta, phi = get_validated_ang(theta, phi, lonlat=lonlat)
-        frame = get_frame_from_string(coord_in)
+        frame = string_to_coordinate_frame(coord_in)
         healpix = hp.HEALPix(nside, order=order, frame=frame)
         (theta, phi), counts = np.unique(np.vstack([theta, phi]), return_counts=True, axis=1)
         coordinates = coords.SkyCoord(
@@ -407,7 +407,7 @@ class Zodipy:
             emission: Simulated zodiacal emission in units of 'MJy/sr'.
 
         """
-        frame = get_frame_from_string(coord_in)
+        frame = string_to_coordinate_frame(coord_in)
         healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
         unique_pixels, counts = np.unique(pixels, return_counts=True)
         coordinates = healpix.healpix_to_skycoord(unique_pixels)
@@ -436,11 +436,13 @@ class Zodipy:
         earth_skycoord = get_earth_skycoord(obs_time, ephemeris=self.ephemeris)
         obs_skycoord = get_obs_skycoord(obs_pos, obs_time, earth_skycoord, ephemeris=self.ephemeris)
 
-        # Rotate to ecliptic coordinates to evaluate zodiacal light model
         coordinates = coordinates.transform_to(coords.BarycentricMeanEcliptic)
 
-        # For binned emission, remove all coordinates within the solar cut
-        if healpix is not None and solar_cut is not None:
+        bin_output_to_healpix_map = healpix is not None
+        filter_coords_by_solar_cut = solar_cut is not None
+        distribute_to_cores = self.n_proc > 1 and coordinates.size > self.n_proc
+
+        if bin_output_to_healpix_map and filter_coords_by_solar_cut:
             sun_skycoord = coords.SkyCoord(
                 obs_skycoord.spherical.lon + 180 * units.deg,
                 obs_skycoord.spherical.lat,
@@ -452,8 +454,6 @@ class Zodipy:
 
         unit_vectors = coordinates.cartesian.xyz.value
 
-        # Get the integration limits for each zodiacal component (which may be
-        # different or the same depending on the model) along all line of sights.
         start, stop = get_line_of_sight_range(
             components=self._ipd_model.comps.keys(),
             unit_vectors=unit_vectors,
@@ -472,15 +472,14 @@ class Zodipy:
         common_integrand = functools.partial(
             EMISSION_MAPPING[type(self._ipd_model)],
             X_obs=obs_skycoord.cartesian.xyz.to_value(units.AU)[:, np.newaxis, np.newaxis],
-            bp_interpolation_table=self.bandpass_interpolatation_table,
-            **self.source_parameters["common"],
+            bp_interpolation_table=self._bandpass_interpolatation_table,
+            **self._source_parameters["common"],
         )
 
-        # Parallelize the line-of-sight integrals if more than one processor is used and the
-        # number of unique observations is greater than the number of processors.
-        if self.n_proc > 1 and unit_vectors.shape[-1] > self.n_proc:
+        if distribute_to_cores:
             unit_vector_chunks = np.array_split(unit_vectors, self.n_proc, axis=-1)
-            integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
+            integrated_comp_emission = np.zeros((self._ipd_model.ncomps, coordinates.size))
+
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=self.n_proc
             ) as pool:
@@ -497,7 +496,7 @@ class Zodipy:
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
                             get_density_function=density_partials[comp_label],
-                            **self.source_parameters[comp_label],
+                            **self._source_parameters[comp_label],
                         )
                         for unit_vectors, start, stop in zip(
                             unit_vector_chunks, start_chunks, stop_chunks
@@ -519,7 +518,7 @@ class Zodipy:
                     )
 
         else:
-            integrated_comp_emission = np.zeros((len(self._ipd_model.comps), unit_vectors.shape[1]))
+            integrated_comp_emission = np.zeros((self._ipd_model.ncomps, coordinates.size))
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
             for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
@@ -529,7 +528,7 @@ class Zodipy:
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
                     get_density_function=density_partials[comp_label],
-                    **self.source_parameters[comp_label],
+                    **self._source_parameters[comp_label],
                 )
 
                 integrated_comp_emission[idx] = (
@@ -538,13 +537,12 @@ class Zodipy:
                     * (stop[comp_label] - start[comp_label])
                 )
 
-        # Output is requested to be binned
-        if healpix:
-            emission = np.zeros((len(self._ipd_model.comps), healpix.npix))
-            pixels = healpix.skycoord_to_healpix(coordinates)
+        if bin_output_to_healpix_map:
+            emission = np.zeros((self._ipd_model.ncomps, healpix.npix))  # type: ignore
+            pixels = healpix.skycoord_to_healpix(coordinates)  # type: ignore
             emission[:, pixels] = integrated_comp_emission
         else:
-            emission = np.zeros((len(self._ipd_model.comps), indicies.size))
+            emission = np.zeros((self._ipd_model.ncomps, indicies.size))
             emission = integrated_comp_emission[:, indicies]
 
         emission = (emission << SPECIFIC_INTENSITY_UNITS).to(units.MJy / units.sr)
@@ -554,7 +552,8 @@ class Zodipy:
     @property
     def supported_observers(self) -> list[str]:
         """Return a list of available observers given an ephemeris."""
-        return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
+        with coords.solar_system_ephemeris.set(self.ephemeris):
+            return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> dict:
         """Return a dictionary containing the interplanetary dust model parameters."""
