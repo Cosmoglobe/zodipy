@@ -35,7 +35,7 @@ def test_tabulated_density(
     grid = random.choice([grid_array, grid_regular])
 
     assert tabulate_density(grid, model="DIRBE").shape == (
-        len(model._ipd_model.comps),
+        len(model._interplanetary_dust_model.comps),
         n_grid_points,
         n_grid_points,
         n_grid_points,

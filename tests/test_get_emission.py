@@ -29,6 +29,27 @@ from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 DIRBE_START_DAY = Time("1990-01-01")
 
 
+def test_compare_to_dirbe_idl() -> None:
+    """Tests that ZodiPy reproduces the DIRBE software.
+
+    Zodipy should be able to reproduce the tabulated emission from the DIRBE Zoidacal Light
+    Prediction Software with a maximum difference of 0.1%.
+    """
+    for frequency, tabulated_emission in TABULATED_DIRBE_EMISSION.items():
+        model = Zodipy(freq=frequency * u.micron, model="dirbe")
+        for idx, (day, lon, lat) in enumerate(zip(DAYS, LON, LAT)):
+            time = DIRBE_START_DAY + TimeDelta(day - 1, format="jd")
+
+            emission = model.get_emission_ang(
+                lon * u.deg,
+                lat * u.deg,
+                lonlat=True,
+                obs_pos="earth",
+                obs_time=time,
+            )
+            assert emission.value == pytest.approx(tabulated_emission[idx], rel=0.01)
+
+
 @given(zodipy_models(), sky_coords(), data())
 @settings(deadline=None)
 def test_get_emission_skycoord(
@@ -174,27 +195,6 @@ def test_invalid_freq() -> None:
         Zodipy(freq=10 * u.GHz, model="Planck2018", extrapolate=False)
     with pytest.raises(ValueError):
         Zodipy(freq=1000 * u.micron, model="Planck2018", extrapolate=False)
-
-
-def test_compare_to_dirbe_idl() -> None:
-    """Tests that ZodiPy reproduces the DIRBE software.
-
-    Zodipy should be able to reproduce the tabulated emission from the DIRBE Zoidacal Light
-    Prediction Software with a maximum difference of 0.1%.
-    """
-    for frequency, tabulated_emission in TABULATED_DIRBE_EMISSION.items():
-        model = Zodipy(freq=frequency * u.micron, model="dirbe")
-        for idx, (day, lon, lat) in enumerate(zip(DAYS, LON, LAT)):
-            time = DIRBE_START_DAY + TimeDelta(day - 1, format="jd")
-
-            emission = model.get_emission_ang(
-                lon * u.deg,
-                lat * u.deg,
-                lonlat=True,
-                obs_pos="earth",
-                obs_time=time,
-            )
-            assert emission.value == pytest.approx(tabulated_emission[idx], rel=0.01)
 
 
 def test_multiprocessing() -> None:

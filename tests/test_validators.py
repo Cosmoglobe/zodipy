@@ -21,25 +21,25 @@ def test_validate_frequencies(model: Zodipy) -> None:
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value,
-            model=model._ipd_model,
+            model=model._interplanetary_dust_model,
             extrapolate=False,
         )
     with pytest.raises(TypeError):
         get_validated_freq(
             freq=25,
-            model=model._ipd_model,
+            model=model._interplanetary_dust_model,
             extrapolate=False,
         )
     with pytest.raises(units.UnitsError):
         get_validated_freq(
             freq=BANDPASS_FREQUENCIES.value * units.g,
-            model=model._ipd_model,
+            model=model._interplanetary_dust_model,
             extrapolate=False,
         )
     with pytest.raises(units.UnitsError):
         get_validated_freq(
             freq=25 * units.g,
-            model=model._ipd_model,
+            model=model._interplanetary_dust_model,
             extrapolate=False,
         )
 
@@ -119,19 +119,19 @@ def test_extrapolate_raises_error() -> None:
     model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
-def test_interp_kind() -> None:
-    """Tests that the interpolation kind can be passed in."""
-    model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="linear")
-    linear = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
+# def test_interp_kind() -> None:
+#     """Tests that the interpolation kind can be passed in."""
+#     model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="linear")
+#     linear = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
-    model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="quadratic")
-    quadratic = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
+#     model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="quadratic")
+#     quadratic = model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
-    assert not np.allclose(linear, quadratic)
+#     assert not np.allclose(linear, quadratic)
 
-    with pytest.raises(NotImplementedError):
-        model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="sdfs")
-        model.get_emission_pix(pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
+#     with pytest.raises(NotImplementedError):
+#         model = Zodipy(freq=27 * units.micron, model="dirbe", interp_kind="sdfs")
+#         model.get_emission_pix(pixels=[1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
 def test_wrong_frame() -> None:

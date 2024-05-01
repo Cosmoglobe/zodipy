@@ -4,9 +4,10 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Mapping, Sequence
 
-if TYPE_CHECKING:
-    from astropy import units
+import numpy as np
+from astropy import units
 
+if TYPE_CHECKING:
     from zodipy._ipd_comps import Component, ComponentLabel
 
 
@@ -46,6 +47,11 @@ class InterplanetaryDustModel(ABC):
     def ncomps(self) -> int:
         return len(self.comps)
 
+    def is_valid_at(self, wavelengths: units.Quantity) -> np.bool_:
+        """Check if the model is valid at a given wavelength."""
+        wavelengths = wavelengths.to(self.spectrum.unit, equivalencies=units.spectral())
+        return np.all((self.spectrum.min() <= wavelengths) & (wavelengths <= self.spectrum.max()))
+
 
 @dataclass
 class Kelsall(InterplanetaryDustModel):
@@ -56,7 +62,9 @@ class Kelsall(InterplanetaryDustModel):
     emissivities: Mapping[ComponentLabel, Sequence[float]]
     albedos: Mapping[ComponentLabel, Sequence[float]] | None = None
     solar_irradiance: Sequence[float] | None = None  # In units of MJy/sr
-    phase_coefficients: Sequence[Sequence[float]] | None = None
+    C1: Sequence[float] | None = None
+    C2: Sequence[float] | None = None
+    C3: Sequence[float] | None = None
 
 
 @dataclass

@@ -50,27 +50,29 @@ def get_scattering_angle(
 
 
 def get_phase_function(
-    Theta: npt.NDArray[np.float64], C: tuple[float, ...]
+    Theta: npt.NDArray[np.float64], C1: float, C2: float, C3: float
 ) -> npt.NDArray[np.float64]:
     """Return the phase function.
 
     Args:
         Theta: Scattering angle.
-        C: Phase function parameters.
+        C1: Phase_function coefficient.
+        C2: Phase_function coefficient.
+        C3: Phase_function coefficient.
 
     Returns:
         The Phase funciton.
 
     """
-    phase_normalization = _get_phase_normalization(C)
-    return phase_normalization * (C[0] + C[1] * Theta + np.exp(C[2] * Theta))
+    phase_normalization = _get_phase_normalization(C1, C2, C3)
+    return phase_normalization * (C1 + C2 * Theta + np.exp(C3 * Theta))
 
 
 @lru_cache
-def _get_phase_normalization(C: tuple[float, ...]) -> float:
+def _get_phase_normalization(C1: float, C2: float, C3: float) -> float:
     """Return the analyitcal integral for the phase normalization factor N."""
     int_term1 = 2 * np.pi
-    int_term2 = 2 * C[0]
-    int_term3 = np.pi * C[1]
-    int_term4 = (np.exp(C[2] * np.pi) + 1) / (C[2] ** 2 + 1)
+    int_term2 = 2 * C1
+    int_term3 = np.pi * C2
+    int_term4 = (np.exp(C3 * np.pi) + 1) / (C3**2 + 1)
     return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))

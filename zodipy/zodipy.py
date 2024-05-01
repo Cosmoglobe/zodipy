@@ -9,17 +9,16 @@ import astropy_healpix as hp
 import numpy as np
 from astropy import coordinates as coords
 from astropy import units
-from scipy import interpolate
+from scipy import integrate
 
-from zodipy._bandpass import get_bandpass_interpolation_table, validate_and_get_bandpass
-from zodipy._constants import SPECIFIC_INTENSITY_UNITS
 from zodipy._coords import get_earth_skycoord, get_obs_skycoord, string_to_coordinate_frame
 from zodipy._emission import EMISSION_MAPPING
-from zodipy._interpolate_source import SOURCE_PARAMS_MAPPING
 from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_range
 from zodipy._validators import get_validated_ang
+from zodipy.blackbody import tabulate_bandpass_integrated_bnu, tabulate_center_wavelength_bnu
+from zodipy.interpolate import get_model_to_dicts_callable
 from zodipy.model_registry import model_registry
 
 if TYPE_CHECKING:
@@ -46,7 +45,7 @@ class Zodipy:
         model: str = "dirbe",
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
-        interp_kind: str = "linear",
+        interp_kind: Literal["linear", "cubic"] = "linear",
         ephemeris: str = "builtin",
         n_proc: int = 1,
     ) -> None:
@@ -77,27 +76,41 @@ class Zodipy:
             n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
                 integrals are parallelized using the `multiprocessing` module. Defaults to 1.
         """
+        if not freq.isscalar and weights is None:
+            msg = "Several wavelengths are provided by no weights."
+            raise ValueError(msg)
+        if freq.isscalar and weights is not None:
+            msg = "A single wavelength is provided with weights."
+            raise ValueError(msg)
+
+        self._interplanetary_dust_model = model_registry.get_model(model)
+        if not extrapolate and not self._interplanetary_dust_model.is_valid_at(freq):
+            msg = (
+                "The requested frequencies are outside the valid range of the model."
+                "If this was intended, set `extrapolate=True`."
+            )
+            raise ValueError(msg)
+
+        bandpass_is_provided = weights is not None
+        if bandpass_is_provided:
+            weights = np.asarray(weights)
+            if freq.size != weights.size:
+                msg = "Number of wavelengths and weights must be the same in the bandpass."
+                raise ValueError(msg)
+            normalized_weights = weights / integrate.trapezoid(weights, freq)
+            self._b_nu_table = tabulate_bandpass_integrated_bnu(freq, normalized_weights)
+        else:
+            self._b_nu_table = tabulate_center_wavelength_bnu(freq)
+            normalized_weights = None
+
+        model_to_dicts_callable = get_model_to_dicts_callable(self._interplanetary_dust_model)
+        self._comp_parameters, self._common_parameters = model_to_dicts_callable(
+            freq, normalized_weights, self._interplanetary_dust_model
+        )
+
         self.ephemeris = ephemeris
         self.n_proc = n_proc
-
-        self._interpolator = functools.partial(
-            interpolate.interp1d,
-            kind=interp_kind,
-            fill_value="extrapolate" if extrapolate else np.nan,
-        )
-        self._ipd_model = model_registry.get_model(model)
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
-
-        bandpass = validate_and_get_bandpass(
-            freq=freq,
-            weights=weights,
-            model=self._ipd_model,
-            extrapolate=extrapolate,
-        )
-        self._bandpass_interpolatation_table = get_bandpass_interpolation_table(bandpass)
-        self._source_parameters = SOURCE_PARAMS_MAPPING[type(self._ipd_model)](
-            bandpass, self._ipd_model, self._interpolator
-        )
 
     def get_emission_skycoord(
         self,
@@ -455,13 +468,13 @@ class Zodipy:
         unit_vectors = coordinates.cartesian.xyz.value
 
         start, stop = get_line_of_sight_range(
-            components=self._ipd_model.comps.keys(),
+            components=self._interplanetary_dust_model.comps.keys(),
             unit_vectors=unit_vectors,
             obs_pos=obs_skycoord.cartesian.xyz.to_value(units.AU),
         )
 
         density_partials = construct_density_partials_comps(
-            comps=self._ipd_model.comps,
+            comps=self._interplanetary_dust_model.comps,
             dynamic_params={
                 "X_earth": earth_skycoord.cartesian.xyz.to_value(units.AU)[
                     :, np.newaxis, np.newaxis
@@ -470,20 +483,21 @@ class Zodipy:
         )
 
         common_integrand = functools.partial(
-            EMISSION_MAPPING[type(self._ipd_model)],
+            EMISSION_MAPPING[type(self._interplanetary_dust_model)],
             X_obs=obs_skycoord.cartesian.xyz.to_value(units.AU)[:, np.newaxis, np.newaxis],
-            bp_interpolation_table=self._bandpass_interpolatation_table,
-            **self._source_parameters["common"],
+            bp_interpolation_table=self._b_nu_table,
+            **self._common_parameters,
         )
-
         if distribute_to_cores:
             unit_vector_chunks = np.array_split(unit_vectors, self.n_proc, axis=-1)
-            integrated_comp_emission = np.zeros((self._ipd_model.ncomps, coordinates.size))
+            integrated_comp_emission = np.zeros(
+                (self._interplanetary_dust_model.ncomps, coordinates.size)
+            )
 
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
                 processes=self.n_proc
             ) as pool:
-                for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
+                for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], self.n_proc, axis=-1)
                     if start[comp_label].size == 1:
                         start_chunks = [start[comp_label]] * self.n_proc
@@ -496,7 +510,7 @@ class Zodipy:
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
                             get_density_function=density_partials[comp_label],
-                            **self._source_parameters[comp_label],
+                            **self._comp_parameters[comp_label],
                         )
                         for unit_vectors, start, stop in zip(
                             unit_vector_chunks, start_chunks, stop_chunks
@@ -518,17 +532,19 @@ class Zodipy:
                     )
 
         else:
-            integrated_comp_emission = np.zeros((self._ipd_model.ncomps, coordinates.size))
+            integrated_comp_emission = np.zeros(
+                (self._interplanetary_dust_model.ncomps, coordinates.size)
+            )
             unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
 
-            for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
+            for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
                     u_los=unit_vectors_expanded,
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
                     get_density_function=density_partials[comp_label],
-                    **self._source_parameters[comp_label],
+                    **self._comp_parameters[comp_label],
                 )
 
                 integrated_comp_emission[idx] = (
@@ -538,14 +554,14 @@ class Zodipy:
                 )
 
         if bin_output_to_healpix_map:
-            emission = np.zeros((self._ipd_model.ncomps, healpix.npix))  # type: ignore
+            emission = np.zeros((self._interplanetary_dust_model.ncomps, healpix.npix))  # type: ignore
             pixels = healpix.skycoord_to_healpix(coordinates)  # type: ignore
             emission[:, pixels] = integrated_comp_emission
         else:
-            emission = np.zeros((self._ipd_model.ncomps, indicies.size))
+            emission = np.zeros((self._interplanetary_dust_model.ncomps, indicies.size))
             emission = integrated_comp_emission[:, indicies]
 
-        emission = (emission << SPECIFIC_INTENSITY_UNITS).to(units.MJy / units.sr)
+        emission = emission << (units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 
@@ -557,7 +573,7 @@ class Zodipy:
 
     def get_parameters(self) -> dict:
         """Return a dictionary containing the interplanetary dust model parameters."""
-        return self._ipd_model.to_dict()
+        return self._interplanetary_dust_model.to_dict()
 
     def update_parameters(self, parameters: dict) -> None:
         """Update the interplanetary dust model parameters.
@@ -574,12 +590,12 @@ class Zodipy:
             if key == "comps":
                 for comp_key, comp_value in value.items():
                     _dict["comps"][ComponentLabel(comp_key)] = type(
-                        self._ipd_model.comps[ComponentLabel(comp_key)]
+                        self._interplanetary_dust_model.comps[ComponentLabel(comp_key)]
                     )(**comp_value)
             elif isinstance(value, dict):
                 _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
 
-        self._ipd_model = self._ipd_model.__class__(**_dict)
+        self._interplanetary_dust_model = self._interplanetary_dust_model.__class__(**_dict)
 
     def __repr__(self) -> str:
         repr_str = f"{self.__class__.__name__}("

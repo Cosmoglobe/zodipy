@@ -226,7 +226,7 @@ def obs_positions(draw: DrawFn, model: zodipy.Zodipy, obs_time: time.Time) -> st
         return u.Quantity(np.linalg.norm(obs_pos.value), u.AU)
 
     los_dist_cut = min(
-        [COMPONENT_CUTOFFS[comp][1] for comp in model._ipd_model.comps],
+        [COMPONENT_CUTOFFS[comp][1] for comp in model._interplanetary_dust_model.comps],
     )
     if isinstance(los_dist_cut, dict):
         los_dist_cut = min(list(los_dist_cut.values()))

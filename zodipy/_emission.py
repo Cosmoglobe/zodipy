@@ -28,14 +28,16 @@ def kelsall(
     stop: npt.NDArray[np.float64],
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
+    bp_interpolation_table: npt.NDArray[np.float64],
     get_density_function: ComponentDensityFn,
     T_0: float,
     delta: float,
     emissivity: np.float64,
     albedo: np.float64,
-    phase_coefficients: tuple[float, ...],
+    C1: float,
+    C2: float,
+    C3: float,
     solar_irradiance: np.float64,
-    bp_interpolation_table: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
     # Convert the quadrature range from [-1, 1] to the true ecliptic positions
@@ -51,8 +53,7 @@ def kelsall(
     if albedo != 0:
         solar_flux = solar_irradiance / R_helio**2
         scattering_angle = get_scattering_angle(R_los, R_helio, X_los, X_helio)
-        phase_function = get_phase_function(scattering_angle, phase_coefficients)
-
+        phase_function = get_phase_function(scattering_angle, C1, C2, C3)
         emission += albedo * solar_flux * phase_function
 
     return emission * get_density_function(X_helio)
@@ -64,11 +65,11 @@ def rrm(
     stop: npt.NDArray[np.float64],
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
+    bp_interpolation_table: npt.NDArray[np.float64],
     get_density_function: ComponentDensityFn,
     T_0: float,
     delta: float,
     calibration: np.float64,
-    bp_interpolation_table: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """RRM is implented with component specific line-of-sight grids."""
     # Convert the quadrature range from [-1, 1] to the true ecliptic positions
