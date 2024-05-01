@@ -5,7 +5,7 @@ from hypothesis import given, settings
 from hypothesis.strategies import floats, integers
 
 from zodipy import model_registry, tabulate_density
-from zodipy.zodipy import Zodipy
+from zodipy.zodipy import Model
 
 from ._strategies import zodipy_models
 
@@ -19,7 +19,7 @@ from ._strategies import zodipy_models
 )
 @settings(max_examples=10, deadline=None)
 def test_tabulated_density(
-    model: Zodipy,
+    model: Model,
     n_grid_points: int,
     x_boundary: float,
     y_boundary: float,

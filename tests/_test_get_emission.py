@@ -7,11 +7,12 @@ import astropy.units as u
 import astropy_healpix as hp
 import numpy as np
 import pytest
+from astropy import units
 from astropy.time import Time, TimeDelta
 from hypothesis import given, settings
 from hypothesis.strategies import DataObject, booleans, data
 
-from zodipy.zodipy import Zodipy
+from zodipy.zodipy import Model
 
 from ._strategies import (
     angles,
@@ -24,7 +25,7 @@ from ._strategies import (
     times,
     zodipy_models,
 )
-from ._tabulated_dirbe import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
+from .dirbe_tabulated import DAYS, LAT, LON, TABULATED_DIRBE_EMISSION
 
 DIRBE_START_DAY = Time("1990-01-01")
 
@@ -36,32 +37,33 @@ def test_compare_to_dirbe_idl() -> None:
     Prediction Software with a maximum difference of 0.1%.
     """
     for frequency, tabulated_emission in TABULATED_DIRBE_EMISSION.items():
-        model = Zodipy(freq=frequency * u.micron, model="dirbe")
+        model = Model(x=frequency * u.micron, name="dirbe")
         for idx, (day, lon, lat) in enumerate(zip(DAYS, LON, LAT)):
             time = DIRBE_START_DAY + TimeDelta(day - 1, format="jd")
 
-            emission = model.get_emission_ang(
-                lon * u.deg,
-                lat * u.deg,
-                lonlat=True,
-                obs_pos="earth",
-                obs_time=time,
+            coord = coords.SkyCoord(
+                lon,
+                lat,
+                unit=units.deg,
+                frame=coords.BarycentricMeanEcliptic,
+                obstime=time,
             )
+            emission = model.evaluate(coord)
             assert emission.value == pytest.approx(tabulated_emission[idx], rel=0.01)
 
 
 @given(zodipy_models(), sky_coords(), data())
 @settings(deadline=None)
 def test_get_emission_skycoord(
-    model: Zodipy,
+    model: Model,
     coordinates: coords.SkyCoord,
     data: DataObject,
 ) -> None:
     """Property test for get_emission_skycoord."""
     observer = data.draw(obs_positions(model, coordinates.obstime))
-    emission = model.get_emission_skycoord(
+    emission = model.evaluate(
         coordinates,
-        obs_pos=observer,
+        obspos=observer,
     )
     assert emission.size == coordinates.size
 
@@ -69,7 +71,7 @@ def test_get_emission_skycoord(
 @given(zodipy_models(), sky_coords(), healpixes(), data())
 @settings(deadline=None)
 def test_get_binned_skycoord(
-    model: Zodipy,
+    model: Model,
     coordinates: coords.SkyCoord,
     healpix: hp.HEALPix,
     data: DataObject,
@@ -90,7 +92,7 @@ def test_get_binned_skycoord(
 @given(zodipy_models(), times(), healpixes(), data(), coords_in())
 @settings(deadline=None)
 def test_get_emission_pix(
-    model: Zodipy,
+    model: Model,
     time: Time,
     healpix: hp.HEALPix,
     data: DataObject,
@@ -112,7 +114,7 @@ def test_get_emission_pix(
 @given(zodipy_models(), times(), healpixes(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_pix(
-    model: Zodipy,
+    model: Model,
     time: Time,
     healpix: hp.HEALPix,
     data: DataObject,
@@ -136,7 +138,7 @@ def test_get_binned_emission_pix(
 @given(zodipy_models(), times(), angles(), data(), coords_in())
 @settings(deadline=None)
 def test_get_emission_ang(
-    model: Zodipy,
+    model: Model,
     time: Time,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
     data: DataObject,
@@ -160,7 +162,7 @@ def test_get_emission_ang(
 @given(zodipy_models(), times(), healpixes(), angles(), data(), coords_in())
 @settings(deadline=None)
 def test_get_binned_emission_ang(
-    model: Zodipy,
+    model: Model,
     time: Time,
     healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
@@ -188,13 +190,13 @@ def test_get_binned_emission_ang(
 def test_invalid_freq() -> None:
     """Property test checking for unsupported spectral range."""
     with pytest.raises(ValueError):
-        Zodipy(freq=0.4 * u.micron, model="DIRBE", extrapolate=False)
+        Model(x=0.4 * u.micron, name="DIRBE", extrapolate=False)
     with pytest.raises(ValueError):
-        Zodipy(freq=500 * u.micron, model="DIRBE", extrapolate=False)
+        Model(x=500 * u.micron, name="DIRBE", extrapolate=False)
     with pytest.raises(ValueError):
-        Zodipy(freq=10 * u.GHz, model="Planck2018", extrapolate=False)
+        Model(x=10 * u.GHz, name="Planck2018", extrapolate=False)
     with pytest.raises(ValueError):
-        Zodipy(freq=1000 * u.micron, model="Planck2018", extrapolate=False)
+        Model(x=1000 * u.micron, name="Planck2018", extrapolate=False)
 
 
 def test_multiprocessing() -> None:
@@ -203,8 +205,8 @@ def test_multiprocessing() -> None:
     Tests that model with multiprocessing enabled returns the same value as
     without multiprocessing.
     """
-    model = Zodipy(freq=78 * u.micron)
-    model_parallel = Zodipy(freq=78 * u.micron, n_proc=4)
+    model = Model(x=78 * u.micron)
+    model_parallel = Model(x=78 * u.micron, n_proc=4)
 
     observer = "earth"
     time = Time("2020-01-01")
@@ -277,8 +279,8 @@ def test_multiprocessing() -> None:
 def test_inner_radial_cutoff_multiprocessing() -> None:
     """Testing that model with inner radial cutoffs can be parallelized."""
     frequency = 78 * u.micron
-    model = Zodipy(freq=frequency, model="RRM-experimental")
-    model_parallel = Zodipy(freq=frequency, model="RRM-experimental", n_proc=4)
+    model = Model(x=frequency, name="RRM-experimental")
+    model_parallel = Model(x=frequency, name="RRM-experimental", n_proc=4)
 
     observer = "earth"
     time = Time("2020-01-01")
@@ -309,7 +311,7 @@ def test_inner_radial_cutoff_multiprocessing() -> None:
 )
 @settings(deadline=None)
 def test_bandpass_integration(
-    model: Zodipy,
+    model: Model,
     time: Time,
     healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
@@ -337,7 +339,7 @@ def test_bandpass_integration(
 )
 @settings(deadline=None)
 def test_weights(
-    model: Zodipy,
+    model: Model,
     time: Time,
     healpix: hp.HEALPix,
     angles: tuple[u.Quantity[u.deg], u.Quantity[u.deg]],
@@ -366,7 +368,7 @@ def test_custom_weights() -> None:
     freqs = np.linspace(central_freq - sigma_freq, central_freq + sigma_freq, 100) * u.micron
     weights = np.random.randn(len(freqs))
     weights /= np.trapz(weights, freqs.value)
-    model = Zodipy(freq=freqs, weights=weights)
+    model = Model(x=freqs, weights=weights)
 
     model.get_emission_pix(
         pix,
@@ -378,7 +380,7 @@ def test_custom_weights() -> None:
 
 def test_custom_obs_pos() -> None:
     """Tests a user specified observer position."""
-    model = Zodipy(freq=234 * u.micron)
+    model = Model(x=234 * u.micron)
     time = Time("2020-01-01")
     healpix = hp.HEALPix(64)
     pix = np.arange(healpix.npix)
@@ -416,7 +418,7 @@ def test_custom_obs_pos() -> None:
 
 def test_pixel_ordering() -> None:
     """Tests that the pixel related functions work for both healpix orderings."""
-    model = Zodipy(freq=234 * u.micron)
+    model = Model(x=234 * u.micron)
     time = Time("2020-01-01")
 
     healpix_ring = hp.HEALPix(32)

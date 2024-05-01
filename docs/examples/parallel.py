@@ -6,15 +6,15 @@ import healpy as hp
 import numpy as np
 from astropy.time import Time
 
-from zodipy import Zodipy
+from zodipy import Model
 
 nside = 256
 pixels = np.arange(hp.nside2npix(nside))
 obs_time = Time("2020-01-01")
 n_proc = cpu_count()
 
-model = Zodipy()
-model_parallel = Zodipy(n_proc=n_proc)
+model = Model()
+model_parallel = Model(n_proc=n_proc)
 
 start = time.perf_counter()
 emission = model.get_binned_emission_pix(

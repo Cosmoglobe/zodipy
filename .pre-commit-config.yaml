@@ -16,7 +16,7 @@ repos:
     rev: v1.10.0
     hooks:
     -   id: mypy
-        exclude: tests/
+        exclude: '(tests|docs)/.*'
         additional_dependencies: [numpy>=1.21.0]
 hooks:
   - id: poetry-export

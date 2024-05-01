@@ -3,33 +3,30 @@ from __future__ import annotations
 import functools
 import multiprocessing
 import platform
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Callable
 
-import astropy_healpix as hp
 import numpy as np
 from astropy import coordinates as coords
 from astropy import units
 from scipy import integrate
 
-from zodipy._coords import get_earth_skycoord, get_obs_skycoord, string_to_coordinate_frame
+from zodipy._coords import get_earth_skycoord, get_obs_skycoord
 from zodipy._emission import EMISSION_MAPPING
 from zodipy._ipd_comps import ComponentLabel
 from zodipy._ipd_dens_funcs import construct_density_partials_comps
 from zodipy._line_of_sight import get_line_of_sight_range
-from zodipy._validators import get_validated_ang
 from zodipy.blackbody import tabulate_bandpass_integrated_bnu, tabulate_center_wavelength_bnu
 from zodipy.interpolate import get_model_to_dicts_callable
 from zodipy.model_registry import model_registry
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from astropy import time
 
 PLATFORM = platform.system().lower()
 SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
 
 
-class Zodipy:
+class Model:
     """Main interface to ZodiPy.
 
     The zodiacal light simulations are configured by specifying a bandpass (`freq`, `weights`)
@@ -40,51 +37,45 @@ class Zodipy:
 
     def __init__(
         self,
-        freq: units.Quantity,
+        x: units.Quantity,
+        *,
         weights: npt.ArrayLike | None = None,
-        model: str = "dirbe",
+        name: str = "dirbe",
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
-        interp_kind: Literal["linear", "cubic"] = "linear",
         ephemeris: str = "builtin",
         n_proc: int = 1,
     ) -> None:
         """Initialize the Zodipy interface.
 
         Args:
-            freq: Delta frequency/wavelength or a sequence of frequencies corresponding to
-                a bandpass over which to evaluate the zodiacal emission. The frequencies
-                must be strictly increasing.
-            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights
-                are assumed to be given in spectral radiance units (Jy/sr).
-            model (str): Name of the interplanetary dust model to use in the simulations.
-                Defaults to DIRBE.
-            gauss_quad_degree (int): Order of the Gaussian-Legendre quadrature used to evaluate
-                the line-of-sight integral in the simulations. Default is 50 points.
-            interp_kind (str): Interpolation kind used in `scipy.interpolate.interp1d` to
-                interpolate spectral paramters (see [Scipy documentation](
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html)).
-                Defaults to 'linear'.
-            extrapolate (bool): If `True` all spectral quantities in the selected model are
-                extrapolated to the requested frequencies or wavelengths. If `False`, an
-                exception is raised on requested frequencies/wavelengths outside of the
-                valid model range. Default is `False`.
-            ephemeris (str): Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to
-                compute the positions of the observer and the Earth. Defaults to 'builtin'. See the
+            x: Wavelength or frequency. If `x` is a array-like it is assumed to be a bandpass and
+                `weights` must be provided.
+            weights: Bandpass weights corresponding the the frequencies in `freq`. The weights are
+                assumed to be given in spectral radiance units (Jy/sr).
+            name: Interplanetary dust model to use. Defaults to 'dirbe' which is the DIRBE model.
+            gauss_quad_degree: Order of the Gaussian-Legendre quadrature used to evaluate the
+                line-of-sight integral in the simulations. Default is 50 points.
+            extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
+                the requested frequencies or wavelengths. If `False`, an exception is raised on
+                requested frequencies/wavelengths outside of the valid model range. Default is
+                `False`.
+            ephemeris: Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to compute the
+                positions of the observer and the Earth. Defaults to 'builtin'. See the
                 [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
                 for available ephemerides.
-            n_proc (int): Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
+            n_proc: Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
                 integrals are parallelized using the `multiprocessing` module. Defaults to 1.
         """
-        if not freq.isscalar and weights is None:
+        if not x.isscalar and weights is None:
             msg = "Several wavelengths are provided by no weights."
             raise ValueError(msg)
-        if freq.isscalar and weights is not None:
+        if x.isscalar and weights is not None:
             msg = "A single wavelength is provided with weights."
             raise ValueError(msg)
 
-        self._interplanetary_dust_model = model_registry.get_model(model)
-        if not extrapolate and not self._interplanetary_dust_model.is_valid_at(freq):
+        self._interplanetary_dust_model = model_registry.get_model(name)
+        if not extrapolate and not self._interplanetary_dust_model.is_valid_at(x):
             msg = (
                 "The requested frequencies are outside the valid range of the model."
                 "If this was intended, set `extrapolate=True`."
@@ -94,41 +85,41 @@ class Zodipy:
         bandpass_is_provided = weights is not None
         if bandpass_is_provided:
             weights = np.asarray(weights)
-            if freq.size != weights.size:
+            if x.size != weights.size:
                 msg = "Number of wavelengths and weights must be the same in the bandpass."
                 raise ValueError(msg)
-            normalized_weights = weights / integrate.trapezoid(weights, freq)
-            self._b_nu_table = tabulate_bandpass_integrated_bnu(freq, normalized_weights)
+            normalized_weights = weights / integrate.trapezoid(weights, x)
+            self._b_nu_table = tabulate_bandpass_integrated_bnu(x, normalized_weights)
         else:
-            self._b_nu_table = tabulate_center_wavelength_bnu(freq)
+            self._b_nu_table = tabulate_center_wavelength_bnu(x)
             normalized_weights = None
 
-        model_to_dicts_callable = get_model_to_dicts_callable(self._interplanetary_dust_model)
-        self._comp_parameters, self._common_parameters = model_to_dicts_callable(
-            freq, normalized_weights, self._interplanetary_dust_model
-        )
+        # Interpolate and convert the model parameters to dictionaries which can be used to evaluate
+        # the zodiacal light model.
+        self._comp_parameters, self._common_parameters = get_model_to_dicts_callable(
+            self._interplanetary_dust_model
+        )(x, normalized_weights, self._interplanetary_dust_model)
 
-        self.ephemeris = ephemeris
-        self.n_proc = n_proc
+        self._ephemeris = ephemeris
+        self._n_proc = n_proc
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
 
-    def get_emission_skycoord(
+    def evaluate(
         self,
-        coord: coords.SkyCoord,
+        skycoord: coords.SkyCoord,
         *,
-        obs_pos: units.Quantity | str = "earth",
+        obspos: units.Quantity | str = "earth",
         return_comps: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal light for all observations in a `SkyCoord` object.
 
         Args:
-            coord: `astropy.coordinates.SkyCoord` object representing the observations for which to
-                simulate the zodiacal light. The `frame` and `obstime` attributes of the `SkyCoord`
-                object must be set. The `obstime` attribute should correspond to a single
+            skycoord: `astropy.coordinates.SkyCoord` object representing the observations for which
+                to simulate the zodiacal light. The `frame` and `obstime` attributes of the
+                `SkyCoord` object must be set. The `obstime` attribute should correspond to a single
                 observational time for which the zodiacal light is assumed to be stationary.
-                Additionally, the frame must be convertible to
-                `astropy.coordinates.BarycentricMeanEcliptic`.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
+                Additionally, the frame must be convertible to the `BarycentricMeanEcliptic` frame.
+            obspos: The heliocentric ecliptic position of the observer, or a string representing
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
@@ -138,338 +129,33 @@ class Zodipy:
 
         """
         (unique_lon, unique_lat), indicies = np.unique(
-            np.vstack([coord.spherical.lon.value, coord.spherical.lat.value]),
+            np.vstack([skycoord.spherical.lon.value, skycoord.spherical.lat.value]),
             return_inverse=True,
             axis=1,
         )
 
-        obs_time = coord.obstime
-        if obs_time is None:
+        if skycoord.obstime is None:
             msg = "The `obstime` attribute of the `SkyCoord` object must be set."
             raise ValueError(msg)
 
-        coord = coords.SkyCoord(
+        skycoord = coords.SkyCoord(
             unique_lon,
             unique_lat,
             unit=units.deg,
-            frame=coord.frame,
+            frame=skycoord.frame,
+            obstime=skycoord.obstime,
         )
 
-        return self._compute_emission(
-            obs_pos=obs_pos,
-            obs_time=obs_time,
-            coordinates=coord,
-            indicies=indicies,
-            return_comps=return_comps,
+        earth_skycoord = get_earth_skycoord(skycoord.obstime, ephemeris=self._ephemeris)
+        obs_skycoord = get_obs_skycoord(
+            obspos, skycoord.obstime, earth_skycoord, ephemeris=self._ephemeris
         )
 
-    def get_emission_ang(
-        self,
-        theta: units.Quantity,
-        phi: units.Quantity,
-        *,
-        lonlat: bool = False,
-        obs_time: time.Time,
-        obs_pos: units.Quantity | str = "earth",
-        coord_in: Literal["E", "G", "C"] = "E",
-        return_comps: bool = False,
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated zodiacal emission given angles on the sky.
-
-        The pointing, for which to compute the emission, is specified in form of angles on
-        the sky given by `theta` and `phi`, matching the healpy convention.
-
-        Args:
-            theta: Angular co-latitude coordinate of a point, or a sequence of points, on
-                the celestial sphere. Must be in the range [0, π] rad. Units must be compatible
-                with degrees.
-            phi: Angular longitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, 2π] rad. Units must be compatible
-                with degrees.
-            lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
-                latitude, otherwise, they are co-latitude and longitude.
-            obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
-                correspond to a single position. Defaults to 'earth'.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-                coordinates) by default.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
-
-        Returns:
-            emission: Simulated zodiacal emission in units of 'MJy/sr'.
-
-        """
-        theta, phi = get_validated_ang(theta=theta, phi=phi, lonlat=lonlat)
-
-        (theta, phi), indicies = np.unique(np.stack([theta, phi]), return_inverse=True, axis=1)
-        frame = string_to_coordinate_frame(coord_in)
-        coordinates = coords.SkyCoord(theta, phi, frame=frame)
-
-        return self._compute_emission(
-            obs_time=obs_time,
-            obs_pos=obs_pos,
-            coordinates=coordinates,
-            indicies=indicies,
-            return_comps=return_comps,
-        )
-
-    def get_emission_pix(
-        self,
-        pixels: npt.ArrayLike,
-        *,
-        nside: int,
-        obs_time: time.Time,
-        obs_pos: units.Quantity | str = "earth",
-        coord_in: Literal["E", "G", "C"] = "E",
-        return_comps: bool = False,
-        order: Literal["ring", "nested"] = "ring",
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated zodiacal emission given pixel numbers.
-
-        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
-        given by `nside`.
-
-        Args:
-            pixels: HEALPix pixel indicies representing points on the celestial sphere.
-            nside: HEALPix resolution parameter of the pixels and the binned map.
-            obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
-                correspond to a single position. Defaults to 'earth'.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-                coordinates) by default.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
-            order: Order of the HEALPix grid.
-
-        Returns:
-            emission: Simulated zodiacal emission in units of 'MJy/sr'.
-
-        """
-        frame = string_to_coordinate_frame(coord_in)
-        healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
-        unique_pixels, indicies = np.unique(pixels, return_inverse=True)
-        coordinates = healpix.healpix_to_skycoord(unique_pixels)
-
-        return self._compute_emission(
-            obs_time=obs_time,
-            obs_pos=obs_pos,
-            coordinates=coordinates,
-            indicies=indicies,
-            return_comps=return_comps,
-        )
-
-    def get_binned_emission_skycoord(
-        self,
-        coord: coords.SkyCoord,
-        *,
-        nside: int,
-        obs_pos: units.Quantity | str = "earth",
-        return_comps: bool = False,
-        order: Literal["ring", "nested"] = "ring",
-        solar_cut: units.Quantity | None = None,
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated binned zodiacal light for all observations in a `SkyCoord` object.
-
-        Args:
-            coord: `astropy.coordinates.SkyCoord` object representing the observations for which to
-                simulate the zodiacal light. The `frame` and `obstime` attributes of the `SkyCoord`
-                object must be set. The `obstime` attribute should correspond to a single
-                observational time for which the zodiacal light is assumed to be stationary.
-                Additionally, the frame must be convertible to
-                `astropy.coordinates.BarycentricMeanEcliptic`.
-            nside: HEALPix resolution parameter of the pixels and the binned map.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
-                correspond to a single position. Defaults to 'earth'.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
-            order: Order of the HEALPix grid.
-            solar_cut: Angular distance around the Sun for which all pointing are discarded.
-                Defaults to `None`.
-
-        Returns:
-            emission: Simulated zodiacal light in units of 'MJy/sr'.
-
-        """
-        (unique_lon, unique_lat), indicies = np.unique(
-            np.vstack([coord.spherical.lon.value, coord.spherical.lat.value]),
-            return_inverse=True,
-            axis=1,
-        )
-
-        obs_time = coord.obstime
-        if obs_time is None:
-            msg = "The `obstime` attribute of the `SkyCoord` object must be set."
-            raise ValueError(msg)
-
-        coord = coords.SkyCoord(
-            unique_lon,
-            unique_lat,
-            unit=units.deg,
-            frame=coord.frame,
-        )
-        healpix = hp.HEALPix(nside, order=order, frame=coord.frame)
-        return self._compute_emission(
-            obs_pos=obs_pos,
-            obs_time=obs_time,
-            coordinates=coord,
-            indicies=indicies,
-            healpix=healpix,
-            return_comps=return_comps,
-            solar_cut=solar_cut,
-        )
-
-    def get_binned_emission_ang(
-        self,
-        theta: units.Quantity,
-        phi: units.Quantity,
-        *,
-        lonlat: bool = False,
-        nside: int,
-        obs_time: time.Time,
-        obs_pos: units.Quantity | str = "earth",
-        coord_in: Literal["E", "G", "C"] = "E",
-        return_comps: bool = False,
-        order: Literal["ring", "nested"] = "ring",
-        solar_cut: units.Quantity | None = None,
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated binned zodiacal emission given angles on the sky.
-
-        The pointing, for which to compute the emission, is specified in form of angles on
-        the sky given by `theta` and `phi`, matching the healpy convention. The emission is
-        binned to a HEALPix map with resolution given by `nside`.
-
-        Args:
-            theta: Angular co-latitude coordinate of a point, or a sequence of points, on
-                the celestial sphere. Must be in the range [0, π] rad. Units must be either
-                radians or degrees.
-            phi: Angular longitude coordinate of a point, or a sequence of points, on the
-                celestial sphere. Must be in the range [0, 2π] rad. Units must be either
-                radians or degrees.
-            nside: HEALPix resolution parameter of the pixels and the binned map.
-            obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
-                correspond to a single position. Defaults to 'earth'.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-                coordinates) by default.
-            lonlat: If True, input angles (`theta`, `phi`) are assumed to be longitude and
-                latitude, otherwise, they are co-latitude and longitude.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
-            order: Order of the HEALPix grid.
-            solar_cut: Angular distance around the Sun for which all pointing are discarded.
-                Defaults to `None`.
-
-        Returns:
-            emission: Simulated zodiacal emission in units of 'MJy/sr'.
-
-        """
-        theta, phi = get_validated_ang(theta, phi, lonlat=lonlat)
-        frame = string_to_coordinate_frame(coord_in)
-        healpix = hp.HEALPix(nside, order=order, frame=frame)
-        (theta, phi), counts = np.unique(np.vstack([theta, phi]), return_counts=True, axis=1)
-        coordinates = coords.SkyCoord(
-            theta,
-            phi,
-            frame=frame,
-        )
-
-        return self._compute_emission(
-            obs_time=obs_time,
-            obs_pos=obs_pos,
-            coordinates=coordinates,
-            indicies=counts,
-            healpix=healpix,
-            return_comps=return_comps,
-            solar_cut=solar_cut,
-        )
-
-    def get_binned_emission_pix(
-        self,
-        pixels: npt.ArrayLike,
-        *,
-        nside: int,
-        obs_time: time.Time,
-        obs_pos: units.Quantity | str = "earth",
-        coord_in: Literal["E", "G", "C"] = "E",
-        return_comps: bool = False,
-        order: Literal["ring", "nested"] = "ring",
-        solar_cut: units.Quantity | None = None,
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated binned zodiacal Emission given pixel numbers.
-
-        The pixel numbers represent the pixel indicies on a HEALPix grid with resolution
-        given by `nside`. The emission is binned to a HEALPix map with resolution given by
-        `nside`.
-
-        Args:
-            pixels: HEALPix pixel indicies representing points on the celestial sphere.
-            nside: HEALPix resolution parameter of the pixels and the binned map.
-            obs_time: Time of observation. This should be a single observational time.
-            obs_pos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
-                correspond to a single position. Defaults to 'earth'.
-            coord_in: Coordinate frame of the input pointing. Assumes 'E' (ecliptic
-                coordinates) by default.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
-            order: Order of the HEALPix grid.
-            solar_cut: Angular distance around the Sun for which all pointing are discarded.
-                Defaults to `None`.
-
-        Returns:
-            emission: Simulated zodiacal emission in units of 'MJy/sr'.
-
-        """
-        frame = string_to_coordinate_frame(coord_in)
-        healpix = hp.HEALPix(nside=nside, order=order, frame=frame)
-        unique_pixels, counts = np.unique(pixels, return_counts=True)
-        coordinates = healpix.healpix_to_skycoord(unique_pixels)
-
-        return self._compute_emission(
-            obs_time=obs_time,
-            obs_pos=obs_pos,
-            coordinates=coordinates,
-            indicies=counts,
-            healpix=healpix,
-            return_comps=return_comps,
-            solar_cut=solar_cut,
-        )
-
-    def _compute_emission(
-        self,
-        obs_time: time.Time,
-        obs_pos: units.Quantity | str,
-        coordinates: coords.SkyCoord,
-        indicies: npt.NDArray,
-        healpix: hp.HEALPix | None = None,
-        return_comps: bool = False,
-        solar_cut: units.Quantity | None = None,
-    ) -> units.Quantity[units.MJy / units.sr]:
-        """Compute the zodiacal light for a given configuration."""
-        earth_skycoord = get_earth_skycoord(obs_time, ephemeris=self.ephemeris)
-        obs_skycoord = get_obs_skycoord(obs_pos, obs_time, earth_skycoord, ephemeris=self.ephemeris)
-
-        coordinates = coordinates.transform_to(coords.BarycentricMeanEcliptic)
-
-        bin_output_to_healpix_map = healpix is not None
-        filter_coords_by_solar_cut = solar_cut is not None
-        distribute_to_cores = self.n_proc > 1 and coordinates.size > self.n_proc
-
-        if bin_output_to_healpix_map and filter_coords_by_solar_cut:
-            sun_skycoord = coords.SkyCoord(
-                obs_skycoord.spherical.lon + 180 * units.deg,
-                obs_skycoord.spherical.lat,
-                frame=coords.BarycentricMeanEcliptic,
-            )
-            angular_distance = coordinates.separation(sun_skycoord)
-            solar_mask = angular_distance < solar_cut
-            coordinates = coordinates[~solar_mask]
-
-        unit_vectors = coordinates.cartesian.xyz.value
+        skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
-            unit_vectors=unit_vectors,
+            unit_vectors=skycoord.cartesian.xyz.value,
             obs_pos=obs_skycoord.cartesian.xyz.to_value(units.AU),
         )
 
@@ -488,21 +174,23 @@ class Zodipy:
             bp_interpolation_table=self._b_nu_table,
             **self._common_parameters,
         )
+
+        distribute_to_cores = self._n_proc > 1 and skycoord.size > self._n_proc
         if distribute_to_cores:
-            unit_vector_chunks = np.array_split(unit_vectors, self.n_proc, axis=-1)
+            unit_vector_chunks = np.array_split(skycoord.cartesian.xyz.value, self._n_proc, axis=-1)
             integrated_comp_emission = np.zeros(
-                (self._interplanetary_dust_model.ncomps, coordinates.size)
+                (self._interplanetary_dust_model.ncomps, skycoord.size)
             )
 
             with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
-                processes=self.n_proc
+                processes=self._n_proc
             ) as pool:
                 for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
-                    stop_chunks = np.array_split(stop[comp_label], self.n_proc, axis=-1)
+                    stop_chunks = np.array_split(stop[comp_label], self._n_proc, axis=-1)
                     if start[comp_label].size == 1:
-                        start_chunks = [start[comp_label]] * self.n_proc
+                        start_chunks = [start[comp_label]] * self._n_proc
                     else:
-                        start_chunks = np.array_split(start[comp_label], self.n_proc, axis=-1)
+                        start_chunks = np.array_split(start[comp_label], self._n_proc, axis=-1)
                     comp_integrands = [
                         functools.partial(
                             common_integrand,
@@ -533,9 +221,9 @@ class Zodipy:
 
         else:
             integrated_comp_emission = np.zeros(
-                (self._interplanetary_dust_model.ncomps, coordinates.size)
+                (self._interplanetary_dust_model.ncomps, skycoord.size)
             )
-            unit_vectors_expanded = np.expand_dims(unit_vectors, axis=-1)
+            unit_vectors_expanded = np.expand_dims(skycoord.cartesian.xyz.value, axis=-1)
 
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
@@ -553,22 +241,15 @@ class Zodipy:
                     * (stop[comp_label] - start[comp_label])
                 )
 
-        if bin_output_to_healpix_map:
-            emission = np.zeros((self._interplanetary_dust_model.ncomps, healpix.npix))  # type: ignore
-            pixels = healpix.skycoord_to_healpix(coordinates)  # type: ignore
-            emission[:, pixels] = integrated_comp_emission
-        else:
-            emission = np.zeros((self._interplanetary_dust_model.ncomps, indicies.size))
-            emission = integrated_comp_emission[:, indicies]
-
-        emission = emission << (units.MJy / units.sr)
+        emission = np.zeros((self._interplanetary_dust_model.ncomps, indicies.size))
+        emission = integrated_comp_emission[:, indicies] << (units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 
     @property
     def supported_observers(self) -> list[str]:
         """Return a list of available observers given an ephemeris."""
-        with coords.solar_system_ephemeris.set(self.ephemeris):
+        with coords.solar_system_ephemeris.set(self._ephemeris):
             return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> dict:

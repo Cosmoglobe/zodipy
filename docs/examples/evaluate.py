@@ -4,9 +4,9 @@ import numpy as np
 from astropy.coordinates import BarycentricMeanEcliptic, SkyCoord
 from astropy.time import Time
 
-from zodipy import Zodipy
+from zodipy import Model
 
-model = Zodipy()
+model = Model()
 
 # Longitude and Latitude values corresponding to a scan through the eclitpic plane
 lats = np.linspace(-90, 90, 100) * u.deg
@@ -22,7 +22,7 @@ coords = SkyCoord(
     obstime=obs_time,
 )
 
-emission = model.get_emission_skycoord(coords, freq=30 * u.micron)
+emission = model.evaluate(coords, freq=30 * u.micron)
 
 plt.plot(lats, emission)
 plt.xlabel("Latitude [deg]")

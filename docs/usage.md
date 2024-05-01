@@ -10,7 +10,7 @@ In the following example we simulate what an observer on Earth is expected to se
 DIRBE interplanetary dust model.
 
 ```python
-{!examples/get_emission_ang.py!}
+{!examples/evaluate.py!}
 ```
 
 ![Zodiacal emission timestream](img/timestream.png)
@@ -43,7 +43,7 @@ what the emission looks like over some instrument bandpass. ZodiPy will accept a
 argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
 Note that the bandpass weights must be in spectral radiance units (Jy/sr), even though the weights them self are unitless. A top hat bandpass is assumed if a sequence of frequencies are used without providing weights.
 ```python hl_lines="11 12 13 31 32"
-{!examples/get_bandpass_integrated_emission.py!}
+{!examples/bandpass.py!}
 ```
 ![Generated Bandpass](img/bandpass.png)
 ![Center frequency emission](img/center_freq.png)

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.time import Time
 
-from zodipy import Zodipy
+from zodipy import Model
 
 nside = 128
 
@@ -18,7 +18,7 @@ plt.plot(freqs, weights)
 plt.xlabel("Frequency [GHz]")
 plt.ylabel("Weights")
 
-model = Zodipy(model="planck18", n_proc=cpu_count())
+model = Model(name="planck18", n_proc=cpu_count())
 
 emission_central_freq = model.get_binned_emission_pix(
     freq=center_freq,

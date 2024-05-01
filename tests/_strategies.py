@@ -208,7 +208,7 @@ def weights(
 
 
 @composite
-def obs_positions(draw: DrawFn, model: zodipy.Zodipy, obs_time: time.Time) -> str:
+def obs_positions(draw: DrawFn, model: zodipy.Model, obs_time: time.Time) -> str:
     def get_obs_dist(obs: str, obs_time: time.Time) -> u.Quantity[u.AU]:
         if obs == "semb-l2":
             obs_pos = (
@@ -238,12 +238,12 @@ def obs_positions(draw: DrawFn, model: zodipy.Zodipy, obs_time: time.Time) -> st
 
 
 @composite
-def any_obs(draw: DrawFn, model: zodipy.Zodipy) -> str:
+def any_obs(draw: DrawFn, model: zodipy.Model) -> str:
     return draw(sampled_from(model.supported_observers))
 
 
 @composite
-def zodipy_models(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodipy:
+def zodipy_models(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Model:
     extrapolate = static_params.pop("extrapolate", draw(booleans()))
     model = static_params.pop("model", draw(sampled_from(AVAILABLE_MODELS)))
     ipd_model = model_registry.get_model(model)
@@ -264,9 +264,9 @@ def zodipy_models(draw: DrawFn, **static_params: dict[str, Any]) -> zodipy.Zodip
         "gauss_quad_degree", draw(integers(min_value=1, max_value=200))
     )
 
-    return zodipy.Zodipy(
-        freq=frequencies,
-        model=model,
+    return zodipy.Model(
+        x=frequencies,
+        name=model,
         weights=w,
         gauss_quad_degree=gauss_quad_degree,
         extrapolate=extrapolate,

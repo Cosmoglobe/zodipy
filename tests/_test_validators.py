@@ -5,7 +5,7 @@ from hypothesis import given
 from hypothesis.strategies import DataObject, data
 
 from zodipy._validators import get_validated_and_normalized_weights, get_validated_freq
-from zodipy.zodipy import Zodipy
+from zodipy.zodipy import Model
 
 from ._strategies import random_freqs, weights, zodipy_models
 
@@ -16,7 +16,7 @@ OBS_TIME = time.Time("2021-01-01T00:00:00")
 
 
 @given(zodipy_models(extrapolate=False))
-def test_validate_frequencies(model: Zodipy) -> None:
+def test_validate_frequencies(model: Model) -> None:
     """Tests that the frequencies are validated."""
     with pytest.raises(TypeError):
         get_validated_freq(
@@ -112,10 +112,10 @@ def test_validate_weights_shape() -> None:
 def test_extrapolate_raises_error() -> None:
     """Tests that an error is correctly raised when extrapolation is not allowed."""
     with pytest.raises(ValueError):
-        model = Zodipy(freq=400 * units.micron, model="dirbe")
+        model = Model(x=400 * units.micron, name="dirbe")
         model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
-    model = Zodipy(freq=400 * units.micron, model="dirbe", extrapolate=True)
+    model = Model(x=400 * units.micron, name="dirbe", extrapolate=True)
     model.get_emission_pix([1, 4, 5], nside=32, obs_time=OBS_TIME)
 
 
@@ -136,7 +136,7 @@ def test_extrapolate_raises_error() -> None:
 
 def test_wrong_frame() -> None:
     """Tests that an error is correctly raised when an incorrect frame is passed in."""
-    model = Zodipy(freq=27 * units.micron)
+    model = Model(x=27 * units.micron)
     with pytest.raises(ValueError):
         model.get_emission_pix(
             [1, 4, 5],
@@ -148,7 +148,7 @@ def test_wrong_frame() -> None:
 
 def test_non_quantity_ang_raises_error() -> None:
     """Tests that an error is correctly raised if the user inputed angles are not Quantities."""
-    model = Zodipy(freq=27 * units.micron)
+    model = Model(x=27 * units.micron)
     with pytest.raises(TypeError):
         model.get_emission_ang(
             32,
