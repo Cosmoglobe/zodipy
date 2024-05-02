@@ -21,27 +21,29 @@ ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/) package f
 ## A simple example
 ```python
 import astropy.units as u
+from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
-from zodipy import Zodipy
+from zodipy import Model
 
+model = Model(25*u.micron)
 
-model = Zodipy("dirbe")
-
-emission = model.get_emission_ang(
-    25 * u.micron,
-    theta=[10, 10.1, 10.2] * u.deg,
-    phi=[90, 89, 88] * u.deg,
-    obs_time=Time("2022-01-01 12:00:00"),
-    obs="earth",
-    lonlat=True,
+lon = [10, 10.1, 10.2] * u.deg
+lat = [90, 89, 88] * u.deg
+skycoord = SkyCoord(
+    lon,
+    lat,
+    obstime=Time("2022-01-01 12:00:00"),
+    frame="galactic",
 )
 
+emission = model.evaluate(skycoord, obspos="earth")
+
 print(emission)
-#> [15.53095493 15.52883577 15.53121942] MJy / sr
+#> [27.52410841 27.66581351 27.81270207] MJy / sr
 ```
 
-What's going on here:
+What's going on here: THIS NEEDS TO BE UPDATED
 
 - We start by initializing the [`Zodipy`][zodipy.zodipy.Zodipy] class, which is our interface, where we specify that we want to use the DIRBE interplanetary dust model.
 - We use the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method which is a method to simulate emission from angular sky coordinates (see the [reference](reference.md) for other available simulation methods).

@@ -123,23 +123,19 @@ class Model:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
 
         """
-        (unique_lon, unique_lat), indicies = np.unique(
-            np.vstack([skycoord.spherical.lon.value, skycoord.spherical.lat.value]),
-            return_inverse=True,
-            axis=1,
-        )
-
         if skycoord.obstime is None:
             msg = "The `obstime` attribute of the `SkyCoord` object must be set."
             raise ValueError(msg)
 
-        skycoord = coords.SkyCoord(
-            unique_lon,
-            unique_lat,
-            unit=units.deg,
-            frame=skycoord.frame,
-            obstime=skycoord.obstime,
+        # Pick out unique coordinates, and only calculate the emission for these. and return the
+        # inverse indices to map the output back to the original coordinates.
+        _, index, inverse = np.unique(
+            [skycoord.spherical.lon, skycoord.spherical.lat],
+            return_index=True,
+            return_inverse=True,
+            axis=1,
         )
+        skycoord = skycoord[index]
 
         earth_skycoord = get_earth_skycoord(skycoord.obstime, ephemeris=self._ephemeris)
         obs_skycoord = get_obs_skycoord(
@@ -216,7 +212,7 @@ class Model:
 
         else:
             integrated_comp_emission = np.zeros(
-                (self._interplanetary_dust_model.ncomps, skycoord.size)
+                (self._interplanetary_dust_model.ncomps, inverse.size)
             )
 
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
@@ -235,8 +231,8 @@ class Model:
                     * (stop[comp_label] - start[comp_label])
                 )
 
-        emission = np.zeros((self._interplanetary_dust_model.ncomps, indicies.size))
-        emission = integrated_comp_emission[:, indicies] << (units.MJy / units.sr)
+        emission = np.zeros((self._interplanetary_dust_model.ncomps, inverse.size))
+        emission = integrated_comp_emission[:, inverse] << (units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 
