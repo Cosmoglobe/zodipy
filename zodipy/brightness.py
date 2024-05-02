@@ -5,31 +5,27 @@ from typing import TYPE_CHECKING, Callable
 import numpy as np
 import numpy.typing as npt
 
-from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
-from zodipy._source_funcs import (
-    get_dust_grain_temperature,
-    get_phase_function,
-    get_scattering_angle,
-)
+from zodipy.blackbody import get_dust_grain_temperature
+from zodipy.scattering import get_phase_function, get_scattering_angle
 
 if TYPE_CHECKING:
-    from zodipy._ipd_dens_funcs import ComponentDensityFn
+    from zodipy.number_density import ComponentNumberDensityCallable
 
 """
 Function that return the zodiacal emission at a step along all lines of sight given
 a zodiacal model.
 """
-GetCompEmissionAtStepFn = Callable[..., npt.NDArray[np.float64]]
+BrightnessAtStepCallable = Callable[..., npt.NDArray[np.float64]]
 
 
-def kelsall(
+def kelsall_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: np.float64,
     stop: npt.NDArray[np.float64],
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
-    get_density_function: ComponentDensityFn,
+    get_density_function: ComponentNumberDensityCallable,
     T_0: float,
     delta: float,
     emissivity: np.float64,
@@ -59,14 +55,14 @@ def kelsall(
     return emission * get_density_function(X_helio)
 
 
-def rrm(
+def rrm_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: npt.NDArray[np.float64],
     stop: npt.NDArray[np.float64],
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
-    get_density_function: ComponentDensityFn,
+    get_density_function: ComponentNumberDensityCallable,
     T_0: float,
     delta: float,
     calibration: np.float64,
@@ -84,7 +80,7 @@ def rrm(
     return blackbody_emission * get_density_function(X_helio) * calibration
 
 
-EMISSION_MAPPING: dict[type[InterplanetaryDustModel], GetCompEmissionAtStepFn] = {
-    Kelsall: kelsall,
-    RRM: rrm,
-}
+# EMISSION_MAPPING: dict[type[InterplanetaryDustModel], GetCompEmissionAtStepFn] = {
+#     Kelsall: kelsall,
+#     RRM: rrm,
+# }

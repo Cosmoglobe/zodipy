@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
 
 from zodipy._constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
-from zodipy._ipd_comps import ComponentLabel
 from zodipy.comps import RRM
+from zodipy.zodiacal_component import ComponentLabel
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -45,6 +45,15 @@ RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floating
 
 
 COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS}
+
+
+def integrate_gauss_legendre(
+    fn: Callable[[float], npt.NDArray[np.float64]],
+    points: npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Integrate a function using Gauss-Legendre quadrature."""
+    return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))
 
 
 def get_sphere_intersection(

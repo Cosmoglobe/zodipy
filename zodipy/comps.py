@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from zodipy._constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
-from zodipy._ipd_comps import (
+from zodipy.zodiacal_component import (
     Band,
     BroadBand,
     Cloud,
     Comet,
-    Component,
     ComponentLabel,
     Fan,
     Feature,
@@ -15,9 +14,10 @@ from zodipy._ipd_comps import (
     NarrowBand,
     Ring,
     RingRRM,
+    ZodiacalComponent,
 )
 
-DIRBE: dict[ComponentLabel, Component] = {
+DIRBE: dict[ComponentLabel, ZodiacalComponent] = {
     ComponentLabel.CLOUD: Cloud(
         x_0=0.011887800744346281,
         y_0=0.0054765064662263777,
@@ -97,7 +97,7 @@ PLANCK.pop(ComponentLabel.RING)
 PLANCK.pop(ComponentLabel.FEATURE)
 
 
-RRM: dict[ComponentLabel, Component] = {
+RRM: dict[ComponentLabel, ZodiacalComponent] = {
     ComponentLabel.FAN: Fan(
         x_0=0.0,
         y_0=0.0,

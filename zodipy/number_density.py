@@ -8,12 +8,11 @@ from typing import Any, Callable, Mapping, Protocol, Sequence
 import numpy as np
 import numpy.typing as npt  # type: ignore
 
-from zodipy._ipd_comps import (
+from zodipy.zodiacal_component import (
     Band,
     BroadBand,
     Cloud,
     Comet,
-    Component,
     ComponentLabel,
     Fan,
     Feature,
@@ -22,6 +21,7 @@ from zodipy._ipd_comps import (
     NarrowBand,
     Ring,
     RingRRM,
+    ZodiacalComponent,
 )
 
 """The density functions for the different types of components.
@@ -36,7 +36,7 @@ class must have all the parameters as instance variables.
 ComputeDensityFunc = Callable[..., npt.NDArray[np.float64]]
 
 
-def compute_cloud_density(
+def cloud_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -66,7 +66,7 @@ def compute_cloud_density(
     return n_0 * R_cloud**-alpha * np.exp(-beta * g**gamma)
 
 
-def compute_band_density(
+def band_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -103,7 +103,7 @@ def compute_band_density(
     return term1 * term2 * term3 * term4
 
 
-def compute_ring_density(
+def ring_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -132,7 +132,7 @@ def compute_ring_density(
     return n_0 * np.exp(term1 - term2)
 
 
-def compute_feature_density(
+def feature_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     X_earth: npt.NDArray[np.float64],
@@ -174,7 +174,7 @@ def compute_feature_density(
     return n_0 * np.exp(-exp_term)
 
 
-def compute_fan_density(  # *
+def fan_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -211,7 +211,7 @@ def compute_fan_density(  # *
     return density
 
 
-def compute_comet_density(
+def comet_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -249,14 +249,15 @@ def compute_comet_density(
     return density
 
 
-def compute_interstellar_density(
+def interstellar_number_density(
     X_helio: npt.NDArray[np.float64],
     amp: float,
 ) -> npt.NDArray[np.float64]:
+    """Interstellar constant number density."""
     return np.array([amp])
 
 
-def compute_narrow_band_density(
+def narrow_band_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -296,7 +297,7 @@ def compute_narrow_band_density(
     return density
 
 
-def compute_broad_band_density(
+def broad_band_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -334,7 +335,7 @@ def compute_broad_band_density(
     return density
 
 
-def compute_ring_density_rmm(
+def rrm_ring_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     sin_Omega_rad: float,
@@ -347,7 +348,8 @@ def compute_ring_density_rmm(
     sigma_z: float,
     A: float,
 ) -> npt.NDArray[np.float64]:
-    return A * compute_ring_density(
+    """RRM ring is just K98 ring with a scaling factor."""
+    return A * ring_number_density(
         X_helio=X_helio,
         X_0=X_0,
         sin_Omega_rad=sin_Omega_rad,
@@ -361,7 +363,7 @@ def compute_ring_density_rmm(
     )
 
 
-def compute_feature_density_rmm(
+def rrm_feature_number_density(
     X_helio: npt.NDArray[np.float64],
     X_0: npt.NDArray[np.float64],
     X_earth: npt.NDArray[np.float64],
@@ -377,7 +379,8 @@ def compute_feature_density_rmm(
     sigma_theta_rad: float,
     A: float,
 ) -> npt.NDArray[np.float64]:
-    return A * compute_feature_density(
+    """RRM feature is just K98 feature with a scaling factor."""
+    return A * feature_number_density(
         X_helio=X_helio,
         X_0=X_0,
         sin_Omega_rad=sin_Omega_rad,
@@ -395,36 +398,39 @@ def compute_feature_density_rmm(
 
 
 # Mapping of implemented zodiacal component data classes and their density functions.
-DENSITY_FUNCS: dict[type[Component], ComputeDensityFunc] = {
-    Cloud: compute_cloud_density,
-    Band: compute_band_density,
-    Ring: compute_ring_density,
-    Feature: compute_feature_density,
-    Fan: compute_fan_density,
-    Comet: compute_comet_density,
-    Interstellar: compute_interstellar_density,
-    NarrowBand: compute_narrow_band_density,
-    BroadBand: compute_broad_band_density,
-    RingRRM: compute_ring_density_rmm,
-    FeatureRRM: compute_feature_density_rmm,
+DENSITY_FUNCS: dict[type[ZodiacalComponent], ComputeDensityFunc] = {
+    Cloud: cloud_number_density,
+    Band: band_number_density,
+    Ring: ring_number_density,
+    Feature: feature_number_density,
+    Fan: fan_number_density,
+    Comet: comet_number_density,
+    Interstellar: interstellar_number_density,
+    NarrowBand: narrow_band_number_density,
+    BroadBand: broad_band_number_density,
+    RingRRM: rrm_ring_number_density,
+    FeatureRRM: rrm_feature_number_density,
 }
 
 
-class ComponentDensityFn(Protocol):
-    def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]: ...
+class ComponentNumberDensityCallable(Protocol):
+    """Protocol for a zodiacal components number density function."""
+
+    def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """Return the number density of the component at the heliocentric position."""
 
 
 def construct_density_partials(
-    comps: Sequence[Component],
+    comps: Sequence[ZodiacalComponent],
     dynamic_params: dict[str, Any],
-) -> tuple[ComponentDensityFn, ...]:
+) -> tuple[ComponentNumberDensityCallable, ...]:
     """Return density partials for the components.
 
     Return a tuple of the density expressions above which has been prepopulated with
     model and configuration parameters, leaving only the `X_helio` argument to be supplied.
     Raises exception for incorrectly defined components or component density functions.
     """
-    partial_density_funcs: list[ComponentDensityFn] = []
+    partial_density_funcs: list[ComponentNumberDensityCallable] = []
     for comp in comps:
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
@@ -454,9 +460,9 @@ def construct_density_partials(
 
 
 def construct_density_partials_comps(
-    comps: Mapping[ComponentLabel, Component],
+    comps: Mapping[ComponentLabel, ZodiacalComponent],
     dynamic_params: dict[str, Any],
-) -> dict[ComponentLabel, ComponentDensityFn]:
+) -> dict[ComponentLabel, ComponentNumberDensityCallable]:
     """Construct density partials for components.
 
     Return a tuple of the density expressions above which has been prepopulated with
@@ -464,7 +470,7 @@ def construct_density_partials_comps(
     Raises exception for incorrectly defined components or component density functions.
 
     """
-    partial_density_funcs: dict[ComponentLabel, ComponentDensityFn] = {}
+    partial_density_funcs: dict[ComponentLabel, ComponentNumberDensityCallable] = {}
     for comp_label, comp in comps.items():
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()

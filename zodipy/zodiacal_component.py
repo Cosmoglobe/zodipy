@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Component(ABC):
+class ZodiacalComponent(ABC):
     """Base class for storing common model parameters for zodiacal components.
 
     Args:
@@ -45,7 +45,7 @@ class Component(ABC):
 
 
 @dataclass
-class Cloud(Component):
+class Cloud(ZodiacalComponent):
     """DIRBE diffuse cloud.
 
     Args:
@@ -65,7 +65,7 @@ class Cloud(Component):
 
 
 @dataclass
-class Band(Component):
+class Band(ZodiacalComponent):
     """DIRBE asteroidal dust band.
 
     Args:
@@ -90,7 +90,7 @@ class Band(Component):
 
 
 @dataclass
-class Ring(Component):
+class Ring(ZodiacalComponent):
     """DIRBE circum-solar ring (excluding the Earth-trailing Feature).
 
     Args:
@@ -108,7 +108,7 @@ class Ring(Component):
 
 
 @dataclass
-class Feature(Component):
+class Feature(ZodiacalComponent):
     """DIRBE Earth-trailing Feature.
 
     Args:
@@ -137,7 +137,9 @@ class Feature(Component):
 
 
 @dataclass
-class Fan(Component):
+class Fan(ZodiacalComponent):
+    """RRM fan."""
+
     gamma: float
     Z_0: float
     Q: float
@@ -146,7 +148,9 @@ class Fan(Component):
 
 
 @dataclass
-class Comet(Component):
+class Comet(ZodiacalComponent):
+    """RRM comet."""
+
     gamma: float
     Z_0: float
     P: float
@@ -156,12 +160,16 @@ class Comet(Component):
 
 
 @dataclass
-class Interstellar(Component):
+class Interstellar(ZodiacalComponent):
+    """RRM interstellar dust."""
+
     amp: float
 
 
 @dataclass
-class NarrowBand(Component):
+class NarrowBand(ZodiacalComponent):
+    """RRM narrow band."""
+
     gamma: float
     A: float
     G: float
@@ -171,7 +179,9 @@ class NarrowBand(Component):
 
 
 @dataclass
-class BroadBand(Component):
+class BroadBand(ZodiacalComponent):
+    """RRM broad band."""
+
     gamma: float
     A: float
     R_inner: float
@@ -182,11 +192,15 @@ class BroadBand(Component):
 
 @dataclass
 class RingRRM(Ring):
+    """RRM circum-solar ring."""
+
     A: float
 
 
 @dataclass
 class FeatureRRM(Feature):
+    """RRM Earth-trailing Feature."""
+
     A: float
 
 

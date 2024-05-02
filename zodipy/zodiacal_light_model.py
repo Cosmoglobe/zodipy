@@ -1,18 +1,24 @@
 from __future__ import annotations
 
-from abc import ABC
+import abc
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Mapping, Sequence
 
 import numpy as np
 from astropy import units
 
+from zodipy.brightness import (
+    BrightnessAtStepCallable,
+    kelsall_brightness_at_step,
+    rrm_brightness_at_step,
+)
+
 if TYPE_CHECKING:
-    from zodipy._ipd_comps import Component, ComponentLabel
+    from zodipy.zodiacal_component import ComponentLabel, ZodiacalComponent
 
 
-@dataclass
-class InterplanetaryDustModel(ABC):
+@dataclass(repr=False)
+class ZodiacalLightModel(abc.ABC):
     """Base class for interplanetary dust models.
 
     Args:
@@ -21,8 +27,14 @@ class InterplanetaryDustModel(ABC):
 
     """
 
-    comps: Mapping[ComponentLabel, Component]
+    comps: Mapping[ComponentLabel, ZodiacalComponent]
     spectrum: units.Quantity
+
+    @property
+    @abc.abstractmethod
+    def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
+        """Return the callable that computes the brightness at a step."""
+        ...
 
     def to_dict(self) -> dict:
         """Return a dictionary representation of the model."""
@@ -45,6 +57,7 @@ class InterplanetaryDustModel(ABC):
 
     @property
     def ncomps(self) -> int:
+        """Return the number of components in the model."""
         return len(self.comps)
 
     def is_valid_at(self, wavelengths: units.Quantity) -> np.bool_:
@@ -53,8 +66,8 @@ class InterplanetaryDustModel(ABC):
         return np.all((self.spectrum.min() <= wavelengths) & (wavelengths <= self.spectrum.max()))
 
 
-@dataclass
-class Kelsall(InterplanetaryDustModel):
+@dataclass(repr=False)
+class Kelsall(ZodiacalLightModel):
     """Kelsall et al. (1998) model."""
 
     T_0: float
@@ -66,38 +79,50 @@ class Kelsall(InterplanetaryDustModel):
     C2: Sequence[float] | None = None
     C3: Sequence[float] | None = None
 
+    @property
+    def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
+        """Kellsall brightness at a step fuction."""
+        return kelsall_brightness_at_step
 
-@dataclass
-class RRM(InterplanetaryDustModel):
+
+@dataclass(repr=False)
+class RRM(ZodiacalLightModel):
     """Rowan-Robinson and May (2013) model."""
 
     T_0: Mapping[ComponentLabel, float]
     delta: Mapping[ComponentLabel, float]
     calibration: Sequence[float]
 
+    @property
+    def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
+        """RRM brightness at a step fuction."""
+        return rrm_brightness_at_step
+
 
 @dataclass
 class InterplanetaryDustModelRegistry:
     """Container for registered models."""
 
-    _registry: dict[str, InterplanetaryDustModel] = field(init=False, default_factory=dict)
+    _registry: dict[str, ZodiacalLightModel] = field(init=False, default_factory=dict)
 
     @property
     def models(self) -> list[str]:
+        """Return a list of registered models."""
         return list(self._registry.keys())
 
     def register_model(
         self,
         name: str,
-        model: InterplanetaryDustModel,
+        model: ZodiacalLightModel,
     ) -> None:
+        """Register a model with the registry."""
         if (name := name.lower()) in self._registry:
             msg = f"a model by the name {name!s} is already registered."
             raise ValueError(msg)
-
         self._registry[name] = model
 
-    def get_model(self, name: str) -> InterplanetaryDustModel:
+    def get_model(self, name: str) -> ZodiacalLightModel:
+        """Return a model from the registry."""
         if (name := name.lower()) not in self._registry:
             msg = (
                 f"{name!r} is not a registered Interplanetary Dust model. "

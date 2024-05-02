@@ -26,7 +26,7 @@ from hypothesis.strategies import (
 )
 
 import zodipy
-from zodipy._line_of_sight import COMPONENT_CUTOFFS
+from zodipy.line_of_sight import COMPONENT_CUTOFFS
 from zodipy.model_registry import model_registry
 
 MIN_FREQ = u.Quantity(10, u.GHz)

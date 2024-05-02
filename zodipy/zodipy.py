@@ -3,21 +3,20 @@ from __future__ import annotations
 import functools
 import multiprocessing
 import platform
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 from astropy import coordinates as coords
 from astropy import units
 from scipy import integrate
 
-from zodipy._coords import get_earth_skycoord, get_obs_skycoord
-from zodipy._emission import EMISSION_MAPPING
-from zodipy._ipd_comps import ComponentLabel
-from zodipy._ipd_dens_funcs import construct_density_partials_comps
-from zodipy._line_of_sight import get_line_of_sight_range
 from zodipy.blackbody import tabulate_bandpass_integrated_bnu, tabulate_center_wavelength_bnu
 from zodipy.interpolate import get_model_to_dicts_callable
+from zodipy.line_of_sight import get_line_of_sight_range, integrate_gauss_legendre
 from zodipy.model_registry import model_registry
+from zodipy.number_density import construct_density_partials_comps
+from zodipy.skycoords import get_earth_skycoord, get_obs_skycoord
+from zodipy.zodiacal_component import ComponentLabel
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -27,13 +26,7 @@ SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
 
 
 class Model:
-    """Main interface to ZodiPy.
-
-    The zodiacal light simulations are configured by specifying a bandpass (`freq`, `weights`)
-    or a delta/center frequency (`freq`), and a string representation of a built in interplanetary
-    dust model (`model`). See https://cosmoglobe.github.io/zodipy/introduction/ for a list of
-    available models.
-    """
+    """Main interface to ZodiPy."""
 
     def __init__(
         self,
@@ -53,7 +46,8 @@ class Model:
                 `weights` must be provided.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights are
                 assumed to be given in spectral radiance units (Jy/sr).
-            name: Interplanetary dust model to use. Defaults to 'dirbe' which is the DIRBE model.
+            name: Interplanetary dust model to use. For a list of available models, see
+                https://cosmoglobe.github.io/zodipy/introduction/. Defaults to 'dirbe'.
             gauss_quad_degree: Order of the Gaussian-Legendre quadrature used to evaluate the
                 line-of-sight integral in the simulations. Default is 50 points.
             extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
@@ -75,6 +69,7 @@ class Model:
             raise ValueError(msg)
 
         self._interplanetary_dust_model = model_registry.get_model(name)
+
         if not extrapolate and not self._interplanetary_dust_model.is_valid_at(x):
             msg = (
                 "The requested frequencies are outside the valid range of the model."
@@ -152,11 +147,13 @@ class Model:
         )
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
+        unit_vector = skycoord.cartesian.xyz.value
+        obspos = obs_skycoord.cartesian.xyz.to_value(units.AU)
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
-            unit_vectors=skycoord.cartesian.xyz.value,
-            obs_pos=obs_skycoord.cartesian.xyz.to_value(units.AU),
+            unit_vectors=unit_vector,
+            obs_pos=obspos,
         )
 
         density_partials = construct_density_partials_comps(
@@ -167,17 +164,15 @@ class Model:
                 ]
             },
         )
-
         common_integrand = functools.partial(
-            EMISSION_MAPPING[type(self._interplanetary_dust_model)],
-            X_obs=obs_skycoord.cartesian.xyz.to_value(units.AU)[:, np.newaxis, np.newaxis],
+            self._interplanetary_dust_model.brightness_at_step_callable,
+            X_obs=obspos[:, np.newaxis, np.newaxis],
             bp_interpolation_table=self._b_nu_table,
             **self._common_parameters,
         )
-
         distribute_to_cores = self._n_proc > 1 and skycoord.size > self._n_proc
         if distribute_to_cores:
-            unit_vector_chunks = np.array_split(skycoord.cartesian.xyz.value, self._n_proc, axis=-1)
+            unit_vector_chunks = np.array_split(unit_vector, self._n_proc, axis=-1)
             integrated_comp_emission = np.zeros(
                 (self._interplanetary_dust_model.ncomps, skycoord.size)
             )
@@ -194,20 +189,20 @@ class Model:
                     comp_integrands = [
                         functools.partial(
                             common_integrand,
-                            u_los=np.expand_dims(unit_vectors, axis=-1),
+                            u_los=np.expand_dims(unit_vector, axis=-1),
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
                             get_density_function=density_partials[comp_label],
                             **self._comp_parameters[comp_label],
                         )
-                        for unit_vectors, start, stop in zip(
+                        for unit_vector, start, stop in zip(
                             unit_vector_chunks, start_chunks, stop_chunks
                         )
                     ]
 
                     proc_chunks = [
                         pool.apply_async(
-                            _integrate_gauss_quad,
+                            integrate_gauss_legendre,
                             args=(comp_integrand, *self._gauss_points_and_weights),
                         )
                         for comp_integrand in comp_integrands
@@ -223,12 +218,11 @@ class Model:
             integrated_comp_emission = np.zeros(
                 (self._interplanetary_dust_model.ncomps, skycoord.size)
             )
-            unit_vectors_expanded = np.expand_dims(skycoord.cartesian.xyz.value, axis=-1)
 
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
-                    u_los=unit_vectors_expanded,
+                    u_los=np.expand_dims(unit_vector, axis=-1),
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
                     get_density_function=density_partials[comp_label],
@@ -236,7 +230,7 @@ class Model:
                 )
 
                 integrated_comp_emission[idx] = (
-                    _integrate_gauss_quad(comp_integrand, *self._gauss_points_and_weights)
+                    integrate_gauss_legendre(comp_integrand, *self._gauss_points_and_weights)
                     * 0.5
                     * (stop[comp_label] - start[comp_label])
                 )
@@ -245,12 +239,6 @@ class Model:
         emission = integrated_comp_emission[:, indicies] << (units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
-
-    @property
-    def supported_observers(self) -> list[str]:
-        """Return a list of available observers given an ephemeris."""
-        with coords.solar_system_ephemeris.set(self._ephemeris):
-            return [*list(coords.solar_system_ephemeris.bodies), "semb-l2"]
 
     def get_parameters(self) -> dict:
         """Return a dictionary containing the interplanetary dust model parameters."""
@@ -286,12 +274,3 @@ class Model:
             repr_str += f"{attribute_name}={attribute!r}, "
 
         return repr_str[:-2] + ")"
-
-
-def _integrate_gauss_quad(
-    fn: Callable[[float], npt.NDArray[np.float64]],
-    points: npt.NDArray[np.float64],
-    weights: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
-    """Integrate a function using Gauss-Legendre quadrature."""
-    return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))

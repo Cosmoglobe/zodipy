@@ -7,8 +7,8 @@ import numpy.typing as npt
 from astropy import units
 from scipy import integrate
 
-from zodipy._ipd_model import RRM, InterplanetaryDustModel, Kelsall
 from zodipy.comps import ComponentLabel
+from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
@@ -121,20 +121,20 @@ def interpolate_spectral_parameter(
     return interpolated_parameter
 
 
-T = TypeVar("T", contravariant=True, bound=InterplanetaryDustModel)
+T = TypeVar("T", contravariant=True, bound=ZodiacalLightModel)
 CallableModelToDicts = Callable[
     [units.Quantity, Union[units.Quantity, None], T], tuple[CompParamDict, CommonParamDict]
 ]
 
 
-MODEL_INTERPOLATION_MAPPING: dict[type[InterplanetaryDustModel], CallableModelToDicts] = {
+MODEL_INTERPOLATION_MAPPING: dict[type[ZodiacalLightModel], CallableModelToDicts] = {
     Kelsall: kelsall_params_to_dicts,
     RRM: rrm_params_to_dicts,
 }
 
 
 def get_model_to_dicts_callable(
-    model: InterplanetaryDustModel,
+    model: ZodiacalLightModel,
 ) -> CallableModelToDicts:
     """Get the appropriate parameter unpacker for the model."""
     return MODEL_INTERPOLATION_MAPPING[type(model)]

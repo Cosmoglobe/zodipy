@@ -11,6 +11,23 @@ temperatures = np.linspace(MIN_TEMP, MAX_TEMP, N_TEMPS)
 blackbody = BlackBody(temperatures)
 
 
+def get_dust_grain_temperature(
+    R: npt.NDArray[np.float64], T_0: float, delta: float
+) -> npt.NDArray[np.float64]:
+    """Return the dust grain temperature given a radial distance from the Sun.
+
+    Args:
+        R: Radial distance from the sun in ecliptic heliocentric coordinates [AU / 1AU].
+        T_0: Temperature of dust grains located 1 AU from the Sun [K].
+        delta: Powerlaw index.
+
+    Returns:
+        Dust grain temperature [K].
+
+    """
+    return T_0 * R**-delta
+
+
 def tabulate_center_wavelength_bnu(wavelength: units.Quantity) -> npt.NDArray[np.float64]:
     """Tabulate blackbody specific intensity for a center wavelength."""
     return np.asarray(

@@ -9,23 +9,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-def get_dust_grain_temperature(
-    R: npt.NDArray[np.float64], T_0: float, delta: float
-) -> npt.NDArray[np.float64]:
-    """Return the dust grain temperature given a radial distance from the Sun.
-
-    Args:
-        R: Radial distance from the sun in ecliptic heliocentric coordinates [AU / 1AU].
-        T_0: Temperature of dust grains located 1 AU from the Sun [K].
-        delta: Powerlaw index.
-
-    Returns:
-        Dust grain temperature [K].
-
-    """
-    return T_0 * R**-delta
-
-
 def get_scattering_angle(
     R_los: float | npt.NDArray[np.float64],
     R_helio: npt.NDArray[np.float64],

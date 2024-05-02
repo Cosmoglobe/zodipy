@@ -1,5 +1,5 @@
 from zodipy import comps, source_params
-from zodipy._ipd_model import RRM, Kelsall, model_registry
+from zodipy.zodiacal_light_model import RRM, Kelsall, model_registry
 
 model_registry.register_model(
     name="dirbe",
