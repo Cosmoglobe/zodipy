@@ -30,9 +30,9 @@ def kelsall_brightness_at_step(
     delta: float,
     emissivity: np.float64,
     albedo: np.float64,
-    C1: float,
-    C2: float,
-    C3: float,
+    C1: np.float64,
+    C2: np.float64,
+    C3: np.float64,
     solar_irradiance: np.float64,
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
@@ -78,9 +78,3 @@ def rrm_brightness_at_step(
     blackbody_emission = np.interp(temperature, *bp_interpolation_table)
 
     return blackbody_emission * get_density_function(X_helio) * calibration
-
-
-# EMISSION_MAPPING: dict[type[InterplanetaryDustModel], GetCompEmissionAtStepFn] = {
-#     Kelsall: kelsall,
-#     RRM: rrm,
-# }

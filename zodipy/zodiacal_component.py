@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC
+import abc
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class ZodiacalComponent(ABC):
+class ZodiacalComponent(abc.ABC):
     """Base class for storing common model parameters for zodiacal components.
 
     Args:

@@ -11,7 +11,7 @@ from zodipy.zodiacal_component import ComponentLabel
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floating]] = {
+DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),
     ComponentLabel.BAND1: (R_0, R_JUPITER),
     ComponentLabel.BAND2: (R_0, R_JUPITER),
@@ -20,7 +20,7 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floati
     ComponentLabel.FEATURE: (R_EARTH - 0.2, R_EARTH + 0.2),
 }
 
-RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.floating, float | np.floating]] = {
+RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
     ComponentLabel.FAN: (R_0, RRM[ComponentLabel.FAN].R_outer),  # type: ignore
     ComponentLabel.INNER_NARROW_BAND: (
         RRM[ComponentLabel.INNER_NARROW_BAND].R_inner,  # type: ignore

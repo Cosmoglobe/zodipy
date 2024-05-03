@@ -33,7 +33,7 @@ def get_scattering_angle(
 
 
 def get_phase_function(
-    Theta: npt.NDArray[np.float64], C1: float, C2: float, C3: float
+    Theta: npt.NDArray[np.float64], C1: np.float64, C2: np.float64, C3: np.float64
 ) -> npt.NDArray[np.float64]:
     """Return the phase function.
 

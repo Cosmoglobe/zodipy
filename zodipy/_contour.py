@@ -15,7 +15,7 @@ DEFAULT_EARTH_POS = u.Quantity([1, 0, 0], u.AU)
 
 
 def tabulate_density(
-    grid: npt.NDArray[np.floating] | Sequence[npt.NDArray[np.floating]],
+    grid: npt.NDArray[np.float64] | Sequence[npt.NDArray[np.float64]],
     model: str = "DIRBE",
     earth_pos: u.Quantity[u.AU] = DEFAULT_EARTH_POS,
 ) -> npt.NDArray[np.float64]:

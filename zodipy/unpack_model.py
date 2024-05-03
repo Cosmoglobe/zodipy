@@ -12,13 +12,16 @@ from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
+UnpackedModelDicts = tuple[CompParamDict, CommonParamDict]
+T = TypeVar("T", bound=ZodiacalLightModel)
+UnpackModelCallable = Callable[[units.Quantity, Union[units.Quantity, None], T], UnpackedModelDicts]
 
 
-def kelsall_params_to_dicts(
+def unpack_kelsall(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: Kelsall,
-) -> tuple[CompParamDict, CommonParamDict]:
+) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
     model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
 
@@ -82,11 +85,11 @@ def kelsall_params_to_dicts(
     return comp_params, common_params
 
 
-def rrm_params_to_dicts(
+def unpack_rrm(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: RRM,
-) -> tuple[CompParamDict, CommonParamDict]:
+) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
     model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
 
@@ -121,20 +124,14 @@ def interpolate_spectral_parameter(
     return interpolated_parameter
 
 
-T = TypeVar("T", contravariant=True, bound=ZodiacalLightModel)
-CallableModelToDicts = Callable[
-    [units.Quantity, Union[units.Quantity, None], T], tuple[CompParamDict, CommonParamDict]
-]
-
-
-MODEL_INTERPOLATION_MAPPING: dict[type[ZodiacalLightModel], CallableModelToDicts] = {
-    Kelsall: kelsall_params_to_dicts,
-    RRM: rrm_params_to_dicts,
+model_unpack_mapping: dict[type[ZodiacalLightModel], UnpackModelCallable] = {
+    Kelsall: unpack_kelsall,
+    RRM: unpack_rrm,
 }
 
 
 def get_model_to_dicts_callable(
     model: ZodiacalLightModel,
-) -> CallableModelToDicts:
+) -> UnpackModelCallable:
     """Get the appropriate parameter unpacker for the model."""
-    return MODEL_INTERPOLATION_MAPPING[type(model)]
+    return model_unpack_mapping[type(model)]

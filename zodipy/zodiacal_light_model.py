@@ -100,7 +100,7 @@ class RRM(ZodiacalLightModel):
 
 
 @dataclass
-class InterplanetaryDustModelRegistry:
+class ModelRegistry:
     """Container for registered models."""
 
     _registry: dict[str, ZodiacalLightModel] = field(init=False, default_factory=dict)
@@ -133,4 +133,4 @@ class InterplanetaryDustModelRegistry:
         return self._registry[name]
 
 
-model_registry = InterplanetaryDustModelRegistry()
+model_registry = ModelRegistry()

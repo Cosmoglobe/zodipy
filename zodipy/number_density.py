@@ -468,7 +468,6 @@ def construct_density_partials_comps(
     Return a tuple of the density expressions above which has been prepopulated with
     model and configuration parameters, leaving only the `X_helio` argument to be supplied.
     Raises exception for incorrectly defined components or component density functions.
-
     """
     partial_density_funcs: dict[ComponentLabel, ComponentNumberDensityCallable] = {}
     for comp_label, comp in comps.items():

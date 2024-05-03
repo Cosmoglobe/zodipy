@@ -10,12 +10,12 @@ from astropy import coordinates as coords
 from astropy import units
 from scipy import integrate
 
-from zodipy.blackbody import tabulate_bandpass_integrated_bnu, tabulate_center_wavelength_bnu
-from zodipy.interpolate import get_model_to_dicts_callable
+from zodipy.blackbody import tabulate_blackbody_emission
+from zodipy.bodies import get_earthpos, get_obspos
 from zodipy.line_of_sight import get_line_of_sight_range, integrate_gauss_legendre
 from zodipy.model_registry import model_registry
 from zodipy.number_density import construct_density_partials_comps
-from zodipy.skycoords import get_earth_skycoord, get_obs_skycoord
+from zodipy.unpack_model import get_model_to_dicts_callable
 from zodipy.zodiacal_component import ComponentLabel
 
 if TYPE_CHECKING:
@@ -84,16 +84,16 @@ class Model:
                 msg = "Number of wavelengths and weights must be the same in the bandpass."
                 raise ValueError(msg)
             normalized_weights = weights / integrate.trapezoid(weights, x)
-            self._b_nu_table = tabulate_bandpass_integrated_bnu(x, normalized_weights)
         else:
-            self._b_nu_table = tabulate_center_wavelength_bnu(x)
             normalized_weights = None
+        self._b_nu_table = tabulate_blackbody_emission(x, normalized_weights)
 
         # Interpolate and convert the model parameters to dictionaries which can be used to evaluate
         # the zodiacal light model.
-        self._comp_parameters, self._common_parameters = get_model_to_dicts_callable(
-            self._interplanetary_dust_model
-        )(x, normalized_weights, self._interplanetary_dust_model)
+        brightness_callable_dicts = get_model_to_dicts_callable(self._interplanetary_dust_model)(
+            x, normalized_weights, self._interplanetary_dust_model
+        )
+        self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
         self._n_proc = n_proc
@@ -105,6 +105,7 @@ class Model:
         *,
         obspos: units.Quantity | str = "earth",
         return_comps: bool = False,
+        contains_duplicates: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal light for all observations in a `SkyCoord` object.
 
@@ -118,6 +119,9 @@ class Model:
                 an observer in the `astropy.coordinates.solar_system_ephemeris`. This should
                 correspond to a single position. Defaults to 'earth'.
             return_comps: If True, the emission is returned component-wise. Defaults to False.
+            contains_duplicates: If True, the input coordinates are filtered and only unique
+                pointing is used to calculate the emission. The output is then mapped back to the
+                original coordinates resulting in the same output shape. Defaults to False.
 
         Returns:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
@@ -127,48 +131,54 @@ class Model:
             msg = "The `obstime` attribute of the `SkyCoord` object must be set."
             raise ValueError(msg)
 
-        # Pick out unique coordinates, and only calculate the emission for these. and return the
-        # inverse indices to map the output back to the original coordinates.
-        _, index, inverse = np.unique(
-            [skycoord.spherical.lon, skycoord.spherical.lat],
-            return_index=True,
-            return_inverse=True,
-            axis=1,
-        )
-        skycoord = skycoord[index]
+        ncoords = skycoord.size
+        if contains_duplicates:
+            _, index, inverse = np.unique(
+                [skycoord.spherical.lon, skycoord.spherical.lat],
+                return_index=True,
+                return_inverse=True,
+                axis=1,
+            )
+            skycoord = skycoord[index]  # filter out identical coordinates
 
-        earth_skycoord = get_earth_skycoord(skycoord.obstime, ephemeris=self._ephemeris)
-        obs_skycoord = get_obs_skycoord(
-            obspos, skycoord.obstime, earth_skycoord, ephemeris=self._ephemeris
-        )
+        earth_xyz = get_earthpos(skycoord.obstime, ephemeris=self._ephemeris)
+        if isinstance(obspos, str):
+            obs_xyz = get_obspos(obspos, skycoord.obstime, earth_xyz, ephemeris=self._ephemeris)
+        else:
+            obs_xyz = obspos.to_value(units.AU)
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
-        unit_vector = skycoord.cartesian.xyz.value
-        obspos = obs_skycoord.cartesian.xyz.to_value(units.AU)
+
+        if skycoord.isscalar:
+            skycoord_xyz = skycoord.cartesian.xyz.value[:, np.newaxis]
+        else:
+            skycoord_xyz = skycoord.cartesian.xyz.value
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
-            unit_vectors=unit_vector,
-            obs_pos=obspos,
+            unit_vectors=skycoord_xyz,
+            obs_pos=obs_xyz,
         )
 
+        # Return a dict of partial functions corresponding to the number density each zodiacal
+        # component in the interplanetary dust model.
         density_partials = construct_density_partials_comps(
             comps=self._interplanetary_dust_model.comps,
-            dynamic_params={
-                "X_earth": earth_skycoord.cartesian.xyz.to_value(units.AU)[
-                    :, np.newaxis, np.newaxis
-                ]
-            },
+            dynamic_params={"X_earth": earth_xyz[:, np.newaxis, np.newaxis]},
         )
+
+        # Partial function of the brightness integral at a step along the line-of-sight prepopulated
+        # with shared arguments between zodiacal components.
         common_integrand = functools.partial(
             self._interplanetary_dust_model.brightness_at_step_callable,
-            X_obs=obspos[:, np.newaxis, np.newaxis],
+            X_obs=obs_xyz[:, np.newaxis, np.newaxis],
             bp_interpolation_table=self._b_nu_table,
             **self._common_parameters,
         )
+
         distribute_to_cores = self._n_proc > 1 and skycoord.size > self._n_proc
         if distribute_to_cores:
-            unit_vector_chunks = np.array_split(unit_vector, self._n_proc, axis=-1)
+            unit_vector_chunks = np.array_split(skycoord_xyz, self._n_proc, axis=-1)
             integrated_comp_emission = np.zeros(
                 (self._interplanetary_dust_model.ncomps, skycoord.size)
             )
@@ -211,14 +221,11 @@ class Model:
                     )
 
         else:
-            integrated_comp_emission = np.zeros(
-                (self._interplanetary_dust_model.ncomps, inverse.size)
-            )
-
+            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
-                    u_los=np.expand_dims(unit_vector, axis=-1),
+                    u_los=np.expand_dims(skycoord_xyz, axis=-1),
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
                     get_density_function=density_partials[comp_label],
@@ -231,8 +238,11 @@ class Model:
                     * (stop[comp_label] - start[comp_label])
                 )
 
-        emission = np.zeros((self._interplanetary_dust_model.ncomps, inverse.size))
-        emission = integrated_comp_emission[:, inverse] << (units.MJy / units.sr)
+        if contains_duplicates:
+            emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+            emission = integrated_comp_emission[:, inverse] << (units.MJy / units.sr)
+        else:
+            emission = integrated_comp_emission << (units.MJy / units.sr)
 
         return emission if return_comps else emission.sum(axis=0)
 
