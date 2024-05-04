@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from zodipy._constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
+from zodipy.constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
 from zodipy.zodiacal_component import (
     Band,
     BroadBand,

@@ -1,0 +1,12 @@
+import numpy as np
+
+R_0 = np.finfo(np.float64).eps
+R_MARS = 1.5237
+R_VERITAS = 2.16
+R_EOS = 3.02
+R_THEMIS = 3.14
+R_EARTH = 1
+R_ASTEROID_BELT = 3.137
+R_NARROW_BANDS = 3.015
+R_JUPITER = 5.2
+R_KUIPER_BELT = 30

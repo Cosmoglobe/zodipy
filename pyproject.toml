@@ -64,6 +64,7 @@ overrides = [
     { module = "scipy.*", ignore_missing_imports = true },
     { module = "pkg_resources.*", ignore_missing_imports = true },
 ]
+exclude = ["_contour.py"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
@@ -113,8 +114,11 @@ lint.ignore = [
     "PLR0913",
     "ISC001",
     "S311",
+    "C901",
+    "PLR0912",
+    "PLR0915",
 ]
-# exclude = ["docs/*"]
+exclude = ["old_tests/*"]
 lint.pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]

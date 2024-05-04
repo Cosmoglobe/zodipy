@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
 
-from zodipy._constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
 from zodipy.comps import RRM
+from zodipy.constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
 from zodipy.zodiacal_component import ComponentLabel
 
 if TYPE_CHECKING:
@@ -64,7 +64,6 @@ def get_sphere_intersection(
     """Returns the distance from the observer to a heliocentric sphere with radius `cutoff`."""
     x, y, z = obs_pos.flatten()
     r_obs = np.sqrt(x**2 + y**2 + z**2)
-
     if r_obs > cutoff:
         return np.asarray([np.finfo(float).eps])
 

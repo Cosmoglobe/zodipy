@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Mapping, Protocol, Sequence
+from typing import Any, Callable, Mapping, Protocol
 
 import numpy as np
 import numpy.typing as npt  # type: ignore
@@ -418,45 +418,6 @@ class ComponentNumberDensityCallable(Protocol):
 
     def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Return the number density of the component at the heliocentric position."""
-
-
-def construct_density_partials(
-    comps: Sequence[ZodiacalComponent],
-    dynamic_params: dict[str, Any],
-) -> tuple[ComponentNumberDensityCallable, ...]:
-    """Return density partials for the components.
-
-    Return a tuple of the density expressions above which has been prepopulated with
-    model and configuration parameters, leaving only the `X_helio` argument to be supplied.
-    Raises exception for incorrectly defined components or component density functions.
-    """
-    partial_density_funcs: list[ComponentNumberDensityCallable] = []
-    for comp in comps:
-        comp_dict = asdict(comp)
-        func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
-        residual_params = [key for key in func_params if key not in comp_dict]
-        try:
-            residual_params.remove("X_helio")
-        except ValueError as err:
-            msg = "X_helio must be be the first argument to the density function of a component."
-            raise ValueError(msg) from err
-
-        if residual_params:
-            if residual_params - dynamic_params.keys():
-                msg = (
-                    f"Argument(s) {residual_params} required by the density function "
-                    f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
-                    f"{type(comp)} or by the `computed_parameters` dict."
-                )
-                raise ValueError(msg)
-            comp_dict.update(dynamic_params)
-
-        # Remove excess intermediate parameters from the component dict.
-        comp_params = {key: value for key, value in comp_dict.items() if key in func_params}
-        partial_func = partial(DENSITY_FUNCS[type(comp)], **comp_params)
-        partial_density_funcs.append(partial_func)
-
-    return tuple(partial_density_funcs)
 
 
 def construct_density_partials_comps(

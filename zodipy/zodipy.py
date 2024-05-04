@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import multiprocessing
+import multiprocessing.pool
 import platform
 from typing import TYPE_CHECKING
 
@@ -21,8 +22,7 @@ from zodipy.zodiacal_component import ComponentLabel
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-PLATFORM = platform.system().lower()
-SYS_PROC_START_METHOD = "fork" if "windows" not in PLATFORM else None
+_platform_start_method = "fork" if "windows" not in platform.system().lower() else None
 
 
 class Model:
@@ -38,6 +38,7 @@ class Model:
         extrapolate: bool = False,
         ephemeris: str = "builtin",
         n_proc: int = 1,
+        pool: multiprocessing.pool.Pool | None = None,
     ) -> None:
         """Initialize the Zodipy interface.
 
@@ -60,10 +61,17 @@ class Model:
                 for available ephemerides.
             n_proc: Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
                 integrals are parallelized using the `multiprocessing` module. Defaults to 1.
+            pool: Custom multiprocessing pool to use. If `None`, a new pool is created. Defaults to
+                `None`.
+
         """
-        if not x.isscalar and weights is None:
-            msg = "Several wavelengths are provided by no weights."
-            raise ValueError(msg)
+        try:
+            if not x.isscalar and weights is None:
+                msg = "Several wavelengths are provided by no weights."
+                raise ValueError(msg)
+        except AttributeError as error:
+            msg = "The input 'x' must be an astropy Quantity."
+            raise TypeError(msg) from error
         if x.isscalar and weights is not None:
             msg = "A single wavelength is provided with weights."
             raise ValueError(msg)
@@ -72,8 +80,8 @@ class Model:
 
         if not extrapolate and not self._interplanetary_dust_model.is_valid_at(x):
             msg = (
-                "The requested frequencies are outside the valid range of the model."
-                "If this was intended, set `extrapolate=True`."
+                "The requested frequencies are outside the valid range of the model. "
+                "If this was intended, set the extrapolate argument to True."
             )
             raise ValueError(msg)
 
@@ -96,8 +104,14 @@ class Model:
         self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
-        self._n_proc = n_proc
         self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
+
+        if pool is None:
+            self._process_pool = multiprocessing.get_context(_platform_start_method).Pool(n_proc)
+            self._n_proc = n_proc
+        else:
+            self._process_pool = pool
+            self._n_proc = pool._processes  # type: ignore
 
     def evaluate(
         self,
@@ -127,11 +141,15 @@ class Model:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
 
         """
-        if skycoord.obstime is None:
-            msg = "The `obstime` attribute of the `SkyCoord` object must be set."
-            raise ValueError(msg)
+        try:
+            if skycoord.obstime is None:
+                msg = "The `obstime` attribute of the `SkyCoord` object must be set."
+                raise ValueError(msg)
+        except AttributeError as error:
+            msg = "The input coordinates must be an astropy SkyCoord object."
+            raise TypeError(msg) from error
 
-        ncoords = skycoord.size
+        n_coords_in = skycoord.size
         if contains_duplicates:
             _, index, inverse = np.unique(
                 [skycoord.spherical.lon, skycoord.spherical.lat],
@@ -140,15 +158,27 @@ class Model:
                 axis=1,
             )
             skycoord = skycoord[index]  # filter out identical coordinates
-
+        n_coords = skycoord.size
         earth_xyz = get_earthpos(skycoord.obstime, ephemeris=self._ephemeris)
         if isinstance(obspos, str):
-            obs_xyz = get_obspos(obspos, skycoord.obstime, earth_xyz, ephemeris=self._ephemeris)
+            try:
+                obs_xyz = get_obspos(obspos, skycoord.obstime, earth_xyz, ephemeris=self._ephemeris)
+            except KeyError as error:
+                valid_obs = [*coords.solar_system_ephemeris.bodies, "semb-l2"]
+                msg = f"Invalid observer string: '{obspos}'. Valid observers are: {valid_obs}"
+                raise ValueError(msg) from error
+
         else:
-            obs_xyz = obspos.to_value(units.AU)
+            try:
+                obs_xyz = obspos.to_value(units.AU)
+            except AttributeError as error:
+                msg = "The observer position must be a string or an astropy Quantity."
+                raise TypeError(msg) from error
+            except units.UnitConversionError as error:
+                msg = "The observer position must be in length units."
+                raise units.UnitConversionError(msg) from error
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
-
         if skycoord.isscalar:
             skycoord_xyz = skycoord.cartesian.xyz.value[:, np.newaxis]
         else:
@@ -176,16 +206,11 @@ class Model:
             **self._common_parameters,
         )
 
-        distribute_to_cores = self._n_proc > 1 and skycoord.size > self._n_proc
+        distribute_to_cores = n_coords > self._n_proc and self._n_proc > 1
         if distribute_to_cores:
             unit_vector_chunks = np.array_split(skycoord_xyz, self._n_proc, axis=-1)
-            integrated_comp_emission = np.zeros(
-                (self._interplanetary_dust_model.ncomps, skycoord.size)
-            )
-
-            with multiprocessing.get_context(SYS_PROC_START_METHOD).Pool(
-                processes=self._n_proc
-            ) as pool:
+            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords))
+            with self._process_pool as pool:
                 for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], self._n_proc, axis=-1)
                     if start[comp_label].size == 1:
@@ -221,7 +246,7 @@ class Model:
                     )
 
         else:
-            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords))
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
@@ -239,7 +264,7 @@ class Model:
                 )
 
         if contains_duplicates:
-            emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+            emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords_in))
             emission = integrated_comp_emission[:, inverse] << (units.MJy / units.sr)
         else:
             emission = integrated_comp_emission << (units.MJy / units.sr)
@@ -271,12 +296,3 @@ class Model:
                 _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
 
         self._interplanetary_dust_model = self._interplanetary_dust_model.__class__(**_dict)
-
-    def __repr__(self) -> str:
-        repr_str = f"{self.__class__.__name__}("
-        for attribute_name, attribute in self.__dict__.items():
-            if attribute_name.startswith("_"):
-                continue
-            repr_str += f"{attribute_name}={attribute!r}, "
-
-        return repr_str[:-2] + ")"

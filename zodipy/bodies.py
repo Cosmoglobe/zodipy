@@ -6,10 +6,10 @@ import astropy.coordinates as coords
 import numpy as np
 from astropy import time, units
 
-from zodipy._constants import DISTANCE_FROM_EARTH_TO_SEMB_L2
-
 if TYPE_CHECKING:
     import numpy.typing as npt
+
+MEAN_DIST_TO_L2 = 0.009896235034000056
 
 
 def get_sun_earth_moon_barycenter(
@@ -22,7 +22,7 @@ def get_sun_earth_moon_barycenter(
     located at a fixed distance from Earth along the vector pointing to Earth from the Sun.
     """
     earth_distance = np.linalg.norm(earthpos)
-    SEMB_L2_distance = earth_distance + DISTANCE_FROM_EARTH_TO_SEMB_L2
+    SEMB_L2_distance = earth_distance + MEAN_DIST_TO_L2
     earth_unit_vector = earthpos / earth_distance
 
     return earth_unit_vector * SEMB_L2_distance

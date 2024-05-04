@@ -62,7 +62,11 @@ class ZodiacalLightModel(abc.ABC):
 
     def is_valid_at(self, wavelengths: units.Quantity) -> np.bool_:
         """Check if the model is valid at a given wavelength."""
-        wavelengths = wavelengths.to(self.spectrum.unit, equivalencies=units.spectral())
+        try:
+            wavelengths = wavelengths.to(self.spectrum.unit, equivalencies=units.spectral())
+        except units.UnitConversionError as error:
+            msg = "Input 'x' must have units convertible to Hz or m."
+            raise units.UnitConversionError(msg) from error
         return np.all((self.spectrum.min() <= wavelengths) & (wavelengths <= self.spectrum.max()))
 
 
