@@ -1,117 +1,210 @@
-## Timestreams
-Below we illustrate how ZodiPy can be used to create timestreams of the zodiacal emission. 
-Note that since ZodiPy assumes a constant observer position over the input pointing sequence, the output
-will not be *real* timestreams, but for small enough time intervals the error is negligible.
+As an Astropy-affiliated package, ZodiPy is highly integrated with the astropy ecosystem.
+To make zodiacal light simulations, the `astropy.units`, `astropy.coordinates`, and `astropy.time` modules are used to provide user input. The coordinates for which ZodiPy will simulate the zodiacal light is specified in through the `astropy.coordinates.SkyCoord` object. Using ZodiPy is very simple and the user will only interact with *one* object `zodipy.Model`, which has *one* method `evaluate`.
 
+!!! danger "Breaking API changes in `v1.0.0`"
+    ZodiPy version >=`v1.0.0` no longer supports simulating zodiacal light from non `SkyCoord` coordinate inputs.
+## Initializing Zodipy
+### Working with the `Model` class
+The interface to ZodiPy is the `zodipy.Model` class
+```python
+import astropy.units as u
+import zodipy
 
-### Emission along a meridian
-In the following example we simulate what an observer on Earth is expected to see on 14 June, 
-2022 when looking along a meridian (line of constant longitude) at 30 microns, given the 
-DIRBE interplanetary dust model.
+model = zodipy.Model(25 * u.micron)
+```
+It has *one* required positional argument `x`, which represents a center wavelength/frequency or the points of a empirical bandpass. If `x` represents the points of a bandpass, the `weights` argument must also be provided
+```python 
+import astropy.units as u
+import zodipy
+
+points = [3, 4, 5, 6] * u.micron
+weights = [0.2, 0.4, 0.3, 0.1]
+
+model = zodipy.Model(points, weights=weights)
+```
+
+ZodiPy supports several zodiacal light models (see the [introduction](introduction.md) page for more information regarding the supported models), which are all valid in wavelength/frequency ranges. By default, the `Model` object will initialize using the DIRBE model. To select a different model, we specify the keyword argument `name`
+```python
+import astropy.units as u
+import zodipy
+
+model = zodipy.Model(25 * u.micron, name="planck18")
+```
+
+### Multiprocessing
+ZodiPy will distribute the input coordinates to cores if the keyword argument `n_proc` is `>= 1` using Python's `multiprocessing` module.
+```python
+import multiprocessing
+
+import astropy.units as u
+import zodipy
+
+model = zodipy.Model(25 * u.micron, n_proc=multiprocessing.cpu_count())
+```
+Alternatively, a custom pool (`multiprocessing.pool.Pool`) may be provided.
 
 ```python
-{!examples/evaluate.py!}
+import multiprocessing
+
+import astropy.units as u
+import zodipy
+
+pool = multiprocessing.Pool(multiprocesing.cpu_count())
+model = zodipy.Model(25 * u.micron, pool=pool)
+```
+!!! tip 
+    For all available optional keyword arguments in `zodipy.Model` see [the API reference](reference.md).
+
+## Simulating zodiacal light
+To make zodiacal light simulations ZodiPy needs to know three things: 1) Sky coordinates for which to simulate zodiacal light; 2) The position of the observer to know where the vertex of the rays is positioned; and 3) the time of observation, used to query the position of Earth. 
+### The SkyCoord object
+The sky coordinates are provided through astropys powerful `astropy.coordinates.SkyCoord` object, which can represent the observed coordinates in several formats. Users unfamiliar with the `SkyCoord` object should visit the [official Astropy documention](https://docs.astropy.org/en/stable/coordinates/index.html) before using ZodiPy to learn the basics.
+
+When using the `SkyCoord` in ZodiPy, the user **must** set the `obstime` and `frame` attributes. For a single observation in galactic coordinates, the `SkyCoord` object may look something like
+```python
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+
+skycoord = SkyCoord(
+    40 * u.deg, 
+    60 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame="galactic"
+)
+```
+The `astropy.time.Time` object can represent time in many formats, including julian and modified julian dates (see the [documentation](https://docs.astropy.org/en/stable/time/) for the `Time` object).
+
+!!! note "Notes on coordinate frames"
+    The coordinates specified to ZodiPy in the `SkyCoord` object must be in either the Ecliptic, Galactic, or Celestial
+    frames. The origin of the frames are therefore not important. Astropy provides a set of supported coordinate frames. In ZodiPy we use the following Astropy frames to represent generic Ecliptic, Galactic, and Celestial frames:
+
+    - Ecliptic = `"barycentricmeanecliptic"` / `BarycentricMeanEcliptic`
+    - Galactic = `"galactic"` / `Galactic`
+    - Celestial = `"icrs"` / `ICRS`
+
+In the following we show three sets of observations in all three coordinate frames
+``` py
+import astropy.units as u
+from astropy.coordinates import SkyCoord, BarycentricMeanEcliptic, Galactic, ICRS
+from astropy.time import Time
+
+skycoord_ecliptic = SkyCoord(
+    40 * u.deg, 
+    60 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame=BarycentricMeanEcliptic
+)
+skycoord_galactic = SkyCoord(
+    203 * u.deg, 
+    10 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame=Galactic
+)
+skycoord_celestial = SkyCoord(
+    12 * u.deg, 
+    40 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame=ICRS
+)
 ```
 
-![Zodiacal emission timestream](img/timestream.png)
+### The `evaluate` method
+Zodiacal light is evaluated by passing in the `SkyCoord` object to the `zodipy.Model.evaluate` method.
+```python
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+import zodipy
 
-!!! note
-    ZodiPy assumes a constant observer position over an input pointing sequence. For an observer on Earth, 
-    the true zodiacal emission signal will move along the ecliptic on the sky by roughly one degree each day. 
-    To account for this effect, the full pointing sequence of an experiment should be chunked into small 
-    subsequences with timescales corresponding to at maximum a day.
+model = zodipy.Model(25 * u.micron)
 
+skycoord = SkyCoord(
+    40 * u.deg, 
+    60 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame="galactic"
+)
 
-## HEALPix maps
-Below we illustrate how ZodiPy can be used to create simulated binned HEALPix maps of the zodiacal emission.
-
-
-### Instantaneous map in ecliptic coordinates
-In the following example we make an instantaneous map of of the zodiacal emission at 857 GHz
-as seen by an observer on earth on 14 June, 2022 given the Planck 2018 interplanetary dust model.
+emission = model.evaluate(skycoord)
+print(emission)
+# <Quantity [25.08189292] MJy / sr>
+```
+By default the observer is assumed to be on Earth. The position of the observer can be explicitly provided as the keyword argument `obspos` in the `evaluate` method
 
 ```python
-{!examples/get_binned_emission.py!}
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+import zodipy
+
+model = zodipy.Model(25 * u.micron)
+
+skycoord = SkyCoord(
+    40 * u.deg, 
+    60 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame="galactic"
+)
+
+emission = model.evaluate(skycoord, obspos="mars")
+print(emission)
+# <Quantity [8.36985535] MJy / sr>
+
+emission = model.evaluate(skycoord, obspos=[0.87, -0.53, 0.001] * u.AU)
+print(emission)
+# <Quantity [20.37750965] MJy / sr>
 ```
-![Zodiacal emission map](img/binned.png)
-*Note that the color bar is logarithmic.*
+This argument accepts both a string represented a body recognized by `astropy.coordinates.solar_system_ephemeris` (see the Astropy [documentation](https://docs.astropy.org/en/stable/api/astropy.coordinates.solar_system_ephemeris.html)), or a heliocentric ecliptic cartesian position.
 
+!!! note "Important to know when using ZodiPy"
+    ZodiPy assumes that all coordinates provided in a single call to `evalute` is obtained at an instant in time from the position of the observer. This is a good approximation for observations made within small time intervals, e.g less than a few hours. This is due to the time-varying of the zodiacal light which moves by about 1 degree on the sky each day. 
+    
+    For the best result, long observations should be split into smaller chunks containing observations within a ~ 1 hour period. 
 
-### Bandpass integrated emission
-Instruments do not typically observe at delta frequencies. Usually, we are more interested in finding out
-what the emission looks like over some instrument bandpass. ZodiPy will accept a sequence of frequencies to the `freq`
-argument in addition to the corresponding bandpass weights to the `weights` argument and perform bandpass integration. 
-Note that the bandpass weights must be in spectral radiance units (Jy/sr), even though the weights them self are unitless. A top hat bandpass is assumed if a sequence of frequencies are used without providing weights.
-```python hl_lines="11 12 13 31 32"
-{!examples/bandpass.py!}
-```
-![Generated Bandpass](img/bandpass.png)
-![Center frequency emission](img/center_freq.png)
-![Bandpass integrated emission](img/bandpass_integrated.png)
+## Examples
 
-### Solar cutoff
-In the case where the user wishes to bin a set of observations into a HEALPix map, using the `*_binned_*` API functions,
-a solar cutoff angle can be specified to mask out the all pixels closer to the Sun by some angle given by `solar_cut`
+### Emission along an Ecliptic scan
+In the following we simulate a scan across the Ecliptic plane
 
-```python hl_lines="9"
-{!examples/get_binned_emission_solar_cutoff.py!}
-```
-![Zodiacal emission map](img/binned_solar_cutoff.png)
-
-
-### Non-ecliptic coordinates
-We can specify the coordinate system of the input pointing with the `coord_in` keyword
-
-```python hl_lines="18"
-{!examples/get_binned_gal_emission.py!}
-```
-![Zodiacal emission map galactic](img/binned_gal.png)
-
-
-### Component-wise maps
-ZodiPy can also return the zodiacal emission component-wise. In the following example we use
-the DIRBE model since the later Planck models excluded the circumsolar-ring and Earth-trailing 
-feature components. For more information on the interplanetary dust models, please 
-read [Cosmoglobe: Simulating Zodiacal Emission with ZodiPy](https://arxiv.org/abs/2205.12962).
-
-```python hl_lines="18"
-{!examples/get_comp_binned_emission.py!}
-```
-![Component-wise emission maps](img/binned_comp.png)
-*Note that the color for the Cloud component is logarithmic, while the others are linear.*
-
-
-## Parallelization
-If you are not using ZodiPy in an already parallelized environment, you may specify the number of cores used by ZodiPy through the `n_proc` keyword. By default `n_proc` is set to 1. For values of `n_proc` > 1, the line-of-sight calculations are parallelized using the `multiprocessing` module.
-
-```python hl_lines="15 16"
-{!examples/get_parallel_emission.py!}
+``` py title="ecliptic_scan.py"
+{!examples/ecliptic_scan.py!}
 ```
 
-!!! warning "Windows users"
-    Windows users must make sure to wrap the `get_*_emission_*` function calls in a `if __name__ == "__main__"` guard to avoid spawning infinite processes: 
-    ```python
-    ...
-    if __name__ == "__main__":
-        emission = model.get_emission_pix(
-            ...
-        )
+![Ecliptic scan profile](img/timestream.png)
+
+
+### HEALPIx maps
+We can use [healpy](https://healpy.readthedocs.io/en/latest/) or [Astropy-healpix](https://astropy-healpix.readthedocs.io/en/latest/) package to create a `SkyCoord` object directly from a HEALPIx pixelization
+
+=== "healpy"
+
+    ```py
+    --8<-- "docs/examples/healpy_map.py"
     ```
 
-!!! warning "Using ZodiPy in parallelized environments"
-    If ZodiPy is used in a parallelized environment one may have to specifically set the environment variable 
-    `OMP_NUM_THREADS=1` to avoid oversubscription. This is due automatic parallelization in third party libraries such as `healpy` where for instance the `hp.Rotator` object automatically parallelizes rotation of unit vectors.
-    This means that when using ZodiPy with pointing in a coordinate system other than ecliptic, even if `Zodipy` is initialized with `n_proc`=1, `healpy` will under the hood automatically distribute the pointing to available CPU's.
+=== "healpy + astropy-healpix"
 
+    ```py
+    --8<-- "docs/examples/astropy_healpix_map.py"
+    ```
 
-## Visualizing the interplanetary dust distribution of a model
-It is possible to visualize the three-dimensional interplanetary dust distribution of the models used in
-ZodiPy by using the `tabulate_density` function which takes in a interplanetary dust model and a custom grid.
+![HEALPix map](img/healpix_map.png)
 
-In the following example we tabulate the density distribution of the DIRBE interplanetary dust model
-and plot the cross section of the diffuse cloud components density in the yz-plane.
-
-```python
-{!examples/get_density_contour.py!}
+### Component-wise zodiacal light
+We can return the zodiacal light for each component by using setting the keyword argument `return_comps` to `True`
+``` py title="component_maps.py"
+{!examples/component_maps.py!}
 ```
-![Interplanetary dust distribution](img/density_grid.png)
+
+![Component maps](img/component_maps.png)
+
+
+### Visualizing the interplanetary dust distribution
+We can evaluate the number density of an interplanetary dust model using the `grid_number_density` function
+``` py title="number_density.py"
+{!examples/number_density.py!}
+```
+
+![DIRBE model interplanetary dust distribution](img/number_density.png)
+

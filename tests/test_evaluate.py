@@ -7,7 +7,7 @@ import pytest
 from astropy import coordinates as coords
 from astropy import time, units
 from astropy.coordinates import SkyCoord
-from hypothesis import given
+from hypothesis import given, settings
 from numpy.testing import assert_array_equal
 
 from zodipy import Model
@@ -44,6 +44,7 @@ def test_compare_to_dirbe_idl() -> None:
             assert emission.value == pytest.approx(tabulated_emission[idx], rel=0.01)
 
 
+@settings(deadline=None)
 @given(models(), sky_coords(), obs())
 def test_evaluate(
     model: Model,

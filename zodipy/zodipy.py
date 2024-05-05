@@ -4,23 +4,21 @@ import functools
 import multiprocessing
 import multiprocessing.pool
 import platform
-from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 from astropy import coordinates as coords
-from astropy import units
+from astropy import time, units
 from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
-from zodipy.bodies import get_earthpos, get_obspos
+from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
 from zodipy.line_of_sight import get_line_of_sight_range, integrate_gauss_legendre
 from zodipy.model_registry import model_registry
-from zodipy.number_density import construct_density_partials_comps
+from zodipy.number_density import populate_number_density_with_model
 from zodipy.unpack_model import get_model_to_dicts_callable
 from zodipy.zodiacal_component import ComponentLabel
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 _platform_start_method = "fork" if "windows" not in platform.system().lower() else None
 
@@ -142,47 +140,37 @@ class Model:
 
         """
         try:
-            if skycoord.obstime is None:
-                msg = "The `obstime` attribute of the `SkyCoord` object must be set."
-                raise ValueError(msg)
+            obstime = cast(time.Time, skycoord.obstime)
         except AttributeError as error:
             msg = "The input coordinates must be an astropy SkyCoord object."
             raise TypeError(msg) from error
+        if obstime is None:
+            msg = "The `obstime` attribute of the `SkyCoord` object must be set."
+            raise ValueError(msg)
 
         n_coords_in = skycoord.size
         if contains_duplicates:
             _, index, inverse = np.unique(
-                [skycoord.spherical.lon, skycoord.spherical.lat],
+                cast(
+                    list[npt.NDArray[np.float64]],
+                    [skycoord.spherical.lon.value, skycoord.spherical.lat.value],
+                ),
                 return_index=True,
                 return_inverse=True,
                 axis=1,
             )
-            skycoord = skycoord[index]  # filter out identical coordinates
+            skycoord = cast(coords.SkyCoord, skycoord[index])  # filter out identical coordinates
         n_coords = skycoord.size
-        earth_xyz = get_earthpos(skycoord.obstime, ephemeris=self._ephemeris)
-        if isinstance(obspos, str):
-            try:
-                obs_xyz = get_obspos(obspos, skycoord.obstime, earth_xyz, ephemeris=self._ephemeris)
-            except KeyError as error:
-                valid_obs = [*coords.solar_system_ephemeris.bodies, "semb-l2"]
-                msg = f"Invalid observer string: '{obspos}'. Valid observers are: {valid_obs}"
-                raise ValueError(msg) from error
-
-        else:
-            try:
-                obs_xyz = obspos.to_value(units.AU)
-            except AttributeError as error:
-                msg = "The observer position must be a string or an astropy Quantity."
-                raise TypeError(msg) from error
-            except units.UnitConversionError as error:
-                msg = "The observer position must be in length units."
-                raise units.UnitConversionError(msg) from error
+        earth_xyz = get_earthpos_xyz(obstime, self._ephemeris)
+        obs_xyz = get_obspos_xyz(obstime, obspos, earth_xyz, self._ephemeris)
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
         if skycoord.isscalar:
-            skycoord_xyz = skycoord.cartesian.xyz.value[:, np.newaxis]
+            skycoord_xyz = cast(
+                npt.NDArray[np.float64], skycoord.cartesian.xyz.value[:, np.newaxis]
+            )
         else:
-            skycoord_xyz = skycoord.cartesian.xyz.value
+            skycoord_xyz = cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
@@ -192,7 +180,7 @@ class Model:
 
         # Return a dict of partial functions corresponding to the number density each zodiacal
         # component in the interplanetary dust model.
-        density_partials = construct_density_partials_comps(
+        density_partials = populate_number_density_with_model(
             comps=self._interplanetary_dust_model.comps,
             dynamic_params={"X_earth": earth_xyz[:, np.newaxis, np.newaxis]},
         )

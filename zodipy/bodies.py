@@ -24,30 +24,45 @@ def get_sun_earth_moon_barycenter(
     earth_distance = np.linalg.norm(earthpos)
     SEMB_L2_distance = earth_distance + MEAN_DIST_TO_L2
     earth_unit_vector = earthpos / earth_distance
-
     return earth_unit_vector * SEMB_L2_distance
 
 
-def get_earthpos(obs_time: time.Time, ephemeris: str) -> npt.NDArray[np.float64]:
+def get_earthpos_xyz(obstime: time.Time, ephemeris: str) -> npt.NDArray[np.float64]:
     """Return the sky coordinates of the Earth in the heliocentric frame."""
     return (
-        coords.get_body("earth", obs_time, ephemeris=ephemeris)
+        coords.get_body("earth", obstime, ephemeris=ephemeris)
         .transform_to(coords.HeliocentricMeanEcliptic)
         .cartesian.xyz.to_value(units.AU)
     )
 
 
-def get_obspos(
-    obs: str,
+def get_obspos_xyz(
     obstime: time.Time,
+    obspos: str | units.Quantity,
     earthpos: npt.NDArray[np.float64],
     ephemeris: str,
 ) -> npt.NDArray[np.float64]:
     """Return the sky coordinates of the observer in the heliocentric frame."""
-    if obs.lower() == "semb-l2":
-        return get_sun_earth_moon_barycenter(earthpos)
-    return (
-        coords.get_body(obs, obstime, ephemeris=ephemeris)
-        .transform_to(coords.HeliocentricMeanEcliptic)
-        .cartesian.xyz.to_value(units.AU)
-    )
+    if isinstance(obspos, str):
+        if obspos.lower() == "semb-l2":
+            return get_sun_earth_moon_barycenter(earthpos)
+        try:
+            return (
+                coords.get_body(obspos, obstime, ephemeris=ephemeris)
+                .transform_to(coords.HeliocentricMeanEcliptic)
+                .cartesian.xyz.to_value(units.AU)
+            )
+        except KeyError as error:
+            valid_obs = [*coords.solar_system_ephemeris.bodies, "semb-l2"]
+            msg = f"Invalid observer string: '{obspos}'. Valid observers are: {valid_obs}"
+            raise ValueError(msg) from error
+
+    else:
+        try:
+            return obspos.to_value(units.AU)
+        except AttributeError as error:
+            msg = "The observer position must be a string or an astropy Quantity."
+            raise TypeError(msg) from error
+        except units.UnitConversionError as error:
+            msg = "The observer position must be in length units."
+            raise units.UnitConversionError(msg) from error

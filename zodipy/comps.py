@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from zodipy.constants import R_ASTEROID_BELT, R_KUIPER_BELT, R_MARS
 from zodipy.zodiacal_component import (
     Band,
     BroadBand,
@@ -96,6 +95,9 @@ PLANCK = DIRBE.copy()
 PLANCK.pop(ComponentLabel.RING)
 PLANCK.pop(ComponentLabel.FEATURE)
 
+R_MARS = 1.5237
+R_ASTEROID_BELT = 3.137
+R_KUIPER_BELT = 30
 
 RRM: dict[ComponentLabel, ZodiacalComponent] = {
     ComponentLabel.FAN: Fan(

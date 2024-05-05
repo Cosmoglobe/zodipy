@@ -1,10 +1,11 @@
 import random
+import warnings
 
 import numpy as np
 import pytest
-from astropy import units
+from astropy import time, units
 
-from zodipy import Model, model_registry
+from zodipy import Model, grid_number_density, model_registry
 
 
 def test_x_input() -> None:
@@ -84,3 +85,22 @@ def test_register_model_raises_error() -> None:
     """Tests that an error is raised when the model is already registered."""
     with pytest.raises(ValueError):
         model_registry.register_model("DIRBE", model_registry.get_model("DIRBE"))
+
+
+def test_grid_number_density() -> None:
+    """Test the number density gridding function."""
+    x = np.linspace(0, 5, 100) * units.AU
+    y = np.linspace(0, 5, 100) * units.AU
+    z = np.linspace(0, 2, 100) * units.AU
+    obstime = time.Time("2022-01-01")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        grid = grid_number_density(x, y, z, obstime=obstime)
+    assert grid.sum(axis=0).shape == (100, 100, 100)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        grid = grid_number_density(x, y, z, obstime=obstime, name="rrm-experimental")
+
+    assert grid.sum(axis=0).shape == (100, 100, 100)

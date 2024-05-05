@@ -3,11 +3,13 @@ from __future__ import annotations
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Mapping, Protocol
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Protocol
 
 import numpy as np
 import numpy.typing as npt  # type: ignore
 
+from zodipy.bodies import get_earthpos_xyz
+from zodipy.model_registry import model_registry
 from zodipy.zodiacal_component import (
     Band,
     BroadBand,
@@ -23,6 +25,10 @@ from zodipy.zodiacal_component import (
     RingRRM,
     ZodiacalComponent,
 )
+
+if TYPE_CHECKING:
+    from astropy import time, units
+
 
 """The density functions for the different types of components.
 
@@ -420,7 +426,7 @@ class ComponentNumberDensityCallable(Protocol):
         """Return the number density of the component at the heliocentric position."""
 
 
-def construct_density_partials_comps(
+def populate_number_density_with_model(
     comps: Mapping[ComponentLabel, ZodiacalComponent],
     dynamic_params: dict[str, Any],
 ) -> dict[ComponentLabel, ComponentNumberDensityCallable]:
@@ -457,3 +463,51 @@ def construct_density_partials_comps(
         partial_density_funcs[comp_label] = partial_func
 
     return partial_density_funcs
+
+
+def grid_number_density(
+    x: units.Quantity,
+    y: units.Quantity,
+    z: units.Quantity,
+    obstime: time.Time,
+    name: str = "DIRBE",
+    ephemeris: str = "builtin",
+) -> npt.NDArray[np.float64]:
+    """Return the tabulated densities of the zodiacal components for a given grid.
+
+    Args:
+        x: Cartesian mesh grid x-coordinates.
+        y: Cartesian mesh grid y-coordinates.
+        z: Cartesian mesh grid z-coordinates.
+        obstime: Time of observation.
+        name: Interplanetary dust model to select. Default is 'DIRBE'.
+        ephemeris: Solar system ephemeris to use. Default is 'builtin'.
+
+    Returns:
+        number_density_grid: The tabulated zodiacal component densities.
+
+    """
+    ipd_model = model_registry.get_model(name)
+
+    grid = np.asarray(np.meshgrid(x, y, z))
+    earthpos_xyz = get_earthpos_xyz(obstime, ephemeris=ephemeris)
+    # Prepare attributes and variables for broadcasting with the grid
+
+    # broadcasting reshapes
+    for comp in ipd_model.comps.values():
+        comp.X_0 = comp.X_0.reshape(3, 1, 1, 1)
+
+    density_partials = populate_number_density_with_model(
+        comps=ipd_model.comps,
+        dynamic_params={"X_earth": earthpos_xyz[:, np.newaxis, np.newaxis, np.newaxis]},
+    )
+
+    number_density_grid = np.zeros((len(ipd_model.comps), *grid.shape[1:]))
+    for idx, number_density_callable in enumerate(density_partials.values()):
+        number_density_grid[idx] = number_density_callable(grid)
+
+    # Revert broadcasting reshapes
+    for comp in ipd_model.comps.values():
+        comp.X_0 = comp.X_0.reshape(3, 1)
+
+    return number_density_grid

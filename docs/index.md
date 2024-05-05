@@ -24,9 +24,9 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
-from zodipy import Model
+import zodipy
 
-model = Model(25*u.micron)
+model = zodipy.Model(25*u.micron)
 
 lon = [10, 10.1, 10.2] * u.deg
 lat = [90, 89, 88] * u.deg
@@ -42,15 +42,5 @@ emission = model.evaluate(skycoord, obspos="earth")
 print(emission)
 #> [27.52410841 27.66581351 27.81270207] MJy / sr
 ```
-
-What's going on here: THIS NEEDS TO BE UPDATED
-
-- We start by initializing the [`Zodipy`][zodipy.zodipy.Zodipy] class, which is our interface, where we specify that we want to use the DIRBE interplanetary dust model.
-- We use the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method which is a method to simulate emission from angular sky coordinates (see the [reference](reference.md) for other available simulation methods).
-- The first argument to the [`get_emission_ang`][zodipy.zodipy.Zodipy.get_emission_ang] method, `25 * u.micron`, specifies the wavelength of the simulated observation. Note that we use Astropy units for many of the input arguments.
-- `theta` and `phi` represent the pointing of the observation (co-latitude and longitude, following the healpy convention). In this example we observe three sky coordinates.
-- `obs_time` represents the time of observation, which we need to compute the position of the observer and all other required solar system bodies.
-- `obs` represents the observer, and must be an solar system observer supported by the [Astropy ephemeris](https://docs.astropy.org/en/stable/coordinates/solarsystem.html) used internally. If we wish to be more specific about the observer position, we can use the `obs_pos` keyword instead of `obs`, which takes in a heliocentric cartesian position in units of AU.
-- Finally, `lonlat` is a boolean which converts the convention of `theta` and `phi` from co-latitude and longitude to longitude and latitude.
 
 For more information on using ZodiPy, see [the usage section](usage.md).

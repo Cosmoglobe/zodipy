@@ -1,17 +1,18 @@
+import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy.time import Time
 from matplotlib.colors import LogNorm
 
-from zodipy import tabulate_density
+from zodipy import grid_number_density
 
 N = 200
 
-x = np.linspace(-5, 5, N)  # x-plane
-y = np.linspace(-5, 5, N)  # y-plane
-z = np.linspace(-2, 2, N)  # z-plane
+x = np.linspace(-5, 5, N) * u.AU  # x-plane
+y = np.linspace(-5, 5, N) * u.AU  # y-plane
+z = np.linspace(-2, 2, N) * u.AU  # z-plane
 
-grid = np.asarray(np.meshgrid(x, y, z))
-density_grid = tabulate_density(grid, model="dirbe")
+density_grid = grid_number_density(x, y, z, obstime=Time("2021-01-01T00:00:00", scale="utc"))
 density_grid = density_grid.sum(axis=0)  # Sum over all components
 
 plt.pcolormesh(
@@ -23,7 +24,8 @@ plt.pcolormesh(
     shading="gouraud",
     rasterized=True,
 )
-plt.title("Cross section of the interplanetary dust density (yz-plane)")
+plt.title("Cross section of the number density in the DIRBE model")
 plt.xlabel("x [AU]")
 plt.ylabel("z [AU]")
+plt.savefig("../img/number_density.png", dpi=300, bbox_inches="tight")
 plt.show()

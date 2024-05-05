@@ -5,11 +5,16 @@ from typing import TYPE_CHECKING, Callable, Iterable
 import numpy as np
 
 from zodipy.comps import RRM
-from zodipy.constants import R_0, R_EARTH, R_JUPITER, R_KUIPER_BELT
 from zodipy.zodiacal_component import ComponentLabel
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+
+
+R_0 = np.finfo(np.float64).eps
+R_KUIPER_BELT = 30
+R_EARTH = 1
+R_JUPITER = 5.2
 
 DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
     ComponentLabel.CLOUD: (R_0, R_JUPITER),

@@ -29,9 +29,9 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
-from zodipy import Model
+import zodipy
 
-model = Model(25*u.micron)
+model = zodipy.Model(25*u.micron)
 
 lon = [10, 10.1, 10.2] * u.deg
 lat = [90, 89, 88] * u.deg
