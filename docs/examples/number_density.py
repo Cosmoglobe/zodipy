@@ -12,7 +12,13 @@ x = np.linspace(-5, 5, N) * u.AU  # x-plane
 y = np.linspace(-5, 5, N) * u.AU  # y-plane
 z = np.linspace(-2, 2, N) * u.AU  # z-plane
 
-density_grid = grid_number_density(x, y, z, obstime=Time("2021-01-01T00:00:00", scale="utc"))
+density_grid = grid_number_density(
+    x,
+    y,
+    z,
+    obstime=Time("2021-01-01T00:00:00", scale="utc"),
+    name="DIRBE",
+)
 density_grid = density_grid.sum(axis=0)  # Sum over all components
 
 plt.pcolormesh(

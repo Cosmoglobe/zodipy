@@ -32,24 +32,24 @@ numpy = "^1.26.4"
 astropy = ">=5.0.1"
 jplephem = "^2.17"
 scipy = "^1.13.0"
-astropy-healpix = "^1.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
 mypy = "^1.0"
 mkdocs = "^1.5.3"
-pymdown-extensions = "^9.4"
-markdown-include = "^0.6.0"
+pymdown-extensions = "^10.8.1"
+markdown-include = "^0.8.1"
 pre-commit = "^2.19.0"
 coverage = "^7.1.0"
 pytest-cov = "^4.0.0"
-mkdocs-material = "^9.0.1"
-mkdocstrings = "^0.23.0"
+mkdocs-material = "^9.5.21"
+mkdocstrings = "^0.25.1"
 mkdocstrings-python = "^1.7.3"
 ruff = "^0.3.7"
-markdown = "<3.4.0"
+markdown = "^3.6.0"
 hypothesis = "^6.99.11"
 healpy = "^1.16.6"
+astropy-healpix = "^1.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -115,7 +115,7 @@ lint.ignore = [
     "ISC001",
     "S311",
 ]
-exclude = ["old_tests/*", "work_in_progress/*"]
+exclude = ["work_in_progress/*"]
 lint.pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]

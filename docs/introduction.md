@@ -1,31 +1,25 @@
 # Introduction
 
-ZodiPy is an open source Python tool for simulating the zodiacal emission that a solar system observer is predicted to see given an interplanetary dust model. We attempts to make zodiacal emission simulations more accessible by providing the community with a simple interface to existing models. For other zodiacal emission tools, see [Zodiacal Light Models on LAMBDA](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html). All contributions are most welcome.
+ZodiPy is a Python package for zodiacal light simulations. Its purpose is to provide the astrophysics and cosmology communities with an easy-to-use and accessible interface to existing zodiacal light models in Python, assisting in astrophysical data analysis and zodiacal light forecasting for future experiments.
+
+For other zodiacal light tools, see [Zodiacal Light Models on LAMBDA](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html).
+
+## Supported zodiacal light models
+
+- DIRBE [`"dirbe"`] ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
+- Rowan-Robinson and May (experimental) [`"rrm-experimental"`] ([Rowan-Robinson and May 2013](https://ui.adsabs.harvard.edu/abs/2013MNRAS.429.2894R/abstract))
+- Planck 2013 [`"planck13"`] ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
+- Planck 2015 [`"planck15"`] ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P))
+- Planck 2018 [`"planck18"`] ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P))
+- Odegard [`"odegard"`] ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
+
+The names in the brackets are the string representations used in the `zodipy.Model` object to select the model.
+
+If you see a missing model or wish to add a new one, please open an issue on GitHub. Contributors are very welcome!
 
 
-## Interplanetary Dust Models
-ZodiPy supports the following interplanetary dust models:
+## Related scientific papers
+See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION.bib)
 
-**1.25-240 $\boldsymbol{\mu}$m**
-
-- DIRBE ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
-- RRM (experimental) ([Rowan-Robinson and May 2013](https://ui.adsabs.harvard.edu/abs/2013MNRAS.429.2894R/abstract))
-
-**100-857 GHz**
-
-- Planck 2013 ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
-- Planck 2015 ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P))
-- Planck 2018 ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P))
-- Odegard ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
-
-!!! info
-    The Planck and Odegard models extend the DIRBE interplanetary dust model to CMB frequencies by fitting the blackbody emissivity of the dust in the respective DIRBE interplanetary dust components to Planck HFI data.
-    The distribution of the interplanetary dust is exactly the same as in the DIRBE model.
-
-If you see a missing model, please feel free to contact us by opening an issue on GitHub. 
-
-
-## Scientific Paper
-For an overview of the modeling approach used in ZodiPy and other information regarding zodiacal emission and interplanetary dust modeling we refer to the scientific paper on ZodiPy:
-
-- [Cosmoglobe: Simulating zodiacal emission with ZodiPy](https://arxiv.org/abs/2205.12962)
+- [Cosmoglobe: Simulating zodiacal emission with ZodiPy (San et al. 2022)](https://arxiv.org/abs/2205.12962). 
+- [ZodiPy: A Python package for zodiacal light simulations (San 2024)](https://joss.theoj.org/papers/10.21105/joss.06648#). 

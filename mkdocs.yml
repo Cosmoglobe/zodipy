@@ -18,9 +18,16 @@ theme:
   icon:
     logo: material/book-open-page-variant
   features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - navigation.indexes
+    - content.tooltips
+    - navigation.path
+    - content.code.annotate
     - content.code.copy
     - content.code.select
-
+    - navigation.tabs
 markdown_extensions:
   - markdown_include.include:
       base_path: docs
@@ -49,7 +56,20 @@ nav:
 plugins:
 - search
 - mkdocstrings:
-    default_handler: python
     handlers:
-      options:
-        merge_init_into_class: true
+      python:
+        options:
+          inherited_members: true
+          merge_init_into_class: true
+          members_order: source
+          separate_signature: true
+          unwrap_annotated: true
+          docstring_section_style: spacy
+          signature_crossrefs: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+# - mkdocstrings:
+#     default_handler: python
+#     handlers:
+#       options:
+#         merge_init_into_class: true

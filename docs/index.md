@@ -14,7 +14,7 @@
 [![DOI](https://zenodo.org/badge/394929213.svg)](https://zenodo.org/doi/10.5281/zenodo.10999611)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.06648/status.svg)](https://doi.org/10.21105/joss.06648)
 
-ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
+ZodiPy is an [Astropy-affiliated](https://www.astropy.org/affiliated/) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
 ![ZodiPy Logo](img/zodipy_map.png)
 
 
@@ -26,8 +26,10 @@ from astropy.time import Time
 
 import zodipy
 
-model = zodipy.Model(25*u.micron)
+# Initialize a zodiacal light model at a wavelength/frequency or at a bandpass
+model = zodipy.Model(25*u.micron, name="DIRBE")
 
+# ZodiPy uses astropy's `SkyCoord` for coordinate inputs
 lon = [10, 10.1, 10.2] * u.deg
 lat = [90, 89, 88] * u.deg
 skycoord = SkyCoord(
@@ -36,7 +38,7 @@ skycoord = SkyCoord(
     obstime=Time("2022-01-01 12:00:00"),
     frame="galactic",
 )
-
+# The zodiacal light model is evaluated
 emission = model.evaluate(skycoord, obspos="earth")
 
 print(emission)

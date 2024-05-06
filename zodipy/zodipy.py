@@ -24,7 +24,7 @@ _platform_start_method = "fork" if "windows" not in platform.system().lower() el
 
 
 class Model:
-    """Main interface to ZodiPy."""
+    """The `Model` class is the main interface to ZodiPy."""
 
     def __init__(
         self,
@@ -41,26 +41,26 @@ class Model:
         """Initialize the Zodipy interface.
 
         Args:
-            x: Wavelength or frequency. If `x` is a array-like it is assumed to be a bandpass and
-                `weights` must be provided.
+            x: Wavelength or frequency. If `x` is a sequence, it is assumed to be a the points
+                corresponding to a bandpass and the corresponding `weights` must be provided.
             weights: Bandpass weights corresponding the the frequencies in `freq`. The weights are
-                assumed to be given in spectral radiance units (Jy/sr).
+                assumed to represent a normalized instrument response in units of spectral radiance
+                (Jy/sr).
             name: Interplanetary dust model to use. For a list of available models, see
                 https://cosmoglobe.github.io/zodipy/introduction/. Defaults to 'dirbe'.
             gauss_quad_degree: Order of the Gaussian-Legendre quadrature used to evaluate the
                 line-of-sight integral in the simulations. Default is 50 points.
             extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
                 the requested frequencies or wavelengths. If `False`, an exception is raised on
-                requested frequencies/wavelengths outside of the valid model range. Default is
-                `False`.
+                requested `x` outside of the valid model range. Default is `False`.
             ephemeris: Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to compute the
                 positions of the observer and the Earth. Defaults to 'builtin'. See the
                 [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
                 for available ephemerides.
-            n_proc: Number of cores to use. If `n_proc` is greater than 1, the line-of-sight
-                integrals are parallelized using the `multiprocessing` module. Defaults to 1.
-            pool: Custom multiprocessing pool to use. If `None`, a new pool is created. Defaults to
-                `None`.
+            n_proc: Number of cores to use. If `n_proc >= 1`, the line-of-sight integrals are
+                parallelized using the `multiprocessing` module. Defaults to 1.
+            pool: Custom multiprocessing pool to use. If `None`, a new pool is created if
+                `n_proc >= 1`. Defaults to `None`.
 
         """
         try:
@@ -119,7 +119,12 @@ class Model:
         return_comps: bool = False,
         contains_duplicates: bool = False,
     ) -> units.Quantity[units.MJy / units.sr]:
-        """Return the simulated zodiacal light for all observations in a `SkyCoord` object.
+        """Return the simulated zodiacal light.
+
+        The zodiacal light is simulated for a single, or a sequence of observations from a
+        position in the Solar system specified by the `obspos` argument, and at instant in
+        time specified in `skycoord` The `obstime` and `frame` keywords must be specified in the
+        `SkyCoord` object.
 
         Args:
             skycoord: `astropy.coordinates.SkyCoord` object representing the observations for which
@@ -260,17 +265,24 @@ class Model:
         return emission if return_comps else emission.sum(axis=0)
 
     def get_parameters(self) -> dict:
-        """Return a dictionary containing the interplanetary dust model parameters."""
+        """Return a dictionary containing the interplanetary dust model parameters.
+
+        This method is mainly meant to be used to fit or sample zodiacal light models.
+
+        Returns:
+            parameters: Dictionary of parameters of the interplanetary dust model.
+        """
         return self._interplanetary_dust_model.to_dict()
 
     def update_parameters(self, parameters: dict) -> None:
         """Update the interplanetary dust model parameters.
 
+        This method is mainly meant to be used to fit or sample zodiacal light models.
+
         Args:
             parameters: Dictionary of parameters to update. The keys must be the names
                 of the parameters as defined in the model. To get the parameters dict
                 of an existing model, use `Zodipy("dirbe").get_parameters()`.
-
         """
         _dict = parameters.copy()
         _dict["comps"] = {}
