@@ -72,34 +72,14 @@ ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
 - [SciPy](https://scipy.org/)
 
 ## For developers
-Contributing developers will need to download the following additional dependencies to test, lint, format and build documentation locally:
-- pytest
-- pytest-cov
-- hypothesis
-- healpy
-- astropy-healpix
-- coverage
-- ruff
-- mypy
-- pre-commit
-- mkdocs
-- pymdown-extensions
-- markdown-include
-- mkdocs-material
-- mkdocstrings
-- mkdocstrings-python
-- markdown
-
-which are required to test and build ZodiPy.
-
 ### Poetry
-ZodiPy uses [Poetry](https://python-poetry.org/) for package managing. To build and commit to the repository with the existing pre-commit setup, developers need to have Poetry (>= 1.8.0) installed. See the Poetry [documentation](https://python-poetry.org/docs/) for installation guide. 
+ZodiPy uses [Poetry](https://python-poetry.org/) for development. To build and commit to the repository with the existing pre-commit setup, developers need to have Poetry (>= 1.8.0) installed. See the Poetry [documentation](https://python-poetry.org/docs/) for installation guide. 
 
 After poetry has been installed, developers should create a new virtual environment and run the following in the root of the ZodiPy repositry
 ```
 poetry install
 ```
-This will read and download all dependencies from `pyproject.toml`, and `poetry.lock`.
+This will download all dependencies (including dev)from `pyproject.toml`, and `poetry.lock`.
 
 ### Tests, linting and formatting, and building documentation
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
