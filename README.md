@@ -32,10 +32,10 @@ from astropy.time import Time
 
 import zodipy
 
-# Initialize a zodiacal light model at a wavelength/frequency or at a bandpass
+# Initialize a zodiacal light model at a wavelength/frequency or over a bandpass
 model = zodipy.Model(25*u.micron, name="DIRBE")
 
-# ZodiPy uses astropy's `SkyCoord` for coordinate inputs
+# Use Astropy's `SkyCoord` to specify coordinate
 lon = [10, 10.1, 10.2] * u.deg
 lat = [90, 89, 88] * u.deg
 skycoord = SkyCoord(
@@ -44,7 +44,8 @@ skycoord = SkyCoord(
     obstime=Time("2022-01-01 12:00:00"),
     frame="galactic",
 )
-# The zodiacal light model is evaluated
+
+# Compute the zodiacal light as seen from Earth
 emission = model.evaluate(skycoord, obspos="earth")
 
 print(emission)
@@ -58,7 +59,10 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION.bib)
 
 
 ## Install
-ZodiPy is installed using `pip install zodipy`.
+ZodiPy is installed with pip
+```bash
+pip install zodipy
+```
 
 ## Dependencies
 ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
@@ -84,25 +88,18 @@ Contributing developers will need to download the following additional dependenc
 - mkdocs-material
 - mkdocstrings
 - mkdocstrings-python
-- markdown (<3.4.0)
+- markdown
 
 which are required to test and build ZodiPy.
 
 ### Poetry
-Developers can install ZodiPy through [Poetry](https://python-poetry.org/) (Poetry >= 1.8.0) by first cloning or forking the repository, and then running 
+ZodiPy uses [Poetry](https://python-poetry.org/) for package managing. To build and commit to the repository with the existing pre-commit setup, developers need to have Poetry (>= 1.8.0) installed. See the Poetry [documentation](https://python-poetry.org/docs/) for installation guide. 
+
+After poetry has been installed, developers should create a new virtual environment and run the following in the root of the ZodiPy repositry
 ```
 poetry install
 ```
-in a virtual environment from the repository root. This will read the `pyproject.toml` file in the repository and install all dependencies. 
-
-### pip
-Developers not using Poetry can install ZodiPy in a virtual environment with all dependencies by first cloning or forking the repository and then running 
-```
-pip install -r requirements-dev.txt
-```
-from the repositry root. This will read and download all the dependencies from the `requirements-dev.txt` file in the repository. 
-
-Note that developers using Python 3.12 will need to upgrade their pip versions with `python3 -m pip install --upgrade pip` before being able to install ZodiPy. This is due to known incompatibilities between older pip versions and Python 3.12
+This will read and download all dependencies from `pyproject.toml`, and `poetry.lock`.
 
 ### Tests, linting and formatting, and building documentation
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)

@@ -28,6 +28,8 @@ theme:
     - content.code.copy
     - content.code.select
     - navigation.tabs
+    - navigation.instant
+    - navigation.top
 markdown_extensions:
   - markdown_include.include:
       base_path: docs
@@ -68,8 +70,3 @@ plugins:
           signature_crossrefs: true
           show_symbol_type_heading: true
           show_symbol_type_toc: true
-# - mkdocstrings:
-#     default_handler: python
-#     handlers:
-#       options:
-#         merge_init_into_class: true

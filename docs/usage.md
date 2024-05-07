@@ -185,7 +185,7 @@ In the following, we simulate a scan across the Ecliptic plane
 {!examples/ecliptic_scan.py!}
 ```
 
-![Ecliptic scan profile](img/timestream.png)
+![Ecliptic scan profile](img/ecliptic_scan.png)
 
 
 ### HEALPIx maps

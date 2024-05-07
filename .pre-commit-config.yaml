@@ -37,9 +37,9 @@ repos:
         files: ^(.*/)?(poetry\.lock|pyproject\.toml)$
       - id: poetry-export
         name: poetry-export
-        description: run poetry export to sync lock file with requirements.txt
+        description: run poetry export to sync lock file with requirements-dev.txt
         entry: poetry export
         language: python
         pass_filenames: false
         files: ^(.*/)?poetry\.lock$
-        args: ["--dev", "-f", "requirements.txt", "-o", "requirements-dev.txt"]
+        args: ["-f", "requirements.txt", "-o", "requirements.txt"]
