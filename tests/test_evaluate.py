@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import multiprocessing
-
 import numpy as np
 import pytest
 from astropy import coordinates as coords
@@ -52,7 +50,10 @@ def test_evaluate(
     obs: units.Quantity | str,
 ) -> None:
     """Test that the evaluate function works for valid user input."""
-    assert model.evaluate(sky_coord, obspos=obs).size == sky_coord.size
+    emission = model.evaluate(sky_coord, obspos=obs)
+    assert emission.size == sky_coord.size
+    assert isinstance(emission, units.Quantity)
+    assert emission.unit == units.MJy / units.sr
 
 
 def test_invalid_sky_coord() -> None:
@@ -145,8 +146,7 @@ def test_contains_duplicates() -> None:
 
 def test_multiprocessing_nproc() -> None:
     """Test that the multiprocessing works with n_proc > 1."""
-    model_multi = Model(x=20 * units.micron, n_proc=4)
-    model = Model(x=20 * units.micron, n_proc=1)
+    model = Model(x=20 * units.micron)
 
     lon = np.random.randint(low=0, high=360, size=10000)
     lat = np.random.randint(low=-90, high=90, size=10000)
@@ -156,12 +156,11 @@ def test_multiprocessing_nproc() -> None:
         unit=units.deg,
         obstime=TEST_TIME,
     )
-    emission_multi = model_multi.evaluate(skycoord)
-    emission = model.evaluate(skycoord)
+    emission_multi = model.evaluate(skycoord, nprocesses=4)
+    emission = model.evaluate(skycoord, nprocesses=1)
     assert_array_equal(emission_multi, emission)
 
-    model_multi = Model(x=75 * units.micron, n_proc=4, name="rrm-experimental")
-    model = Model(x=75 * units.micron, n_proc=1, name="rrm-experimental")
+    model = Model(x=75 * units.micron, name="rrm-experimental")
 
     lon = np.random.randint(low=0, high=360, size=10000)
     lat = np.random.randint(low=-90, high=90, size=10000)
@@ -171,34 +170,7 @@ def test_multiprocessing_nproc() -> None:
         unit=units.deg,
         obstime=TEST_TIME,
     )
-    emission_multi = model_multi.evaluate(skycoord)
-    emission = model.evaluate(skycoord)
-
-    assert_array_equal(emission_multi, emission)
-
-
-def test_multiprocessing_pool() -> None:
-    """Test that the multiprocessing works with n_proc > 1."""
-    model = Model(x=20 * units.micron, n_proc=1)
-    lon = np.random.randint(low=0, high=360, size=10000)
-    lat = np.random.randint(low=-90, high=90, size=10000)
-    skycoord = SkyCoord(
-        lon,
-        lat,
-        unit=units.deg,
-        obstime=TEST_TIME,
-    )
-    emission = model.evaluate(skycoord)
-
-    try:
-        from pytest_cov.embed import cleanup_on_sigterm
-    except ImportError:
-        pass
-    else:
-        cleanup_on_sigterm()
-
-    with multiprocessing.Pool(processes=4) as pool:
-        model_multi = Model(x=20 * units.micron, pool=pool)
-        emission_multi = model_multi.evaluate(skycoord)
+    emission_multi = model.evaluate(skycoord, nprocesses=4)
+    emission = model.evaluate(skycoord, nprocesses=1)
 
     assert_array_equal(emission_multi, emission)
