@@ -20,8 +20,10 @@ BrightnessAtStepCallable = Callable[..., npt.NDArray[np.float64]]
 
 def kelsall_brightness_at_step(
     r: npt.NDArray[np.float64],
-    start: np.float64,
+    start: npt.NDArray[np.float64],
     stop: npt.NDArray[np.float64],
+    quad_root_0: float,
+    quad_root_n: float,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
@@ -36,8 +38,11 @@ def kelsall_brightness_at_step(
     solar_irradiance: np.float64,
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
-    # Convert the quadrature range from [-1, 1] to the true ecliptic positions
-    R_los = ((stop - start) / 2) * r + (stop + start) / 2
+    # Convert the quadrature range from [0, inf] to the true ecliptic positions
+    a, b = start, stop
+    i, j = quad_root_0, quad_root_n
+    R_los = ((b - a) / (j - i)) * r + (j * a - i * b) / (j - i)
+
     X_los = R_los * u_los
     X_helio = X_los + X_obs
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
@@ -59,6 +64,8 @@ def rrm_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: npt.NDArray[np.float64],
     stop: npt.NDArray[np.float64],
+    quad_root_0: float,
+    quad_root_n: float,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
@@ -68,8 +75,11 @@ def rrm_brightness_at_step(
     calibration: np.float64,
 ) -> npt.NDArray[np.float64]:
     """RRM is implented with component specific line-of-sight grids."""
-    # Convert the quadrature range from [-1, 1] to the true ecliptic positions
-    R_los = ((stop - start) / 2) * r + (stop + start) / 2
+    # Convert the quadrature range from [0, inf] to the true ecliptic positions
+    a, b = start, stop
+    i, j = quad_root_0, quad_root_n
+    R_los = ((b - a) / (j - i)) * r + (j * a - i * b) / (j - i)
+
     X_los = R_los * u_los
     X_helio = X_los + X_obs
     R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)

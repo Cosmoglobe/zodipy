@@ -4,7 +4,7 @@ import functools
 import multiprocessing
 import multiprocessing.pool
 import platform
-from typing import cast
+import typing
 
 import numpy as np
 import numpy.typing as npt
@@ -14,13 +14,16 @@ from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
-from zodipy.line_of_sight import get_line_of_sight_range, integrate_gauss_legendre
+from zodipy.line_of_sight import (
+    get_line_of_sight_range,
+    integrate_gauss_laguerre,
+)
 from zodipy.model_registry import model_registry
 from zodipy.number_density import populate_number_density_with_model
 from zodipy.unpack_model import get_model_to_dicts_callable
 from zodipy.zodiacal_component import ComponentLabel
 
-_platform_start_method = "fork" if "windows" not in platform.system().lower() else None
+_PLATFORM_METHOD = "fork" if "windows" not in platform.system().lower() else None
 
 
 class Model:
@@ -35,8 +38,6 @@ class Model:
         gauss_quad_degree: int = 50,
         extrapolate: bool = False,
         ephemeris: str = "builtin",
-        n_proc: int = 1,
-        pool: multiprocessing.pool.Pool | None = None,
     ) -> None:
         """Initialize the Zodipy interface.
 
@@ -48,7 +49,7 @@ class Model:
                 (Jy/sr).
             name: Interplanetary dust model to use. For a list of available models, see
                 https://cosmoglobe.github.io/zodipy/introduction/. Defaults to 'dirbe'.
-            gauss_quad_degree: Order of the Gaussian-Legendre quadrature used to evaluate the
+            gauss_quad_degree: Order of the Gaussian-laguerre quadrature used to evaluate the
                 line-of-sight integral in the simulations. Default is 50 points.
             extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
                 the requested frequencies or wavelengths. If `False`, an exception is raised on
@@ -57,10 +58,6 @@ class Model:
                 positions of the observer and the Earth. Defaults to 'builtin'. See the
                 [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
                 for available ephemerides.
-            n_proc: Number of cores to use. If `n_proc >= 1`, the line-of-sight integrals are
-                parallelized using the `multiprocessing` module. Defaults to 1.
-            pool: Custom multiprocessing pool to use. If `None`, a new pool is created if
-                `n_proc >= 1`. Defaults to `None`.
 
         """
         try:
@@ -102,14 +99,7 @@ class Model:
         self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
-        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
-
-        if pool is None:
-            self._process_pool = multiprocessing.get_context(_platform_start_method).Pool(n_proc)
-            self._n_proc = n_proc
-        else:
-            self._process_pool = pool
-            self._n_proc = pool._processes  # type: ignore
+        self._gauss_x, self.gauss_w = np.polynomial.laguerre.laggauss(gauss_quad_degree)
 
     def evaluate(
         self,
@@ -118,6 +108,7 @@ class Model:
         obspos: units.Quantity | str = "earth",
         return_comps: bool = False,
         contains_duplicates: bool = False,
+        nprocesses: int = 1,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal light.
 
@@ -139,13 +130,15 @@ class Model:
             contains_duplicates: If True, the input coordinates are filtered and only unique
                 pointing is used to calculate the emission. The output is then mapped back to the
                 original coordinates resulting in the same output shape. Defaults to False.
+            nprocesses: Number of cores to use. If `nprocesses >= 1`, the line-of-sight integrals
+                are parallelized using the `multiprocessing` module. Defaults to 1.
 
         Returns:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
 
         """
         try:
-            obstime = cast(time.Time, skycoord.obstime)
+            obstime = typing.cast(time.Time, skycoord.obstime)
         except AttributeError as error:
             msg = "The input coordinates must be an astropy SkyCoord object."
             raise TypeError(msg) from error
@@ -153,10 +146,9 @@ class Model:
             msg = "The `obstime` attribute of the `SkyCoord` object must be set."
             raise ValueError(msg)
 
-        n_coords_in = skycoord.size
         if contains_duplicates:
             _, index, inverse = np.unique(
-                cast(
+                typing.cast(
                     list[npt.NDArray[np.float64]],
                     [skycoord.spherical.lon.value, skycoord.spherical.lat.value],
                 ),
@@ -164,18 +156,20 @@ class Model:
                 return_inverse=True,
                 axis=1,
             )
-            skycoord = cast(coords.SkyCoord, skycoord[index])  # filter out identical coordinates
-        n_coords = skycoord.size
+            skycoord = typing.cast(
+                coords.SkyCoord, skycoord[index]
+            )  # filter out identical coordinates
+        ncoords = skycoord.size
         earth_xyz = get_earthpos_xyz(obstime, self._ephemeris)
         obs_xyz = get_obspos_xyz(obstime, obspos, earth_xyz, self._ephemeris)
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
         if skycoord.isscalar:
-            skycoord_xyz = cast(
+            skycoord_xyz = typing.cast(
                 npt.NDArray[np.float64], skycoord.cartesian.xyz.value[:, np.newaxis]
             )
         else:
-            skycoord_xyz = cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
+            skycoord_xyz = typing.cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
@@ -185,7 +179,7 @@ class Model:
 
         # Return a dict of partial functions corresponding to the number density each zodiacal
         # component in the interplanetary dust model.
-        density_partials = populate_number_density_with_model(
+        density_callables = populate_number_density_with_model(
             comps=self._interplanetary_dust_model.comps,
             dynamic_params={"X_earth": earth_xyz[:, np.newaxis, np.newaxis]},
         )
@@ -199,69 +193,69 @@ class Model:
             **self._common_parameters,
         )
 
-        distribute_to_cores = n_coords > self._n_proc and self._n_proc > 1
-        if distribute_to_cores:
-            unit_vector_chunks = np.array_split(skycoord_xyz, self._n_proc, axis=-1)
-            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords))
-            with self._process_pool as pool:
+        emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+        dist_to_cores = ncoords > nprocesses and nprocesses > 1
+        if dist_to_cores:
+            skycoord_xyz_splits = np.array_split(skycoord_xyz, nprocesses, axis=-1)
+            with multiprocessing.get_context(_PLATFORM_METHOD).Pool(nprocesses) as pool:
                 for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
-                    stop_chunks = np.array_split(stop[comp_label], self._n_proc, axis=-1)
+                    stop_chunks = np.array_split(stop[comp_label], nprocesses, axis=-1)
                     if start[comp_label].size == 1:
-                        start_chunks = [start[comp_label]] * self._n_proc
+                        start_chunks = [start[comp_label]] * nprocesses
                     else:
-                        start_chunks = np.array_split(start[comp_label], self._n_proc, axis=-1)
+                        start_chunks = np.array_split(start[comp_label], nprocesses, axis=-1)
                     comp_integrands = [
                         functools.partial(
                             common_integrand,
-                            u_los=np.expand_dims(unit_vector, axis=-1),
+                            u_los=np.expand_dims(vec, axis=-1),
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
-                            get_density_function=density_partials[comp_label],
+                            quad_root_0=self._gauss_x[0],
+                            quad_root_n=self._gauss_x[-1],
+                            get_density_function=density_callables[comp_label],
                             **self._comp_parameters[comp_label],
                         )
-                        for unit_vector, start, stop in zip(
-                            unit_vector_chunks, start_chunks, stop_chunks
-                        )
+                        for vec, start, stop in zip(skycoord_xyz_splits, start_chunks, stop_chunks)
                     ]
 
                     proc_chunks = [
                         pool.apply_async(
-                            integrate_gauss_legendre,
-                            args=(comp_integrand, *self._gauss_points_and_weights),
+                            integrate_gauss_laguerre,
+                            args=(comp_integrand, self._gauss_x, self.gauss_w),
                         )
                         for comp_integrand in comp_integrands
                     ]
+                    emission[idx] = np.concatenate([result.get() for result in proc_chunks])
 
-                    integrated_comp_emission[idx] += (
-                        np.concatenate([result.get() for result in proc_chunks])
-                        * 0.5
-                        * (stop[comp_label] - start[comp_label])
+                    # Correct for change of integral limits
+                    emission[idx] *= (stop[comp_label] - start[comp_label]) / (
+                        self._gauss_x[-1] - self._gauss_x[0]
                     )
 
         else:
-            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords))
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
                     u_los=np.expand_dims(skycoord_xyz, axis=-1),
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
-                    get_density_function=density_partials[comp_label],
+                    quad_root_0=self._gauss_x[0],
+                    quad_root_n=self._gauss_x[-1],
+                    get_density_function=density_callables[comp_label],
                     **self._comp_parameters[comp_label],
                 )
-
-                integrated_comp_emission[idx] = (
-                    integrate_gauss_legendre(comp_integrand, *self._gauss_points_and_weights)
-                    * 0.5
-                    * (stop[comp_label] - start[comp_label])
+                emission[idx] = integrate_gauss_laguerre(
+                    comp_integrand, self._gauss_x, self.gauss_w
                 )
 
+                # Correct for change of integral limits
+                emission[idx] *= (stop[comp_label] - start[comp_label]) / (
+                    self._gauss_x[-1] - self._gauss_x[0]
+                )
         if contains_duplicates:
-            emission = np.zeros((self._interplanetary_dust_model.ncomps, n_coords_in))
-            emission = integrated_comp_emission[:, inverse] << (units.MJy / units.sr)
-        else:
-            emission = integrated_comp_emission << (units.MJy / units.sr)
+            emission = emission[:, inverse]
 
+        emission <<= units.MJy / units.sr
         return emission if return_comps else emission.sum(axis=0)
 
     def get_parameters(self) -> dict:
