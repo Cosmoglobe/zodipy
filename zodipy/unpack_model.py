@@ -5,7 +5,7 @@ from typing import Any, Callable, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 from astropy import units
-from scipy import integrate
+from scipy import integrate, interpolate
 
 from zodipy.comps import ComponentLabel
 from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
@@ -51,14 +51,22 @@ def unpack_kelsall(
 
     common_params["C1"] = (
         interpolate_spectral_parameter(
-            wavelengths, weights, model_spectrum, spectral_parameter=model.C1
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.C1,
+            use_nearest=True,
         )
         if model.C1 is not None
         else 0
     )
     common_params["C2"] = (
         interpolate_spectral_parameter(
-            wavelengths, weights, model_spectrum, spectral_parameter=model.C2
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.C2,
+            use_nearest=True,
         )
         if model.C2 is not None
         else 0
@@ -66,12 +74,15 @@ def unpack_kelsall(
 
     common_params["C3"] = (
         interpolate_spectral_parameter(
-            wavelengths, weights, model_spectrum, spectral_parameter=model.C3
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.C3,
+            use_nearest=True,
         )
         if model.C3 is not None
         else 0
     )
-
     if model.solar_irradiance is None:
         common_params["solar_irradiance"] = 0
     else:
@@ -114,10 +125,17 @@ def interpolate_spectral_parameter(
     weights: units.Quantity | None,
     model_spectrum: units.Quantity,
     spectral_parameter: npt.ArrayLike,
+    use_nearest=False,
 ) -> npt.NDArray:
     """Interpolate a spectral parameters."""
     paramameter = np.asarray(spectral_parameter)
-    interpolated_parameter = np.interp(wavelengths.value, model_spectrum.value, paramameter)
+
+    if use_nearest:
+        interpolated_parameter = (
+            interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(wavelengths.value)
+        )
+    else:
+        interpolated_parameter = np.interp(wavelengths.value, model_spectrum.value, paramameter)
 
     if weights is not None:
         return integrate.trapezoid(weights.value * interpolated_parameter, x=wavelengths.value)
