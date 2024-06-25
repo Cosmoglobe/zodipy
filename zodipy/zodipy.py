@@ -4,7 +4,7 @@ import functools
 import multiprocessing
 import multiprocessing.pool
 import platform
-from typing import cast
+import typing
 
 import numpy as np
 import numpy.typing as npt
@@ -14,7 +14,10 @@ from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
-from zodipy.line_of_sight import get_line_of_sight_range, integrate_gauss_legendre
+from zodipy.line_of_sight import (
+    get_line_of_sight_range,
+    integrate_gauss_laguerre,
+)
 from zodipy.model_registry import model_registry
 from zodipy.number_density import populate_number_density_with_model
 from zodipy.unpack_model import get_model_to_dicts_callable
@@ -46,7 +49,7 @@ class Model:
                 (Jy/sr).
             name: Interplanetary dust model to use. For a list of available models, see
                 https://cosmoglobe.github.io/zodipy/introduction/. Defaults to 'dirbe'.
-            gauss_quad_degree: Order of the Gaussian-Legendre quadrature used to evaluate the
+            gauss_quad_degree: Order of the Gaussian-laguerre quadrature used to evaluate the
                 line-of-sight integral in the simulations. Default is 50 points.
             extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
                 the requested frequencies or wavelengths. If `False`, an exception is raised on
@@ -96,7 +99,7 @@ class Model:
         self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
-        self._gauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
+        self._gauss_x, self.gauss_w = np.polynomial.laguerre.laggauss(gauss_quad_degree)
 
     def evaluate(
         self,
@@ -135,7 +138,7 @@ class Model:
 
         """
         try:
-            obstime = cast(time.Time, skycoord.obstime)
+            obstime = typing.cast(time.Time, skycoord.obstime)
         except AttributeError as error:
             msg = "The input coordinates must be an astropy SkyCoord object."
             raise TypeError(msg) from error
@@ -143,10 +146,9 @@ class Model:
             msg = "The `obstime` attribute of the `SkyCoord` object must be set."
             raise ValueError(msg)
 
-        ncoords_in = skycoord.size
         if contains_duplicates:
             _, index, inverse = np.unique(
-                cast(
+                typing.cast(
                     list[npt.NDArray[np.float64]],
                     [skycoord.spherical.lon.value, skycoord.spherical.lat.value],
                 ),
@@ -154,18 +156,20 @@ class Model:
                 return_inverse=True,
                 axis=1,
             )
-            skycoord = cast(coords.SkyCoord, skycoord[index])  # filter out identical coordinates
+            skycoord = typing.cast(
+                coords.SkyCoord, skycoord[index]
+            )  # filter out identical coordinates
         ncoords = skycoord.size
         earth_xyz = get_earthpos_xyz(obstime, self._ephemeris)
         obs_xyz = get_obspos_xyz(obstime, obspos, earth_xyz, self._ephemeris)
 
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
         if skycoord.isscalar:
-            skycoord_xyz = cast(
+            skycoord_xyz = typing.cast(
                 npt.NDArray[np.float64], skycoord.cartesian.xyz.value[:, np.newaxis]
             )
         else:
-            skycoord_xyz = cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
+            skycoord_xyz = typing.cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
 
         start, stop = get_line_of_sight_range(
             components=self._interplanetary_dust_model.comps.keys(),
@@ -189,10 +193,10 @@ class Model:
             **self._common_parameters,
         )
 
-        distribute_to_cores = ncoords > nprocesses and nprocesses > 1
-        if distribute_to_cores:
-            unit_vector_chunks = np.array_split(skycoord_xyz, nprocesses, axis=-1)
-            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+        emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
+        dist_to_cores = ncoords > nprocesses and nprocesses > 1
+        if dist_to_cores:
+            skycoord_xyz_splits = np.array_split(skycoord_xyz, nprocesses, axis=-1)
             with multiprocessing.get_context(_PLATFORM_METHOD).Pool(nprocesses) as pool:
                 for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                     stop_chunks = np.array_split(stop[comp_label], nprocesses, axis=-1)
@@ -206,48 +210,50 @@ class Model:
                             u_los=np.expand_dims(vec, axis=-1),
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
+                            quad_root_0=self._gauss_x[0],
+                            quad_root_n=self._gauss_x[-1],
                             get_density_function=density_callables[comp_label],
                             **self._comp_parameters[comp_label],
                         )
-                        for vec, start, stop in zip(unit_vector_chunks, start_chunks, stop_chunks)
+                        for vec, start, stop in zip(skycoord_xyz_splits, start_chunks, stop_chunks)
                     ]
 
                     proc_chunks = [
                         pool.apply_async(
-                            integrate_gauss_legendre,
-                            args=(comp_integrand, *self._gauss_points_and_weights),
+                            integrate_gauss_laguerre,
+                            args=(comp_integrand, self._gauss_x, self.gauss_w),
                         )
                         for comp_integrand in comp_integrands
                     ]
-                    integrated_comp_emission[idx] += (
-                        np.concatenate([result.get() for result in proc_chunks])
-                        * 0.5
-                        * (stop[comp_label] - start[comp_label])
+                    emission[idx] = np.concatenate([result.get() for result in proc_chunks])
+
+                    # Correct for change of integral limits
+                    emission[idx] *= (stop[comp_label] - start[comp_label]) / (
+                        self._gauss_x[-1] - self._gauss_x[0]
                     )
 
         else:
-            integrated_comp_emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords))
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
                 comp_integrand = functools.partial(
                     common_integrand,
                     u_los=np.expand_dims(skycoord_xyz, axis=-1),
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
+                    quad_root_0=self._gauss_x[0],
+                    quad_root_n=self._gauss_x[-1],
                     get_density_function=density_callables[comp_label],
                     **self._comp_parameters[comp_label],
                 )
-
-                integrated_comp_emission[idx] = (
-                    integrate_gauss_legendre(comp_integrand, *self._gauss_points_and_weights)
-                    * 0.5
-                    * (stop[comp_label] - start[comp_label])
+                emission[idx] = integrate_gauss_laguerre(
+                    comp_integrand, self._gauss_x, self.gauss_w
                 )
 
+                # Correct for change of integral limits
+                emission[idx] *= (stop[comp_label] - start[comp_label]) / (
+                    self._gauss_x[-1] - self._gauss_x[0]
+                )
         if contains_duplicates:
-            emission = np.zeros((self._interplanetary_dust_model.ncomps, ncoords_in))
-            emission = integrated_comp_emission[:, inverse]
-        else:
-            emission = integrated_comp_emission
+            emission = emission[:, inverse]
 
         emission <<= units.MJy / units.sr
         return emission if return_comps else emission.sum(axis=0)
