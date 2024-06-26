@@ -16,7 +16,7 @@ from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
 from zodipy.line_of_sight import (
     get_line_of_sight_range,
-    integrate_gauss_laguerre,
+    integrate_leggauss,
 )
 from zodipy.model_registry import model_registry
 from zodipy.number_density import populate_number_density_with_model
@@ -99,7 +99,7 @@ class Model:
         self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
-        self._gauss_x, self.gauss_w = np.polynomial.laguerre.laggauss(gauss_quad_degree)
+        self._leggauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
 
     def evaluate(
         self,
@@ -210,8 +210,6 @@ class Model:
                             u_los=np.expand_dims(vec, axis=-1),
                             start=np.expand_dims(start, axis=-1),
                             stop=np.expand_dims(stop, axis=-1),
-                            quad_root_0=self._gauss_x[0],
-                            quad_root_n=self._gauss_x[-1],
                             get_density_function=density_callables[comp_label],
                             **self._comp_parameters[comp_label],
                         )
@@ -220,17 +218,15 @@ class Model:
 
                     proc_chunks = [
                         pool.apply_async(
-                            integrate_gauss_laguerre,
-                            args=(comp_integrand, self._gauss_x, self.gauss_w),
+                            integrate_leggauss,
+                            args=(comp_integrand, *self._leggauss_points_and_weights),
                         )
                         for comp_integrand in comp_integrands
                     ]
                     emission[idx] = np.concatenate([result.get() for result in proc_chunks])
 
                     # Correct for change of integral limits
-                    emission[idx] *= (stop[comp_label] - start[comp_label]) / (
-                        self._gauss_x[-1] - self._gauss_x[0]
-                    )
+                    emission[idx] *= 0.5 * (stop[comp_label] - start[comp_label])
 
         else:
             for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
@@ -239,19 +235,15 @@ class Model:
                     u_los=np.expand_dims(skycoord_xyz, axis=-1),
                     start=np.expand_dims(start[comp_label], axis=-1),
                     stop=np.expand_dims(stop[comp_label], axis=-1),
-                    quad_root_0=self._gauss_x[0],
-                    quad_root_n=self._gauss_x[-1],
                     get_density_function=density_callables[comp_label],
                     **self._comp_parameters[comp_label],
                 )
-                emission[idx] = integrate_gauss_laguerre(
-                    comp_integrand, self._gauss_x, self.gauss_w
+                emission[idx] = integrate_leggauss(
+                    comp_integrand, *self._leggauss_points_and_weights
                 )
-
                 # Correct for change of integral limits
-                emission[idx] *= (stop[comp_label] - start[comp_label]) / (
-                    self._gauss_x[-1] - self._gauss_x[0]
-                )
+                emission[idx] *= 0.5 * (stop[comp_label] - start[comp_label])
+
         if contains_duplicates:
             emission = emission[:, inverse]
 

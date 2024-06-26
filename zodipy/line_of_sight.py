@@ -52,13 +52,13 @@ RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]]
 COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS}
 
 
-def integrate_gauss_laguerre(
+def integrate_leggauss(
     fn: Callable[[float], npt.NDArray[np.float64]],
     points: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Integrate a function using Gauss-Laguerre quadrature."""
-    return np.squeeze(sum(np.exp(x) * fn(x) * w for x, w in zip(points, weights)))
+    return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))
 
 
 def get_sphere_intersection(
