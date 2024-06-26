@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -51,8 +50,7 @@ def get_phase_function(
     return phase_normalization * (C1 + C2 * Theta + np.exp(C3 * Theta))
 
 
-@lru_cache
-def _get_phase_normalization(C1: float, C2: float, C3: float) -> float:
+def _get_phase_normalization(C1: np.float64, C2: np.float64, C3: np.float64) -> np.float64:
     """Return the analyitcal integral for the phase normalization factor N."""
     int_term1 = 2 * np.pi
     int_term2 = 2 * C1
