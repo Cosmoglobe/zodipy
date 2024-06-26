@@ -22,8 +22,6 @@ def kelsall_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: npt.NDArray[np.float64],
     stop: npt.NDArray[np.float64],
-    quad_root_0: float,
-    quad_root_n: float,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
@@ -39,9 +37,7 @@ def kelsall_brightness_at_step(
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
     # Convert the quadrature range from [0, inf] to the true ecliptic positions
-    a, b = start, stop
-    i, j = quad_root_0, quad_root_n
-    R_los = ((b - a) / (j - i)) * r + (j * a - i * b) / (j - i)
+    R_los = 0.5 * (stop - start) * r + 0.5 * (stop + start)
 
     X_los = R_los * u_los
     X_helio = X_los + X_obs
@@ -64,8 +60,6 @@ def rrm_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: npt.NDArray[np.float64],
     stop: npt.NDArray[np.float64],
-    quad_root_0: float,
-    quad_root_n: float,
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
@@ -76,9 +70,7 @@ def rrm_brightness_at_step(
 ) -> npt.NDArray[np.float64]:
     """RRM is implented with component specific line-of-sight grids."""
     # Convert the quadrature range from [0, inf] to the true ecliptic positions
-    a, b = start, stop
-    i, j = quad_root_0, quad_root_n
-    R_los = ((b - a) / (j - i)) * r + (j * a - i * b) / (j - i)
+    R_los = 0.5 * (stop - start) * r + 0.5 * (stop + start)
 
     X_los = R_los * u_los
     X_helio = X_los + X_obs
