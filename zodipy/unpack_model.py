@@ -125,15 +125,15 @@ def interpolate_spectral_parameter(
     weights: units.Quantity | None,
     model_spectrum: units.Quantity,
     spectral_parameter: npt.ArrayLike,
-    use_nearest=False,
+    use_nearest: bool = False,
 ) -> npt.NDArray:
     """Interpolate a spectral parameters."""
     paramameter = np.asarray(spectral_parameter)
 
     if use_nearest:
-        interpolated_parameter = (
-            interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(wavelengths.value)
-        )
+        interpolated_parameter = interpolate.interp1d(
+            model_spectrum.value, paramameter, kind="nearest"
+        )(wavelengths.value)
     else:
         interpolated_parameter = np.interp(wavelengths.value, model_spectrum.value, paramameter)
 
