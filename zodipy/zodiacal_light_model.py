@@ -123,6 +123,9 @@ class ModelRegistry:
         if (name := name.lower()) in self._registry:
             msg = f"a model by the name {name!s} is already registered."
             raise ValueError(msg)
+        if not isinstance(model, ZodiacalLightModel):
+            msg = "model must be an instance of ZodiacalLightModel."
+            raise TypeError(msg)
         self._registry[name] = model
 
     def get_model(self, name: str) -> ZodiacalLightModel:
