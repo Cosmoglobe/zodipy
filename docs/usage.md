@@ -31,39 +31,14 @@ import zodipy
 
 model = zodipy.Model(25 * u.micron, name="planck18")
 ```
-
-### Multiprocessing
-ZodiPy will distribute the input coordinates to cores if the keyword argument `n_proc` is `>= 1` using Python's `multiprocessing` module.
-
-=== "Specifying number of processes"
-    ```py hl_lines="4"
-    import astropy.units as u
-    import zodipy
-
-    model = zodipy.Model(25 * u.micron, n_proc=4)
-    ```
-=== "Custom pool object"
-
-    ```py hl_lines="1 6 7"
-    import multiprocessing
-
-    import astropy.units as u
-    import zodipy
-
-    pool = multiprocessing.Pool(4)
-    model = zodipy.Model(25 * u.micron, pool=pool)
-    ```
-
-!!! tip 
-    For all available optional keyword arguments in `zodipy.Model` see [the API reference](reference.md#zodipy.zodipy.Model).
-
 ## Simulating zodiacal light
 To make zodiacal light simulations ZodiPy needs to know three things: 1) Sky coordinates for which to simulate zodiacal light; 2) The position of the observer to know where the vertex of the rays is positioned; and 3) the time of observation, used to query the position of Earth. 
 
 ### The SkyCoord object
-The sky coordinates are provided through Astropy's powerful `astropy.coordinates.SkyCoord` object, which can represent the observed coordinates in several formats. Users unfamiliar with the `SkyCoord` object should visit the [official Astropy documentation](https://docs.astropy.org/en/stable/coordinates/index.html) before using ZodiPy to learn the basics.
+The sky coordinates for which to simulate zodiacal light is given to ZodiPy using Astropy's `astropy.coordinates.SkyCoord` object. Users unfamiliar with the `SkyCoord` object should visit the [official Astropy documentation](https://docs.astropy.org/en/stable/coordinates/index.html) before using ZodiPy to learn the basics.
 
-When using the `SkyCoord` in ZodiPy, the user **must** set the `obstime` and `frame` attributes. For a single observation in galactic coordinates, the `SkyCoord` object may look something like
+
+For a single observation in galactic coordinates, the `SkyCoord` object may look something like
 ```py hl_lines="2 5 6 7 8 9 10"
 import astropy.units as u
 from astropy.coordinates import SkyCoord
@@ -76,22 +51,26 @@ skycoord = SkyCoord(
     frame="galactic"
 )
 ```
-The `astropy.time.Time` object can represent time in many formats, including Julian and modified Julian dates (see the [documentation](https://docs.astropy.org/en/stable/time/) on times with Astropy).
+The `obstime` keyword is mandetory, and is given by an `astropy.time.Time` object, which can represent time in many formats, including Julian and modified Julian dates (see the [documentation](https://docs.astropy.org/en/stable/time/) on times with Astropy).
 
-The user should use the following coordinate frames when transforming between Ecliptic, Galatic, and Celestial coordinates in string representation:
+The sky coordinates should represent observer-centric coordinates. The observer-position is therefore required to compute the line-of-sight integrals, but this is provided not in the `SkyCoord` object, but rather in the `evaluate` method which we will see soon.
 
-- "barycentricmeanecliptic"
-- "galactic"
-- "icrs"
+Common coordinate frames are the Ecliptic, Galactic, and Celestial frames ("E", "G", "C" in `healpy`), which can be specified through string representations:
 
-or using the frame objects imported from `astropy.coordinataes`:
+- `"barycentricmeanecliptic"` (Ecliptic)
+- `"galactic"` (Galactic)
+- `"icrs"` (Celestial)
+
+or using the frame objects imported from `astropy.coordinates`:
 
 - `BarycentricMeanEcliptic`
 - `Galactic`
 - `ICRS`
 
 !!! info "Notes on coordinate frames"
-    The user input is assumed to be observer-centric, meaning that we do not care about the origin of the frame passed in. This is instead supplied through the `obspos` keyword in the `evaluate` method. The above built-in Astropy frames share an origin and can therefore trivially be converted internally in ZodiPy.
+    While the above listed built-in Astropy frames do *not* represent observer-centric coordinate frames,
+    we still use these to specify the frame rotation, which is required internally as the model is evaluated in
+    ecliptic coordinates.
 
 In the following, we show three sets of observations in all three coordinate frames
 ```py hl_lines="2 9 15 21"
@@ -176,6 +155,33 @@ This argument accepts both a string representing a body recognized by `astropy.c
 !!! tip
     If the coordinates in the `SkyCoord` object contain a large number of re-observations, as is the case for many satellite observations, setting the `contains_duplicates` keyword in the `evaluate` method to `True` will speed up the evaluations.
 
+
+### Multiprocessing
+ZodiPy will distribute the input coordinates to cores if the keyword argument `nprocesses` in the `evaluate` method is `nprocesses >= 1` using Python's `multiprocessing` module.
+```py hl_lines="1 17"
+import multiprocessing
+
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+import zodipy
+
+model = zodipy.Model(25 * u.micron)
+
+skycoord = SkyCoord(
+    40 * u.deg, 
+    60 * u.deg, 
+    obstime=Time("2020-01-01"), 
+    frame="galactic"
+)
+
+emission = model.evaluate(skycoord, nprocesses=multiprocessing.cpu_count())
+```
+
+!!! tip 
+    For all available optional keyword arguments in `zodipy.Model` see [the API reference](reference.md#zodipy.zodipy.Model).
+
+
 ## Examples
 
 ### Emission along an Ecliptic scan
@@ -189,7 +195,7 @@ In the following, we simulate a scan across the Ecliptic plane
 
 
 ### HEALPIx maps
-We can use [healpy](https://healpy.readthedocs.io/en/latest/) or [Astropy-healpix](https://astropy-healpix.readthedocs.io/en/latest/) package to create a `SkyCoord` object directly from a HEALPIx pixelization
+We can use [healpy](https://healpy.readthedocs.io/en/latest/) or [Astropy-healpix](https://astropy-healpix.readthedocs.io/en/latest/) to create a `SkyCoord` object directly from a HEALPIx pixelization
 
 === "healpy"
 

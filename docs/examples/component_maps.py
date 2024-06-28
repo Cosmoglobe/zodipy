@@ -18,7 +18,7 @@ COMP_NAMES = [
     "Earth-trailing Feature",
 ]
 
-model = zodipy.Model(24 * u.micron, n_proc=multiprocessing.cpu_count())
+model = zodipy.Model(24 * u.micron)
 
 nside = 32
 pixels = np.arange(hp.nside2npix(nside))
@@ -32,7 +32,7 @@ skycoord = SkyCoord(
     obstime=Time("2022-01-14"),
 )
 
-emission = model.evaluate(skycoord, return_comps=True)
+emission = model.evaluate(skycoord, return_comps=True, nprocesses=multiprocessing.cpu_count())
 
 fig = plt.figure(figsize=(8, 7))
 for idx, comp_emission in enumerate(emission):

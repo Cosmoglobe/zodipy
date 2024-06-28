@@ -9,7 +9,7 @@ from astropy.time import Time
 
 import zodipy
 
-model = zodipy.Model(30 * u.micron, n_proc=multiprocessing.cpu_count())
+model = zodipy.Model(30 * u.micron)
 
 healpix = ahp.HEALPix(nside=256, frame="galactic")
 pixels = np.arange(healpix.npix)
@@ -18,7 +18,7 @@ skycoord = healpix.healpix_to_skycoord(pixels)
 # Note that we manually set the obstime attribute
 skycoord.obstime = Time("2022-01-14")
 
-emission = model.evaluate(skycoord)
+emission = model.evaluate(skycoord, nprocesses=multiprocessing.cpu_count())
 
 hp.mollview(
     emission,

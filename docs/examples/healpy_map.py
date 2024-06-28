@@ -9,7 +9,7 @@ from astropy.time import Time
 
 import zodipy
 
-model = zodipy.Model(30 * u.micron, n_proc=multiprocessing.cpu_count())
+model = zodipy.Model(30 * u.micron)
 
 nside = 256
 pixels = np.arange(hp.nside2npix(nside))
@@ -17,7 +17,7 @@ lon, lat = hp.pix2ang(nside, pixels, lonlat=True)
 
 skycoord = SkyCoord(lon, lat, unit=u.deg, frame="galactic", obstime=Time("2022-01-14"))
 
-emission = model.evaluate(skycoord)
+emission = model.evaluate(skycoord, nprocesses=multiprocessing.cpu_count())
 
 hp.mollview(
     emission,
