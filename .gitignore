@@ -174,3 +174,6 @@ test.py
 context.py
 
 *.pdf
+
+work_in_progress/
+old_tests/
