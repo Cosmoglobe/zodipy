@@ -109,6 +109,48 @@ def test_output_shape() -> None:
     assert test_model.evaluate(skycoord, return_comps=False).shape == (6,)
 
 
+def test_input_shape() -> None:
+    """Test that shape of the input sky_coord is correct and obspos and obstime are correct."""
+    obstimes = time.Time([TEST_TIME.mjd + i for i in range(4)], format="mjd")
+    obsposes = (
+        coords.get_body("earth", obstimes)
+        .transform_to(coords.HeliocentricMeanEcliptic)
+        .cartesian.xyz.to(units.AU)
+    )
+    test_model.evaluate(SkyCoord([20, 30], [30, 40], unit=units.deg, obstime=TEST_TIME))
+    test_model.evaluate(
+        SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes)
+    )
+    test_model.evaluate(
+        SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes),
+        obspos=obsposes,
+    )
+
+    # obstime > sky_coord
+    with pytest.raises(ValueError):
+        test_model.evaluate(SkyCoord([20, 30], [30, 40], unit=units.deg, obstime=obstimes))
+
+    # obspos > sky_coord
+    with pytest.raises(ValueError):
+        test_model.evaluate(SkyCoord(20, 30, unit=units.deg, obstime=TEST_TIME), obspos=obsposes)
+
+    # obspos > obstime
+    with pytest.raises(ValueError):
+        test_model.evaluate(SkyCoord(20, 30, unit=units.deg, obstime=TEST_TIME), obspos=obsposes)
+
+    # obstime > obspos
+    with pytest.raises(ValueError):
+        test_model.evaluate(
+            SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes),
+            obspos=[[1, -0.4, 0.2]] * units.AU,
+        )
+    with pytest.raises(ValueError):
+        test_model.evaluate(
+            SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes),
+            obspos=obsposes[:2],
+        )
+
+
 def test_return_comps() -> None:
     """Test that the return_comps function works for valid user input."""
     emission_comps = test_model.evaluate(TEST_SKY_COORD, return_comps=True)

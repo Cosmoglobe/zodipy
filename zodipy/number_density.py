@@ -58,7 +58,6 @@ def cloud_number_density(
     """Density of the diffuse cloud (see Eq (6). in K98)."""
     X_cloud = X_helio - X_0
     R_cloud = np.sqrt(X_cloud[0] ** 2 + X_cloud[1] ** 2 + X_cloud[2] ** 2)
-
     Z_cloud = (
         X_cloud[0] * sin_Omega_rad * sin_i_rad
         - X_cloud[1] * cos_Omega_rad * sin_i_rad

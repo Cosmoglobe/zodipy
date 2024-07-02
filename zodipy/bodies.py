@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import astropy.coordinates as coords
 import numpy as np
 from astropy import time, units
+from scipy import interpolate
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -29,11 +30,32 @@ def get_sun_earth_moon_barycenter(
 
 def get_earthpos_xyz(obstime: time.Time, ephemeris: str) -> npt.NDArray[np.float64]:
     """Return the sky coordinates of the Earth in the heliocentric frame."""
-    return (
-        coords.get_body("earth", obstime, ephemeris=ephemeris)
+    if obstime.size == 1:
+        return (
+            coords.get_body("earth", obstime, ephemeris=ephemeris)
+            .transform_to(coords.HeliocentricMeanEcliptic)
+            .cartesian.xyz.to_value(units.AU)
+        )
+    return get_interpolated_body_xyz("earth", obstime, ephemeris)
+
+
+def get_interpolated_body_xyz(
+    body: str,
+    obstimes: time.Time,
+    ephemeris: str,
+) -> npt.NDArray[np.float64]:
+    """Return interpolated Earth positions in the heliocentric frame."""
+    dt = (1 * units.hour).to_value(units.day)
+    t0, t1 = obstimes[0].mjd, obstimes[-1].mjd
+    times = time.Time(np.arange(t0, max(t0 + 365, t1), dt), format="mjd")
+
+    bodypos = (
+        coords.get_body(body, times, ephemeris=ephemeris)
         .transform_to(coords.HeliocentricMeanEcliptic)
         .cartesian.xyz.to_value(units.AU)
     )
+    f = interpolate.interp1d(times.mjd, bodypos, axis=-1)
+    return f(obstimes.mjd)
 
 
 def get_obspos_xyz(
@@ -46,12 +68,17 @@ def get_obspos_xyz(
     if isinstance(obspos, str):
         if obspos.lower() == "semb-l2":
             return get_sun_earth_moon_barycenter(earthpos)
+        if obspos.lower() == "earth":
+            return earthpos
+
         try:
-            return (
-                coords.get_body(obspos, obstime, ephemeris=ephemeris)
-                .transform_to(coords.HeliocentricMeanEcliptic)
-                .cartesian.xyz.to_value(units.AU)
-            )
+            if obstime.size == 1:
+                return (
+                    coords.get_body(obspos, obstime, ephemeris=ephemeris)
+                    .transform_to(coords.HeliocentricMeanEcliptic)
+                    .cartesian.xyz.to_value(units.AU)
+                )
+            return get_interpolated_body_xyz(obspos, obstime, ephemeris)
         except KeyError as error:
             valid_obs = [*coords.solar_system_ephemeris.bodies, "semb-l2"]
             msg = f"Invalid observer string: '{obspos}'. Valid observers are: {valid_obs}"
