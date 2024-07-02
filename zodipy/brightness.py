@@ -36,7 +36,8 @@ def kelsall_brightness_at_step(
     solar_irradiance: np.float64,
 ) -> npt.NDArray[np.float64]:
     """Kelsall uses common line of sight grid from obs to 5.2 AU."""
-    # Convert the quadrature range from [0, inf] to the true ecliptic positions
+    # Convert the quadrature range from [-1, 1] to the true ecliptic positions
+    # and back again at the end
     R_los = 0.5 * (stop - start) * r + 0.5 * (stop + start)
 
     X_los = R_los * u_los
@@ -46,14 +47,13 @@ def kelsall_brightness_at_step(
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
     blackbody_emission = np.interp(temperature, *bp_interpolation_table)
     emission = (1 - albedo) * (emissivity * blackbody_emission)
-
     if albedo != 0:
         solar_flux = solar_irradiance / R_helio**2
         scattering_angle = get_scattering_angle(R_los, R_helio, X_los, X_helio)
         phase_function = get_phase_function(scattering_angle, C1, C2, C3)
         emission += albedo * solar_flux * phase_function
 
-    return emission * get_density_function(X_helio)
+    return emission * get_density_function(X_helio) * 0.5 * (stop - start)
 
 
 def rrm_brightness_at_step(
@@ -69,7 +69,8 @@ def rrm_brightness_at_step(
     calibration: np.float64,
 ) -> npt.NDArray[np.float64]:
     """RRM is implented with component specific line-of-sight grids."""
-    # Convert the quadrature range from [0, inf] to the true ecliptic positions
+    # Convert the quadrature range from [-1, 1] to the true ecliptic positions
+    # and back again at the end
     R_los = 0.5 * (stop - start) * r + 0.5 * (stop + start)
 
     X_los = R_los * u_los
@@ -79,4 +80,4 @@ def rrm_brightness_at_step(
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
     blackbody_emission = np.interp(temperature, *bp_interpolation_table)
 
-    return blackbody_emission * get_density_function(X_helio) * calibration
+    return blackbody_emission * get_density_function(X_helio) * calibration * 0.5 * (stop - start)

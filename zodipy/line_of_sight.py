@@ -21,8 +21,8 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64
     ComponentLabel.BAND1: (R_0, R_JUPITER),
     ComponentLabel.BAND2: (R_0, R_JUPITER),
     ComponentLabel.BAND3: (R_0, R_JUPITER),
-    ComponentLabel.RING: (R_EARTH - 0.2, R_EARTH + 0.2),
-    ComponentLabel.FEATURE: (R_EARTH - 0.2, R_EARTH + 0.2),
+    ComponentLabel.RING: (R_0, R_EARTH + 0.2),
+    ComponentLabel.FEATURE: (R_0, R_EARTH + 0.2),
 }
 
 RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
@@ -67,10 +67,12 @@ def get_sphere_intersection(
     cutoff: float | np.float64,
 ) -> npt.NDArray[np.float64]:
     """Returns the distance from the observer to a heliocentric sphere with radius `cutoff`."""
-    x, y, z = obs_pos.flatten()
+    x, y, z = obs_pos
     r_obs = np.sqrt(x**2 + y**2 + z**2)
-    if r_obs > cutoff:
-        return np.asarray([np.finfo(float).eps])
+    if (r_obs > cutoff).any():
+        if obs_pos.ndim == 1:
+            return np.array([np.finfo(float).eps])
+        return np.full(obs_pos.shape[-1], np.finfo(float).eps)
 
     u_x, u_y, u_z = unit_vectors
     lon = np.arctan2(u_y, u_x)
