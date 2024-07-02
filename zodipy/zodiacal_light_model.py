@@ -14,7 +14,7 @@ from zodipy.brightness import (
 )
 
 if TYPE_CHECKING:
-    from zodipy.zodiacal_component import ComponentLabel, ZodiacalComponent
+    from zodipy.component import ComponentLabel, ZodiacalComponent
 
 
 @dataclass(repr=False)

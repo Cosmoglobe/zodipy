@@ -9,8 +9,7 @@ import numpy as np
 import numpy.typing as npt  # type: ignore
 
 from zodipy.bodies import get_earthpos_xyz
-from zodipy.model_registry import model_registry
-from zodipy.zodiacal_component import (
+from zodipy.component import (
     Band,
     BroadBand,
     Cloud,
@@ -25,6 +24,7 @@ from zodipy.zodiacal_component import (
     RingRRM,
     ZodiacalComponent,
 )
+from zodipy.model_registry import model_registry
 
 if TYPE_CHECKING:
     from astropy import time, units

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from zodipy.zodiacal_component import (
+from zodipy.component import (
     Band,
     BroadBand,
     Cloud,

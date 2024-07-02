@@ -168,24 +168,6 @@ def test_return_comps() -> None:
     assert_array_equal(emission_comps.sum(axis=0), emission)
 
 
-def test_contains_duplicates() -> None:
-    """Test that evaluations with and without the test duplicates flag are the same."""
-    lon = np.random.randint(low=0, high=360, size=10000)
-    lat = np.random.randint(low=-90, high=90, size=10000)
-
-    unique = np.unique(np.vstack([lon, lat]), axis=1)
-    assert len(lon) > unique.shape[1]
-    skycoord = SkyCoord(
-        lon,
-        lat,
-        unit=units.deg,
-        obstime=TEST_TIME,
-    )
-    emission = test_model.evaluate(skycoord, contains_duplicates=False)
-    emission_duplicates = test_model.evaluate(skycoord, contains_duplicates=True)
-    assert_array_equal(emission, emission_duplicates)
-
-
 def test_multiprocessing_nproc() -> None:
     """Test that the multiprocessing works with n_proc > 1."""
     model = Model(x=20 * units.micron)

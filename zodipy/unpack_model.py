@@ -7,7 +7,7 @@ import numpy.typing as npt
 from astropy import units
 from scipy import integrate, interpolate
 
-from zodipy.comps import ComponentLabel
+from zodipy.component import ComponentLabel
 from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]

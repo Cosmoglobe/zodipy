@@ -14,6 +14,7 @@ from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
+from zodipy.component import ComponentLabel
 from zodipy.line_of_sight import (
     get_line_of_sight_range,
     integrate_leggauss,
@@ -21,7 +22,6 @@ from zodipy.line_of_sight import (
 from zodipy.model_registry import model_registry
 from zodipy.number_density import populate_number_density_with_model
 from zodipy.unpack_model import get_model_to_dicts_callable
-from zodipy.zodiacal_component import ComponentLabel
 
 _PLATFORM_METHOD = "fork" if "windows" not in platform.system().lower() else None
 

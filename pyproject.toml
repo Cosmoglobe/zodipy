@@ -48,7 +48,7 @@ mkdocstrings-python = "^1.7.3"
 ruff = "^0.3.7"
 markdown = "^3.6.0"
 hypothesis = "^6.99.11"
-healpy = "^1.16.6"
+healpy = "^1.17.1"
 astropy-healpix = "^1.0.3"
 
 [build-system]

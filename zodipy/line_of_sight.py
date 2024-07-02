@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
 
-from zodipy.comps import RRM
-from zodipy.zodiacal_component import ComponentLabel
+from zodipy.component import ComponentLabel
+from zodipy.component_params import RRM
 
 if TYPE_CHECKING:
     import numpy.typing as npt

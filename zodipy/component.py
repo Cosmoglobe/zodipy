@@ -37,7 +37,7 @@ class ZodiacalComponent(abc.ABC):
     cos_Omega_rad: float = field(init=False)
 
     def __post_init__(self) -> None:
-        self.X_0 = np.array([self.x_0, self.y_0, self.z_0]).reshape(3, 1)
+        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=-1)
         self.sin_i_rad = np.sin(np.radians(self.i))
         self.cos_i_rad = np.cos(np.radians(self.i))
         self.sin_Omega_rad = np.sin(np.radians(self.Omega))
