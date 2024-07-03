@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 import pytest
-from astropy import time, units
+from astropy import coordinates, time, units
 
 from zodipy import Model, grid_number_density, model_registry
 
@@ -60,12 +60,16 @@ def test_get_parameters() -> None:
 def test_update_model() -> None:
     """Tests that the model can be updated."""
     model = Model(20 * units.micron, name="dirbe")
-
+    obstime = time.Time("2021-01-01T00:00:00")
+    skycoord = coordinates.SkyCoord(20, 30, unit=units.deg, obstime=obstime)
+    emission_before = model.evaluate(skycoord)
     parameters = model.get_parameters()
     comp = random.choice(list(parameters["comps"].keys()))
     parameter = random.choice(list(parameters["comps"][comp]))
     parameters["comps"][comp][parameter] = random.random()
     model.update_parameters(parameters)
+    emission_after = model.evaluate(skycoord)
+    assert not np.allclose(emission_before, emission_after)
 
 
 def test_get_model_raises_error() -> None:
