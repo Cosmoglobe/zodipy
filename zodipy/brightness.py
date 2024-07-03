@@ -9,7 +9,7 @@ from zodipy.blackbody import get_dust_grain_temperature
 from zodipy.scattering import get_phase_function, get_scattering_angle
 
 if TYPE_CHECKING:
-    from zodipy.number_density import ComponentNumberDensityCallable
+    from zodipy.number_density import NumberDensityFunc
 
 """
 Function that return the zodiacal emission at a step along all lines of sight given
@@ -25,7 +25,7 @@ def kelsall_brightness_at_step(
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
-    get_density_function: ComponentNumberDensityCallable,
+    number_density_func: NumberDensityFunc,
     T_0: float,
     delta: float,
     emissivity: np.float64,
@@ -53,7 +53,7 @@ def kelsall_brightness_at_step(
         phase_function = get_phase_function(scattering_angle, C1, C2, C3)
         emission += albedo * solar_flux * phase_function
 
-    return emission * get_density_function(X_helio) * 0.5 * (stop - start)
+    return emission * number_density_func(X_helio) * 0.5 * (stop - start)
 
 
 def rrm_brightness_at_step(
@@ -63,7 +63,7 @@ def rrm_brightness_at_step(
     X_obs: npt.NDArray[np.float64],
     u_los: npt.NDArray[np.float64],
     bp_interpolation_table: npt.NDArray[np.float64],
-    get_density_function: ComponentNumberDensityCallable,
+    number_density_func: NumberDensityFunc,
     T_0: float,
     delta: float,
     calibration: np.float64,
@@ -80,4 +80,4 @@ def rrm_brightness_at_step(
     temperature = get_dust_grain_temperature(R_helio, T_0, delta)
     blackbody_emission = np.interp(temperature, *bp_interpolation_table)
 
-    return blackbody_emission * get_density_function(X_helio) * calibration * 0.5 * (stop - start)
+    return blackbody_emission * number_density_func(X_helio) * calibration * 0.5 * (stop - start)

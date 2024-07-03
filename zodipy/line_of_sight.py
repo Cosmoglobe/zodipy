@@ -21,8 +21,8 @@ DIRBE_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64
     ComponentLabel.BAND1: (R_0, R_JUPITER),
     ComponentLabel.BAND2: (R_0, R_JUPITER),
     ComponentLabel.BAND3: (R_0, R_JUPITER),
-    ComponentLabel.RING: (R_0, R_EARTH + 0.2),
-    ComponentLabel.FEATURE: (R_0, R_EARTH + 0.2),
+    ComponentLabel.RING: (R_EARTH - 0.2, R_EARTH + 0.2),
+    ComponentLabel.FEATURE: (R_EARTH - 0.3, R_EARTH + 0.3),
 }
 
 RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
@@ -53,12 +53,12 @@ COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS}
 
 
 def integrate_leggauss(
-    fn: Callable[[float], npt.NDArray[np.float64]],
+    func: Callable[[float], npt.NDArray[np.float64]],
     points: npt.NDArray[np.float64],
     weights: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Integrate a function using Gauss-Laguerre quadrature."""
-    return np.squeeze(sum(fn(x) * w for x, w in zip(points, weights)))
+    return np.squeeze(sum(func(x) * w for x, w in zip(points, weights)))
 
 
 def get_sphere_intersection(
@@ -67,8 +67,8 @@ def get_sphere_intersection(
     cutoff: float | np.float64,
 ) -> npt.NDArray[np.float64]:
     """Returns the distance from the observer to a heliocentric sphere with radius `cutoff`."""
-    x, y, z = obs_pos
-    r_obs = np.sqrt(x**2 + y**2 + z**2)
+    x_0, y_0, z_0 = obs_pos
+    r_obs = np.sqrt(x_0**2 + y_0**2 + z_0**2)
     if (r_obs > cutoff).any():
         if obs_pos.ndim == 1:
             return np.array([np.finfo(float).eps])
@@ -79,7 +79,7 @@ def get_sphere_intersection(
     lat = np.arcsin(u_z)
 
     cos_lat = np.cos(lat)
-    b = 2 * (x * cos_lat * np.cos(lon) + y * cos_lat * np.sin(lon))
+    b = 2 * (x_0 * cos_lat * np.cos(lon) + y_0 * cos_lat * np.sin(lon))
     c = r_obs**2 - cutoff**2
 
     q = -0.5 * b * (1 + np.sqrt(b**2 - 4 * c) / np.abs(b))
@@ -87,7 +87,7 @@ def get_sphere_intersection(
     return np.maximum(q, c / q)
 
 
-def get_line_of_sight_range(
+def get_line_of_sight_range_dicts(
     components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
     obs_pos: npt.NDArray[np.float64],

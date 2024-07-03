@@ -9,14 +9,14 @@ from scipy import integrate
 MIN_TEMP = 40 * units.K
 MAX_TEMP = 550 * units.K
 N_TEMPS = 100
-temperatures = np.linspace(MIN_TEMP, MAX_TEMP, N_TEMPS)
-blackbody = BlackBody(temperatures)
+TEMPERATURES = np.linspace(MIN_TEMP, MAX_TEMP, N_TEMPS)
+blackbody = BlackBody(TEMPERATURES)
 
 
 def get_dust_grain_temperature(
     R: npt.NDArray[np.float64], T_0: float, delta: float
 ) -> npt.NDArray[np.float64]:
-    """Return the dust grain temperature given a radial distance from the Sun.
+    """Return the dust grain temperature given at a radial distance from the Sun.
 
     Args:
         R: Radial distance from the sun in ecliptic heliocentric coordinates [AU / 1AU].
@@ -43,7 +43,7 @@ def tabulate_blackbody_emission(
 
     return np.asarray(
         [
-            temperatures.to_value(units.K),
+            TEMPERATURES.to_value(units.K),
             tabulated_blackbody_emission.to_value(units.MJy / units.sr),
         ]
     )

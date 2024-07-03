@@ -26,23 +26,20 @@ from astropy.time import Time
 import zodipy
 
 # Initialize a zodiacal light model at a wavelength/frequency or over a bandpass
-model = zodipy.Model(25*u.micron, name="DIRBE")
+model = zodipy.Model(25*u.micron)
 
 # Use Astropy's `SkyCoord` to specify coordinate
 lon = [10, 10.1, 10.2] * u.deg
 lat = [90, 89, 88] * u.deg
-skycoord = SkyCoord(
-    lon,
-    lat,
-    obstime=Time("2022-01-01 12:00:00"),
-    frame="galactic",
-)
+obstimes = Time(["2022-01-01 12:00:00", "2022-01-01 12:01:00", "2022-01-01 12:02:00"])
+
+skycoord = SkyCoord(lon, lat, obstime=obstimes, frame="galactic")
 
 # Compute the zodiacal light as seen from Earth
 emission = model.evaluate(skycoord, obspos="earth")
 
 print(emission)
-#> [27.52410841 27.66581351 27.81270207] MJy / sr
+#> [27.52410841 27.66572294 27.81251906] MJy / sr
 ```
 
 For more information on using ZodiPy, see [the usage section](usage.md).

@@ -95,7 +95,7 @@ def test_evaluate_invalid_obspos() -> None:
 
 def test_output_shape() -> None:
     """Test that the return_comps function works for valid user input."""
-    n_comps = test_model._interplanetary_dust_model.ncomps
+    n_comps = test_model._ipd_model.ncomps
     assert test_model.evaluate(TEST_SKY_COORD, return_comps=True).shape == (n_comps, 1)
     assert test_model.evaluate(TEST_SKY_COORD, return_comps=False).shape == (1,)
 
@@ -168,7 +168,7 @@ def test_return_comps() -> None:
     assert_array_equal(emission_comps.sum(axis=0), emission)
 
 
-def test_multiprocessing_nproc() -> None:
+def test_multiprocessing_nproc_inst() -> None:
     """Test that the multiprocessing works with n_proc > 1."""
     model = Model(x=20 * units.micron)
 
@@ -198,3 +198,27 @@ def test_multiprocessing_nproc() -> None:
     emission = model.evaluate(skycoord, nprocesses=1)
 
     assert_array_equal(emission_multi, emission)
+
+
+def test_multiprocessing_nproc_time() -> None:
+    """Test that the multiprocessing works with n_proc > 1."""
+    model = Model(x=20 * units.micron)
+
+    lon = np.random.randint(low=0, high=360, size=10000)
+    lat = np.random.randint(low=-90, high=90, size=10000)
+    obstime = np.linspace(0, 300, 10000) + TEST_TIME.mjd
+    skycoord = SkyCoord(
+        lon,
+        lat,
+        unit=units.deg,
+        obstime=time.Time(obstime, format="mjd"),
+    )
+    emission_multi = model.evaluate(skycoord, nprocesses=4)
+    emission = model.evaluate(skycoord, nprocesses=1)
+    assert_array_equal(emission_multi, emission)
+
+    # model = Model(x=75 * units.micron, name="rrm-experimental")
+    # emission_multi = model.evaluate(skycoord, nprocesses=4)
+    # emission = model.evaluate(skycoord, nprocesses=1)
+
+    # assert_array_equal(emission_multi, emission)

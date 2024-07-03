@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import copy
 import inspect
 from dataclasses import asdict
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Mapping, Protocol
+from typing import TYPE_CHECKING, Callable, Mapping, Protocol
 
 import numpy as np
-import numpy.typing as npt  # type: ignore
+import numpy.typing as npt
 
 from zodipy.bodies import get_earthpos_xyz
 from zodipy.component import (
@@ -161,6 +162,7 @@ def feature_number_density(
         - X_feature[1] * cos_Omega_rad * sin_i_rad
         + X_feature[2] * cos_i_rad
     )
+
     X_earth_comp = X_earth - X_0
 
     theta_comp = np.arctan2(X_feature[1], X_feature[0]) - np.arctan2(
@@ -418,24 +420,23 @@ DENSITY_FUNCS: dict[type[ZodiacalComponent], ComputeDensityFunc] = {
 }
 
 
-class ComponentNumberDensityCallable(Protocol):
+class NumberDensityFunc(Protocol):
     """Protocol for a zodiacal components number density function."""
 
     def __call__(self, X_helio: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Return the number density of the component at the heliocentric position."""
 
 
-def populate_number_density_with_model(
+def get_partial_number_density_func(
     comps: Mapping[ComponentLabel, ZodiacalComponent],
-    dynamic_params: dict[str, Any],
-) -> dict[ComponentLabel, ComponentNumberDensityCallable]:
+) -> dict[ComponentLabel, partial[npt.NDArray[np.float64]]]:
     """Construct density partials for components.
 
     Return a tuple of the density expressions above which has been prepopulated with
     model and configuration parameters, leaving only the `X_helio` argument to be supplied.
     Raises exception for incorrectly defined components or component density functions.
     """
-    partial_density_funcs: dict[ComponentLabel, ComponentNumberDensityCallable] = {}
+    partial_density_funcs: dict[ComponentLabel, partial[npt.NDArray[np.float64]]] = {}
     for comp_label, comp in comps.items():
         comp_dict = asdict(comp)
         func_params = inspect.signature(DENSITY_FUNCS[type(comp)]).parameters.keys()
@@ -446,15 +447,16 @@ def populate_number_density_with_model(
             msg = "X_helio must be be the first argument to the density function of a component."
             raise ValueError(msg) from err
 
+        if "X_earth" in residual_params:
+            residual_params.remove("X_earth")
+
         if residual_params:
-            if residual_params - dynamic_params.keys():
-                msg = (
-                    f"Argument(s) {residual_params} required by the density function "
-                    f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
-                    f"{type(comp)} or by the `computed_parameters` dict."
-                )
-                raise ValueError(msg)
-            comp_dict.update(dynamic_params)
+            msg = (
+                f"Argument(s) {residual_params} required by the density function "
+                f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "
+                f"{type(comp)} or by the `computed_parameters` dict."
+            )
+            raise ValueError(msg)
 
         # Remove excess intermediate parameters from the component dict.
         comp_params = {key: value for key, value in comp_dict.items() if key in func_params}
@@ -462,6 +464,19 @@ def populate_number_density_with_model(
         partial_density_funcs[comp_label] = partial_func
 
     return partial_density_funcs
+
+
+def update_partial_earth_pos(
+    partials: dict[ComponentLabel, partial[npt.NDArray[np.float64]]],
+    earth_pos: npt.NDArray[np.float64],
+) -> dict[ComponentLabel, partial[npt.NDArray[np.float64]]]:
+    """Inplace populate the `X_earth` parameter in the partial density functions."""
+    updated_partials = copy.deepcopy(partials)
+    for partial_func in updated_partials.values():
+        remaining = inspect.signature(partial_func).parameters.keys() - partial_func.keywords.keys()
+        if "X_earth" in remaining:
+            partial_func.keywords["X_earth"] = earth_pos
+    return updated_partials
 
 
 def grid_number_density(
@@ -496,9 +511,11 @@ def grid_number_density(
     for comp in ipd_model.comps.values():
         comp.X_0 = comp.X_0.reshape(3, 1, 1, 1)
 
-    density_partials = populate_number_density_with_model(
+    density_partials = get_partial_number_density_func(
         comps=ipd_model.comps,
-        dynamic_params={"X_earth": earthpos_xyz[:, np.newaxis, np.newaxis, np.newaxis]},
+    )
+    density_partials = update_partial_earth_pos(
+        density_partials, earthpos_xyz[:, np.newaxis, np.newaxis, np.newaxis]
     )
 
     number_density_grid = np.zeros((len(ipd_model.comps), *grid.shape[1:]))

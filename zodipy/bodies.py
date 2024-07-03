@@ -47,7 +47,7 @@ def get_interpolated_body_xyz(
     """Return interpolated Earth positions in the heliocentric frame."""
     dt = (1 * units.hour).to_value(units.day)
     t0, t1 = obstimes[0].mjd, obstimes[-1].mjd
-    times = time.Time(np.arange(t0, max(t0 + 365, t1), dt), format="mjd")
+    times = time.Time(np.arange(t0, max(t0 + 366, t1) + dt, dt), format="mjd")
 
     bodypos = (
         coords.get_body(body, times, ephemeris=ephemeris)

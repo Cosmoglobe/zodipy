@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import multiprocessing
-import multiprocessing.pool
 import platform
 import typing
 
@@ -16,14 +15,14 @@ from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
 from zodipy.component import ComponentLabel
 from zodipy.line_of_sight import (
-    get_line_of_sight_range,
+    get_line_of_sight_range_dicts,
     integrate_leggauss,
 )
 from zodipy.model_registry import model_registry
-from zodipy.number_density import populate_number_density_with_model
-from zodipy.unpack_model import get_model_to_dicts_callable
+from zodipy.number_density import get_partial_number_density_func, update_partial_earth_pos
+from zodipy.unpack_model import get_model_interp_func
 
-_PLATFORM_METHOD = "fork" if "windows" not in platform.system().lower() else None
+PLATFORM_METHOD = "fork" if "windows" not in platform.system().lower() else None
 
 
 class Model:
@@ -62,26 +61,26 @@ class Model:
         """
         try:
             if not x.isscalar and weights is None:
-                msg = "Several wavelengths are provided by no weights."
+                msg = "Bandpass weights must be provided for non-scalar `x`."
                 raise ValueError(msg)
         except AttributeError as error:
             msg = "The input 'x' must be an astropy Quantity."
             raise TypeError(msg) from error
         if x.isscalar and weights is not None:
-            msg = "A single wavelength is provided with weights."
+            msg = "Bandpass weights should not be provided for scalar `x`."
             raise ValueError(msg)
 
-        self._interplanetary_dust_model = model_registry.get_model(name)
+        self._ipd_model = model_registry.get_model(name)
 
-        if not extrapolate and not self._interplanetary_dust_model.is_valid_at(x):
+        if not extrapolate and not self._ipd_model.is_valid_at(x):
             msg = (
                 "The requested frequencies are outside the valid range of the model. "
                 "If this was intended, set the extrapolate argument to True."
             )
             raise ValueError(msg)
 
-        bandpass_is_provided = weights is not None
-        if bandpass_is_provided:
+        # Bandpass is provided rather than a delta wavelength or frequency.
+        if weights is not None:
             weights = np.asarray(weights)
             if x.size != weights.size:
                 msg = "Number of wavelengths and weights must be the same in the bandpass."
@@ -91,15 +90,30 @@ class Model:
             normalized_weights = None
         self._b_nu_table = tabulate_blackbody_emission(x, normalized_weights)
 
-        # Interpolate and convert the model parameters to dictionaries which can be used to evaluate
-        # the zodiacal light model.
-        brightness_callable_dicts = get_model_to_dicts_callable(self._interplanetary_dust_model)(
-            x, normalized_weights, self._interplanetary_dust_model
+        # We interpolate the spectrally dependant zodiacal light parameters over the provided
+        # bandpass or delta frequency/wavelength.
+        interp_and_unpack_func = get_model_interp_func(self._ipd_model)
+        self._interped_comp_params, self._interped_shared_params = interp_and_unpack_func(
+            x, normalized_weights, self._ipd_model
         )
-        self._comp_parameters, self._common_parameters = brightness_callable_dicts
 
         self._ephemeris = ephemeris
-        self._leggauss_points_and_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
+
+        quad_points, quad_weights = np.polynomial.legendre.leggauss(gauss_quad_degree)
+        self._integrate_leggauss = functools.partial(
+            integrate_leggauss,
+            points=quad_points,
+            weights=quad_weights,
+        )
+
+        # Build partial functions to be evaluated when simulating the zodiacal light. These partials
+        # are pre-populated functions that contains all non line-of-sight related parameters.
+        self._number_density_partials = get_partial_number_density_func(comps=self._ipd_model.comps)
+        self._shared_brightness_partial = functools.partial(
+            self._ipd_model.brightness_at_step_callable,
+            bp_interpolation_table=self._b_nu_table,
+            **self._interped_shared_params,
+        )
 
     def evaluate(
         self,
@@ -113,9 +127,8 @@ class Model:
 
         The zodiacal light is simulated for a single, or a sequence of observations. If a single
         `obspos` and `obstime` is provided for multiple coordinates, all coordinates are assumed to
-        be observed from that position at that time. Otherwise, when `obspos` and `obstime` contains
-        multiple values, corresponding to coordinates in `skycoord`, the zodiacal light is simulated
-        in a time-ordered manner.
+        be observed from that position at that time. Otherwise, each coordinate is simulated from
+        the corresponding observer position and time.
 
         Args:
             skycoord: `astropy.coordinates.SkyCoord` object representing the coordinates or
@@ -140,6 +153,10 @@ class Model:
         earth_xyz = get_earthpos_xyz(obstime, self._ephemeris)
         obs_xyz = get_obspos_xyz(obstime, obspos, earth_xyz, self._ephemeris)
 
+        # Model evaluation is performed in heliocentric ecliptic coordinates. We transform
+        # to the barycentric frame, which is compatiable with the Galactic and Celestial,
+        # and pretend that that this is the heliocentric frame as we only need the correction
+        # rotation.
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
         if skycoord.isscalar:
             skycoord_xyz = typing.cast(
@@ -148,78 +165,113 @@ class Model:
         else:
             skycoord_xyz = typing.cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
 
-        start, stop = get_line_of_sight_range(
-            components=self._interplanetary_dust_model.comps.keys(),
+        start, stop = get_line_of_sight_range_dicts(
+            components=self._ipd_model.comps.keys(),
             unit_vectors=skycoord_xyz,
             obs_pos=obs_xyz,
         )
 
-        # If a time and obspos is provided per coordinate, we need to make arrays broadcastable.
-        if obs_xyz.ndim == 1:
+        instantaneous = obs_xyz.ndim == 1
+        if instantaneous:
             obs_xyz = obs_xyz[:, np.newaxis]
             earth_xyz = earth_xyz[:, np.newaxis]
 
-        # Return a dict of partial functions corresponding to the number density of each zodiacal
-        # component in the interplanetary dust model.
-        density_callables = populate_number_density_with_model(
-            comps=self._interplanetary_dust_model.comps,
-            dynamic_params={"X_earth": earth_xyz},
-        )
+        number_density_partials = self._number_density_partials
+        shared_brightness_partial = self._shared_brightness_partial
+        dist_coords_to_cores = skycoord.size > nprocesses and nprocesses > 1
+        if instantaneous or not dist_coords_to_cores:
+            # Populate the instantaneous Earth and observer position in the partial functions.
+            number_density_partials = update_partial_earth_pos(
+                number_density_partials, earth_pos=earth_xyz
+            )
+            shared_brightness_partial = functools.partial(shared_brightness_partial, X_obs=obs_xyz)
 
-        # Create partial function of the brightness integral at a step along the line-of-sight with
-        # shared arguments between zodiacal components.
-        common_integrand = functools.partial(
-            self._interplanetary_dust_model.brightness_at_step_callable,
-            X_obs=obs_xyz,
-            bp_interpolation_table=self._b_nu_table,
-            **self._common_parameters,
-        )
+        emission = np.zeros((self._ipd_model.ncomps, skycoord.size))
 
-        emission = np.zeros((self._interplanetary_dust_model.ncomps, skycoord.size))
-        dist_to_cores = skycoord.size > nprocesses and nprocesses > 1
-        if dist_to_cores:
+        if dist_coords_to_cores:
             skycoord_xyz_splits = np.array_split(skycoord_xyz, nprocesses, axis=-1)
-            with multiprocessing.get_context(_PLATFORM_METHOD).Pool(nprocesses) as pool:
-                for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
-                    stop_chunks = np.array_split(stop[comp_label], nprocesses, axis=-1)
-                    if start[comp_label].size == 1:
-                        start_chunks = [start[comp_label]] * nprocesses
-                    else:
-                        start_chunks = np.array_split(start[comp_label], nprocesses, axis=-1)
-                    comp_integrands = [
-                        functools.partial(
-                            common_integrand,
-                            u_los=vec,
-                            start=start,
-                            stop=stop,
-                            get_density_function=density_callables[comp_label],
-                            **self._comp_parameters[comp_label],
-                        )
-                        for vec, start, stop in zip(skycoord_xyz_splits, start_chunks, stop_chunks)
-                    ]
+            if not instantaneous:
+                # The observer and Earth positions are applied into the partial functions. In the
+                # case where we have coordinate-by-coordinate observer positions, we need to ensure
+                # that these positions are distributed accordingly over the cores. This means that
+                # we need to create partial functions for each core.
+                earth_xyz_splits = np.array_split(earth_xyz, nprocesses, axis=-1)
+                obs_xyz_splits = np.array_split(obs_xyz, nprocesses, axis=-1)
 
+                number_density_partial_splits = [
+                    update_partial_earth_pos(
+                        number_density_partials,
+                        earth_pos=earth_xyz_split,
+                    )
+                    for earth_xyz_split in earth_xyz_splits
+                ]
+                shared_brightness_partial_splits = [
+                    functools.partial(shared_brightness_partial, X_obs=obs_xyz_split)
+                    for obs_xyz_split in obs_xyz_splits
+                ]
+            with multiprocessing.get_context(PLATFORM_METHOD).Pool(nprocesses) as pool:
+                for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
+                    stop_chunks = (
+                        [stop[comp_label]] * nprocesses
+                        if stop[comp_label].size == 1
+                        else np.array_split(stop[comp_label], nprocesses, axis=-1)
+                    )
+                    start_chunks = (
+                        [start[comp_label]] * nprocesses
+                        if start[comp_label].size == 1
+                        else np.array_split(start[comp_label], nprocesses, axis=-1)
+                    )
+
+                    if instantaneous:
+                        comp_funcs = [
+                            functools.partial(
+                                shared_brightness_partial,
+                                u_los=skycoord_xyz,
+                                start=start,
+                                stop=stop,
+                                number_density_func=number_density_partials[comp_label],
+                                **self._interped_comp_params[comp_label],
+                            )
+                            for skycoord_xyz, start, stop in zip(
+                                skycoord_xyz_splits, start_chunks, stop_chunks
+                            )
+                        ]
+                    else:
+                        comp_funcs = [
+                            functools.partial(
+                                brightness_partial,
+                                u_los=skycoord_xyz,
+                                start=start,
+                                stop=stop,
+                                number_density_func=dens_partial[comp_label],
+                                **self._interped_comp_params[comp_label],
+                            )
+                            for skycoord_xyz, start, stop, dens_partial, brightness_partial in zip(
+                                skycoord_xyz_splits,
+                                start_chunks,
+                                stop_chunks,
+                                number_density_partial_splits,
+                                shared_brightness_partial_splits,
+                            )
+                        ]
                     proc_chunks = [
-                        pool.apply_async(
-                            integrate_leggauss,
-                            args=(comp_integrand, *self._leggauss_points_and_weights),
-                        )
-                        for comp_integrand in comp_integrands
+                        pool.apply_async(self._integrate_leggauss, args=(func,))
+                        for func in comp_funcs
                     ]
                     emission[idx] = np.concatenate([result.get() for result in proc_chunks])
 
+        # Simulate the zodiacal light over the coordinates sequentially.
         else:
-            for idx, comp_label in enumerate(self._interplanetary_dust_model.comps.keys()):
-                comp_integrand = functools.partial(
-                    common_integrand,
+            for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
+                comp_func = functools.partial(
+                    shared_brightness_partial,
                     u_los=skycoord_xyz,
                     start=start[comp_label],
                     stop=stop[comp_label],
-                    get_density_function=density_callables[comp_label],
-                    **self._comp_parameters[comp_label],
+                    number_density_func=number_density_partials[comp_label],
+                    **self._interped_comp_params[comp_label],
                 )
-                emission[idx] = integrate_leggauss(
-                    comp_integrand, *self._leggauss_points_and_weights
-                )
+                emission[idx] = self._integrate_leggauss(comp_func)
 
         emission <<= units.MJy / units.sr
         return emission if return_comps else emission.sum(axis=0)
@@ -232,7 +284,7 @@ class Model:
         Returns:
             parameters: Dictionary of parameters of the interplanetary dust model.
         """
-        return self._interplanetary_dust_model.to_dict()
+        return self._ipd_model.to_dict()
 
     def update_parameters(self, parameters: dict) -> None:
         """Update the interplanetary dust model parameters.
@@ -250,12 +302,12 @@ class Model:
             if key == "comps":
                 for comp_key, comp_value in value.items():
                     _dict["comps"][ComponentLabel(comp_key)] = type(
-                        self._interplanetary_dust_model.comps[ComponentLabel(comp_key)]
+                        self._ipd_model.comps[ComponentLabel(comp_key)]
                     )(**comp_value)
             elif isinstance(value, dict):
                 _dict[key] = {ComponentLabel(k): v for k, v in value.items()}
 
-        self._interplanetary_dust_model = self._interplanetary_dust_model.__class__(**_dict)
+        self._ipd_model = self._ipd_model.__class__(**_dict)
 
 
 def validate_user_input(skycoord: coords.SkyCoord, obspos: units.Quantity | str) -> time.Time:

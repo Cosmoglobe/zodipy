@@ -17,7 +17,7 @@ T = TypeVar("T", bound=ZodiacalLightModel)
 UnpackModelCallable = Callable[[units.Quantity, Union[units.Quantity, None], T], UnpackedModelDicts]
 
 
-def unpack_kelsall(
+def interp_and_unpack_kelsall(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: Kelsall,
@@ -33,14 +33,14 @@ def unpack_kelsall(
 
     for comp_label in model.comps:
         comp_params[comp_label] = {}
-        comp_params[comp_label]["emissivity"] = interpolate_spectral_parameter(
+        comp_params[comp_label]["emissivity"] = interp_spectral_param(
             wavelengths,
             weights,
             model_spectrum,
             spectral_parameter=model.emissivities[comp_label],
         )
         if model.albedos is not None:
-            comp_params[comp_label]["albedo"] = interpolate_spectral_parameter(
+            comp_params[comp_label]["albedo"] = interp_spectral_param(
                 wavelengths,
                 weights,
                 model_spectrum,
@@ -50,7 +50,7 @@ def unpack_kelsall(
             comp_params[comp_label]["albedo"] = 0
 
     common_params["C1"] = (
-        interpolate_spectral_parameter(
+        interp_spectral_param(
             wavelengths,
             weights,
             model_spectrum,
@@ -61,7 +61,7 @@ def unpack_kelsall(
         else 0
     )
     common_params["C2"] = (
-        interpolate_spectral_parameter(
+        interp_spectral_param(
             wavelengths,
             weights,
             model_spectrum,
@@ -73,7 +73,7 @@ def unpack_kelsall(
     )
 
     common_params["C3"] = (
-        interpolate_spectral_parameter(
+        interp_spectral_param(
             wavelengths,
             weights,
             model_spectrum,
@@ -86,7 +86,7 @@ def unpack_kelsall(
     if model.solar_irradiance is None:
         common_params["solar_irradiance"] = 0
     else:
-        common_params["solar_irradiance"] = interpolate_spectral_parameter(
+        common_params["solar_irradiance"] = interp_spectral_param(
             wavelengths,
             weights,
             model_spectrum,
@@ -96,7 +96,7 @@ def unpack_kelsall(
     return comp_params, common_params
 
 
-def unpack_rrm(
+def interp_and_unpack_rrm(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: RRM,
@@ -112,7 +112,7 @@ def unpack_rrm(
         comp_params[comp_label]["T_0"] = model.T_0[comp_label]
         comp_params[comp_label]["delta"] = model.delta[comp_label]
 
-    calibration = interpolate_spectral_parameter(
+    calibration = interp_spectral_param(
         wavelengths, weights, model_spectrum, spectral_parameter=model.calibration
     )
     calibration_quantity = units.Quantity(calibration, unit=units.MJy / units.AU)
@@ -120,7 +120,7 @@ def unpack_rrm(
     return comp_params, common_params
 
 
-def interpolate_spectral_parameter(
+def interp_spectral_param(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model_spectrum: units.Quantity,
@@ -131,25 +131,25 @@ def interpolate_spectral_parameter(
     paramameter = np.asarray(spectral_parameter)
 
     if use_nearest:
-        interpolated_parameter = interpolate.interp1d(
-            model_spectrum.value, paramameter, kind="nearest"
-        )(wavelengths.value)
+        interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(
+            wavelengths.value
+        )
     else:
-        interpolated_parameter = np.interp(wavelengths.value, model_spectrum.value, paramameter)
+        interped_param = np.interp(wavelengths.value, model_spectrum.value, paramameter)
 
     if weights is not None:
-        return integrate.trapezoid(weights.value * interpolated_parameter, x=wavelengths.value)
-    return interpolated_parameter
+        return integrate.trapezoid(weights.value * interped_param, x=wavelengths.value)
+    return interped_param
 
 
-model_unpack_mapping: dict[type[ZodiacalLightModel], UnpackModelCallable] = {
-    Kelsall: unpack_kelsall,
-    RRM: unpack_rrm,
+interp_and_unpack_func_mapping: dict[type[ZodiacalLightModel], UnpackModelCallable] = {
+    Kelsall: interp_and_unpack_kelsall,
+    RRM: interp_and_unpack_rrm,
 }
 
 
-def get_model_to_dicts_callable(
+def get_model_interp_func(
     model: ZodiacalLightModel,
 ) -> UnpackModelCallable:
     """Get the appropriate parameter unpacker for the model."""
-    return model_unpack_mapping[type(model)]
+    return interp_and_unpack_func_mapping[type(model)]
