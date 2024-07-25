@@ -20,7 +20,7 @@ COMP_NAMES = [
 
 model = zodipy.Model(24 * u.micron)
 
-nside = 32
+nside = 128
 pixels = np.arange(hp.nside2npix(nside))
 lon, lat = hp.pix2ang(nside, pixels, lonlat=True)
 

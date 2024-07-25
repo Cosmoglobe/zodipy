@@ -20,6 +20,7 @@ skycoord.obstime = Time("2022-01-14")
 
 emission = model.evaluate(skycoord, nprocesses=multiprocessing.cpu_count())
 
+# Plot with healpy
 hp.mollview(
     emission,
     unit="MJy/sr",
@@ -28,5 +29,5 @@ hp.mollview(
     max=80,
     title="Zodiacal light at 30 µm (2022-01-14)",
 )
-plt.savefig("../img/healpix_map.png", dpi=300, bbox_inches="tight")
+# plt.savefig("../img/healpix_map.png", dpi=300, bbox_inches="tight")
 plt.show()

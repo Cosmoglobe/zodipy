@@ -1,5 +1,5 @@
-!!! warning "Breaking API changes in `v1.0.0` and newer"
-    From version `v1.0.0` and out ZodiPy no implements the `get_emission_ang` and `get_emission_pix` methods. See the section on [HEALPix maps](usage.md#healpix-maps) for an example of how to make simulations from HEALPix pixel indices. We apologize for the inconvenience.  
+!!! warning "Breaking API changes in `v1.0.0`"
+    From version `v1.0.0` and out ZodiPy no implements the `get_emission_ang` and `get_emission_pix` methods. See the section on [HEALPix maps](usage.md#healpix-maps) for an example of how to make simulations from HEALPix pixel indices. These are changes following the integration of ZodiPy into the Astropy ecosystem.
 
 As an Astropy-affiliated package, ZodiPy is highly integrated with the astropy ecosystem.
 To make zodiacal light simulations, the `astropy.units`, `astropy.coordinates`, and `astropy.time` modules are used to provide user input. The coordinates for which ZodiPy will simulate the zodiacal light is specified in through the `astropy.coordinates.SkyCoord` object. Using ZodiPy is very simple and the user will only interact with *one* object `zodipy.Model`, which has *one* method `evaluate`.
@@ -51,7 +51,21 @@ skycoord = SkyCoord(
     frame="galactic"
 )
 ```
-The `obstime` keyword is mandetory, and is given by an `astropy.time.Time` object, which can represent time in many formats, including Julian and modified Julian dates (see the [documentation](https://docs.astropy.org/en/stable/time/) on times with Astropy).
+The `obstime` keyword is mandatory, and is given by an `astropy.time.Time` object, which can represent time in many formats, including Julian and modified Julian dates (see the [Astropy documentation](https://docs.astropy.org/en/stable/time/)).
+Correspondingly for several observations, each with their own `obstime` input:
+```py hl_lines="6 7 8"
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+
+skycoord = SkyCoord(
+    [40, 41, 42] * u.deg, 
+    [60, 59, 58] * u.deg, 
+    obstime=Time(["2020-01-01", "2020-01-02", "2020-01-03"]), 
+    frame="galactic"
+)
+```
+If a single value is given for `obstime`, all coordinates are assumed to be viewed instantaneously at that time from a single position in the Solar system. Otherwise, each coordinate must have its own `obstime` value.
 
 The sky coordinates should represent observer-centric coordinates. The observer-position is therefore required to compute the line-of-sight integrals, but this is provided not in the `SkyCoord` object, but rather in the `evaluate` method which we will see soon.
 
@@ -99,12 +113,7 @@ skycoord_celestial = SkyCoord(
 ```
 
 ### The `evaluate` method
-Zodiacal light is evaluated by passing in the `SkyCoord` object to the `zodipy.Model.evaluate` method.
-
-!!! note 
-    ZodiPy assumes that all coordinates provided to a single `evalute` call are obtained at an instant in time from the position of the observer. The zodiacal light moves by about ~1 degree on the sky each day, meaning that long time-ordered pointing Sequences need to be rechunked.
-    For the best result, each call to `evaluate` should contain pointing observed within ~ 1 hour of the `obstime` provided in the `SkyCoord` object. 
-
+The zodiacal light is evaluated by providing the `SkyCoord` object to the `zodipy.Model.evaluate` method.
 
 ```py hl_lines="15"
 import astropy.units as u
@@ -125,7 +134,7 @@ emission = model.evaluate(skycoord)
 print(emission)
 # <Quantity [25.08189292] MJy / sr>
 ```
-By default, the observer is assumed to be on Earth. The position of the observer can be explicitly provided as the keyword argument `obspos` in the `evaluate` method
+By default, the observer is assumed to be the center of the Earth. The position of the observer can be explicitly provided as the keyword argument `obspos` in the `evaluate` method
 
 ```py hl_lines="15 19"
 import astropy.units as u
@@ -152,8 +161,7 @@ print(emission)
 ```
 This argument accepts both a string representing a body recognized by `astropy.coordinates.solar_system_ephemeris` (see the Astropy [documentation](https://docs.astropy.org/en/stable/api/astropy.coordinates.solar_system_ephemeris.html)), or a heliocentric ecliptic cartesian position.
 
-!!! tip
-    If the coordinates in the `SkyCoord` object contain a large number of re-observations, as is the case for many satellite observations, setting the `contains_duplicates` keyword in the `evaluate` method to `True` will speed up the evaluations.
+Similar to with the `obstime` attribute in the `SkyCoord` object, the `obspos` keyword have shape `(3,)` or `(3, ncoords)`. If a string representation of a body is used, with several values `obstime` ZodiPy will internally compute a position for each coordinate.
 
 
 ### Multiprocessing
@@ -194,7 +202,7 @@ In the following, we simulate a scan across the Ecliptic plane
 ![Ecliptic scan profile](img/ecliptic_scan.png)
 
 
-### HEALPIx maps
+### HEALPix maps
 We can use [healpy](https://healpy.readthedocs.io/en/latest/) or [Astropy-healpix](https://astropy-healpix.readthedocs.io/en/latest/) to create a `SkyCoord` object directly from a HEALPIx pixelization
 
 === "healpy"
@@ -203,7 +211,7 @@ We can use [healpy](https://healpy.readthedocs.io/en/latest/) or [Astropy-healpi
     --8<-- "docs/examples/healpy_map.py"
     ```
 
-=== "healpy + astropy-healpix"
+=== "astropy-healpix"
 
     ```py
     --8<-- "docs/examples/astropy_healpix_map.py"
