@@ -5,13 +5,20 @@ import pytest
 from astropy import coordinates as coords
 from astropy import time, units
 from astropy.coordinates import SkyCoord
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
+from hypothesis.strategies import DataObject, data
 from numpy.testing import assert_array_equal
 
 from zodipy import Model
 
 from .dirbe_tabulated import DAYS, DIRBE_START_DAY, LAT, LON, TABULATED_DIRBE_EMISSION
-from .strategies import models, obs, sky_coords
+from .strategies import (
+    models,
+    obs_inst,
+    obs_tod,
+    sky_coord_inst,
+    sky_coord_tod,
+)
 
 np.random.seed(42)
 
@@ -43,14 +50,29 @@ def test_compare_to_dirbe_idl() -> None:
 
 
 @settings(deadline=None)
-@given(models(), sky_coords(), obs())
-def test_evaluate(
+@given(models(), sky_coord_inst(), obs_inst())
+def test_evaluate_inst(
     model: Model,
     sky_coord: SkyCoord,
-    obs: units.Quantity | str,
+    obspos: units.Quantity,
 ) -> None:
     """Test that the evaluate function works for valid user input."""
-    emission = model.evaluate(sky_coord, obspos=obs)
+    emission = model.evaluate(sky_coord, obspos=obspos)
+    assert emission.size == sky_coord.size
+    assert isinstance(emission, units.Quantity)
+    assert emission.unit == units.MJy / units.sr
+
+
+@settings(deadline=None, suppress_health_check=[HealthCheck.data_too_large])
+@given(data(), models(), sky_coord_tod())
+def test_evaluate_tod(
+    data: DataObject,
+    model: Model,
+    sky_coord: SkyCoord,
+) -> None:
+    """Test that the evaluate function works for valid user input."""
+    obspos = data.draw(obs_tod(sky_coord.size))
+    emission = model.evaluate(sky_coord, obspos=obspos)
     assert emission.size == sky_coord.size
     assert isinstance(emission, units.Quantity)
     assert emission.unit == units.MJy / units.sr
@@ -138,7 +160,12 @@ def test_input_shape() -> None:
     with pytest.raises(ValueError):
         test_model.evaluate(SkyCoord(20, 30, unit=units.deg, obstime=TEST_TIME), obspos=obsposes)
 
-    # obstime > obspos
+    # obstimes > obspos
+    with pytest.raises(ValueError):
+        test_model.evaluate(
+            SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes),
+            obspos=[1, 2, 3] * units.AU,
+        )
     with pytest.raises(ValueError):
         test_model.evaluate(
             SkyCoord([20, 30, 40, 50], [30, 40, 30, 20], unit=units.deg, obstime=obstimes),
