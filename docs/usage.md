@@ -1,5 +1,5 @@
 !!! warning "Breaking API changes in `v1.0.0`"
-    From version `v1.0.0` and out ZodiPy no implements the `get_emission_ang` and `get_emission_pix` methods. See the section on [HEALPix maps](usage.md#healpix-maps) for an example of how to make simulations from HEALPix pixel indices. These are changes following the integration of ZodiPy into the Astropy ecosystem.
+    From version `v1.0.0` the `get_emission_ang` and `get_emission_pix` methods are deprecated and removed. See the section on [HEALPix maps](usage.md#healpix-maps) for an example of how to make simulations from HEALPix pixel indices. These are changes following the integration of ZodiPy into the Astropy ecosystem.
 
 As an Astropy-affiliated package, ZodiPy is highly integrated with the astropy ecosystem.
 To make zodiacal light simulations, the `astropy.units`, `astropy.coordinates`, and `astropy.time` modules are used to provide user input. The coordinates for which ZodiPy will simulate the zodiacal light is specified in through the `astropy.coordinates.SkyCoord` object. Using ZodiPy is very simple and the user will only interact with *one* object `zodipy.Model`, which has *one* method `evaluate`.
