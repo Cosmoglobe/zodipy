@@ -186,12 +186,12 @@ class Model:
             )
             interp_obstime_splits = itertools.repeat(interp_obstimes, nprocesses)
             with multiprocessing.get_context(PLATFORM_METHOD).Pool(nprocesses) as pool:
-                emission_splits = (
+                emission_splits = [
                     pool.apply_async(self._evaluate, args=(skycoord, obspos, obstime_lims))
                     for skycoord, obspos, obstime_lims in zip(
                         skycoord_splits, obspos_splits, interp_obstime_splits
                     )
-                )
+                ]
                 emission = np.concatenate([split.get() for split in emission_splits], axis=-1)
         else:
             emission = self._evaluate(skycoord, obspos, interp_obstimes)
