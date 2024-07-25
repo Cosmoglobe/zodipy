@@ -16,33 +16,38 @@
 ---
 
 
+
 ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/#affiliated-package-list) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
 
 ![plot](docs/img/zodipy_map.png)
 
+
 ## Documentation
-See the [documentation](https://cosmoglobe.github.io/zodipy/) for more information and examples on how to use ZodiPy for different applications.
+See the [documentation](https://cosmoglobe.github.io/zodipy/) for a list of supported zodiacal light models and examples of how to use ZodiPy.
 
 ## A simple example
 ```python
 import astropy.units as u
+from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
-from zodipy import Zodipy
+import zodipy
 
+# Initialize a zodiacal light model at a wavelength/frequency or over a bandpass
+model = zodipy.Model(25*u.micron)
 
-model = Zodipy(model="dirbe")
+# Use Astropy's `SkyCoord` to specify coordinate
+lon = [10, 10.1, 10.2] * u.deg
+lat = [90, 89, 88] * u.deg
+obstimes = Time(["2022-01-01 12:00:00", "2022-01-01 12:01:00", "2022-01-01 12:02:00"])
 
-emission = model.get_emission_ang(
-    25 * u.micron,
-    theta=[10, 10.1, 10.2] * u.deg,
-    phi=[90, 89, 88] * u.deg,
-    obs_time=Time("2022-01-01 12:00:00"),
-    obs="earth",
-)
+skycoord = SkyCoord(lon, lat, obstime=obstimes, frame="galactic")
+
+# Compute the zodiacal light as seen from Earth
+emission = model.evaluate(skycoord, obspos="earth")
 
 print(emission)
-#> [15.35392831 15.35495051 15.35616009] MJy / sr
+#> [27.52410841 27.66572294 27.81251906] MJy / sr
 ```
 
 ## Related scientific papers
@@ -52,63 +57,55 @@ See [CITATION](https://github.com/Cosmoglobe/zodipy/blob/main/CITATION.bib)
 
 
 ## Install
-ZodiPy is installed using `pip install zodipy`.
+ZodiPy is installed with pip
+```bash
+pip install zodipy
+```
 
 ## Dependencies
 ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
 - [Astropy](https://www.astropy.org/) (>=5.0.1)
 - [NumPy](https://numpy.org/)
-- [healpy](https://healpy.readthedocs.io/en/latest/)
 - [jplephem](https://pypi.org/project/jplephem/)
 - [SciPy](https://scipy.org/)
 
 ## For developers
-Contributing developers will need to download the following additional dependencies to test, lint, format and build documentation locally:
-- pytest
-- pytest-cov
-- hypothesis
-- coverage
-- ruff
-- mypy
-- pre-commit
-- mkdocs
-- pymdown-extensions
-- markdown-include
-- mkdocs-material
-- mkdocstrings
-- mkdocstrings-python
-- markdown (<3.4.0)
-
-which are required to test and build ZodiPy.
-
 ### Poetry
-Developers can install ZodiPy through [Poetry](https://python-poetry.org/) (Poetry >= 1.8.0) by first cloning or forking the repository, and then running 
+ZodiPy uses [Poetry](https://python-poetry.org/) for development. To build and commit to the repository with the existing pre-commit setup, developers need to have Poetry (>= 1.8.0) installed. See the Poetry [documentation](https://python-poetry.org/docs/) for installation guide. 
+
+After poetry has been installed, developers should create a new virtual environment and run the following in the root of the ZodiPy repositry
 ```
 poetry install
 ```
-in a virtual environment from the repository root. This will read the `pyproject.toml` file in the repository and install all dependencies. 
+This will download all dependencies (including dev)from `pyproject.toml`, and `poetry.lock`.
 
-### pip
-Developers not using Poetry can install ZodiPy in a virtual environment with all dependencies by first cloning or forking the repository and then running 
-```
-pip install -r requirements-dev.txt
-```
-from the repositry root. This will read and download all the dependencies from the `requirements-dev.txt` file in the repository. 
-
-Note that developers using Python 3.12 will need to upgrade their pip versions with `python3 -m pip install --upgrade pip` before being able to install ZodiPy. This is due to known incompatibilities between older pip versions and Python 3.12
-
-### Tests, linting and formatting
+### Tests, linting and formatting, and building documentation
 The following tools should be run from the root of the repository with no errors. (These are ran automatically as part of the CI workflows on GitHub, but should be tested locally first)
 
-- [pytest](https://docs.pytest.org/en/8.0.x/): Tests are run with pytest by simply running `pytest` in the command line in the root of the repository. 
-- [ruff](https://github.com/astral-sh/ruff): Formating and linting is done with `ruff` by simply running `ruff check` and `ruff format` in the command line in the root of the repository. 
-- [mypy](https://mypy-lang.org/): Type checking is done with `mypy` by simply running `mypy zodipy/` in the root of the repository.
+#### pytest
+Testing is done with [pytest](https://docs.pytest.org/en/8.0.x/). To run the tests, run the following command from the repository root
+```bash
+pytest
+``` 
+#### ruff
+Formating and linting is done with [ruff](https://github.com/astral-sh/ruff). To format and lint, run the following command from the repository root
+```bash
+ruff check
+ruff format
+``` 
+#### mypy
+ZodiPy is fully typed. We use [mypy](https://mypy-lang.org/) as a static type checker. To type check, run the following command from the repositry root
 
+```bash
+mypy zodipy/
+```
 Remeber to add tests when implementing new features to maintain a high code coverage.
 
-### Documentation
-We use [MkDocs](https://www.mkdocs.org/) to create our documentation. The documentation is built locally with `mkdocs build` from the repository root, and served with `mkdocs serve`.
-
+#### MkDocs
+We use [MkDocs](https://www.mkdocs.org/) to create our documentation. To serve the docs locally on you machine, run the following from the repositry root
+```bash
+mkdocs serve
+```
 
 ## Funding
 This work has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreements No 776282 (COMPET-4; BeyondPlanck), 772253 (ERC; bits2cosmology) and 819478 (ERC; Cosmoglobe).

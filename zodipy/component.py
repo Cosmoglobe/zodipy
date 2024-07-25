@@ -1,0 +1,223 @@
+from __future__ import annotations
+
+import abc
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+
+@dataclass
+class ZodiacalComponent(abc.ABC):
+    """Base class for storing common model parameters for zodiacal components.
+
+    Args:
+        x_0: x-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        y_0: y-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        z_0: z-offset from the Sun in heliocentric ecliptic coordinates [AU].
+        i: Inclination with respect to the ecliptic plane [deg].
+        Omega: Ascending node [deg].
+
+    """
+
+    x_0: float
+    y_0: float
+    z_0: float
+    i: float
+    Omega: float
+
+    X_0: npt.NDArray[np.float64] = field(init=False)
+    sin_i_rad: float = field(init=False)
+    cos_i_rad: float = field(init=False)
+    sin_Omega_rad: float = field(init=False)
+    cos_Omega_rad: float = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.X_0 = np.expand_dims([self.x_0, self.y_0, self.z_0], axis=-1)
+        self.sin_i_rad = np.sin(np.radians(self.i))
+        self.cos_i_rad = np.cos(np.radians(self.i))
+        self.sin_Omega_rad = np.sin(np.radians(self.Omega))
+        self.cos_Omega_rad = np.cos(np.radians(self.Omega))
+
+
+@dataclass
+class Cloud(ZodiacalComponent):
+    """DIRBE diffuse cloud.
+
+    Args:
+        n_0: Density at 1 AU.
+        alpha: Radial power-law exponent.
+        beta: Vertical shape parameter.
+        gamma: Vertical power-law exponent.
+        mu: Widening parameter for the modified fan.
+
+    """
+
+    n_0: float
+    alpha: float
+    beta: float
+    gamma: float
+    mu: float
+
+
+@dataclass
+class Band(ZodiacalComponent):
+    """DIRBE asteroidal dust band.
+
+    Args:
+        n_0: Density at 3 AU.
+        delta_zeta: Shape parameter [deg].
+        v: Shape parameter.
+        p: Shape parameter.
+        delta_r: Inner radial cutoff.
+
+    """
+
+    n_0: float
+    delta_zeta: float
+    v: float
+    p: float
+    delta_r: float
+    delta_zeta_rad: float = field(init=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.delta_zeta_rad = np.radians(self.delta_zeta)
+
+
+@dataclass
+class Ring(ZodiacalComponent):
+    """DIRBE circum-solar ring (excluding the Earth-trailing Feature).
+
+    Args:
+        n_0: Density at 1 AU.
+        R: Radius of the peak density.
+        sigma_r: Radial dispersion.
+        sigma_z: Vertical dispersion.
+
+    """
+
+    n_0: float
+    R: float
+    sigma_r: float
+    sigma_z: float
+
+
+@dataclass
+class Feature(ZodiacalComponent):
+    """DIRBE Earth-trailing Feature.
+
+    Args:
+        n_0: Density at 1 AU.
+        R: Radius of the peak density.
+        sigma_r: Radial dispersion.
+        sigma_z: Vertical dispersion.
+        theta: Longitude with respect to Earth [deg].
+        sigma_theta: Longitude dispersion [deg].
+
+    """
+
+    n_0: float
+    R: float
+    sigma_r: float
+    sigma_z: float
+    theta: float
+    sigma_theta: float
+    theta_rad: float = field(init=False)
+    sigma_theta_rad: float = field(init=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.theta_rad = np.radians(self.theta)
+        self.sigma_theta_rad = np.radians(self.sigma_theta)
+
+
+@dataclass
+class Fan(ZodiacalComponent):
+    """RRM fan."""
+
+    gamma: float
+    Z_0: float
+    Q: float
+    P: float
+    R_outer: float
+
+
+@dataclass
+class Comet(ZodiacalComponent):
+    """RRM comet."""
+
+    gamma: float
+    Z_0: float
+    P: float
+    amp: float
+    R_inner: float
+    R_outer: float
+
+
+@dataclass
+class Interstellar(ZodiacalComponent):
+    """RRM interstellar dust."""
+
+    amp: float
+
+
+@dataclass
+class NarrowBand(ZodiacalComponent):
+    """RRM narrow band."""
+
+    gamma: float
+    A: float
+    G: float
+    R_inner: float
+    R_outer: float
+    beta_nb: float
+
+
+@dataclass
+class BroadBand(ZodiacalComponent):
+    """RRM broad band."""
+
+    gamma: float
+    A: float
+    R_inner: float
+    R_outer: float
+    beta_bb: float
+    sigma_bb: float
+
+
+@dataclass
+class RingRRM(Ring):
+    """RRM circum-solar ring."""
+
+    A: float
+
+
+@dataclass
+class FeatureRRM(Feature):
+    """RRM Earth-trailing Feature."""
+
+    A: float
+
+
+class ComponentLabel(Enum):
+    """Labels representing the components in the DIRBE model."""
+
+    CLOUD = "cloud"
+    BAND1 = "band1"
+    BAND2 = "band2"
+    BAND3 = "band3"
+    RING = "ring"
+    FEATURE = "feature"
+    FAN = "fan"
+    COMET = "comet"
+    INTERSTELLAR = "interstellar"
+    INNER_NARROW_BAND = "inner_narrow_band"
+    OUTER_NARROW_BAND = "outer_narrow_band"
+    BROAD_BAND = "broad_band"
+    RING_RRM = "ring_rrm"
+    FEATURE_RRM = "feature_rrm"
