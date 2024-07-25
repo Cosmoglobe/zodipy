@@ -34,7 +34,6 @@ class ZodiacalLightModel(abc.ABC):
     @abc.abstractmethod
     def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
         """Return the callable that computes the brightness at a step."""
-        ...
 
     def to_dict(self) -> dict:
         """Return a dictionary representation of the model."""
@@ -123,7 +122,7 @@ class ModelRegistry:
         if (name := name.lower()) in self._registry:
             msg = f"a model by the name {name!s} is already registered."
             raise ValueError(msg)
-        if not isinstance(model, ZodiacalLightModel):
+        if not isinstance(model, ZodiacalLightModel):  # pragma: no cover
             msg = "model must be an instance of ZodiacalLightModel."
             raise TypeError(msg)
         self._registry[name] = model

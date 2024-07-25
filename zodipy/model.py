@@ -230,9 +230,6 @@ class Model:
             except units.UnitConversionError as error:
                 msg = "The observer position must be in length units."
                 raise units.UnitConversionError(msg) from error
-            except AttributeError as error:
-                msg = "The observer position must be an astropy Quantity."
-                raise TypeError(msg) from error
 
         instantaneous = skycoord.obstime.size == 1
         if instantaneous:

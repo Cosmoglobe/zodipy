@@ -442,14 +442,14 @@ def get_partial_number_density_func(
         residual_params = [key for key in func_params if key not in comp_dict]
         try:
             residual_params.remove("X_helio")
-        except ValueError as err:
+        except ValueError as err:  # pragma: no cover
             msg = "X_helio must be be the first argument to the density function of a component."
             raise ValueError(msg) from err
 
         if "X_earth" in residual_params:
             residual_params.remove("X_earth")
 
-        if residual_params:
+        if residual_params:  # pragma: no cover
             msg = (
                 f"Argument(s) {residual_params} required by the density function "
                 f"{DENSITY_FUNCS[type(comp)]} are not provided by instance variables in "

@@ -70,8 +70,6 @@ def get_sphere_intersection(
     x_0, y_0, z_0 = obs_pos
     r_obs = np.sqrt(x_0**2 + y_0**2 + z_0**2)
     if (r_obs > cutoff).any():
-        if obs_pos.ndim == 1:
-            return np.array([np.finfo(float).eps])
         return np.full(obs_pos.shape[-1], np.finfo(float).eps)
 
     u_x, u_y, u_z = unit_vectors

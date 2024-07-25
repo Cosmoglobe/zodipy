@@ -87,7 +87,7 @@ def get_obspos_from_str(
             msg = f"Invalid observer string: '{body}'. Valid observers are: {valid_obs}"
             raise ValueError(msg) from error
 
-    if interp_obstimes is None:
+    if interp_obstimes is None:  # pragma: no cover
         msg = "interp_obstimes must be provided when obstime is an array."
         raise ValueError(msg)
 
