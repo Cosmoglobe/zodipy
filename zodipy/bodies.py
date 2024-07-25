@@ -13,7 +13,29 @@ if TYPE_CHECKING:
 MEAN_DIST_TO_L2 = 0.009896235034000056
 
 
-def get_sun_earth_moon_barycenter(
+def get_interp_obstimes(t0: float, t1: float) -> time.Time:
+    """Return a subset of the obstimes used to interpolate in body positions."""
+    dt = (1 * units.hour).to_value(units.day)
+    return time.Time(np.arange(t0, t1 + dt, dt), format="mjd")
+
+
+def get_interpolated_bodypos(
+    body: str,
+    obstimes: npt.NDArray[np.float64],
+    interp_obstimes: time.Time,
+    ephemeris: str,
+) -> np.ndarray:
+    """Return the interpolated heliocentric positions of body."""
+    pos = (
+        coords.get_body(body, interp_obstimes, ephemeris=ephemeris)
+        .transform_to(coords.HeliocentricMeanEcliptic)
+        .cartesian.xyz.to_value(units.AU)
+    )
+    interpolator = interpolate.CubicSpline(interp_obstimes.mjd, pos, axis=-1)
+    return interpolator(obstimes)
+
+
+def get_semb_l2_pos(
     earthpos: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Return a SkyCoord of the heliocentric position of the SEMB-L2 point.
@@ -28,68 +50,50 @@ def get_sun_earth_moon_barycenter(
     return earth_unit_vector * SEMB_L2_distance
 
 
-def get_earthpos_xyz(obstime: time.Time, ephemeris: str) -> npt.NDArray[np.float64]:
-    """Return the sky coordinates of the Earth in the heliocentric frame."""
-    if obstime.size == 1:
-        return (
-            coords.get_body("earth", obstime, ephemeris=ephemeris)
-            .transform_to(coords.HeliocentricMeanEcliptic)
-            .cartesian.xyz.to_value(units.AU)
-        )
-    return get_interpolated_body_xyz("earth", obstime, ephemeris)
-
-
-def get_interpolated_body_xyz(
-    body: str,
-    obstimes: time.Time,
+def get_earthpos_inst(
+    obstime: time.Time,
     ephemeris: str,
 ) -> npt.NDArray[np.float64]:
-    """Return interpolated Earth positions in the heliocentric frame."""
-    dt = (1 * units.hour).to_value(units.day)
-    t0, t1 = obstimes[0].mjd, obstimes[-1].mjd
-    times = time.Time(np.arange(t0, max(t0 + 366, t1) + dt, dt), format="mjd")
-
-    bodypos = (
-        coords.get_body(body, times, ephemeris=ephemeris)
+    """Return the sky coordinates of the Earth in the heliocentric frame."""
+    return (
+        coords.get_body("earth", obstime, ephemeris=ephemeris)
         .transform_to(coords.HeliocentricMeanEcliptic)
         .cartesian.xyz.to_value(units.AU)
-    )
-    f = interpolate.interp1d(times.mjd, bodypos, axis=-1)
-    return f(obstimes.mjd)
+    ).flatten()
 
 
-def get_obspos_xyz(
+def get_obspos_from_str(
+    body: str,
     obstime: time.Time,
-    obspos: str | units.Quantity,
+    interp_obstimes: time.Time | None,
     earthpos: npt.NDArray[np.float64],
     ephemeris: str,
 ) -> npt.NDArray[np.float64]:
     """Return the sky coordinates of the observer in the heliocentric frame."""
-    if isinstance(obspos, str):
-        if obspos.lower() == "semb-l2":
-            return get_sun_earth_moon_barycenter(earthpos)
-        if obspos.lower() == "earth":
-            return earthpos
+    if body == "semb-l2":
+        return get_semb_l2_pos(earthpos)
+    if body == "earth":
+        return earthpos
 
+    if obstime.size == 1:
         try:
-            if obstime.size == 1:
-                return (
-                    coords.get_body(obspos, obstime, ephemeris=ephemeris)
-                    .transform_to(coords.HeliocentricMeanEcliptic)
-                    .cartesian.xyz.to_value(units.AU)
-                )
-            return get_interpolated_body_xyz(obspos, obstime, ephemeris)
+            return (
+                coords.get_body(body, obstime, ephemeris=ephemeris)
+                .transform_to(coords.HeliocentricMeanEcliptic)
+                .cartesian.xyz.to_value(units.AU)
+            ).flatten()
         except KeyError as error:
             valid_obs = [*coords.solar_system_ephemeris.bodies, "semb-l2"]
-            msg = f"Invalid observer string: '{obspos}'. Valid observers are: {valid_obs}"
+            msg = f"Invalid observer string: '{body}'. Valid observers are: {valid_obs}"
             raise ValueError(msg) from error
 
-    else:
-        try:
-            return obspos.to_value(units.AU)
-        except AttributeError as error:
-            msg = "The observer position must be a string or an astropy Quantity."
-            raise TypeError(msg) from error
-        except units.UnitConversionError as error:
-            msg = "The observer position must be in length units."
-            raise units.UnitConversionError(msg) from error
+    if interp_obstimes is None:
+        msg = "interp_obstimes must be provided when obstime is an array."
+        raise ValueError(msg)
+
+    return get_interpolated_bodypos(
+        body=body,
+        obstimes=obstime.mjd,
+        interp_obstimes=interp_obstimes,
+        ephemeris=ephemeris,
+    )

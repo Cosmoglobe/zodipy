@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Callable, Mapping, Protocol
 import numpy as np
 import numpy.typing as npt
 
-from zodipy.bodies import get_earthpos_xyz
+from zodipy.bodies import get_earthpos_inst
 from zodipy.component import (
     Band,
     BroadBand,
@@ -164,7 +164,6 @@ def feature_number_density(
     )
 
     X_earth_comp = X_earth - X_0
-
     theta_comp = np.arctan2(X_feature[1], X_feature[0]) - np.arctan2(
         X_earth_comp[1], X_earth_comp[0]
     )
@@ -504,7 +503,8 @@ def grid_number_density(
     ipd_model = model_registry.get_model(name)
 
     grid = np.asarray(np.meshgrid(x, y, z))
-    earthpos_xyz = get_earthpos_xyz(obstime, ephemeris=ephemeris)
+
+    earthpos_xyz = get_earthpos_inst(obstime, ephemeris=ephemeris)
     # Prepare attributes and variables for broadcasting with the grid
 
     # broadcasting reshapes

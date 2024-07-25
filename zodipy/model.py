@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import functools
+import itertools
 import multiprocessing
 import platform
-import typing
 
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +12,12 @@ from astropy import time, units
 from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
-from zodipy.bodies import get_earthpos_xyz, get_obspos_xyz
+from zodipy.bodies import (
+    get_earthpos_inst,
+    get_interp_obstimes,
+    get_interpolated_bodypos,
+    get_obspos_from_str,
+)
 from zodipy.component import ComponentLabel
 from zodipy.line_of_sight import (
     get_line_of_sight_range_dicts,
@@ -143,21 +148,107 @@ class Model:
             emission: Simulated zodiacal light in units of 'MJy/sr'.
 
         """
-        obstime = validate_user_input(skycoord, obspos)
-        earth_xyz = get_earthpos_xyz(obstime, self._ephemeris)
-        obs_xyz = get_obspos_xyz(obstime, obspos, earth_xyz, self._ephemeris)
+        try:
+            if skycoord.obstime is None:
+                msg = "The `obstime` attribute of the `SkyCoord` object is not set."
+                raise ValueError(msg)
+        except AttributeError as error:
+            msg = "The input coordinates must be an astropy SkyCoord object."
+            raise TypeError(msg) from error
+
+        try:
+            if not (obspos_isstr := isinstance(obspos, str)) and (
+                (obspos.ndim > 1 and skycoord.obstime.size != obspos.shape[-1])
+                or (obspos.ndim == 1 and skycoord.obstime.size != 1)
+            ):
+                msg = "The number of obstime (ncoords) and obspos (3, ncoords) does not match."
+                raise ValueError(msg)
+        except AttributeError as error:
+            msg = "The observer position is not a string or an astropy Quantity."
+            raise TypeError(msg) from error
+
+        if skycoord.obstime.size > skycoord.size:
+            msg = "The size of obstime must be either 1 or ncoords."
+            raise ValueError(msg)
+
+        if skycoord.obstime.size == 1:
+            interp_obstimes = None
+        else:
+            interp_obstimes = get_interp_obstimes(skycoord.obstime[0].mjd, skycoord.obstime[-1].mjd)
+
+        dist_coords_to_cores = skycoord.size > nprocesses and nprocesses > 1
+        if dist_coords_to_cores:
+            skycoord_splits = np.array_split(skycoord, nprocesses)
+            obspos_splits = (
+                itertools.repeat(obspos, nprocesses)
+                if obspos_isstr
+                else np.array_split(obspos, nprocesses, axis=-1)
+            )
+            interp_obstime_splits = itertools.repeat(interp_obstimes, nprocesses)
+            with multiprocessing.get_context(PLATFORM_METHOD).Pool(nprocesses) as pool:
+                emission_splits = (
+                    pool.apply_async(self._evaluate, args=(skycoord, obspos, obstime_lims))
+                    for skycoord, obspos, obstime_lims in zip(
+                        skycoord_splits, obspos_splits, interp_obstime_splits
+                    )
+                )
+                emission = np.concatenate([split.get() for split in emission_splits], axis=-1)
+        else:
+            emission = self._evaluate(skycoord, obspos, interp_obstimes)
+
+        emission <<= units.MJy / units.sr
+        return emission if return_comps else emission.sum(axis=0)
+
+    def _evaluate(
+        self,
+        skycoord: coords.SkyCoord,
+        obspos: units.Quantity | str,
+        interp_obstimes: time.Time | None,
+    ) -> npt.NDArray[np.float64]:
+        """Evaluate the zodiacal light for a single or a sequence of sky coordinates."""
+        if interp_obstimes is None:
+            earth_xyz = get_earthpos_inst(skycoord.obstime, self._ephemeris)
+        else:
+            earth_xyz = get_interpolated_bodypos(
+                body="earth",
+                obstimes=skycoord.obstime.mjd,
+                interp_obstimes=interp_obstimes,
+                ephemeris=self._ephemeris,
+            )
+
+        if isinstance(obspos, str):
+            obs_xyz = get_obspos_from_str(
+                body=obspos,
+                obstime=skycoord.obstime,
+                interp_obstimes=interp_obstimes,
+                earthpos=earth_xyz,
+                ephemeris=self._ephemeris,
+            )
+        else:
+            try:
+                obs_xyz = obspos.to_value(units.AU)
+            except units.UnitConversionError as error:
+                msg = "The observer position must be in length units."
+                raise units.UnitConversionError(msg) from error
+            except AttributeError as error:
+                msg = "The observer position must be an astropy Quantity."
+                raise TypeError(msg) from error
+
+        instantaneous = skycoord.obstime.size == 1
+        if instantaneous:
+            obs_xyz = obs_xyz[:, np.newaxis]
+        if earth_xyz.ndim == 1:
+            earth_xyz = earth_xyz[:, np.newaxis]
 
         # Model evaluation is performed in heliocentric ecliptic coordinates. We transform
         # to the barycentric frame, which is compatiable with the Galactic and Celestial,
         # and pretend that that this is the heliocentric frame as we only need the correction
         # rotation.
         skycoord = skycoord.transform_to(coords.BarycentricMeanEcliptic)
+
+        skycoord_xyz: npt.NDArray[np.float64] = skycoord.cartesian.xyz.value
         if skycoord.isscalar:
-            skycoord_xyz = typing.cast(
-                npt.NDArray[np.float64], skycoord.cartesian.xyz.value[:, np.newaxis]
-            )
-        else:
-            skycoord_xyz = typing.cast(npt.NDArray[np.float64], skycoord.cartesian.xyz.value)
+            skycoord_xyz = skycoord.cartesian.xyz.value[:, np.newaxis]
 
         start, stop = get_line_of_sight_range_dicts(
             components=self._ipd_model.comps.keys(),
@@ -165,111 +256,27 @@ class Model:
             obs_pos=obs_xyz,
         )
 
-        instantaneous = obs_xyz.ndim == 1
-        if instantaneous:
-            obs_xyz = obs_xyz[:, np.newaxis]
-            earth_xyz = earth_xyz[:, np.newaxis]
-
         number_density_partials = self._number_density_partials
         shared_brightness_partial = self._shared_brightness_partial
 
-        dist_coords_to_cores = skycoord.size > nprocesses and nprocesses > 1
-        if instantaneous or not dist_coords_to_cores:
-            # Populate the instantaneous Earth and observer position in the partial functions.
-            number_density_partials = update_partial_earth_pos(
-                number_density_partials, earth_pos=earth_xyz
-            )
-            shared_brightness_partial = functools.partial(shared_brightness_partial, X_obs=obs_xyz)
+        number_density_partials = update_partial_earth_pos(
+            number_density_partials, earth_pos=earth_xyz
+        )
+        shared_brightness_partial = functools.partial(shared_brightness_partial, X_obs=obs_xyz)
 
         emission = np.zeros((self._ipd_model.ncomps, skycoord.size))
+        for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
+            comp_func = functools.partial(
+                shared_brightness_partial,
+                u_los=skycoord_xyz,
+                start=start[comp_label],
+                stop=stop[comp_label],
+                number_density_func=number_density_partials[comp_label],
+                **self._interped_comp_params[comp_label],
+            )
+            emission[idx] = self._integrate_leggauss(comp_func)
 
-        if dist_coords_to_cores:
-            skycoord_xyz_splits = np.array_split(skycoord_xyz, nprocesses, axis=-1)
-            if not instantaneous:
-                # The observer and Earth positions are applied into the partial functions. In the
-                # case where we have coordinate-by-coordinate observer positions, we need to ensure
-                # that these positions are distributed accordingly over the cores. This means that
-                # we need to create partial functions for each core.
-                earth_xyz_splits = np.array_split(earth_xyz, nprocesses, axis=-1)
-                obs_xyz_splits = np.array_split(obs_xyz, nprocesses, axis=-1)
-
-                number_density_partial_splits = [
-                    update_partial_earth_pos(
-                        number_density_partials,
-                        earth_pos=earth_xyz_split,
-                    )
-                    for earth_xyz_split in earth_xyz_splits
-                ]
-                shared_brightness_partial_splits = [
-                    functools.partial(shared_brightness_partial, X_obs=obs_xyz_split)
-                    for obs_xyz_split in obs_xyz_splits
-                ]
-            with multiprocessing.get_context(PLATFORM_METHOD).Pool(nprocesses) as pool:
-                for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
-                    stop_chunks = (
-                        [stop[comp_label]] * nprocesses
-                        if stop[comp_label].size == 1
-                        else np.array_split(stop[comp_label], nprocesses, axis=-1)
-                    )
-                    start_chunks = (
-                        [start[comp_label]] * nprocesses
-                        if start[comp_label].size == 1
-                        else np.array_split(start[comp_label], nprocesses, axis=-1)
-                    )
-
-                    if instantaneous:
-                        comp_funcs = [
-                            functools.partial(
-                                shared_brightness_partial,
-                                u_los=skycoord_xyz,
-                                start=start,
-                                stop=stop,
-                                number_density_func=number_density_partials[comp_label],
-                                **self._interped_comp_params[comp_label],
-                            )
-                            for skycoord_xyz, start, stop in zip(
-                                skycoord_xyz_splits, start_chunks, stop_chunks
-                            )
-                        ]
-                    else:
-                        comp_funcs = [
-                            functools.partial(
-                                brightness_partial,
-                                u_los=skycoord_xyz,
-                                start=start,
-                                stop=stop,
-                                number_density_func=dens_partial[comp_label],
-                                **self._interped_comp_params[comp_label],
-                            )
-                            for skycoord_xyz, start, stop, dens_partial, brightness_partial in zip(
-                                skycoord_xyz_splits,
-                                start_chunks,
-                                stop_chunks,
-                                number_density_partial_splits,
-                                shared_brightness_partial_splits,
-                            )
-                        ]
-                    proc_chunks = [
-                        pool.apply_async(self._integrate_leggauss, args=(func,))
-                        for func in comp_funcs
-                    ]
-                    emission[idx] = np.concatenate([result.get() for result in proc_chunks])
-
-        # Simulate the zodiacal light over the coordinates sequentially.
-        else:
-            for idx, comp_label in enumerate(self._ipd_model.comps.keys()):
-                comp_func = functools.partial(
-                    shared_brightness_partial,
-                    u_los=skycoord_xyz,
-                    start=start[comp_label],
-                    stop=stop[comp_label],
-                    number_density_func=number_density_partials[comp_label],
-                    **self._interped_comp_params[comp_label],
-                )
-                emission[idx] = self._integrate_leggauss(comp_func)
-
-        emission <<= units.MJy / units.sr
-        return emission if return_comps else emission.sum(axis=0)
+        return emission
 
     def _init_ipd_model_partials(self) -> None:
         """Initialize the partial functions for the interplanetary dust model.
@@ -325,29 +332,3 @@ class Model:
 
         self._ipd_model = self._ipd_model.__class__(**_dict)
         self._init_ipd_model_partials()
-
-
-def validate_user_input(skycoord: coords.SkyCoord, obspos: units.Quantity | str) -> time.Time:
-    """Validate the shapes and types of the input coordinate information."""
-    try:
-        obstime = typing.cast(time.Time, skycoord.obstime)
-    except AttributeError as error:
-        msg = "The input coordinates must be an astropy SkyCoord object."
-        raise TypeError(msg) from error
-    if obstime is None:
-        msg = "The `obstime` attribute of the `SkyCoord` object must be set."
-        raise ValueError(msg)
-
-    try:
-        if not isinstance(obspos, str) and obspos.ndim > 1 and obstime.size != obspos.shape[-1]:
-            msg = "The number of obstime and obspos must match."
-            raise ValueError(msg)
-    except AttributeError as error:
-        msg = "The observer position must be a string or an astropy Quantity."
-        raise TypeError(msg) from error
-
-    if obstime.size > skycoord.size:
-        msg = "The number of obstime must be either 1 or the same size as ."
-        raise ValueError(msg)
-
-    return obstime
