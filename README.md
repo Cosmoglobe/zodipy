@@ -16,7 +16,8 @@
 ---
 
 
-ZodiPy is an [Astropy-affiliated](https://www.astropy.org/affiliated/) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
+
+ZodiPy is an [Astropy affiliated](https://www.astropy.org/affiliated/#affiliated-package-list) package for simulating zodiacal light in intensity for arbitrary Solar system observers.
 
 ![plot](docs/img/zodipy_map.png)
 
