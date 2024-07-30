@@ -1,3 +1,3 @@
 # Reference
 
-::: zodipy.Model
+::: zodipy

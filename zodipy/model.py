@@ -35,7 +35,7 @@ class Model:
 
     def __init__(
         self,
-        x: units.Quantity,
+        x: units.Quantity[units.micron | units.GHz],
         *,
         weights: npt.ArrayLike | None = None,
         name: str = "dirbe",
@@ -43,25 +43,27 @@ class Model:
         extrapolate: bool = False,
         ephemeris: str = "builtin",
     ) -> None:
-        """Initialize the ZodiPy model interface.
+        """Initialize a zodiacal light model.
 
         Args:
-            x: Wavelength or frequency. If `x` is a sequence, it is assumed to be a the points
-                corresponding to a bandpass and the corresponding `weights` must be provided.
-            weights: Bandpass weights corresponding the the frequencies or wavelengths in `x`. The
+            x: Wavelength or frequency. If `x` is a sequence it is assumed to be a the points
+                corresponding to an instrument bandpass and the corresponding `weights` argument
+                must be provided.
+            weights: Bandpass weights corresponding the the frequencies/wavelengths in `x`. The
                 weights are assumed to represent a normalized instrument response in units of
-                spectral radiance (Jy/sr).
-            name: Zodiacal light model to use for the simulations. For a list of available models,
-                see https://cosmoglobe.github.io/zodipy/introduction/. Defaults to 'dirbe'.
-            gauss_quad_degree: Order of the Gaussian-legendre quadrature used to evaluate the
-                line-of-sight integrals in the simulations. Default is 50 points.
+                spectral radiance [Jy/sr].
+            name: Zodiacal light model to use. See the
+                [docs](https://cosmoglobe.github.io/zodipy/introduction/) for list of available
+                models. Defaults to 'dirbe'.
+            gauss_quad_degree: Order of the Gaussian-legendre quadrature representing the number of
+                discrete points along each line-of-sight. Default is 50 points.
             extrapolate: If `True` all spectral quantities in the selected model are extrapolated to
-                the requested frequencies or wavelengths. If `False`, an exception is raised on
-                requested values of `x` outside of the valid model range. Default is `False`.
-            ephemeris: Ephemeris used in `astropy.coordinates.solar_system_ephemeris` to compute the
-                positions of the observer and Earth. Defaults to 'builtin'. See the
+                the requested frequencies/wavelengths. Else, an exception is raised on values of `x`
+                outside of the valid model range. Default is `False`.
+            ephemeris: Ephemeris used in Astropy's `solar_system_ephemeris` to compute the positions
+                of Earth and optionally the observer. See the
                 [Astropy documentation](https://docs.astropy.org/en/stable/coordinates/solarsystem.html)
-                for available ephemerides.
+                for all available ephemerides. Defaults to 'builtin'.
 
         """
         try:
@@ -118,34 +120,35 @@ class Model:
         self,
         skycoord: coords.SkyCoord,
         *,
-        obspos: units.Quantity | str = "earth",
+        obspos: units.Quantity[units.AU] | str = "earth",
         return_comps: bool = False,
         nprocesses: int = 1,
     ) -> units.Quantity[units.MJy / units.sr]:
         """Return the simulated zodiacal light.
 
-        The zodiacal light is simulated for a single, or a sequence of observations. If a single
-        `obspos` and `obstime` is provided for multiple coordinates, all coordinates are assumed to
-        be observed from that position at that time. Otherwise, each coordinate is simulated from
-        the corresponding observer position and time.
+        The zodiacal light is simulated for all sky coordinates present in the `skycoord` argument.
+        If an obstime and obspos value is not provided for each coordinate value, all coordinates
+        are assumed to be observed at an instant from the same position.
 
         Args:
-            skycoord: `astropy.coordinates.SkyCoord` object representing the coordinates or
-                observations for which to simulate the zodiacal light. The `frame` and `obstime`
-                attributes of the `SkyCoord` object must be set. The `obstime` attribute must be
-                specified, and correspond to a single, or a sequence of observational times with
-                length matching the number of coordinates. The frame must be convertible to the
+            skycoord: `astropy.coordinates.SkyCoord` object representing the coordinates for which
+                to simulate the zodiacal light. The `obstime` attribute must be specified, and
+                correspond to a either a single, or a sequence of observational times, one for each
+                coordinate in `skycoord`. The coordinate frame, provided through the `frame` keyword
+                in the the `astropy.coordinates.SkyCoord` object (defaults to
+                `astropy.coordinates.ICRS`), must be convertible to the
                 `astropy.coordinates.BarycentricMeanEcliptic` frame.
-            obspos: The heliocentric ecliptic position of the observer, or a string representing
-                an observer in the `astropy.coordinates.solar_system_ephemeris`. If an explicit
-                position is given, it must either be a single, or a sequence of positions with
-                shape matching the number of coordinates Defaults to 'earth'.
-            return_comps: If True, the emission is returned component-wise. Defaults to False.
+            obspos: The heliocentric ecliptic position of the observer, or a string representing an
+                observer supported by the `astropy.coordinates.solar_system_ephemeris`. If an
+                explicit position is given, it must either be a single, or a sequence of positions,
+                one for each coordinate. Defaults to 'earth'.
+            return_comps: If `True`, the emission is returned component-wise. Defaults to `False`.
             nprocesses: Number of cores to use. If `nprocesses >= 1`, the line-of-sight integrals
-                are parallelized using the `multiprocessing` module. Defaults to 1.
+                are distributed and computed in parallel using the `multiprocessing` module.
+                Defaults to 1.
 
         Returns:
-            emission: Simulated zodiacal light in units of 'MJy/sr'.
+            emission: Simulated zodiacal light [MJy/sr].
 
         """
         try:
@@ -296,25 +299,22 @@ class Model:
         self._number_density_partials = get_partial_number_density_func(comps=self._ipd_model.comps)
 
     def get_parameters(self) -> dict:
-        """Return a dictionary containing the interplanetary dust model parameters.
-
-        This method is mainly meant to be used to fit or sample zodiacal light models.
+        """Return a dictionary containing the zodiacal light model parameters.
 
         Returns:
-            parameters: Dictionary of parameters of the interplanetary dust model.
+            parameters: Zodiacal light model parameter dict.
         """
         return self._ipd_model.to_dict()
 
     def update_parameters(self, parameters: dict) -> None:
-        """Update the interplanetary dust model parameters.
+        """Update the zodiacal light model parameters from a parameter dictionary.
 
-        This method is mainly meant to be used to fit or sample zodiacal light models.
+        The structure of the input dictionary must match that of the output of the `get_parameters`
+        method.
 
         Args:
-            parameters: Dictionary of parameters to update. The keys must be the names
-                of the parameters as defined in the model. To get the parameters dict
-                of an existing model, use the`get_parameters` method of an initialized
-                `zodipy.Model`.
+            parameters: Zodiacal light model parameter dict.
+
         """
         _dict = parameters.copy()
         _dict["comps"] = {}

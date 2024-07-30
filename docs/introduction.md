@@ -1,8 +1,12 @@
 # Introduction
 
-ZodiPy is a Python package for zodiacal light simulations. Its purpose is to provide the astrophysics and cosmology communities with an easy-to-use and accessible interface to existing zodiacal light models in Python, assisting in astrophysical data analysis and zodiacal light forecasting for future experiments.
+ZodiPy is a Python package for zodiacal light simulations. Its purpose is to provide the 
+astrophysics and cosmology communities with an easy-to-use and accessible interface to existing 
+zodiacal light models in Python, assisting in astrophysical data analysis and zodiacal light 
+forecasting for future experiments.
 
-For other zodiacal light tools, see [Zodiacal Light Models on LAMBDA](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html).
+For other zodiacal light tools, see 
+[Zodiacal Light Models on LAMBDA](https://lambda.gsfc.nasa.gov/product/foreground/fg_models.html).
 
 ## Supported zodiacal light models
 
@@ -13,9 +17,11 @@ For other zodiacal light tools, see [Zodiacal Light Models on LAMBDA](https://la
 - Planck 2018 [`"planck18"`] ([Planck Collaboration et al. 2020](https://ui.adsabs.harvard.edu/abs/2020A&A...641A...3P))
 - Odegard [`"odegard"`] ([Odegard et al. 2019](https://ui.adsabs.harvard.edu/abs/2019ApJ...877...40O/abstract))
 
-The names in the brackets are the string representations used in the `zodipy.Model` object to select the model.
+The names in the brackets are the string representations used in the [`Model`][zodipy.Model] object 
+to select the model.
 
-If you see a missing model or wish to add a new one, please open an issue on GitHub. Contributors are very welcome!
+If you see a missing model or wish to add a new one, please feel free to open an issue on GitHub. 
+Contributors are very welcome!
 
 
 ## Related scientific papers

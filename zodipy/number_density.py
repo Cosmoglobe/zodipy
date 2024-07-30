@@ -479,21 +479,21 @@ def update_partial_earth_pos(
 
 
 def grid_number_density(
-    x: units.Quantity,
-    y: units.Quantity,
-    z: units.Quantity,
+    x: units.Quantity[units.AU],
+    y: units.Quantity[units.AU],
+    z: units.Quantity[units.AU],
     obstime: time.Time,
-    name: str = "DIRBE",
+    name: str = "dirbe",
     ephemeris: str = "builtin",
 ) -> npt.NDArray[np.float64]:
-    """Return the tabulated densities of the zodiacal components for a given grid.
+    """Return the component-wise tabulated densities of the zodiacal components for a given grid.
 
     Args:
-        x: Cartesian mesh grid x-coordinates.
-        y: Cartesian mesh grid y-coordinates.
-        z: Cartesian mesh grid z-coordinates.
-        obstime: Time of observation.
-        name: Interplanetary dust model to select. Default is 'DIRBE'.
+        x: x-coordinates of a cartesian mesh grid.
+        y: y-coordinates of a cartesian mesh grid.
+        z: z-coordinates of a cartesian mesh grid.
+        obstime: Time of observation. Required to compute the Earth position.
+        name: Zodiacal light model to use. Default is 'dirbe'.
         ephemeris: Solar system ephemeris to use. Default is 'builtin'.
 
     Returns:
@@ -505,7 +505,6 @@ def grid_number_density(
     grid = np.asarray(np.meshgrid(x, y, z))
 
     earthpos_xyz = get_earthpos_inst(obstime, ephemeris=ephemeris)
-    # Prepare attributes and variables for broadcasting with the grid
 
     # broadcasting reshapes
     for comp in ipd_model.comps.values():
