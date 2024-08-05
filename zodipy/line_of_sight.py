@@ -85,7 +85,7 @@ def get_sphere_intersection(
     return np.maximum(q, c / q)
 
 
-def get_line_of_sight_range_dicts(
+def get_line_of_sight_range(
     components: Iterable[ComponentLabel],
     unit_vectors: npt.NDArray[np.float64],
     obs_pos: npt.NDArray[np.float64],

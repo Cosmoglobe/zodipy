@@ -13,13 +13,13 @@ if TYPE_CHECKING:
 MEAN_DIST_TO_L2 = 0.009896235034000056
 
 
-def get_interp_obstimes(t0: float, t1: float) -> time.Time:
+def arrange_obstimes(t0: float, t1: float) -> time.Time:
     """Return a subset of the obstimes used to interpolate in body positions."""
     dt = (1 * units.hour).to_value(units.day)
     return time.Time(np.arange(t0, t1 + dt, dt), format="mjd")
 
 
-def get_interpolated_bodypos(
+def get_interp_bodypos(
     body: str,
     obstimes: npt.NDArray[np.float64],
     interp_obstimes: time.Time,
@@ -62,7 +62,7 @@ def get_earthpos_inst(
     ).flatten()
 
 
-def get_obspos_from_str(
+def get_obspos_from_body(
     body: str,
     obstime: time.Time,
     interp_obstimes: time.Time | None,
@@ -91,7 +91,7 @@ def get_obspos_from_str(
         msg = "interp_obstimes must be provided when obstime is an array."
         raise ValueError(msg)
 
-    return get_interpolated_bodypos(
+    return get_interp_bodypos(
         body=body,
         obstimes=obstime.mjd,
         interp_obstimes=interp_obstimes,

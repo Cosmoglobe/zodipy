@@ -13,14 +13,14 @@ from scipy import integrate
 
 from zodipy.blackbody import tabulate_blackbody_emission
 from zodipy.bodies import (
+    arrange_obstimes,
     get_earthpos_inst,
-    get_interp_obstimes,
-    get_interpolated_bodypos,
-    get_obspos_from_str,
+    get_interp_bodypos,
+    get_obspos_from_body,
 )
 from zodipy.component import ComponentLabel
 from zodipy.line_of_sight import (
-    get_line_of_sight_range_dicts,
+    get_line_of_sight_range,
     integrate_leggauss,
 )
 from zodipy.model_registry import model_registry
@@ -177,7 +177,7 @@ class Model:
         if skycoord.obstime.size == 1:
             interp_obstimes = None
         else:
-            interp_obstimes = get_interp_obstimes(skycoord.obstime[0].mjd, skycoord.obstime[-1].mjd)
+            interp_obstimes = arrange_obstimes(skycoord.obstime[0].mjd, skycoord.obstime[-1].mjd)
 
         dist_coords_to_cores = skycoord.size > nprocesses and nprocesses > 1
         if dist_coords_to_cores:
@@ -212,7 +212,7 @@ class Model:
         if interp_obstimes is None:
             earth_xyz = get_earthpos_inst(skycoord.obstime, self._ephemeris)
         else:
-            earth_xyz = get_interpolated_bodypos(
+            earth_xyz = get_interp_bodypos(
                 body="earth",
                 obstimes=skycoord.obstime.mjd,
                 interp_obstimes=interp_obstimes,
@@ -220,7 +220,7 @@ class Model:
             )
 
         if isinstance(obspos, str):
-            obs_xyz = get_obspos_from_str(
+            obs_xyz = get_obspos_from_body(
                 body=obspos,
                 obstime=skycoord.obstime,
                 interp_obstimes=interp_obstimes,
@@ -250,7 +250,7 @@ class Model:
         if skycoord.isscalar:
             skycoord_xyz = skycoord.cartesian.xyz.value[:, np.newaxis]
 
-        start, stop = get_line_of_sight_range_dicts(
+        start, stop = get_line_of_sight_range(
             components=self._ipd_model.comps.keys(),
             unit_vectors=skycoord_xyz,
             obs_pos=obs_xyz,
