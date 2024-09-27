@@ -105,6 +105,19 @@ def test_grid_number_density() -> None:
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        grid = grid_number_density(x, y, z, obstime=obstime, name="rrm-experimental")
+        grid = grid_number_density(x, y, z, obstime=obstime, model="rrm-experimental")
 
     assert grid.sum(axis=0).shape == (100, 100, 100)
+
+    model = model_registry.get_model("rrm-experimental")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        grid = grid_number_density(x, y, z, obstime=obstime, model=model)
+
+    assert grid.sum(axis=0).shape == (100, 100, 100)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with pytest.raises(TypeError):
+            grid = grid_number_density(x, y, z, obstime=obstime, model=2)

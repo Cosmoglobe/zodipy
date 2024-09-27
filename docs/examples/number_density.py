@@ -17,7 +17,7 @@ density_grid = grid_number_density(
     y,
     z,
     obstime=Time("2021-01-01T00:00:00", scale="utc"),
-    name="DIRBE",
+    model="DIRBE",
 )
 density_grid = density_grid.sum(axis=0)  # Sum over all components
 
