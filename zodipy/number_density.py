@@ -493,14 +493,18 @@ def grid_number_density(
         y: y-coordinates of a cartesian mesh grid.
         z: z-coordinates of a cartesian mesh grid.
         obstime: Time of observation. Required to compute the Earth position.
-        name: Zodiacal light model to use. Default is 'dirbe'.
+        name: Either Zodiacal light model to use or an arbitrary model from the Model class. Default is 'dirbe'. 
         ephemeris: Solar system ephemeris to use. Default is 'builtin'.
 
     Returns:
         number_density_grid: The tabulated zodiacal component densities.
 
     """
-    ipd_model = model_registry.get_model(name)
+    if type(name) == str:
+        ipd_model = model_registry.get_model(name)
+    else:
+        
+        ipd_model = name._ipd_model
 
     grid = np.asarray(np.meshgrid(x, y, z))
 
