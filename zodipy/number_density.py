@@ -26,6 +26,7 @@ from zodipy.component import (
     ZodiacalComponent,
 )
 from zodipy.model_registry import model_registry
+from zodipy.zodiacal_light_model import ZodiacalLightModel
 
 if TYPE_CHECKING:
     from astropy import time, units
@@ -483,7 +484,7 @@ def grid_number_density(
     y: units.Quantity[units.AU],
     z: units.Quantity[units.AU],
     obstime: time.Time,
-    name: str = "dirbe",
+    model: str | ZodiacalLightModel = "dirbe",
     ephemeris: str = "builtin",
 ) -> npt.NDArray[np.float64]:
     """Return the component-wise tabulated densities of the zodiacal components for a given grid.
@@ -493,36 +494,43 @@ def grid_number_density(
         y: y-coordinates of a cartesian mesh grid.
         z: z-coordinates of a cartesian mesh grid.
         obstime: Time of observation. Required to compute the Earth position.
-        name: Zodiacal light model to use. Default is 'dirbe'.
+        model: String representing a built-in model or an explicit instance of a
+            `ZodiacalLightModel`. Default is 'dirbe'.
         ephemeris: Solar system ephemeris to use. Default is 'builtin'.
 
     Returns:
         number_density_grid: The tabulated zodiacal component densities.
 
     """
-    ipd_model = model_registry.get_model(name)
+    if isinstance(model, str):
+        zodiacal_light_model = model_registry.get_model(model)
+    elif isinstance(model, ZodiacalLightModel):
+        zodiacal_light_model = model
+    else:
+        msg = "model type must be a `str` or a `ZodiacalLightModel`."
+        raise TypeError(msg)
 
     grid = np.asarray(np.meshgrid(x, y, z))
 
     earthpos_xyz = get_earthpos_inst(obstime, ephemeris=ephemeris)
 
     # broadcasting reshapes
-    for comp in ipd_model.comps.values():
+    for comp in zodiacal_light_model.comps.values():
         comp.X_0 = comp.X_0.reshape(3, 1, 1, 1)
 
     density_partials = get_partial_number_density_func(
-        comps=ipd_model.comps,
+        comps=zodiacal_light_model.comps,
     )
     density_partials = update_partial_earth_pos(
         density_partials, earthpos_xyz[:, np.newaxis, np.newaxis, np.newaxis]
     )
 
-    number_density_grid = np.zeros((len(ipd_model.comps), *grid.shape[1:]))
+    number_density_grid = np.zeros((len(zodiacal_light_model.comps), *grid.shape[1:]))
     for idx, number_density_callable in enumerate(density_partials.values()):
         number_density_grid[idx] = number_density_callable(grid)
 
     # Revert broadcasting reshapes
-    for comp in ipd_model.comps.values():
+    for comp in zodiacal_light_model.comps.values():
         comp.X_0 = comp.X_0.reshape(3, 1)
 
     return number_density_grid
