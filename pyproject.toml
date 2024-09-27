@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zodipy"
-version = "1.0.0"
+version = "1.1.0"
 description = "A Python package for zodiacal light simulations"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
