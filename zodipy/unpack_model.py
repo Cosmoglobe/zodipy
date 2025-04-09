@@ -10,6 +10,8 @@ from scipy import integrate, interpolate
 from zodipy.component import ComponentLabel
 from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
 
+from copy import deepcopy
+
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
 UnpackedModelDicts = tuple[CompParamDict, CommonParamDict]
@@ -23,8 +25,10 @@ def interp_and_unpack_kelsall(
     model: Kelsall,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
-    model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
 
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
+    
     comp_params: dict[ComponentLabel, dict[str, Any]] = {}
     common_params: dict[str, Any] = {
         "T_0": model.T_0,
@@ -102,7 +106,8 @@ def interp_and_unpack_rrm(
     model: RRM,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
-    model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
 
     comp_params: dict[ComponentLabel, dict[str, Any]] = {}
     common_params: dict[str, Any] = {}
@@ -130,6 +135,9 @@ def interp_spectral_param(
     """Interpolate a spectral parameters."""
     paramameter = np.asarray(spectral_parameter)
 
+    if not np.array_equal(model_spectrum.value, np.sort(model_spectrum.value)):
+        model_spectrum = np.flip(model_spectrum)
+        parameter = np.flip(parameter)
     if use_nearest:
         interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(
             wavelengths.value
