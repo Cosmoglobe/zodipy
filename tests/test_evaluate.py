@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from astropy import constants, time, units
 from astropy import coordinates as coords
-from astropy import time, units, constants
 from astropy.coordinates import SkyCoord
 from hypothesis import HealthCheck, given, settings
 from hypothesis.strategies import DataObject, data
@@ -37,12 +37,13 @@ def test_emission_parity() -> None:
 
     skycoord = coords.SkyCoord(TEST_LON, TEST_LAT, obstime=TEST_TIME, frame="galactic")
     model1 = Model(lambda_micron, extrapolate=False)
-    model2 = Model(freq_ghz, extrapolate=False) 
+    model2 = Model(freq_ghz, extrapolate=False)
 
     evaluation1 = list(model1.evaluate(skycoord).value)
     evaluation2 = list(model2.evaluate(skycoord).value)
-    
+
     assert [round(val, 12) for val in evaluation1] == [round(val, 12) for val in evaluation2]
+
 
 def test_compare_to_dirbe_idl() -> None:
     """Tests that ZodiPy reproduces the DIRBE software.

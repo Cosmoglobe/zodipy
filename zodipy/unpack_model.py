@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any, Callable, TypeVar, Union
 
 import numpy as np
@@ -9,8 +10,6 @@ from scipy import integrate, interpolate
 
 from zodipy.component import ComponentLabel
 from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
-
-from copy import deepcopy
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
@@ -25,7 +24,6 @@ def interp_and_unpack_kelsall(
     model: Kelsall,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
-
     model_spectrum = deepcopy(model.spectrum)
     wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
 
@@ -138,6 +136,7 @@ def interp_spectral_param(
     if not np.array_equal(model_spectrum.value, np.sort(model_spectrum.value)):
         model_spectrum = np.flip(model_spectrum)
         paramameter = np.flip(paramameter)
+
     if use_nearest:
         interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(
             wavelengths.value

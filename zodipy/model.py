@@ -179,7 +179,7 @@ class Model:
         else:
             interp_obstimes = arrange_obstimes(skycoord.obstime[0].mjd, skycoord.obstime[-1].mjd)
 
-        dist_coords_to_cores = skycoord.size > nprocesses and nprocesses > 1
+        dist_coords_to_cores = skycoord.size > nprocesses > 1
         if dist_coords_to_cores:
             skycoord_splits = np.array_split(skycoord, nprocesses)
             obspos_splits = (
