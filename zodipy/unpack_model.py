@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any, Callable, TypeVar, Union
 
 import numpy as np
@@ -23,7 +24,8 @@ def interp_and_unpack_kelsall(
     model: Kelsall,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
-    model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
 
     comp_params: dict[ComponentLabel, dict[str, Any]] = {}
     common_params: dict[str, Any] = {
@@ -102,7 +104,8 @@ def interp_and_unpack_rrm(
     model: RRM,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
-    model_spectrum = model.spectrum.to(wavelengths.unit, equivalencies=units.spectral())
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
 
     comp_params: dict[ComponentLabel, dict[str, Any]] = {}
     common_params: dict[str, Any] = {}
@@ -129,6 +132,10 @@ def interp_spectral_param(
 ) -> npt.NDArray:
     """Interpolate a spectral parameters."""
     paramameter = np.asarray(spectral_parameter)
+
+    if not np.array_equal(model_spectrum.value, np.sort(model_spectrum.value)):
+        model_spectrum = np.flip(model_spectrum)
+        paramameter = np.flip(paramameter)
 
     if use_nearest:
         interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(

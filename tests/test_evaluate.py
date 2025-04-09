@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from astropy import constants, time, units
 from astropy import coordinates as coords
-from astropy import time, units
 from astropy.coordinates import SkyCoord
 from hypothesis import HealthCheck, given, settings
 from hypothesis.strategies import DataObject, data
@@ -25,7 +25,24 @@ np.random.seed(42)
 TEST_TIME = time.Time("2021-01-01T00:00:00", scale="utc")
 TEST_SKY_COORD = SkyCoord(20, 30, unit=units.deg, obstime=TEST_TIME)
 TEST_SKY_COORD_GALACTIC = SkyCoord(20, 30, unit=units.deg, obstime=TEST_TIME, frame="galactic")
+TEST_LON = [10, 10.1, 10.2] * units.deg
+TEST_LAT = [90, 89, 77] * units.deg
 test_model = Model(x=20 * units.micron)
+
+
+def test_emission_parity() -> None:
+    """Test emission parity between GHz and microns."""
+    lambda_micron = 20.0 * units.um
+    freq_ghz = (constants.c / lambda_micron).to(units.GHz)
+
+    skycoord = coords.SkyCoord(TEST_LON, TEST_LAT, obstime=TEST_TIME, frame="galactic")
+    model1 = Model(lambda_micron, extrapolate=False)
+    model2 = Model(freq_ghz, extrapolate=False)
+
+    evaluation1 = list(model1.evaluate(skycoord).value)
+    evaluation2 = list(model2.evaluate(skycoord).value)
+
+    assert [round(val, 12) for val in evaluation1] == [round(val, 12) for val in evaluation2]
 
 
 def test_compare_to_dirbe_idl() -> None:
