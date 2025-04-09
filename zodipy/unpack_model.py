@@ -28,7 +28,7 @@ def interp_and_unpack_kelsall(
 
     model_spectrum = deepcopy(model.spectrum)
     wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
-    
+
     comp_params: dict[ComponentLabel, dict[str, Any]] = {}
     common_params: dict[str, Any] = {
         "T_0": model.T_0,
@@ -137,7 +137,7 @@ def interp_spectral_param(
 
     if not np.array_equal(model_spectrum.value, np.sort(model_spectrum.value)):
         model_spectrum = np.flip(model_spectrum)
-        parameter = np.flip(parameter)
+        paramameter = np.flip(paramameter)
     if use_nearest:
         interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(
             wavelengths.value
