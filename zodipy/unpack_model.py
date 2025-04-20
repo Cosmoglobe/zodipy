@@ -15,7 +15,9 @@ CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
 UnpackedModelDicts = tuple[CompParamDict, CommonParamDict]
 T = TypeVar("T", bound=ZodiacalLightModel)
-UnpackModelCallable = Callable[[units.Quantity, Union[units.Quantity, None], T], UnpackedModelDicts]
+UnpackModelCallable = Callable[
+    [units.Quantity, Union[units.Quantity, None], T, bool], UnpackedModelDicts
+]
 
 
 def interp_and_unpack_kelsall(

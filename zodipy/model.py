@@ -287,7 +287,7 @@ class Model:
         """
         interp_and_unpack_func = get_model_interp_func(self._ipd_model)
         dicts = interp_and_unpack_func(
-            self._x, self._normalized_weights, self._ipd_model, bounds_error=self._bounds_error
+            self._x, self._normalized_weights, self._ipd_model, self._bounds_error
         )
         self._interped_comp_params = dicts[0]
         self._interped_shared_params = dicts[1]
