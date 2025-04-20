@@ -78,7 +78,6 @@ class Model:
             raise ValueError(msg)
 
         self._ipd_model = model_registry.get_model(name)
-
         if not extrapolate and not self._ipd_model.is_valid_at(x):
             msg = (
                 "The requested frequencies are outside the valid range of the model. "
@@ -97,6 +96,7 @@ class Model:
             normalized_weights = None
 
         self._x = x
+        self._bounds_error = not extrapolate
         self._normalized_weights = normalized_weights
         self._b_nu_table = tabulate_blackbody_emission(self._x, self._normalized_weights)
 
@@ -286,7 +286,9 @@ class Model:
         all non line-of-sight related parameters.
         """
         interp_and_unpack_func = get_model_interp_func(self._ipd_model)
-        dicts = interp_and_unpack_func(self._x, self._normalized_weights, self._ipd_model)
+        dicts = interp_and_unpack_func(
+            self._x, self._normalized_weights, self._ipd_model, bounds_error=self._bounds_error
+        )
         self._interped_comp_params = dicts[0]
         self._interped_shared_params = dicts[1]
 

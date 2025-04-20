@@ -22,6 +22,7 @@ def interp_and_unpack_kelsall(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: Kelsall,
+    bounds_error: bool,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
     model_spectrum = deepcopy(model.spectrum)
@@ -40,6 +41,7 @@ def interp_and_unpack_kelsall(
             weights,
             model_spectrum,
             spectral_parameter=model.emissivities[comp_label],
+            bounds_error=bounds_error,
         )
         if model.albedos is not None:
             comp_params[comp_label]["albedo"] = interp_spectral_param(
@@ -47,6 +49,7 @@ def interp_and_unpack_kelsall(
                 weights,
                 model_spectrum,
                 spectral_parameter=model.albedos[comp_label],
+                bounds_error=bounds_error,
             )
         else:
             comp_params[comp_label]["albedo"] = 0
@@ -58,6 +61,7 @@ def interp_and_unpack_kelsall(
             model_spectrum,
             spectral_parameter=model.C1,
             use_nearest=True,
+            bounds_error=bounds_error,
         )
         if model.C1 is not None
         else 0
@@ -69,6 +73,7 @@ def interp_and_unpack_kelsall(
             model_spectrum,
             spectral_parameter=model.C2,
             use_nearest=True,
+            bounds_error=bounds_error,
         )
         if model.C2 is not None
         else 0
@@ -81,6 +86,7 @@ def interp_and_unpack_kelsall(
             model_spectrum,
             spectral_parameter=model.C3,
             use_nearest=True,
+            bounds_error=bounds_error,
         )
         if model.C3 is not None
         else 0
@@ -93,6 +99,7 @@ def interp_and_unpack_kelsall(
             weights,
             model_spectrum,
             spectral_parameter=model.solar_irradiance,
+            bounds_error=bounds_error,
         )
 
     return comp_params, common_params
@@ -102,6 +109,7 @@ def interp_and_unpack_rrm(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
     model: RRM,
+    bounds_error: bool,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
     model_spectrum = deepcopy(model.spectrum)
@@ -116,7 +124,11 @@ def interp_and_unpack_rrm(
         comp_params[comp_label]["delta"] = model.delta[comp_label]
 
     calibration = interp_spectral_param(
-        wavelengths, weights, model_spectrum, spectral_parameter=model.calibration
+        wavelengths,
+        weights,
+        model_spectrum,
+        spectral_parameter=model.calibration,
+        bounds_error=bounds_error,
     )
     calibration_quantity = units.Quantity(calibration, unit=units.MJy / units.AU)
     common_params["calibration"] = calibration_quantity.to_value(units.Jy / units.cm)
@@ -129,21 +141,31 @@ def interp_spectral_param(
     model_spectrum: units.Quantity,
     spectral_parameter: npt.ArrayLike,
     use_nearest: bool = False,
+    bounds_error: bool = True,
 ) -> npt.NDArray:
     """Interpolate a spectral parameters."""
-    paramameter = np.asarray(spectral_parameter)
+    parameter = np.asarray(spectral_parameter)
 
     if not np.array_equal(model_spectrum.value, np.sort(model_spectrum.value)):
         model_spectrum = np.flip(model_spectrum)
-        paramameter = np.flip(paramameter)
+        parameter = np.flip(parameter)
+
+    fill_value = np.nan if bounds_error else "extrapolate"
 
     if use_nearest:
-        interped_param = interpolate.interp1d(model_spectrum.value, paramameter, kind="nearest")(
-            wavelengths.value
+        interp_func = interpolate.interp1d(
+            model_spectrum.value,
+            parameter,
+            bounds_error=bounds_error,
+            fill_value=fill_value,
+            kind="nearest",
         )
     else:
-        interped_param = np.interp(wavelengths.value, model_spectrum.value, paramameter)
+        interp_func = interpolate.interp1d(
+            model_spectrum.value, parameter, bounds_error=bounds_error, fill_value=fill_value
+        )
 
+    interped_param = interp_func(wavelengths.value)
     if weights is not None:
         return integrate.trapezoid(weights.value * interped_param, x=wavelengths.value)
     return interped_param
