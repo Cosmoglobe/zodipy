@@ -19,10 +19,16 @@ TEST_SAMPRATE = 1 / 86400  # 1 sec
 
 
 @st.composite
-def bandpass(draw: st.DrawFn, model: ZodiacalLightModel) -> tuple[units.Quantity, np.ndarray]:
+def bandpass(
+    draw: st.DrawFn, model: ZodiacalLightModel, extrapolate: bool
+) -> tuple[units.Quantity, np.ndarray]:
     """Generate randomized bandpass."""
     min_freq = model.spectrum.min()
     max_freq = model.spectrum.max()
+    if extrapolate:
+        min_freq -= min_freq * draw(st.floats(min_value=0.1, max_value=0.5))
+        max_freq += max_freq * draw(st.floats(min_value=0.1, max_value=0.5))
+
     scale = draw(st.floats(min_value=0.1, max_value=0.5))
     full_width = max_freq - min_freq
     width = full_width * scale
@@ -42,20 +48,18 @@ def models(draw: st.DrawFn) -> Model:
     model_name = draw(st.sampled_from(model_registry.models))
     zodi_model = model_registry.get_model(model_name)
     has_bandpass = draw(st.booleans())
+    extrapolate = draw(st.booleans())
     if has_bandpass:
-        x, weights = draw(bandpass(zodi_model))
-
+        x, weights = draw(bandpass(zodi_model, extrapolate))
     else:
-        x = (
-            draw(
-                st.floats(
-                    min_value=zodi_model.spectrum.min().value,
-                    max_value=zodi_model.spectrum.max().value,
-                )
-            )
-        ) * zodi_model.spectrum.unit
+        x_min = zodi_model.spectrum.min().value
+        x_max = zodi_model.spectrum.max().value
+        if extrapolate:
+            x_min -= x_min * draw(st.floats(0.1, 0.5))
+            x_max += x_max * draw(st.floats(0.1, 0.5))
+        x = (draw(st.floats(min_value=x_min, max_value=x_max))) * zodi_model.spectrum.unit
         weights = None
-    return Model(x, weights=weights, name=model_name)
+    return Model(x, weights=weights, name=model_name, extrapolate=extrapolate)
 
 
 @st.composite
