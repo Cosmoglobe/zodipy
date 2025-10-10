@@ -110,7 +110,7 @@ def interp_and_unpack_kelsall(
 def interp_and_unpack_cosmoglobe(
     wavelengths: units.Quantity,
     weights: units.Quantity | None,
-    model: Kelsall,
+    model: Cosmoglobe,
     bounds_error: bool,
 ) -> UnpackedModelDicts:
     """InterplantaryDustModelToDicts implementation for Kelsall model."""
