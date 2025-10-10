@@ -14,6 +14,8 @@ from zodipy.component import (
     Ring,
     RingRRM,
     ZodiacalComponent,
+    CloudRingWright,
+    BandWright,
 )
 
 DIRBE: dict[ComponentLabel, ZodiacalComponent] = {
@@ -279,3 +281,48 @@ RRM: dict[ComponentLabel, ZodiacalComponent] = {
         sigma_theta=12.1,
     ),
 }
+
+WRIGHT: dict[ComponentLabel, ZodiacalComponent] = {
+    ComponentLabel.CLOUDRING_WRIGHT: CloudRingWright(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=1,
+        Omega=1, 
+        p1 = 1.2346,
+        p3 = 3.5785,
+        p4 = 0.9450,
+        p5 = -1.3559,
+        p6 = 0.3838,
+        p7 = -0.0758,
+        p8 = -0.0195,
+        p9 = -0.0471,
+        p10 = 0.6098,
+        p13 = 0.3161,
+        p14 = 7.8852,
+        p15 = -0.0226,
+        p16 = 0.0289,
+        p17 = -0.0262,
+        p18 = -0.1977,
+        p19 = -0.0294,
+    ),
+    ComponentLabel.BAND_WRIGHT: BandWright(
+        x_0=0.0,
+        y_0=0.0,
+        z_0=0.0,
+        i=1,
+        Omega=1,         
+        q1 = 1.7058,
+        q2 = 0.1963,
+        q3 = 0.2722,
+        q4 = 0.2515,
+        q5 = 0.1167,
+        q6 = -0.2691,
+        q7 = -0.9321,
+        q8 = 1.9164,
+        R_1 = 3.14,
+        R_2 = 3.02,
+        p12 = 0.7727,
+    ),
+}
+

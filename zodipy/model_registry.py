@@ -1,5 +1,5 @@
 from zodipy import component_params, source_params
-from zodipy.zodiacal_light_model import RRM, Kelsall, Cosmoglobe, model_registry
+from zodipy.zodiacal_light_model import Wright, RRM, Kelsall, Cosmoglobe, model_registry
 
 model_registry.register_model(
     name="dirbe",
@@ -32,6 +32,22 @@ model_registry.register_model(
         w3=source_params.w3_COSMOGLOBE,
         T_0=source_params.T_0_DIRBE,
         delta=source_params.DELTA_COSMOGLOBE,
+    ),
+)
+
+model_registry.register_model(
+    name="wright",
+    model=Wright(
+        comps=component_params.WRIGHT,
+        spectrum=source_params.SPECTRUM_DIRBE,
+        emissivities=source_params.EMISSIVITY_WRIGHT,
+        albedos=source_params.ALBEDO_WRIGHT,
+        p20=source_params.p20_WRIGHT,
+        p21=source_params.p21_WRIGHT,
+        p11=source_params.p11_WRIGHT,
+        T_0=source_params.T_0_WRIGHT,
+        delta=source_params.DELTA_WRIGHT,
+        T_sun=source_params.T_sun_WRIGHT,
     ),
 )
 

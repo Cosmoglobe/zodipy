@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Callable, Iterable
 import numpy as np
 
 from zodipy.component import ComponentLabel
-from zodipy.component_params import RRM
+from zodipy.component_params import RRM, WRIGHT
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -48,8 +48,13 @@ RRM_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]]
     ComponentLabel.FEATURE_RRM: DIRBE_CUTOFFS[ComponentLabel.FEATURE],
 }
 
+WRIGHT_CUTOFFS: dict[ComponentLabel, tuple[float | np.float64, float | np.float64]] = {
+    ComponentLabel.CLOUDRING_WRIGHT: (R_0, R_JUPITER),
+    ComponentLabel.BAND_WRIGHT: (R_0, R_JUPITER),
+}
 
-COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS}
+
+COMPONENT_CUTOFFS = {**DIRBE_CUTOFFS, **RRM_CUTOFFS, **WRIGHT_CUTOFFS}
 
 
 def integrate_leggauss(

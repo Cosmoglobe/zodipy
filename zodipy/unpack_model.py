@@ -9,7 +9,7 @@ from astropy import units
 from scipy import integrate, interpolate
 
 from zodipy.component import ComponentLabel
-from zodipy.zodiacal_light_model import RRM, Kelsall, Cosmoglobe, ZodiacalLightModel
+from zodipy.zodiacal_light_model import RRM, Wright, Kelsall, Cosmoglobe, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
@@ -113,7 +113,7 @@ def interp_and_unpack_cosmoglobe(
     model: Cosmoglobe,
     bounds_error: bool,
 ) -> UnpackedModelDicts:
-    """InterplantaryDustModelToDicts implementation for Kelsall model."""
+    """InterplantaryDustModelToDicts implementation for Cosmoglobe DR2 model."""
     model_spectrum = deepcopy(model.spectrum)
     wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
 
@@ -221,6 +221,72 @@ def interp_and_unpack_cosmoglobe(
 
     return comp_params, common_params
 
+def interp_and_unpack_wright(
+    wavelengths: units.Quantity,
+    weights: units.Quantity | None,
+    model: Wright,
+    bounds_error: bool,
+) -> UnpackedModelDicts:
+    """InterplantaryDustModelToDicts implementation for Wright model."""
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
+
+    comp_params: dict[ComponentLabel, dict[str, Any]] = {}
+    common_params: dict[str, Any] = {
+        "T_sun": model.T_sun,
+        "T_0": model.T_0,
+        "delta": model.delta,
+        "p11": model.p11,
+    }
+
+    for comp_label in model.comps:
+        comp_params[comp_label] = {}
+        comp_params[comp_label]["emissivity"] = interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.emissivities[comp_label],
+            bounds_error=bounds_error,
+        )
+        if model.albedos is not None:
+            comp_params[comp_label]["albedo"] = interp_spectral_param(
+                wavelengths,
+                weights,
+                model_spectrum,
+                spectral_parameter=model.albedos[comp_label],
+                bounds_error=bounds_error,
+            )
+        else:
+            comp_params[comp_label]["albedo"] = 0
+
+    common_params["p20"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.p20,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.p20 is not None
+        else 0
+    )
+
+    common_params["p21"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.p21,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.p21 is not None
+        else 0
+    )
+
+    return comp_params, common_params
+
 
 
 def interp_and_unpack_rrm(
@@ -293,6 +359,7 @@ interp_and_unpack_func_mapping: dict[type[ZodiacalLightModel], UnpackModelCallab
     Kelsall: interp_and_unpack_kelsall,
     RRM: interp_and_unpack_rrm,
     Cosmoglobe: interp_and_unpack_cosmoglobe,
+    Wright: interp_and_unpack_wright,
 }
 
 
