@@ -12,7 +12,6 @@ from zodipy.brightness import (
     kelsall_brightness_at_step,
     cosmoglobe_brightness_at_step,
     rrm_brightness_at_step,
-    wright_brightness_at_step,
 )
 
 if TYPE_CHECKING:
@@ -108,25 +107,6 @@ class Cosmoglobe(ZodiacalLightModel):
     def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
         """Hong brightness at a step fuction."""
         return cosmoglobe_brightness_at_step
-
-@dataclass(repr=False)
-class Wright(ZodiacalLightModel):
-    """Wright E. L. 1997 + Gorjian, Wright and Chary 2000"""
-
-    T_sun: float
-    T_0: float
-    delta: float
-    p11: float
-    emissivities: Mapping[ComponentLabel, Sequence[float]]
-    albedos: Mapping[ComponentLabel, Sequence[float]] | None = None
-    p20: Sequence[float] | None = None
-    p21: Sequence[float] | None = None
-
-    @property
-    def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
-        """Hong brightness at a step fuction."""
-        return wright_brightness_at_step
-
 
 @dataclass(repr=False)
 class RRM(ZodiacalLightModel):

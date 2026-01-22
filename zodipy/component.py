@@ -203,55 +203,6 @@ class FeatureRRM(Feature):
 
     A: float
 
-@dataclass
-class CloudRingWright(ZodiacalComponent):
-    """W97 cloud+ring."""
-
-    x_0: float
-    y_0: float
-    z_0: float
-    i: float
-    Omega: float
-
-    p1: float
-    p3: float
-    p4: float
-    p5: float
-    p6: float
-    p7: float
-    p8: float
-    p9: float
-    p10: float
-    p13: float
-    p14: float
-    p15: float
-    p16: float
-    p17: float
-    p18: float
-    p19: float
-
-@dataclass
-class BandWright(ZodiacalComponent):
-    """W97 band."""
-
-    x_0: float
-    y_0: float
-    z_0: float
-    i: float
-    Omega: float
-
-    q1: float
-    q2: float
-    q3: float 
-    q4: float
-    q5: float
-    q6: float
-    q7: float 
-    q8: float 
-    R_1: float 
-    R_2: float
-    p12: float 
-
 
 class ComponentLabel(Enum):
     """Labels representing the components in the DIRBE model."""
@@ -270,5 +221,3 @@ class ComponentLabel(Enum):
     BROAD_BAND = "broad_band"
     RING_RRM = "ring_rrm"
     FEATURE_RRM = "feature_rrm"
-    CLOUDRING_WRIGHT = "cloudring_wright"
-    BAND_WRIGHT = "band_wright"

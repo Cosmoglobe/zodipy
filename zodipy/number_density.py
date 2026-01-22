@@ -24,8 +24,6 @@ from zodipy.component import (
     Ring,
     RingRRM,
     ZodiacalComponent,
-    CloudRingWright,
-    BandWright,
 )
 from zodipy.model_registry import model_registry
 from zodipy.zodiacal_light_model import ZodiacalLightModel
@@ -405,99 +403,6 @@ def rrm_feature_number_density(
         theta_rad=theta_rad,
     )
 
-def wright_cloudring_number_density(
-    X_helio: npt.NDArray[np.float64],
-    X_earth: npt.NDArray[np.float64],
-    p1: float, 
-    p3: float, 
-    p4: float, 
-    p5: float, 
-    p6: float,
-    p7: float, 
-    p8: float, 
-    p9: float, 
-    p10: float,
-    p13: float,
-    p14: float,
-    p15: float,
-    p16: float,
-    p17: float,
-    p18: float,
-    p19: float,
-
-) -> npt.NDArray[np.float64]:
-    """Density of the diffuse cloud (see Eq (A7). in W97)."""
-    
-    #cloud
-    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
-    O_cloud = [p8/10, p9/10, 0]
-    R_cloud = R_helio + O_cloud[0]*X_helio[0] + O_cloud[1]*X_helio[1] + O_cloud[2]*X_helio[2]
-
-    Z_down = np.sqrt(100+p6**2+p7**2)
-    Z_cloud = [p6, p7, 10]/Z_down
-    sin_incl = (Z_cloud[0]*X_helio[0] + Z_cloud[1]*X_helio[1] + Z_cloud[2]*X_helio[2])/R_helio
-
-    S = np.exp(p5)
-    Z_f = np.where(np.abs(sin_incl) > S, np.abs(sin_incl) - 0.5 * S, 0.5 * sin_incl**2 / S)
-
-    f_i = (np.exp(-p3*Z_f**p4)+p15+(p16*sin_incl**2)+(p17*4*sin_incl**2*np.exp(-4*sin_incl**2))+
-           (p18*16*sin_incl**2*np.exp(-16*sin_incl**2))+(p19*36*sin_incl**2*np.exp(-36*sin_incl**2)))
-
-    #ring
-    L_earth = np.arctan2(X_earth[1], X_earth[0])
-    X_d = [X_helio[0]*np.cos(L_earth)+X_helio[1]*np.sin(L_earth), 
-           X_helio[1]*np.cos(L_earth)-X_helio[0]*np.sin(L_earth),
-           X_helio[2]]
-    L_d = np.abs(np.arctan2(X_d[1], X_d[0])+0.25)
-    A = np.where(L_d < 3.0/8.0, np.cos(8 * np.pi * L_d / 3.0), 
-                 np.where((L_d >= 3.0/8.0) & (L_d < 3.0/4.0), 
-                          (np.cos(8 * np.pi * L_d / 3.0) - 1) * 0.5, 0.0)
-                 )
-    D = np.exp(-56.5*(np.sqrt(X_d[0]**2+X_d[1]**2)-1.133+(0.133*p13*np.exp(-4*L_d**2)))**2-(p14*X_d[2]**2)/R_helio**2)
-
-    #cumulative
-    return (R_helio/R_cloud)*f_i*R_cloud**(-p1)*(1+(p10*D*(1+A)*0.10))
-
-
-def wright_band_number_density(
-    X_helio: npt.NDArray[np.float64],
-    q1: float, 
-    q2: float,
-    q3: float, 
-    q4: float, 
-    q5: float,
-    q6: float,
-    q7: float, 
-    q8: float, 
-    R_1: float, 
-    R_2: float,
-    p12: float,   
-) -> npt.NDArray[np.float64]:
-    """Density of the dust bands (see Eq. (A25) in W97)."""
-
-    R_helio = np.sqrt(X_helio[0] ** 2 + X_helio[1] ** 2 + X_helio[2] ** 2)
-    Z_down = np.sqrt(100+q5**2+q6**2)
-    Z_b = [q5, q6, 10]/Z_down
-    sin_incl = (Z_b[0]*X_helio[0] + Z_b[1]*X_helio[1] + Z_b[2]*X_helio[2])/R_helio
-
-    O_b = [q7*0.1, q8*0.1, 0]
-    R_b = R_helio+(O_b[0]*X_helio[0]+O_b[1]*X_helio[1]+O_b[2]*X_helio[2])
-
-    rho_b = np.where(
-    (np.abs(sin_incl) < q1) & (R_b < R_1),
-    (R_helio / R_b**2) * q2 * np.cosh((1.72 * np.abs(sin_incl)) / q1),
-    0.0
-    )
-
-    rho_b += np.where(
-        (np.abs(sin_incl) < q3) & (R_b < R_2),
-        (R_helio / R_b**2) * q4 * np.cosh((1.72 * np.abs(sin_incl)) / q3),
-        0.0
-    )
-
-    return p12*rho_b
-
-
 # Mapping of implemented zodiacal component data classes and their density functions.
 DENSITY_FUNCS: dict[type[ZodiacalComponent], ComputeDensityFunc] = {
     Cloud: cloud_number_density,
@@ -511,8 +416,6 @@ DENSITY_FUNCS: dict[type[ZodiacalComponent], ComputeDensityFunc] = {
     BroadBand: broad_band_number_density,
     RingRRM: rrm_ring_number_density,
     FeatureRRM: rrm_feature_number_density,
-    CloudRingWright: wright_cloudring_number_density,
-    BandWright: wright_band_number_density,
 }
 
 

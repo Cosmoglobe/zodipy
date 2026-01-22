@@ -82,22 +82,3 @@ def get_phase_function_Hong(
     Phi += w3*(1.0-g3**2)/(1.0+g3**2-2.0*g3*np.cos(Theta))**1.5
     return Phi/(4.0*np.pi)
 
-def get_phase_function_Wright(
-    Theta: npt.NDArray[np.float64], p20: np.float64, p21: np.float64
-) -> npt.NDArray[np.float64]:
-    """Return the phase function using Wright version.
-
-    Args:
-        Theta: Scattering angle.
-        p20
-        p21
-
-    Returns:
-        The Wright's Phase funciton.
-
-    """
-    mu = np.cos(Theta)
-    exponent = -(p20*mu)+(p21*mu**2)
-    return np.exp(exponent)
-
-
