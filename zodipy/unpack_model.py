@@ -9,7 +9,7 @@ from astropy import units
 from scipy import integrate, interpolate
 
 from zodipy.component import ComponentLabel
-from zodipy.zodiacal_light_model import RRM, Kelsall, Cosmoglobe, ZodiacalLightModel
+from zodipy.zodiacal_light_model import RRM, Cosmoglobe, Kelsall, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
@@ -93,7 +93,7 @@ def interp_and_unpack_kelsall(
         if model.C3 is not None
         else 0
     )
-    
+
     if model.solar_irradiance is None:
         common_params["solar_irradiance"] = 0
     else:
@@ -106,6 +106,7 @@ def interp_and_unpack_kelsall(
         )
 
     return comp_params, common_params
+
 
 def interp_and_unpack_cosmoglobe(
     wavelengths: units.Quantity,

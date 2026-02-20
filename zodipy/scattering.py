@@ -60,7 +60,12 @@ def _get_phase_normalization(C1: np.float64, C2: np.float64, C3: np.float64) -> 
 
 
 def get_phase_function_Hong(
-    Theta: npt.NDArray[np.float64], g1: np.float64, g2: np.float64, g3: np.float64, w2: np.float64, w3: np.float64
+    Theta: npt.NDArray[np.float64],
+    g1: np.float64,
+    g2: np.float64,
+    g3: np.float64,
+    w2: np.float64,
+    w3: np.float64,
 ) -> npt.NDArray[np.float64]:
     """Return the phase function using Homg version.
 
@@ -76,9 +81,8 @@ def get_phase_function_Hong(
         The Hong's Phase funciton.
 
     """
-    w1 = 1.0-(w2+w3)
-    Phi  = w1*(1.0-g1**2)/(1.0+g1**2-2.0*g1*np.cos(Theta))**1.5
-    Phi += w2*(1.0-g2**2)/(1.0+g2**2-2.0*g2*np.cos(Theta))**1.5
-    Phi += w3*(1.0-g3**2)/(1.0+g3**2-2.0*g3*np.cos(Theta))**1.5
-    return Phi/(4.0*np.pi)
-
+    w1 = 1.0 - (w2 + w3)
+    Phi = w1 * (1.0 - g1**2) / (1.0 + g1**2 - 2.0 * g1 * np.cos(Theta)) ** 1.5
+    Phi += w2 * (1.0 - g2**2) / (1.0 + g2**2 - 2.0 * g2 * np.cos(Theta)) ** 1.5
+    Phi += w3 * (1.0 - g3**2) / (1.0 + g3**2 - 2.0 * g3 * np.cos(Theta)) ** 1.5
+    return Phi / (4.0 * np.pi)

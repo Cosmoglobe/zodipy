@@ -9,8 +9,8 @@ from astropy import units
 
 from zodipy.brightness import (
     BrightnessAtStepCallable,
-    kelsall_brightness_at_step,
     cosmoglobe_brightness_at_step,
+    kelsall_brightness_at_step,
     rrm_brightness_at_step,
 )
 
@@ -88,6 +88,7 @@ class Kelsall(ZodiacalLightModel):
         """Kellsall brightness at a step fuction."""
         return kelsall_brightness_at_step
 
+
 @dataclass(repr=False)
 class Cosmoglobe(ZodiacalLightModel):
     """Kelsall et al. (1998) model + Hong phase function."""
@@ -99,7 +100,7 @@ class Cosmoglobe(ZodiacalLightModel):
     solar_irradiance: Sequence[float] | None = None  # In units of MJy/sr
     g1: Sequence[float] | None = None
     g2: Sequence[float] | None = None
-    g3: Sequence[float] | None = None 
+    g3: Sequence[float] | None = None
     w2: Sequence[float] | None = None
     w3: Sequence[float] | None = None
 
@@ -107,6 +108,7 @@ class Cosmoglobe(ZodiacalLightModel):
     def brightness_at_step_callable(cls) -> BrightnessAtStepCallable:
         """Hong brightness at a step fuction."""
         return cosmoglobe_brightness_at_step
+
 
 @dataclass(repr=False)
 class RRM(ZodiacalLightModel):

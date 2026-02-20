@@ -403,6 +403,7 @@ def rrm_feature_number_density(
         theta_rad=theta_rad,
     )
 
+
 # Mapping of implemented zodiacal component data classes and their density functions.
 DENSITY_FUNCS: dict[type[ZodiacalComponent], ComputeDensityFunc] = {
     Cloud: cloud_number_density,

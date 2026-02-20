@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from zodipy.blackbody import get_dust_grain_temperature
-from zodipy.scattering import get_phase_function, get_scattering_angle, get_phase_function_Hong
+from zodipy.scattering import get_phase_function, get_phase_function_Hong, get_scattering_angle
 
 if TYPE_CHECKING:
     from zodipy.number_density import NumberDensityFunc
@@ -55,6 +55,7 @@ def kelsall_brightness_at_step(
 
     return emission * number_density_func(X_helio) * 0.5 * (stop - start)
 
+
 def cosmoglobe_brightness_at_step(
     r: npt.NDArray[np.float64],
     start: npt.NDArray[np.float64],
@@ -93,6 +94,7 @@ def cosmoglobe_brightness_at_step(
         emission += albedo * solar_flux * phase_function
 
     return emission * number_density_func(X_helio) * 0.5 * (stop - start)
+
 
 def rrm_brightness_at_step(
     r: npt.NDArray[np.float64],
