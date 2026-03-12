@@ -87,7 +87,12 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-lint.select = [
+line-length = 100
+indent-width = 4
+exclude = ["work_in_progress/*"]
+
+[tool.ruff.lint]
+select = [
     "F", 
     "D", 
     "F", 
@@ -118,20 +123,18 @@ lint.select = [
     "RUF",
     "NPY201"
 ]
-lint.ignore = [
+ignore = [
     "B905",
     "D100",
     "D104",
     "D105",
     "D107",
-    "ANN101",
+    # "ANN101",
     "PLR0913",
     "ISC001",
     "S311",
 ]
-lint.pydocstyle.convention = "google"
-line-length = 100
-exclude = ["work_in_progress/*"]
+pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
