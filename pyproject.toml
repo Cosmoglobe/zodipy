@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zodipy"
-version = "1.1.2"
+version = "1.1.3"
 description = "A Python package for zodiacal light simulations"
 authors = ["Metin San <metinisan@gmail.com>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engingiteering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 keywords = [
@@ -74,21 +74,21 @@ filterwarnings = [
 
 [tool.ruff]
 lint.select = [
-    "F", 
-    "D", 
-    "F", 
-    "E", 
-    "W", 
-    "C", 
-    "B", 
-    "I", 
-    "YTT", 
-    "ANN", 
-    "S", 
-    "BLE", 
-    "A", 
-    "C4", 
-    "EM", 
+    "F",
+    "D",
+    "F",
+    "E",
+    "W",
+    "C",
+    "B",
+    "I",
+    "YTT",
+    "ANN",
+    "S",
+    "BLE",
+    "A",
+    "C4",
+    "EM",
     "ISC",
     "ICN",
     "G",
