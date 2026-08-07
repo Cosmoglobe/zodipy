@@ -73,9 +73,9 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
 skycoord = SkyCoord(
-    40 * u.deg, 
-    60 * u.deg, 
-    obstime=Time("2020-01-01"), 
+    40 * u.deg,
+    60 * u.deg,
+    obstime=Time("2020-01-01"),
 )
 ```
 where the coordinates here are specified as longitude and latitude values. Note that the 
@@ -98,9 +98,9 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
 skycoord = SkyCoord(
-    [40, 41, 42] * u.deg, 
-    [60, 59, 58] * u.deg, 
-    obstime=Time(["2020-01-01", "2020-01-02", "2020-01-03"]), 
+    [40, 41, 42] * u.deg,
+    [60, 59, 58] * u.deg,
+    obstime=Time(["2020-01-01", "2020-01-02", "2020-01-03"]),
 )
 ```
 If a single value is given for `obstime`, all coordinates are assumed to be viewed instantaneously 
@@ -122,9 +122,9 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time
 
 skycoord = SkyCoord(
-    [40, 41, 42] * u.deg, 
-    [60, 59, 58] * u.deg, 
-    obstime=Time(["2020-01-01", "2020-01-02", "2020-01-03"]), 
+    [40, 41, 42] * u.deg,
+    [60, 59, 58] * u.deg,
+    obstime=Time(["2020-01-01", "2020-01-02", "2020-01-03"]),
     frame="galactic",
 )
 ```
@@ -162,12 +162,7 @@ import zodipy
 
 model = zodipy.Model(25 * u.micron)
 
-skycoord = SkyCoord(
-    40 * u.deg, 
-    60 * u.deg, 
-    obstime=Time("2020-01-01"), 
-    frame="galactic"
-)
+skycoord = SkyCoord(40 * u.deg, 60 * u.deg, obstime=Time("2020-01-01"), frame="galactic")
 
 emission = model.evaluate(skycoord)
 print(emission)
@@ -187,12 +182,7 @@ import zodipy
 
 model = zodipy.Model(25 * u.micron)
 
-skycoord = SkyCoord(
-    40 * u.deg, 
-    60 * u.deg, 
-    obstime=Time("2020-01-01"), 
-    frame="galactic"
-)
+skycoord = SkyCoord(40 * u.deg, 60 * u.deg, obstime=Time("2020-01-01"), frame="galactic")
 
 emission = model.evaluate(skycoord, obspos="mars")
 print(emission)
@@ -221,7 +211,7 @@ argument `nprocesses` in the [`evaluate`][zodipy.Model.evaluate] method is great
 ```py
 import multiprocessing
 
-nprocesses = multiprocessing.cpu_count() # 8 cores
+nprocesses = multiprocessing.cpu_count()  # 8 cores
 
 emission = model.evaluate(skycoord, nprocesses=nprocesses)
 ```
@@ -249,13 +239,13 @@ of the sky in HEALPix representation:
 === "healpy"
 
     ```py
-    --8<-- "docs/examples/healpy_map.py"
+    --8 < --"docs/examples/healpy_map.py"
     ```
 
 === "astropy-healpix"
 
     ```py
-    --8<-- "docs/examples/astropy_healpix_map.py"
+    --8 < --"docs/examples/astropy_healpix_map.py"
     ```
 
 ![HEALPix map](img/healpix_map.png)
