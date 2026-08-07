@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-R_0 = np.finfo(np.float64).eps
+R_0 = float(np.finfo(np.float64).eps)
 R_KUIPER_BELT = 30
 R_EARTH = 1
 R_JUPITER = 5.2
