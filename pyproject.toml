@@ -115,6 +115,7 @@ lint.ignore = [
     "PLR0913",
     "ISC001",
     "S311",
+    "PLR0917",
 ]
 exclude = ["work_in_progress/*"]
 lint.pydocstyle.convention = "google"
