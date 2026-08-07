@@ -239,13 +239,13 @@ of the sky in HEALPix representation:
 === "healpy"
 
     ```py
-    --8 < --"docs/examples/healpy_map.py"
+    --8<--"docs/examples/healpy_map.py"
     ```
 
 === "astropy-healpix"
 
     ```py
-    --8 < --"docs/examples/astropy_healpix_map.py"
+    --8<--"docs/examples/astropy_healpix_map.py"
     ```
 
 ![HEALPix map](img/healpix_map.png)
