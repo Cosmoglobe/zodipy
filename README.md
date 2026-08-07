@@ -33,7 +33,7 @@ from astropy.time import Time
 import zodipy
 
 # Initialize a zodiacal light model at a wavelength/frequency or over a bandpass
-model = zodipy.Model(25*u.micron)
+model = zodipy.Model(25 * u.micron)
 
 # Use Astropy's `SkyCoord` object to specify coordinates
 lon = [10, 10.1, 10.2] * u.deg
@@ -45,7 +45,7 @@ skycoord = SkyCoord(lon, lat, obstime=obstimes, frame="galactic")
 emission = model.evaluate(skycoord)
 
 print(emission)
-#> [27.52410841 27.66572294 27.81251906] MJy / sr
+# > [27.52410841 27.66572294 27.81251906] MJy / sr
 ```
 
 ## Related scientific papers
