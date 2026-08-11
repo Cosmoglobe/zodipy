@@ -6,11 +6,11 @@ from astropy import units
 from astropy.modeling.physical_models import BlackBody
 from scipy import integrate
 
-MIN_TEMP = 40 * units.K
-MAX_TEMP = 550 * units.K
+MIN_TEMP = 40
+MAX_TEMP = 550
 N_TEMPS = 100
 TEMPERATURES = np.linspace(MIN_TEMP, MAX_TEMP, N_TEMPS)
-blackbody = BlackBody(TEMPERATURES)
+blackbody = BlackBody(TEMPERATURES * units.K)
 
 
 def get_dust_grain_temperature(
@@ -43,7 +43,7 @@ def tabulate_blackbody_emission(
 
     return np.asarray(
         [
-            TEMPERATURES.to_value(units.K),
+            TEMPERATURES,
             tabulated_blackbody_emission.to_value(units.MJy / units.sr),
         ]
     )
