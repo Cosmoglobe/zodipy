@@ -11,6 +11,7 @@ For other zodiacal light tools, see
 ## Supported zodiacal light models
 
 - DIRBE [`"dirbe"`] ([Kelsall et al. 1998](https://ui.adsabs.harvard.edu/abs/1998ApJ...508...44K/abstract))
+- Cosmoglobe [`"cosmoglobe"`] ([San et al. 2024](https://arxiv.org/abs/2408.11004))
 - Rowan-Robinson and May (experimental) [`"rrm-experimental"`] ([Rowan-Robinson and May 2013](https://ui.adsabs.harvard.edu/abs/2013MNRAS.429.2894R/abstract))
 - Planck 2013 [`"planck13"`] ([Planck Collaboration et al. 2014](https://ui.adsabs.harvard.edu/abs/2014A%26A...571A..14P/abstract>))
 - Planck 2015 [`"planck15"`] ([Planck Collaboration et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A&A...594A...8P))

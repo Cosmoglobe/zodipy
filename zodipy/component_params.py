@@ -91,6 +91,81 @@ DIRBE: dict[ComponentLabel, ZodiacalComponent] = {
     ),
 }
 
+COSMOGLOBE: dict[ComponentLabel, ZodiacalComponent] = {
+    ComponentLabel.CLOUD: Cloud(
+        x_0=0.005703,  # AU
+        y_0=-0.005631,  # AU
+        z_0=-0.0007057,  # AU
+        i=2.195,  # degrees
+        Omega=75.58,  # degrees
+        n_0=1.056e-07,  # AU^-1
+        alpha=1.343,
+        beta=3.842,
+        gamma=0.9070,
+        mu=0.2236,
+    ),
+    ComponentLabel.BAND1: Band(
+        x_0=0.0,  # AU
+        y_0=0.0,  # AU
+        z_0=0.0,  # AU
+        i=0.56,  # degrees
+        Omega=80.0,  # degrees
+        n_0=1.819e-10,  # AU^-1
+        delta_zeta=8.78,  # degrees
+        v=0.10,
+        p=4.0,
+        delta_r=1.5,  # AU
+    ),
+    ComponentLabel.BAND2: Band(
+        x_0=0.0,  # AU
+        y_0=0.0,  # AU
+        z_0=0.0,  # AU
+        i=1.2,  # degrees
+        Omega=30.3,  # degrees
+        n_0=1.487e-09,  # AU^-1
+        delta_zeta=1.99,  # degrees
+        v=0.90,
+        p=4.0,
+        delta_r=0.94,  # AU
+    ),
+    ComponentLabel.BAND3: Band(
+        x_0=0.0,  # AU
+        y_0=0.0,  # AU
+        z_0=0.0,  # AU
+        i=0.8,  # degrees
+        Omega=80.0,  # degrees
+        n_0=3.158e-11,  # AU^-1
+        delta_zeta=15.0,  # degrees
+        v=0.05,
+        p=4.0,
+        delta_r=1.5,  # AU
+    ),
+    ComponentLabel.RING: Ring(
+        x_0=0.0,  # AU
+        y_0=0.0,  # AU
+        z_0=0.0,  # AU
+        i=0.49,  # degrees
+        Omega=22.3,  # degrees
+        n_0=1.83e-08,  # AU^-1
+        R=1.03,  # AU
+        sigma_r=0.025,  # AU
+        sigma_z=0.054,  # AU
+    ),
+    ComponentLabel.FEATURE: Feature(
+        x_0=0.0,  # AU
+        y_0=0.0,  # AU
+        z_0=0.0,  # AU
+        i=0.49,  # degrees
+        Omega=22.3,  # degrees
+        n_0=1.9e-08,  # AU^-1
+        R=1.06,  # AU
+        sigma_r=0.10,  # AU
+        sigma_z=0.091,  # AU
+        theta=-10.0,  # degrees
+        sigma_theta=12.1,  # degrees
+    ),
+}
+
 PLANCK = DIRBE.copy()
 PLANCK.pop(ComponentLabel.RING)
 PLANCK.pop(ComponentLabel.FEATURE)

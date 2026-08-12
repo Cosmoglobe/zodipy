@@ -57,3 +57,32 @@ def _get_phase_normalization(C1: np.float64, C2: np.float64, C3: np.float64) -> 
     int_term3 = np.pi * C2
     int_term4 = (np.exp(C3 * np.pi) + 1) / (C3**2 + 1)
     return 1 / (int_term1 * (int_term2 + int_term3 + int_term4))
+
+
+def get_phase_function_Hong(
+    Theta: npt.NDArray[np.float64],
+    g1: np.float64,
+    g2: np.float64,
+    g3: np.float64,
+    w2: np.float64,
+    w3: np.float64,
+) -> npt.NDArray[np.float64]:
+    """Return the phase function using Homg version.
+
+    Args:
+        Theta: Scattering angle.
+        g1: Asymmetry factor.
+        g2: Asymmetry factor.
+        g3: Asymmetry factor.
+        w2: Weight coefficient.
+        w3: Weight coefficient.
+
+    Returns:
+        The Hong's Phase funciton.
+
+    """
+    w1 = 1.0 - (w2 + w3)
+    Phi = w1 * (1.0 - g1**2) / (1.0 + g1**2 - 2.0 * g1 * np.cos(Theta)) ** 1.5
+    Phi += w2 * (1.0 - g2**2) / (1.0 + g2**2 - 2.0 * g2 * np.cos(Theta)) ** 1.5
+    Phi += w3 * (1.0 - g3**2) / (1.0 + g3**2 - 2.0 * g3 * np.cos(Theta)) ** 1.5
+    return Phi / (4.0 * np.pi)
