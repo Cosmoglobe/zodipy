@@ -17,14 +17,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1.4.2
+      - name: Set up uv
+        uses: astral-sh/setup-uv@5
         with:
-          version: 2.3.4
-          virtualenvs-in-project: true
+	  enable-cache: true
 
       - name: Install dependencies
-        run: poetry install
+        run: uv sync --locked --dev
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: Typecheck with mypy
@@ -35,17 +34,17 @@ jobs:
       - name: Check linting with ruff
         run: |
           source $VENV
-          ruff check
+          uvx ruff check
 
       - name: Check formating with ruff
         run: |
           source $VENV
-          ruff format --check
+          uvx ruff format --check
 
       - name: Test with pytest
         run: |
           source $VENV
-          pytest tests -v --cov=./zodipy --cov-report=xml:./coverage.xml --cov-report term-missing
+          uv run pytest tests -v --cov=./zodipy --cov-report=xml:./coverage.xml --cov-report term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
