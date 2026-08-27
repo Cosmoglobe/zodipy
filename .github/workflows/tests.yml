@@ -20,7 +20,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
         with:
-          python-version ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
 
       - name: Install dependencies
@@ -28,22 +28,18 @@ jobs:
 
       - name: Typecheck with mypy
         run: |
-          source $VENV
-          mypy ./zodipy
+          uv run mypy ./zodipy
 
       - name: Check linting with ruff
         run: |
-          source $VENV
           uvx ruff check
 
       - name: Check formating with ruff
         run: |
-          source $VENV
           uvx ruff format --check
 
       - name: Test with pytest
         run: |
-          source $VENV
           uv run pytest tests -v --cov=./zodipy --cov-report=xml:./coverage.xml --cov-report term-missing
 
       - name: Upload coverage to Codecov
