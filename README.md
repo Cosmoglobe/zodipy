@@ -74,17 +74,16 @@ ZodiPy supports all Python versions >= 3.9, and has the following dependencies:
 
 ## For developers
 
-### Poetry
+### uv
 
-ZodiPy uses [Poetry](https://python-poetry.org/) for development. To build and commit to the repository with the existing pre-commit setup, developers need to have Poetry (>= 1.8.0) installed. See the Poetry [documentation](https://python-poetry.org/docs/) for installation guide.
+ZodiPy now uses [uv](https://docs.astral.sh/uv/) for development. To build and commit to the repository with the existing pre-commit setup, developers need to have uv (>= 0.12.6) installed. uv can be installed by following the installation instructions [here](https://docs.astral.sh/uv/getting-started/installation/)
 
-After poetry has been installed, developers should create a new virtual environment and run the following in the root of the ZodiPy repositry
-
+uv does not require setting up any virtual environment manually and handles the requirements itself. To get the dependencies set up, simply run
 ```
-poetry install
+uv sync
 ```
 
-This will download all dependencies (including dev)from `pyproject.toml`, and `poetry.lock`.
+This will download all dependencies (including dev)from `pyproject.toml`, and `uv.lock`.
 
 ### Tests, linting and formatting, and building documentation
 
@@ -95,16 +94,16 @@ The following tools should be run from the root of the repository with no errors
 Testing is done with [pytest](https://docs.pytest.org/en/8.0.x/). To run the tests, run the following command from the repository root
 
 ```bash
-pytest
+uv run pytest
 ```
 
 #### ruff
 
-Formating and linting is done with [ruff](https://github.com/astral-sh/ruff). To format and lint, run the following command from the repository root
+Formating and linting is done with [ruff](https://github.com/astral-sh/ruff). `uv` also handles formatting and linting explicitly. To format and lint, run the following command from the repository root
 
 ```bash
-ruff check
-ruff format
+uvx ruff check
+uvx ruff format (with --check for a dry run)
 ```
 
 #### mypy
