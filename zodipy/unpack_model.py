@@ -9,7 +9,7 @@ from astropy import units
 from scipy import integrate, interpolate
 
 from zodipy.component import ComponentLabel
-from zodipy.zodiacal_light_model import RRM, Kelsall, ZodiacalLightModel
+from zodipy.zodiacal_light_model import RRM, Cosmoglobe, Kelsall, ZodiacalLightModel
 
 CompParamDict = dict[ComponentLabel, dict[str, Any]]
 CommonParamDict = dict[str, Any]
@@ -93,6 +93,122 @@ def interp_and_unpack_kelsall(
         if model.C3 is not None
         else 0
     )
+
+    if model.solar_irradiance is None:
+        common_params["solar_irradiance"] = 0
+    else:
+        common_params["solar_irradiance"] = interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.solar_irradiance,
+            bounds_error=bounds_error,
+        )
+
+    return comp_params, common_params
+
+
+def interp_and_unpack_cosmoglobe(
+    wavelengths: units.Quantity,
+    weights: units.Quantity | None,
+    model: Cosmoglobe,
+    bounds_error: bool,
+) -> UnpackedModelDicts:
+    """InterplantaryDustModelToDicts implementation for Cosmoglobe DR2 model."""
+    model_spectrum = deepcopy(model.spectrum)
+    wavelengths = wavelengths.to(model.spectrum.unit, equivalencies=units.spectral())
+
+    comp_params: dict[ComponentLabel, dict[str, Any]] = {}
+    common_params: dict[str, Any] = {
+        "T_0": model.T_0,
+        "delta": model.delta,
+    }
+
+    for comp_label in model.comps:
+        comp_params[comp_label] = {}
+        comp_params[comp_label]["emissivity"] = interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.emissivities[comp_label],
+            bounds_error=bounds_error,
+        )
+        if model.albedos is not None:
+            comp_params[comp_label]["albedo"] = interp_spectral_param(
+                wavelengths,
+                weights,
+                model_spectrum,
+                spectral_parameter=model.albedos[comp_label],
+                bounds_error=bounds_error,
+            )
+        else:
+            comp_params[comp_label]["albedo"] = 0
+
+    common_params["g1"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.g1,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.g1 is not None
+        else 0
+    )
+
+    common_params["g2"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.g2,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.g2 is not None
+        else 0
+    )
+
+    common_params["g3"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.g3,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.g3 is not None
+        else 0
+    )
+
+    common_params["w2"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.w2,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.w2 is not None
+        else 0
+    )
+
+    common_params["w3"] = (
+        interp_spectral_param(
+            wavelengths,
+            weights,
+            model_spectrum,
+            spectral_parameter=model.w3,
+            use_nearest=True,
+            bounds_error=bounds_error,
+        )
+        if model.w3 is not None
+        else 0
+    )
+
     if model.solar_irradiance is None:
         common_params["solar_irradiance"] = 0
     else:
@@ -176,6 +292,7 @@ def interp_spectral_param(
 interp_and_unpack_func_mapping: dict[type[ZodiacalLightModel], UnpackModelCallable] = {
     Kelsall: interp_and_unpack_kelsall,
     RRM: interp_and_unpack_rrm,
+    Cosmoglobe: interp_and_unpack_cosmoglobe,
 }
 
 
