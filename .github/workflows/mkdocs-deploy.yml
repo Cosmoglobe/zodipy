@@ -21,7 +21,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: uv sync --locked --all-extras --dev
         
       - name: Deploy docs to gh-pages
         run: uv run mkdocs gh-deploy --force --clean --verbose
